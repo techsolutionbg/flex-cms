@@ -33,8 +33,13 @@ final class EnvironmentValidatorTest extends TestCase
                 'debug' => true, 'force_https' => false,
             ],
             'database' => [
-                'driver' => 'sqlite', 'host' => '', 'database' => '', 'username' => '',
-                'charset' => '', 'collation' => '', 'port' => 70000,
+                'default' => 'mysql',
+                'connections' => [
+                    'mysql' => [
+                        'driver' => 'sqlite', 'host' => '', 'database' => '', 'username' => '',
+                        'charset' => '', 'collation' => '', 'port' => 70000,
+                    ],
+                ],
             ],
             'session' => ['same_site' => 'none', 'secure' => false],
             'paths' => [

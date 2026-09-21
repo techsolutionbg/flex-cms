@@ -50,15 +50,23 @@ final class EnvironmentValidator
             }
         }
 
-        if ($this->string($configuration, 'database.driver', $errors) !== 'mysql') {
-            $errors[] = 'database.driver must be mysql.';
+        $defaultConnection = $this->string($configuration, 'database.default', $errors);
+        if ($defaultConnection !== null && !$configuration->has('database.connections.' . $defaultConnection)) {
+            $errors[] = sprintf('database.default references the undefined connection "%s".', $defaultConnection);
         }
-        foreach (['database.host', 'database.database', 'database.username', 'database.charset', 'database.collation'] as $keyName) {
+
+        if ($defaultConnection !== null && $this->string($configuration, 'database.connections.' . $defaultConnection . '.driver', $errors) !== 'mysql') {
+            $errors[] = 'The default database driver must be mysql.';
+        }
+
+        $connectionPrefix = 'database.connections.' . ($defaultConnection ?? 'mysql') . '.';
+        foreach (['host', 'database', 'username', 'charset', 'collation'] as $keyName) {
+            $keyName = $connectionPrefix . $keyName;
             $this->requireNonEmpty($configuration, $keyName, $errors);
         }
-        $port = $this->int($configuration, 'database.port', $errors);
+        $port = $this->int($configuration, $connectionPrefix . 'port', $errors);
         if ($port !== null && ($port < 1 || $port > 65535)) {
-            $errors[] = 'database.port must be between 1 and 65535.';
+            $errors[] = $connectionPrefix . 'port must be between 1 and 65535.';
         }
 
         $sameSite = $this->string($configuration, 'session.same_site', $errors);

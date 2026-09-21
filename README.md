@@ -93,6 +93,25 @@ Flex CMS ще бъде **модулен монолит** със собствен
 
 Услугите се групират в providers, които имплементират `Flex\\Contracts\\Container\\ServiceProviderInterface`. Нов provider се добавя в `config/container.php`: `definitions()` връща PHP-DI дефинициите, а `boot()` се изпълнява след построяването на container-а. Теми и плъгини няма да редактират този файл директно; техните providers ще се добавят по-късно през контролиран extension registry.
 
+## Database Manager
+
+`Flex\\Database\\DatabaseManager` управлява Eloquent connections и се стартира от отделен `DatabaseServiceProvider`. Връзката остава lazy: bootstrap-ът регистрира connection конфигурацията и Eloquent model resolver-а, но реална MySQL връзка се отваря едва при първата заявка.
+
+Manager-ът предоставя:
+
+- именувани database connections и избор на default connection;
+- достъп до Eloquent connection и schema builder;
+- транзакции с конфигурируем брой повторни опити при concurrency конфликт;
+- `disconnect()` и `reconnect()` за long-running процеси;
+- безопасна проверка на връзката чрез `database:status`;
+- резултат с име на връзката, база, версия на сървъра и latency.
+
+```bash
+docker compose exec app bin/flex database:status
+```
+
+Database паролата никога не се показва от диагностичната команда. Production runtime поддържа MySQL; SQLite се използва само за изолирани unit тестове на инфраструктурния слой.
+
 ## Минимални изисквания към хостинга
 
 ### Сървър
