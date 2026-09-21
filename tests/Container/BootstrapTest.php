@@ -6,6 +6,7 @@ namespace Flex\Tests\Container;
 
 use Flex\Application;
 use Flex\Bootstrap;
+use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Console\FlexConsoleApplication;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Database\DatabaseManager;
@@ -27,5 +28,6 @@ final class BootstrapTest extends TestCase
         self::assertInstanceOf(LoggerInterface::class, $container->get(LoggerInterface::class));
         self::assertTrue($container->get(DatabaseManager::class)->isBooted());
         self::assertInstanceOf(KernelInterface::class, $container->get(KernelInterface::class));
+        self::assertInstanceOf(AuthenticationInterface::class, $container->get(AuthenticationInterface::class));
     }
 }

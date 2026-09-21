@@ -299,6 +299,40 @@ Core маршрутите на този етап са:
 
 Непознатите маршрути и неподдържаните HTTP методи връщат съответно `404` и `405`. За `/api/*` или при `Accept: application/json` грешките са JSON; в останалите случаи са минимален HTML. Production `500` responses никога не разкриват exception съобщения.
 
+## Users и Authentication
+
+Authentication слоят използва native PHP sessions зад `Flex\\Contracts\\Session\\SessionInterface` и публичния `Flex\\Contracts\\Auth\\AuthenticationInterface`. Паролите се съхраняват само чрез `password_hash()` и се проверяват с `password_verify()`; при промяна на препоръчания PHP algorithm hash-ът се обновява автоматично при успешен вход.
+
+Security правила:
+
+- session ID се регенерира при успешен login и session-ът се инвалидира при logout;
+- cookie настройките идват от `config/session.php` и включват HTTP-only, SameSite и optional Secure/Domain;
+- всички state-changing auth/user routes са защитени с CSRF token;
+- API token-ът се подава чрез `X-CSRF-Token`, а HTML формите използват `_token`;
+- login грешките са generic и не разкриват дали email адресът съществува;
+- пет неуспешни опита за една email/IP комбинация блокират следващите опити за 15 минути;
+- disabled потребители не могат да се вписват и активна session се отхвърля при следваща заявка;
+- users API изисква `super_admin`;
+- текущият потребител не може да изтрие профила си, да отнеме собствената си роля или да се деактивира;
+- последният активен `super_admin` не може да бъде деактивиран, понижен или изтрит.
+
+Налични маршрути:
+
+| Метод | Път | Предназначение |
+| --- | --- | --- |
+| `GET` | `/login` | HTML login форма |
+| `POST` | `/login` | HTML session login |
+| `GET` | `/api/auth/csrf` | Създаване/получаване на CSRF token |
+| `POST` | `/api/auth/login` | JSON session login |
+| `GET` | `/api/auth/me` | Текущ потребител и CSRF token |
+| `POST` | `/api/auth/logout` | Logout и session invalidation |
+| `GET` | `/api/users` | Списък на потребителите |
+| `POST` | `/api/users` | Създаване на потребител |
+| `PATCH/PUT` | `/api/users/{id}` | Редактиране на потребител |
+| `DELETE` | `/api/users/{id}` | Изтриване на потребител |
+
+`/health` остава независим от sessions и database authentication, за да може да служи като надежден container liveness endpoint.
+
 ## База данни и модели
 
 Eloquent ще се използва самостоятелно чрез `illuminate/database` за:

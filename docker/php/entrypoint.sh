@@ -16,4 +16,13 @@ mkdir -p \
     storage/sessions \
     storage/tmp
 
+# Development bind mounts retain host ownership. Only runtime-writable paths
+# are opened for Apache; application source and configuration remain read-only.
+chmod -R a+rwX \
+    public/media \
+    storage/cache \
+    storage/logs \
+    storage/sessions \
+    storage/tmp
+
 exec "$@"

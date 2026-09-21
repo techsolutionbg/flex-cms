@@ -6,6 +6,9 @@ namespace Flex\Http\Middleware;
 
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Http\Exception\InvalidRequestBody;
+use Flex\Users\Exception\UserNotFound;
+use Flex\Users\Exception\UserValidationFailed;
 use League\Route\Http\Exception\HttpExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -26,7 +29,13 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
         try {
             return $handler->handle($request);
         } catch (\Throwable $exception) {
-            $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500;
+            $status = match (true) {
+                $exception instanceof HttpExceptionInterface => $exception->getStatusCode(),
+                $exception instanceof InvalidRequestBody => 400,
+                $exception instanceof UserNotFound => 404,
+                $exception instanceof UserValidationFailed => 422,
+                default => 500,
+            };
             $headers = $exception instanceof HttpExceptionInterface ? $exception->getHeaders() : [];
             $message = $status < 500 || $this->configuration->bool('app.debug')
                 ? $exception->getMessage()

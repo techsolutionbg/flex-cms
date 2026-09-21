@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Flex\Providers\AuthServiceProvider;
 use Flex\Providers\CoreServiceProvider;
 use Flex\Providers\DatabaseServiceProvider;
 use Flex\Providers\HttpServiceProvider;
@@ -12,5 +13,6 @@ return [
         CoreServiceProvider::class,
         DatabaseServiceProvider::class,
         HttpServiceProvider::class,
+        AuthServiceProvider::class,
     ],
 ];
