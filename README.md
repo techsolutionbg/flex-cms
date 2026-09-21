@@ -88,10 +88,12 @@ Flex CMS ще бъде **модулен монолит** със собствен
 - `config:validate` проверява типовете и задължителните production стойности;
 - `config:cache` създава `storage/cache/config.php`, а `config:clear` го премахва;
 - cached конфигурация се използва само при `APP_CONFIG_CACHE=true`;
-- PHP-DI compilation се активира с `APP_CONTAINER_COMPILE=true` и записва в `storage/cache/container/`;
+- PHP-DI compilation се активира с `APP_CONTAINER_COMPILE=true` и записва във versioned поддиректория на `storage/cache/container/`;
 - writable runtime директориите остават извън web root, с изключение на публичната медийна директория.
 
 Услугите се групират в providers, които имплементират `Flex\\Contracts\\Container\\ServiceProviderInterface`. Нов provider се добавя в `config/container.php`: `definitions()` връща PHP-DI дефинициите, а `boot()` се изпълнява след построяването на container-а. Теми и плъгини няма да редактират този файл директно; техните providers ще се добавят по-късно през контролиран extension registry.
+
+Compiled container cache key-ят включва resolved конфигурацията, `platform.json` и `composer.lock`. Промяна на platform версия, providers, конфигурация или Composer dependencies създава нов compiled container и не позволява зареждане на несъвместим стар cache.
 
 ## Database Manager
 
@@ -273,6 +275,29 @@ public/index.php
 ```
 
 Плъгините ще регистрират маршрути чрез Flex `RouteRegistry`, а не чрез пряка зависимост към router библиотеката.
+
+### Application Kernel
+
+HTTP runtime-ът е реализиран като PSR-15 `Flex\\Http\\ApplicationKernel`. `public/index.php` запазва Web Installer проверката преди normal bootstrap, след което `Flex\\Application` създава PSR-7 request от PHP globals, подава го към kernel-а и изпраща получения PSR-7 response чрез SAPI emitter.
+
+Глобалният middleware pipeline се конфигурира в `config/http.php` и по подразбиране изпълнява:
+
+1. request ID генериране или валидиране;
+2. security headers, включително върху error responses;
+3. централизирано exception handling и безопасни JSON/HTML error responses;
+4. trusted host validation;
+5. maintenance mode;
+6. League Router dispatch и route middleware;
+7. controller.
+
+Маршрутите се регистрират през `Flex\\Contracts\\Http\\RouteRegistryInterface`. Registry-то валидира пътищата и уникалните имена и се заключва при построяване на router-а. Така Core, а по-късно темите и плъгините, не зависят пряко от League Route. Controllers връщат PSR-7 responses чрез `Flex\\Contracts\\Http\\ResponseFactoryInterface`.
+
+Core маршрутите на този етап са:
+
+- `GET /` — application readiness response;
+- `GET /health` — lightweight liveness response, достъпен и в maintenance mode.
+
+Непознатите маршрути и неподдържаните HTTP методи връщат съответно `404` и `405`. За `/api/*` или при `Accept: application/json` грешките са JSON; в останалите случаи са минимален HTML. Production `500` responses никога не разкриват exception съобщения.
 
 ## База данни и модели
 

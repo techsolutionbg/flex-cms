@@ -9,6 +9,7 @@ use Flex\Bootstrap;
 use Flex\Console\FlexConsoleApplication;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Database\DatabaseManager;
+use Flex\Contracts\Http\KernelInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -25,5 +26,6 @@ final class BootstrapTest extends TestCase
         self::assertInstanceOf(FlexConsoleApplication::class, $container->get(FlexConsoleApplication::class));
         self::assertInstanceOf(LoggerInterface::class, $container->get(LoggerInterface::class));
         self::assertTrue($container->get(DatabaseManager::class)->isBooted());
+        self::assertInstanceOf(KernelInterface::class, $container->get(KernelInterface::class));
     }
 }

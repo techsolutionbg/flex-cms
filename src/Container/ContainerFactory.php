@@ -11,6 +11,7 @@ use Flex\Configuration\ProjectPaths;
 use Flex\Container\Exception\ContainerException;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Psr\Container\ContainerInterface;
+
 use function DI\create;
 use function DI\get;
 
@@ -19,8 +20,7 @@ final readonly class ContainerFactory
     public function __construct(
         private string $basePath,
         private ConfigRepositoryInterface $configuration,
-    ) {
-    }
+    ) {}
 
     public function build(): ContainerInterface
     {
@@ -30,11 +30,12 @@ final readonly class ContainerFactory
         $builder->useAttributes(false);
 
         if ($this->configuration->bool('container.compile')) {
-            $directory = $this->basePath . '/storage/cache/container';
+            $cacheKey = $this->compilationCacheKey();
+            $directory = $this->basePath . '/storage/cache/container/' . $cacheKey;
             if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
                 throw new ContainerException('The compiled container cache directory cannot be created.');
             }
-            $builder->enableCompilation($directory);
+            $builder->enableCompilation($directory, 'CompiledContainer_' . $cacheKey);
         }
 
         $builder->addDefinitions([
@@ -58,5 +59,18 @@ final readonly class ContainerFactory
         $providers->boot($container);
 
         return $container;
+    }
+
+    private function compilationCacheKey(): string
+    {
+        $deploymentFingerprint = '';
+        foreach (['platform.json', 'composer.lock'] as $file) {
+            $path = $this->basePath . '/' . $file;
+            if (is_file($path)) {
+                $deploymentFingerprint .= (string) file_get_contents($path);
+            }
+        }
+
+        return substr(hash('sha256', serialize($this->configuration->all()) . $deploymentFingerprint), 0, 20);
     }
 }
