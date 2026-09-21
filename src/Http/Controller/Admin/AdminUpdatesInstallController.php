@@ -7,7 +7,6 @@ namespace Flex\Http\Controller\Admin;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
-use Flex\Http\RequestInput;
 use Flex\Session\CsrfTokenManager;
 use Flex\Updates\Platform\PlatformHistory;
 use Flex\Updates\Platform\PlatformInstallOptions;
@@ -22,7 +21,6 @@ final readonly class AdminUpdatesInstallController
         private PlatformHistory $history,
         private PlatformPackageUpload $uploads,
         private PlatformVersionInstallerInterface $installer,
-        private RequestInput $input,
         private AdminUpdatesPage $page,
         private CsrfTokenManager $csrf,
         private ResponseFactoryInterface $responses,
@@ -33,22 +31,21 @@ final readonly class AdminUpdatesInstallController
     {
         $path = null;
         try {
-            $input = $this->input->all($request);
-            $checksum = is_string($input['checksum'] ?? null) ? trim($input['checksum']) : null;
-            $dryRun = ($input['mode'] ?? 'install') === 'dry_run';
             $path = $this->uploads->store($request);
+            $checksum = hash_file('sha256', $path);
+            if ($checksum === false) {
+                throw new \RuntimeException('The uploaded platform package checksum cannot be calculated.');
+            }
             $result = $this->installer->install($path, new PlatformInstallOptions(
-                expectedChecksum: $checksum !== '' ? $checksum : null,
-                dryRun: $dryRun,
+                expectedChecksum: $checksum,
+                dryRun: false,
                 requireChecksum: $this->configuration->bool('extensions.updates.require_checksum'),
             ));
 
             return $this->responses->html($this->page->render(
                 $this->csrf->token(),
                 $this->history->all(),
-                $dryRun
-                    ? sprintf('Dry-run проверката за обновяване от %s до %s завърши успешно.', $result->from->value, $result->to->value)
-                    : sprintf('Обновяването от %s до %s завърши успешно.', $result->from->value, $result->to->value),
+                sprintf('Обновяването от %s до %s завърши успешно.', $result->from->value, $result->to->value),
             ));
         } catch (\Throwable $exception) {
             return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, $exception->getMessage()), 422);

@@ -537,16 +537,15 @@ Private key файлът не трябва да се качва на production 
 
 Интерфейсът поддържа:
 
-- качване и inspect на ZIP пакет;
-- checksum проверка;
+- качване на ZIP пакет и стартиране на обновяването с един бутон;
+- автоматично изчисляване и проверка на checksum;
 - signature и compatibility проверки чрез същия service layer като CLI;
 - стартиране на инсталация с maintenance, backup, миграции и health check;
 - история на обновяванията;
 - rollback за update записи с наличен съвместим database backup.
 
 Всички POST действия използват CSRF token и са достъпни само за `super_admin`.
-Каченият ZIP се поставя временно в `storage/tmp` и се изтрива след inspect или
-инсталация.
+Каченият ZIP се поставя временно в `storage/tmp` и се изтрива след инсталацията.
 
 ### Състояние и recovery на обновяването
 
