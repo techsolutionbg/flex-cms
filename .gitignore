@@ -12,6 +12,7 @@
 /storage/backups/
 /storage/logs/*
 !/storage/logs/.gitkeep
+/storage/installed.json
 /storage/sessions/*
 !/storage/sessions/.gitkeep
 /storage/tmp/*

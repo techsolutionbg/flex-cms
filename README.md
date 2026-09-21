@@ -112,6 +112,25 @@ docker compose exec app bin/flex database:status
 
 Database паролата никога не се показва от диагностичната команда. Production runtime поддържа MySQL; SQLite се използва само за изолирани unit тестове на инфраструктурния слой.
 
+## Web Installer
+
+Когато липсват едновременно `.env` и `storage/installed.json`, HTTP entry point-ът пренасочва към `/install`. Installer-ът работи преди нормалния application bootstrap, така че може да стартира и при все още липсваща database конфигурация.
+
+Процесът включва:
+
+1. проверка на PHP 8.3+, 64-bit runtime и задължителните PHP extensions;
+2. проверка на writable директориите и възможността за създаване на `.env`;
+3. валидиране на URL, locale, timezone, MySQL и administrator данните;
+4. проверка за MySQL 8.0+ с generic грешка, която не разкрива credentials;
+5. атомарно създаване на `.env` с генериран 256-bit `APP_KEY` и права `0600`;
+6. изпълнение на началните Phinx миграции;
+7. създаване на първия `super_admin` потребител с `password_hash()`;
+8. записване на `storage/installed.json`, което заключва installer-а.
+
+Installer формата използва CSRF token, `SameSite=Strict`/HTTP-only session cookie, CSP, frame protection, non-cacheable responses и process lock срещу паралелна инсталация. Подадените database и administrator пароли не се връщат в HTML при грешка. Съществуващ `.env` никога не се презаписва.
+
+Първоначалната миграция създава таблиците `users` и `settings`; Phinx управлява собствената таблица `flex_migrations`. При production deployment `.env` не трябва да присъства в release архива — той се създава от Web Installer-а.
+
 ## Минимални изисквания към хостинга
 
 ### Сървър
