@@ -23,6 +23,7 @@ use Flex\Updates\Platform\PlatformRollback;
 use Flex\Updates\Platform\MySqlPlatformDatabaseBackup;
 use Flex\Updates\Platform\PlatformVersionInstaller;
 use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Updates\Platform\PlatformPackageUpload;
 use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformUpdateStateStore;
 use Psr\Container\ContainerInterface;
@@ -73,6 +74,7 @@ final class CoreServiceProvider implements ServiceProviderInterface
                 get(PlatformDatabaseBackupInterface::class),
             ),
             PlatformDatabaseBackupInterface::class => autowire(MySqlPlatformDatabaseBackup::class),
+            PlatformPackageUpload::class => create()->constructor(get('base_path')),
             Application::class => autowire(),
             FlexConsoleApplication::class => autowire(),
         ];

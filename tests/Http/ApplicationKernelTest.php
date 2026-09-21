@@ -53,6 +53,14 @@ final class ApplicationKernelTest extends TestCase
         self::assertSame('/login', $response->getHeaderLine('Location'));
     }
 
+    public function testItRedirectsUnauthenticatedVisitorsAwayFromTheUpdatesPanel(): void
+    {
+        $response = $this->kernel->handle(new ServerRequest('GET', 'http://localhost/admin/updates'));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/login', $response->getHeaderLine('Location'));
+    }
+
     public function testItRejectsUntrustedHostsBeforeRouting(): void
     {
         $response = $this->kernel->handle(new ServerRequest('GET', 'http://malicious.example/health'));

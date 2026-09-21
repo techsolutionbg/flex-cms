@@ -58,7 +58,7 @@ final readonly class AdminDashboardController
                 <p>Имате пълен достъп до системната администрация като супер администратор.</p>
                 <section class="grid" aria-label="Административни секции">
                     <article class="card"><h2>Потребители</h2><p>Управление на потребители, роли и статуси.</p><a href="/api/users">Отвори API →</a></article>
-                    <article class="card"><h2>Системен достъп</h2><p>Тази секция е достъпна единствено за ролята <code>super_admin</code>.</p></article>
+                    <article class="card"><h2>Обновявания</h2><p>Проверка, инсталация и rollback на подписани platform пакети.</p><a href="/admin/updates">Отвори обновявания →</a></article>
                 </section>
             </main>
         </body>

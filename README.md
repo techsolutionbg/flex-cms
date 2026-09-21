@@ -512,6 +512,27 @@ bin/flex platform:sign-manifest unsigned-manifest.json signed-manifest.json \
 
 Private key файлът не трябва да се качва на production сървъра.
 
+### Web интерфейс за обновявания
+
+Супер администраторът може да управлява platform обновяванията от:
+
+```text
+/admin/updates
+```
+
+Интерфейсът поддържа:
+
+- качване и inspect на ZIP пакет;
+- checksum проверка;
+- signature и compatibility проверки чрез същия service layer като CLI;
+- стартиране на инсталация с maintenance, backup, миграции и health check;
+- история на обновяванията;
+- rollback за update записи с наличен съвместим database backup.
+
+Всички POST действия използват CSRF token и са достъпни само за `super_admin`.
+Каченият ZIP се поставя временно в `storage/tmp` и се изтрива след inspect или
+инсталация.
+
 ### Състояние и recovery на обновяването
 
 По време на инсталация updater-ът записва атомарно текущата фаза в
