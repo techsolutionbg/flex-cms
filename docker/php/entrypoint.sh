@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
+if [ -d .git ]; then
+    git config --global --add safe.directory /var/www/html
+fi
+
 if [ ! -f vendor/autoload.php ]; then
     composer install --no-interaction --prefer-dist
 fi

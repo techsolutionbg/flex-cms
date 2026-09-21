@@ -44,6 +44,19 @@ services:
       retries: 20
       start_period: 20s
 
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: "${PMA_HOST:-mysql}"
+      PMA_PORT: "${PMA_PORT:-3306}"
+      PMA_ARBITRARY: "${PMA_ARBITRARY:-0}"
+      UPLOAD_LIMIT: "${PMA_UPLOAD_LIMIT:-64M}"
+    ports:
+      - "${PMA_FORWARD_PORT:-8081}:80"
+
 volumes:
   mysql_data:
   vendor:

@@ -17,6 +17,7 @@ docker compose up --build
 
 - приложението е достъпно на `http://localhost:8080`;
 - health endpoint-ът е на `http://localhost:8080/health`;
+- phpMyAdmin е достъпен на `http://localhost:8081`;
 - MySQL е достъпен от хост машината на порт `33060`.
 
 Полезни команди:
@@ -28,7 +29,9 @@ docker compose exec app vendor/bin/phinx status
 docker compose down
 ```
 
-Портовете могат да се променят чрез `APP_PORT` и `DB_FORWARD_PORT` в `.env`.
+Портовете могат да се променят чрез `APP_PORT`, `PMA_FORWARD_PORT` и `DB_FORWARD_PORT` в `.env`.
+
+phpMyAdmin е част само от локалната Docker среда и не е production зависимост на Flex CMS. За вход се използват `DB_USERNAME` и `DB_PASSWORD` от `.env`.
 
 ## Основни възможности
 
