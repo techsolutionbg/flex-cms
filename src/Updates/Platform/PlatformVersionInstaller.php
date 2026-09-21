@@ -6,20 +6,34 @@ namespace Flex\Updates\Platform;
 
 use Composer\Semver\Semver;
 use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
+use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
+use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 use Flex\Updates\Exception\PlatformUpdateException;
-use Flex\Updates\Exception\PlatformUpdateLocked;
 use ZipArchive;
 
 final readonly class PlatformVersionInstaller implements PlatformVersionInstallerInterface
 {
+    private PlatformUpdateStateStore $states;
+    private PlatformPreflightChecker $preflight;
+    private ?PlatformHealthCheckerInterface $healthChecker;
+    private ?PlatformDatabaseBackupInterface $databaseBackup;
+
     public function __construct(
         private string $basePath,
         private PlatformPackageInspector $inspector,
         private PlatformVersionRegistry $versions,
         private PlatformMigrationRunnerInterface $migrationRunner,
+        ?PlatformUpdateStateStore $stateStore = null,
+        ?PlatformPreflightChecker $preflight = null,
+        ?PlatformHealthCheckerInterface $healthChecker = null,
+        ?PlatformDatabaseBackupInterface $databaseBackup = null,
     ) {
+        $this->states = $stateStore ?? new PlatformUpdateStateStore($basePath);
+        $this->preflight = $preflight ?? new PlatformPreflightChecker($basePath);
+        $this->healthChecker = $healthChecker;
+        $this->databaseBackup = $databaseBackup;
     }
 
     public function install(string $packagePath, PlatformInstallOptions $options): PlatformInstallResult
@@ -31,6 +45,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         $package = $this->inspector->inspect($packagePath, $options->expectedChecksum);
         $currentVersion = $this->versions->current();
         $this->assertCompatible($package->manifest, $currentVersion, $options);
+        $this->preflight->assertReady($package);
 
         if ($options->dryRun) {
             return new PlatformInstallResult(
@@ -42,32 +57,80 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
             );
         }
 
-        $lock = $this->acquireLock();
-        $workPath = $this->createWorkDirectory($package->manifest->version);
-        $backupPath = $this->createBackupDirectory($currentVersion, $package->manifest->version);
+        $lock = PlatformUpdateLock::acquire($this->basePath);
+        $workPath = null;
+        $backupPath = null;
         $maintenancePath = $this->basePath . '/storage/maintenance.json';
+        $recoveryRequired = false;
+        $state = null;
 
         try {
+            $workPath = $this->createWorkDirectory($package->manifest->version);
+            $backupPath = $this->createBackupDirectory($currentVersion, $package->manifest->version);
+            $state = new PlatformUpdateState(
+                id: basename($backupPath),
+                phase: 'started',
+                from: $currentVersion->value,
+                to: $package->manifest->version->value,
+                checksum: $package->checksum,
+                backupPath: $backupPath,
+                workPath: $workPath,
+                databaseBackupPath: $package->manifest->runMigrations ? $backupPath . '/database.json' : null,
+                affectedPaths: $this->affectedPaths($package->manifest),
+                startedAt: gmdate(DATE_ATOM),
+            );
+            $this->states->write($state);
             $this->extractPayload($package, $workPath);
+            $state = $this->transition($state, 'staged');
             $this->backupAffectedFiles($package->manifest, $backupPath);
+            $state = $this->transition($state, 'backed_up');
+            if ($package->manifest->runMigrations) {
+                if ($this->databaseBackup === null) {
+                    throw new PlatformUpdateException('Database backup is required before running migrations.');
+                }
+                $this->databaseBackup->backup($state->databaseBackupPath ?? $backupPath . '/database.json');
+            }
             $this->enableMaintenanceMode($maintenancePath, $currentVersion, $package->manifest->version);
+            $state = $this->transition($state, 'maintenance_enabled');
 
             try {
                 $this->applyPayload($package->manifest, $workPath);
+                $state = $this->transition($state, 'files_activated');
                 if ($package->manifest->runMigrations) {
+                    $state = $this->transition($state, 'migrations_running');
                     $this->migrationRunner->migrate();
                 }
+                if ($this->healthChecker !== null) {
+                    $state = $this->transition($state, 'health_checking');
+                    $this->healthChecker->check();
+                }
                 $this->appendHistory($package, $currentVersion, $backupPath);
+                $state = $this->transition($state, 'completed');
             } catch (\Throwable $exception) {
-                $this->restoreBackup($package->manifest, $backupPath);
+                try {
+                    $this->restoreBackup($package->manifest, $backupPath);
+                    if ($package->manifest->runMigrations && $this->databaseBackup !== null && $state->databaseBackupPath !== null) {
+                        $this->databaseBackup->restore($state->databaseBackupPath);
+                    }
+                    $this->states->clear();
+                } catch (\Throwable $recoveryException) {
+                    $recoveryRequired = true;
+                    $this->states->write($this->transition($state, 'recovery_required'));
+                    throw new PlatformUpdateException('Platform installation failed and automatic recovery also failed. Run platform:recover.', 0, $recoveryException);
+                }
                 throw new PlatformUpdateException('Platform installation failed and the file backup was restored.', 0, $exception);
             }
         } finally {
-            @unlink($maintenancePath);
-            $this->removeDirectory($workPath);
-            flock($lock, LOCK_UN);
-            fclose($lock);
+            if (!$recoveryRequired) {
+                @unlink($maintenancePath);
+                if ($workPath !== null) {
+                    $this->removeDirectory($workPath);
+                }
+            }
+            $lock->release();
         }
+
+        $this->states->clear();
 
         return new PlatformInstallResult(
             from: $currentVersion,
@@ -101,23 +164,23 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         }
     }
 
-    /** @return resource */
-    private function acquireLock()
+    private function transition(PlatformUpdateState $state, string $phase): PlatformUpdateState
     {
-        $directory = $this->basePath . '/storage/tmp';
-        $this->ensureDirectory($directory);
+        $next = new PlatformUpdateState(
+            id: $state->id,
+            phase: $phase,
+            from: $state->from,
+            to: $state->to,
+            checksum: $state->checksum,
+            backupPath: $state->backupPath,
+            workPath: $state->workPath,
+            databaseBackupPath: $state->databaseBackupPath,
+            affectedPaths: $state->affectedPaths,
+            startedAt: $state->startedAt,
+        );
+        $this->states->write($next);
 
-        $lock = @fopen($directory . '/platform-update.lock', 'c+');
-        if ($lock === false) {
-            throw new PlatformUpdateException('The platform update lock cannot be opened.');
-        }
-
-        if (!flock($lock, LOCK_EX | LOCK_NB)) {
-            fclose($lock);
-            throw new PlatformUpdateLocked('Another platform installation is already running.');
-        }
-
-        return $lock;
+        return $next;
     }
 
     private function createWorkDirectory(PlatformVersion $version): string
@@ -269,10 +332,18 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         $this->ensureDirectory($directory);
         $record = json_encode([
             'type' => 'platform',
+            'id' => basename($backupPath),
             'from' => $from->value,
             'to' => $package->manifest->version->value,
             'checksum' => $package->checksum,
             'backup' => $backupPath,
+            'database_backup' => $package->manifest->runMigrations ? $backupPath . '/database.json' : null,
+            'affected_paths' => $this->affectedPaths($package->manifest),
+            'migrations_ran' => $package->manifest->runMigrations,
+            'migration_files' => array_values(array_filter(
+                array_keys($package->manifest->files),
+                static fn(string $path): bool => str_starts_with($path, 'database/migrations/'),
+            )),
             'installed_at' => gmdate(DATE_ATOM),
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 

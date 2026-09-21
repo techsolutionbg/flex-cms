@@ -21,6 +21,8 @@ final readonly class PlatformPackageInspector
 
     public function __construct(
         private int $maximumUncompressedBytes = 268_435_456,
+        private ?string $signingPublicKey = null,
+        private bool $requireSignature = false,
     ) {
     }
 
@@ -76,6 +78,7 @@ final readonly class PlatformPackageInspector
 
     private function validateArchive(ZipArchive $archive, PlatformPackageManifest $manifest): int
     {
+        $this->validateSignature($manifest);
         $seenFiles = [];
         $uncompressedBytes = 0;
 
@@ -154,6 +157,22 @@ final readonly class PlatformPackageInspector
         $this->validatePlatformManifest($archive, $manifest);
 
         return $uncompressedBytes;
+    }
+
+    private function validateSignature(PlatformPackageManifest $manifest): void
+    {
+        if ($manifest->signature === null) {
+            if ($this->requireSignature) {
+                throw new InvalidPlatformPackage('The platform package signature is required.');
+            }
+
+            return;
+        }
+
+        if ($this->signingPublicKey === null || $manifest->signatureAlgorithm !== PlatformPackageSignature::ALGORITHM
+            || !PlatformPackageSignature::verify($manifest->signingData(), $manifest->signature, $this->signingPublicKey)) {
+            throw new InvalidPlatformPackage('The platform package signature is invalid.');
+        }
     }
 
     private function validatePlatformManifest(ZipArchive $archive, PlatformPackageManifest $manifest): void

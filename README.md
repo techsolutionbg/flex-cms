@@ -432,6 +432,15 @@ docker compose exec app bin/flex platform:install /path/to/flex-cms.zip --checks
 
 `UPDATE_REQUIRE_CHECKSUM=true` изисква предварително известен SHA-256 checksum. Това е безопасната настройка по подразбиране. Ограничението за разархивирания пакет се задава чрез `UPDATE_MAX_UNCOMPRESSED_MB`.
 
+Платформените пакети трябва да съдържат и Ed25519 подпис на canonical JSON
+manifest-а. Подписът се записва като Base64 в `signature`, алгоритъмът като
+`signature_algorithm: "ed25519"`, а по избор може да има `key_id`. Верификацията
+се активира по подразбиране чрез `UPDATE_REQUIRE_SIGNATURE=true`; публичният
+ключ се задава като Base64 raw Ed25519 key чрез `UPDATE_SIGNING_PUBLIC_KEY`.
+Частният ключ не трябва да се съхранява в приложението или в deployment архива.
+Canonical manifest-ът подписва всички полета на manifest-а с изключение на
+самото поле `signature`, включително алгоритъма и `key_id`.
+
 Platform пакетът е ZIP архив със следната структура:
 
 ```text
@@ -479,6 +488,47 @@ flex-cms-1.1.0.zip
 - възстановява файловете при неуспех.
 
 При `run_migrations=true` се изпълняват Phinx миграциите след активиране на файловете. File rollback-ът е автоматичен, но database миграциите трябва да са проектирани като безопасни forward migrations; връщането на файловете не може универсално да върне вече commit-ната промяна на схемата.
+
+Пакет с `run_migrations=true` трябва да съдържа поне един файл в
+`database/migrations/`. Историята пази migration файловете и дали са изпълнени.
+При такъв пакет updater-ът създава database snapshot в backup директорията
+преди активиране на миграциите. Snapshot-ът съдържа схемата и данните на
+MySQL таблиците и е достъпен само за процеса на приложението. Ръчен rollback
+възстановява и този snapshot, когато е наличен; без него rollback-ът се отказва,
+за да не се върне стар код върху несъвместима нова схема.
+
+```bash
+docker compose exec app bin/flex platform:history
+docker compose exec app bin/flex platform:rollback BACKUP_ID --force
+```
+
+За release pipeline-а manifest-ът се подписва извън production приложението:
+
+```bash
+bin/flex platform:sign-manifest unsigned-manifest.json signed-manifest.json \
+  --private-key-file=/secure/release/ed25519-private.key \
+  --key-id=release-2026
+```
+
+Private key файлът не трябва да се качва на production сървъра.
+
+### Състояние и recovery на обновяването
+
+По време на инсталация updater-ът записва атомарно текущата фаза в
+`storage/updates/state.json`. Фазите са `started`, `staged`, `backed_up`,
+`maintenance_enabled`, `files_activated`, `migrations_running`,
+`health_checking` и `completed`.
+Това позволява възстановяване след прекъсване на PHP процеса или рестарт на
+сървъра:
+
+```bash
+docker compose exec app bin/flex platform:recover
+```
+
+Recovery използва backup-а от state файла, възстановява засегнатите файлове,
+премахва останалия maintenance marker и изчиства временната state информация.
+Ако самото възстановяване не успее, state файлът и maintenance mode-ът се
+запазват за повторна диагностика и ръчна намеса.
 
 ## Writable директории
 

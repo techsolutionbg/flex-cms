@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Flex\Tests\Updates;
 
 use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
+use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
+use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 use Flex\Updates\Exception\PlatformUpdateException;
 use Flex\Updates\Platform\PlatformInstallOptions;
@@ -23,6 +25,7 @@ final class PlatformVersionInstallerTest extends TestCase
         $this->workspace = sys_get_temp_dir() . '/flex-update-test-' . bin2hex(random_bytes(6));
         self::assertTrue(mkdir($this->workspace . '/storage/tmp', 0775, true));
         self::assertTrue(mkdir($this->workspace . '/src', 0775, true));
+        self::assertTrue(mkdir($this->workspace . '/database/migrations', 0775, true));
         $this->writePlatformManifest('1.0.0');
         file_put_contents($this->workspace . '/src/example.php', 'old');
     }
@@ -96,6 +99,7 @@ final class PlatformVersionInstallerTest extends TestCase
     {
         $package = $this->createPackage('1.1.0', [
             'platform.json' => $this->platformManifest('1.1.0'),
+            'database/migrations/20260922000001_example.php' => '<?php // migration',
             'src/example.php' => 'new',
         ], runMigrations: true);
 
@@ -105,9 +109,13 @@ final class PlatformVersionInstallerTest extends TestCase
                 throw new PlatformUpdateException('Migration failed.');
             }
         };
+        $databaseBackup = new class implements PlatformDatabaseBackupInterface {
+            public function backup(string $path): void {}
+            public function restore(string $path): void {}
+        };
 
         try {
-            $this->installer($migrationRunner)->install($package, new PlatformInstallOptions(
+            $this->installer($migrationRunner, databaseBackup: $databaseBackup)->install($package, new PlatformInstallOptions(
                 expectedChecksum: $this->checksum($package),
             ));
             self::fail('The installer was expected to fail.');
@@ -120,7 +128,30 @@ final class PlatformVersionInstallerTest extends TestCase
         self::assertFileDoesNotExist($this->workspace . '/storage/maintenance.json');
     }
 
-    private function installer(?PlatformMigrationRunnerInterface $migrationRunner = null): PlatformVersionInstaller
+    public function testItRunsTheHealthCheckBeforeCompletingTheUpdate(): void
+    {
+        $package = $this->createPackage('1.1.0', [
+            'platform.json' => $this->platformManifest('1.1.0'),
+            'src/example.php' => 'new',
+        ]);
+        $health = new class implements PlatformHealthCheckerInterface {
+            public int $calls = 0;
+            public function check(): void { ++$this->calls; }
+        };
+
+        $this->installer(healthChecker: $health)->install($package, new PlatformInstallOptions(
+            expectedChecksum: $this->checksum($package),
+        ));
+
+        self::assertSame(1, $health->calls);
+        self::assertFileDoesNotExist($this->workspace . '/storage/updates/state.json');
+    }
+
+    private function installer(
+        ?PlatformMigrationRunnerInterface $migrationRunner = null,
+        ?PlatformHealthCheckerInterface $healthChecker = null,
+        ?PlatformDatabaseBackupInterface $databaseBackup = null,
+    ): PlatformVersionInstaller
     {
         $migrationRunner ??= new class implements PlatformMigrationRunnerInterface {
             public function migrate(): void
@@ -133,6 +164,8 @@ final class PlatformVersionInstallerTest extends TestCase
             inspector: new PlatformPackageInspector(),
             versions: new PlatformVersionRegistry($this->workspace),
             migrationRunner: $migrationRunner,
+            healthChecker: $healthChecker,
+            databaseBackup: $databaseBackup,
         );
     }
 
