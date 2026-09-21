@@ -24,6 +24,7 @@ use Flex\Updates\Platform\MySqlPlatformDatabaseBackup;
 use Flex\Updates\Platform\PlatformVersionInstaller;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Platform\PlatformPackageUpload;
+use Flex\Updates\Platform\PlatformPackageBuilder;
 use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformUpdateStateStore;
 use Psr\Container\ContainerInterface;
@@ -43,6 +44,7 @@ final class CoreServiceProvider implements ServiceProviderInterface
             LoggerFactory::class => autowire(),
             LoggerInterface::class => factory([LoggerFactory::class, 'create']),
             PlatformVersionRegistry::class => create()->constructor(get('base_path')),
+            PlatformPackageBuilder::class => create()->constructor(get('base_path'), get(PlatformVersionRegistry::class)),
             PlatformPackageInspectorFactory::class => autowire(),
             PlatformPackageInspector::class => factory([PlatformPackageInspectorFactory::class, 'create']),
             PlatformMigrationRunnerInterface::class => create(PhinxPlatformMigrationRunner::class)

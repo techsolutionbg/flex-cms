@@ -19,11 +19,13 @@ use Flex\Console\Command\PlatformRecoverCommand;
 use Flex\Console\Command\PlatformHistoryCommand;
 use Flex\Console\Command\PlatformRollbackCommand;
 use Flex\Console\Command\PlatformSignManifestCommand;
+use Flex\Console\Command\PlatformBuildCommand;
 use Flex\Console\Command\PlatformVersionCommand;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Database\DatabaseManager;
 use Flex\Updates\Platform\PlatformPackageInspector;
+use Flex\Updates\Platform\PlatformPackageBuilder;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformHistory;
@@ -48,6 +50,7 @@ final class FlexConsoleApplication extends Application
         PlatformUpdateRecovery $updateRecovery,
         PlatformHistory $updateHistory,
         PlatformRollback $platformRollback,
+        PlatformPackageBuilder $platformPackageBuilder,
     ) {
         parent::__construct('Flex CMS', $registry->current()->value);
 
@@ -65,6 +68,7 @@ final class FlexConsoleApplication extends Application
             new PlatformHistoryCommand($updateHistory),
             new PlatformRollbackCommand($platformRollback),
             new PlatformSignManifestCommand(),
+            new PlatformBuildCommand($platformPackageBuilder),
         ]);
     }
 }

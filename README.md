@@ -430,6 +430,21 @@ docker compose exec app bin/flex platform:install /path/to/flex-cms.zip --checks
 docker compose exec app bin/flex platform:install /path/to/flex-cms.zip --checksum=SHA256
 ```
 
+Release ZIP пакет може да се генерира директно от текущия source tree:
+
+```bash
+docker compose exec app bin/flex platform:build --target-version=0.1.1 \
+  --private-key-file=/secure/release/ed25519-private.key \
+  --key-id=release-2026
+```
+
+Генераторът създава `releases/flex-cms-<version>.zip` и съответния `.sha256`
+sidecar файл. Без `--private-key-file` пакетът е unsigned и е подходящ само за
+локален тест, когато `UPDATE_REQUIRE_SIGNATURE=false`. Версията, която се
+подава с `--version`, се записва и в payload `platform.json`; source tree-ът не
+се променя. В архива не се включват `.env`, `.git`, `storage`, `plugins`,
+`themes` и `public/media`.
+
 `UPDATE_REQUIRE_CHECKSUM=true` изисква предварително известен SHA-256 checksum. Това е безопасната настройка по подразбиране. Ограничението за разархивирания пакет се задава чрез `UPDATE_MAX_UNCOMPRESSED_MB`.
 
 Платформените пакети трябва да съдържат и Ed25519 подпис на canonical JSON
