@@ -1,0 +1,7 @@
+parameters:
+    level: 8
+    paths:
+        - contracts
+        - src
+        - tests
+    tmpDir: storage/tmp/phpstan

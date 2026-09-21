@@ -1,0 +1,49 @@
+name: flex-cms
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.example
+        required: true
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=caching_sha2_password
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-flex_cms}"
+      MYSQL_USER: "${DB_USERNAME:-flex_cms}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-flex_cms}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-change-me}"
+    ports:
+      - "${DB_FORWARD_PORT:-33060}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  mysql_data:
+  vendor:
