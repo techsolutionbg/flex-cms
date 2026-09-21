@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Dotenv\Dotenv;
+use Flex\Console\FlexConsoleApplication;
+
+$basePath = dirname(__DIR__);
+require $basePath . '/vendor/autoload.php';
+
+if (is_file($basePath . '/.env')) {
+    Dotenv::createImmutable($basePath)->safeLoad();
+}
+
+$requireChecksum = filter_var($_ENV['UPDATE_REQUIRE_CHECKSUM'] ?? true, FILTER_VALIDATE_BOOL);
+$maximumUncompressedBytes = max(1, (int) ($_ENV['UPDATE_MAX_UNCOMPRESSED_MB'] ?? 256)) * 1024 * 1024;
+
+exit((new FlexConsoleApplication($basePath, $requireChecksum, $maximumUncompressedBytes))->run());

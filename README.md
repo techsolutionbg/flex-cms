@@ -295,6 +295,67 @@ Flex CMS, темите и плъгините ще използват Semantic Ve
 
 Когато PHP няма права да променя application файловете, системата трябва да предлага ръчно обновяване чрез ZIP пакет.
 
+### Инсталиране на platform версии
+
+Началната имплементация предоставя Core installer и CLI команди:
+
+```bash
+docker compose exec app bin/flex platform:version
+docker compose exec app bin/flex platform:inspect /path/to/flex-cms.zip --checksum=SHA256
+docker compose exec app bin/flex platform:install /path/to/flex-cms.zip --checksum=SHA256 --dry-run
+docker compose exec app bin/flex platform:install /path/to/flex-cms.zip --checksum=SHA256
+```
+
+`UPDATE_REQUIRE_CHECKSUM=true` изисква предварително известен SHA-256 checksum. Това е безопасната настройка по подразбиране. Ограничението за разархивирания пакет се задава чрез `UPDATE_MAX_UNCOMPRESSED_MB`.
+
+Platform пакетът е ZIP архив със следната структура:
+
+```text
+flex-cms-1.1.0.zip
+├── manifest.json
+└── payload/
+    ├── platform.json
+    ├── src/
+    ├── public/
+    └── vendor/
+```
+
+Примерен `manifest.json`:
+
+```json
+{
+  "schema": 1,
+  "package": "flex-cms",
+  "version": "1.1.0",
+  "minimum_php": ">=8.3",
+  "compatible_from": ">=1.0.0 <1.1.0",
+  "files": {
+    "platform.json": "SHA256_OF_FILE",
+    "src/Application.php": "SHA256_OF_FILE"
+  },
+  "remove": [
+    "src/ObsoleteClass.php"
+  ],
+  "run_migrations": true
+}
+```
+
+Всеки файл в `payload/` трябва да присъства в `files` с точен SHA-256 checksum. Пакетът винаги трябва да съдържа `platform.json`, чиято версия съвпада с версията в manifest-а.
+
+Инсталаторът:
+
+- блокира absolute paths, `..`, символни връзки и непознати ZIP entries;
+- не позволява промяна на `.env`, `.git`, `storage`, `plugins`, `themes` и `public/media`;
+- проверява PHP и current-version ограниченията;
+- не позволява downgrade без `--allow-downgrade`;
+- използва lock срещу паралелни обновявания;
+- включва maintenance mode;
+- създава backup в `storage/backups/platform`;
+- записва история в `storage/updates/history.jsonl`;
+- възстановява файловете при неуспех.
+
+При `run_migrations=true` се изпълняват Phinx миграциите след активиране на файловете. File rollback-ът е автоматичен, но database миграциите трябва да са проектирани като безопасни forward migrations; връщането на файловете не може универсално да върне вече commit-ната промяна на схемата.
+
 ## Writable директории
 
 Очаква се web server процесът да има права за запис само там, където са необходими:

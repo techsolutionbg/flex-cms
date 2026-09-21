@@ -58,6 +58,9 @@
             "Flex\\Tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/flex"
+    ],
     "config": {
         "allow-plugins": {},
         "optimize-autoloader": true,

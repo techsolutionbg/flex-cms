@@ -9,5 +9,7 @@ return [
         'channel' => $_ENV['UPDATE_CHANNEL'] ?? 'stable',
         'enabled' => filter_var($_ENV['UPDATE_CHECK_ENABLED'] ?? true, FILTER_VALIDATE_BOOL),
         'server_url' => $_ENV['UPDATE_SERVER_URL'] ?? '',
+        'require_checksum' => filter_var($_ENV['UPDATE_REQUIRE_CHECKSUM'] ?? true, FILTER_VALIDATE_BOOL),
+        'max_uncompressed_mb' => (int) ($_ENV['UPDATE_MAX_UNCOMPRESSED_MB'] ?? 256),
     ],
 ];
