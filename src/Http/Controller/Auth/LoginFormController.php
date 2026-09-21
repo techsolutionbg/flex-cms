@@ -23,7 +23,9 @@ final readonly class LoginFormController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         if ($this->authentication->check()) {
-            return $this->responses->text('', 302, ['Location' => '/']);
+            $location = $this->authentication->user()?->isSuperAdmin() === true ? '/admin' : '/';
+
+            return $this->responses->text('', 302, ['Location' => $location]);
         }
 
         return $this->responses->html($this->page->render($this->csrf->token()));

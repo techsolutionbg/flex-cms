@@ -16,6 +16,7 @@ use Flex\Http\Controller\Auth\CurrentUserController;
 use Flex\Http\Controller\Auth\LoginController;
 use Flex\Http\Controller\Auth\LoginFormController;
 use Flex\Http\Controller\Auth\LogoutController;
+use Flex\Http\Controller\Admin\AdminDashboardController;
 use Flex\Http\Controller\Users\CreateUserController;
 use Flex\Http\Controller\Users\DeleteUserController;
 use Flex\Http\Controller\Users\ListUsersController;
@@ -46,6 +47,8 @@ final class AuthServiceProvider implements ServiceProviderInterface
         $routes->add('POST', '/logout', LogoutController::class, 'auth.logout', [CsrfMiddleware::class, RequireAuthenticationMiddleware::class]);
         $routes->add('POST', '/api/auth/logout', LogoutController::class, 'api.auth.logout', [CsrfMiddleware::class, RequireAuthenticationMiddleware::class]);
         $routes->add('GET', '/api/auth/me', CurrentUserController::class, 'api.auth.me', [RequireAuthenticationMiddleware::class]);
+
+        $routes->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', [RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
 
         $admin = [CsrfMiddleware::class, RequireSuperAdminMiddleware::class];
         $routes->add('GET', '/api/users', ListUsersController::class, 'api.users.index', $admin);

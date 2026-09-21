@@ -45,6 +45,14 @@ final class ApplicationKernelTest extends TestCase
         self::assertStringContainsString('GET', $methodNotAllowed->getHeaderLine('Allow'));
     }
 
+    public function testItRedirectsUnauthenticatedVisitorsAwayFromTheAdminPanel(): void
+    {
+        $response = $this->kernel->handle(new ServerRequest('GET', 'http://localhost/admin'));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/login', $response->getHeaderLine('Location'));
+    }
+
     public function testItRejectsUntrustedHostsBeforeRouting(): void
     {
         $response = $this->kernel->handle(new ServerRequest('GET', 'http://malicious.example/health'));

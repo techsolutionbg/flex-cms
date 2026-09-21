@@ -45,7 +45,9 @@ final readonly class LoginController
             return $this->responses->json(['user' => $this->authentication->user()?->toArray()]);
         }
 
-        return $this->responses->text('', 302, ['Location' => '/']);
+        $location = $this->authentication->user()?->isSuperAdmin() === true ? '/admin' : '/';
+
+        return $this->responses->text('', 302, ['Location' => $location]);
     }
 
     /** @param array<string, string|list<string>> $headers */

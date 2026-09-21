@@ -11,6 +11,7 @@ use Flex\Console\Command\ConfigCacheCommand;
 use Flex\Console\Command\ConfigClearCommand;
 use Flex\Console\Command\ConfigShowCommand;
 use Flex\Console\Command\ConfigValidateCommand;
+use Flex\Console\Command\CreateFirstSuperAdminCommand;
 use Flex\Console\Command\DatabaseStatusCommand;
 use Flex\Console\Command\PlatformInstallCommand;
 use Flex\Console\Command\PlatformInspectCommand;
@@ -20,6 +21,8 @@ use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Database\DatabaseManager;
 use Flex\Updates\Platform\PlatformPackageInspector;
 use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Users\UserRepository;
+use Flex\Users\UserService;
 use Symfony\Component\Console\Application;
 
 final class FlexConsoleApplication extends Application
@@ -33,6 +36,8 @@ final class FlexConsoleApplication extends Application
         EnvironmentValidator $environmentValidator,
         ConfigurationRedactor $redactor,
         DatabaseManager $database,
+        UserRepository $users,
+        UserService $userService,
     ) {
         parent::__construct('Flex CMS', $registry->current()->value);
 
@@ -42,6 +47,7 @@ final class FlexConsoleApplication extends Application
             new ConfigCacheCommand($configurationCache),
             new ConfigClearCommand($configurationCache),
             new DatabaseStatusCommand($database),
+            new CreateFirstSuperAdminCommand($users, $userService),
             new PlatformVersionCommand($registry),
             new PlatformInspectCommand($inspector),
             new PlatformInstallCommand($installer, $configuration->bool('extensions.updates.require_checksum')),
