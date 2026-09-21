@@ -4,48 +4,43 @@ declare(strict_types=1);
 
 namespace Flex;
 
-use Dotenv\Dotenv;
+use Flex\Configuration\ProjectPaths;
+use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 
 final class Application
 {
-    private function __construct(
-        private readonly string $basePath,
+    public function __construct(
+        private readonly ConfigRepositoryInterface $configuration,
+        private readonly ProjectPaths $paths,
+        private readonly PlatformVersionRegistry $versions,
     ) {
-    }
-
-    public static function create(string $basePath): self
-    {
-        if (is_file($basePath . '/.env')) {
-            Dotenv::createImmutable($basePath)->safeLoad();
-        }
-
-        return new self($basePath);
     }
 
     public function run(): never
     {
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-        $version = (new PlatformVersionRegistry($this->basePath))->current()->value;
+        $version = $this->versions->current()->value;
+        $applicationName = $this->configuration->string('app.name');
 
         if ($path === '/health') {
             $this->respond([
                 'status' => 'ok',
-                'application' => 'Flex CMS',
+                'application' => $applicationName,
                 'version' => $version,
             ]);
         }
 
-        if (is_file($this->basePath . '/storage/maintenance.json')) {
+        if (is_file($this->paths->storage('maintenance.json'))) {
             $this->respond([
                 'status' => 'maintenance',
-                'application' => 'Flex CMS',
+                'application' => $applicationName,
                 'version' => $version,
             ], 503);
         }
 
         $this->respond([
-            'application' => 'Flex CMS',
+            'application' => $applicationName,
             'status' => 'bootstrap-ready',
             'version' => $version,
         ]);

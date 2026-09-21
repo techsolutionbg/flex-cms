@@ -2,7 +2,7 @@
 
 Flex CMS е платформа за бързо създаване и управление на сайтове, предназначена да работи на стандартен споделен хостинг с PHP и MySQL. Системата ще използва собствено модулно ядро и внимателно подбрани самостоятелни библиотеки, без зависимост от цялостна работна рамка.
 
-> Проектът е в етап на планиране. Описаните по-долу изисквания и зависимости определят началната техническа посока и могат да бъдат прецизирани преди първата стабилна версия.
+> Проектът е в ранен етап на разработка. Описаните по-долу изисквания и зависимости определят техническата посока и могат да бъдат прецизирани преди първата стабилна версия.
 
 ## Стартиране за разработка
 
@@ -27,6 +27,15 @@ docker compose exec app composer test
 docker compose exec app composer analyse
 docker compose exec app vendor/bin/phinx status
 docker compose down
+```
+
+Конфигурация и диагностика:
+
+```bash
+docker compose exec app bin/flex config:validate
+docker compose exec app bin/flex config:show
+docker compose exec app bin/flex config:cache
+docker compose exec app bin/flex config:clear
 ```
 
 Портовете могат да се променят чрез `APP_PORT`, `PMA_FORWARD_PORT` и `DB_FORWARD_PORT` в `.env`.
@@ -65,6 +74,24 @@ Flex CMS ще бъде **модулен монолит** със собствен
 - Деактивирането запазва данните на разширението.
 - Премахването на таблици и данни изисква изрично деинсталиране и потвърждение.
 - Production инсталацията не изисква Node.js, Composer, SSH, Redis или постоянно работещ queue process.
+
+## Configuration и service container
+
+И HTTP, и CLI входната точка използват един bootstrap процес. Той зарежда `.env`, валидира задължителните environment стойности, събира файловете от `config/` и създава PSR-11 container чрез PHP-DI.
+
+Конфигурацията се достъпва през `Flex\\Contracts\\Configuration\\ConfigRepositoryInterface` с dot notation, например `app.name` и `database.connections.mysql.host`. Application кодът не трябва да чете директно `$_ENV`, `getenv()` или конфигурационни PHP файлове.
+
+Основни правила:
+
+- `.env` е локален и не се commit-ва; `.env.example` е договорът за наличните променливи;
+- secrets се маскират от `config:show`;
+- `config:validate` проверява типовете и задължителните production стойности;
+- `config:cache` създава `storage/cache/config.php`, а `config:clear` го премахва;
+- cached конфигурация се използва само при `APP_CONFIG_CACHE=true`;
+- PHP-DI compilation се активира с `APP_CONTAINER_COMPILE=true` и записва в `storage/cache/container/`;
+- writable runtime директориите остават извън web root, с изключение на публичната медийна директория.
+
+Услугите се групират в providers, които имплементират `Flex\\Contracts\\Container\\ServiceProviderInterface`. Нов provider се добавя в `config/container.php`: `definitions()` връща PHP-DI дефинициите, а `boot()` се изпълнява след построяването на container-а. Теми и плъгини няма да редактират този файл директно; техните providers ще се добавят по-късно през контролиран extension registry.
 
 ## Минимални изисквания към хостинга
 

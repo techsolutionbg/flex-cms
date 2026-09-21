@@ -9,10 +9,10 @@ services:
       mysql:
         condition: service_healthy
     env_file:
-      - path: .env
-        required: false
       - path: .env.example
         required: true
+      - path: .env
+        required: false
     ports:
       - "${APP_PORT:-8080}:80"
     volumes:
