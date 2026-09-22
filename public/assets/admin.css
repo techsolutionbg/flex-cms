@@ -1,7 +1,13 @@
-:root{--sidebar-width:248px;--sidebar-mobile-width:min(86vw,320px);--sidebar-transition:180ms cubic-bezier(.2,.8,.2,1)}
-.admin-shell{min-height:100vh}
+:root{--sidebar-width:248px;--sidebar-mobile-width:min(86vw,320px);--sidebar-transition:180ms cubic-bezier(.2,.8,.2,1);--admin-content-gutter:16px}
+.admin-shell{display:flex;min-height:100vh}
+.admin-app-content{display:flex;min-width:0;flex:1 1 auto}
 .admin-sidebar{position:fixed;inset:0 auto 0 0;z-index:90;display:flex;width:var(--sidebar-width);height:100dvh;min-height:100vh;flex-direction:column;overflow:hidden auto;padding:16px 14px 14px;background:var(--sidebar,#18231d);color:#fff;box-shadow:8px 0 30px rgba(12,19,15,.08);transition:width var(--sidebar-transition),transform var(--sidebar-transition),padding var(--sidebar-transition),box-shadow var(--sidebar-transition)}
-.admin-main{width:100%;min-width:0;margin-left:var(--sidebar-width);transition:margin-left var(--sidebar-transition)}
+.admin-main{width:auto;min-width:0;flex:1 1 auto;margin-left:var(--sidebar-width);transition:margin-left var(--sidebar-transition)}
+.admin-main>header{height:66px;min-height:66px;align-items:center;padding:0 var(--admin-content-gutter)}
+.admin-main>header .brand,.admin-main>header .user,.admin-main>header .back{display:flex;align-items:center;line-height:1}
+.admin-main>header .logout{margin-top:0}
+.topbar-spacer{flex:1 1 auto}.topbar-actions{display:flex;align-items:center}.topbar-actions form{display:flex;align-items:center;margin:0}
+.admin-main>main{width:calc(100% - (var(--admin-content-gutter) * 2))}
 .sidebar-brand{display:flex;min-height:68px;flex:0 0 auto;align-items:center;justify-content:flex-start;margin:-16px -14px 0;padding:12px 48px 12px 18px;border-bottom:1px solid rgba(23,33,27,.14);background:#fff}
 .sidebar-logo{display:block;width:172px;max-width:100%;height:auto}
 .admin-sidebar nav{display:grid;flex:0 0 auto;gap:5px;padding-top:18px}
@@ -22,4 +28,7 @@
 .sidebar-collapsed .admin-sidebar{width:0;padding-right:0;padding-left:0;box-shadow:none}.sidebar-collapsed .admin-main{margin-left:0}.sidebar-collapsed .sidebar-toggle{left:14px}
 @media (prefers-reduced-motion:reduce){.admin-sidebar,.admin-main,.sidebar-toggle{transition:none}}
 @media (max-width:768px){.admin-sidebar{width:var(--sidebar-mobile-width);padding:16px 14px 14px}.admin-main{margin-left:72px}.sidebar-enhanced .admin-sidebar{transform:translateX(-101%);box-shadow:none}.sidebar-enhanced .admin-main{margin-left:0}.sidebar-enhanced.sidebar-mobile-open .admin-sidebar{transform:translateX(0);box-shadow:12px 0 36px rgba(12,19,15,.28)}.sidebar-toggle{left:14px}.sidebar-mobile-open .sidebar-toggle{left:calc(var(--sidebar-mobile-width) - 50px)}.sidebar-resizer{display:none}.sidebar-brand{padding-right:48px}}
-@media (max-width:520px){.admin-main header{align-items:flex-start;gap:10px;padding:18px 16px 18px 62px}}
+@media (max-width:520px){.admin-main>header{height:58px;min-height:58px;align-items:center;gap:10px;padding:0 16px 0 62px}.admin-main>header .brand,.admin-main>header .user,.admin-main>header .back{line-height:1.1}}
+.admin-main>main,.admin-main>.layout{width:100%;max-width:none;margin:18px 0;padding:0 var(--admin-content-gutter)}
+.admin-main>main h1,.admin-main>.layout h1{margin-top:0;font-size:2.2rem;line-height:1.1}
+@media (max-width:720px){.admin-main>main,.admin-main>.layout{width:100%;margin:16px 0;padding:0 12px}}

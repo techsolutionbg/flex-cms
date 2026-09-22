@@ -11,7 +11,7 @@
     var mobileOpen = false;
     var width = 248;
 
-    function AdminApp(props) { return h('div', { dangerouslySetInnerHTML: { __html: props.html } }); }
+    function AdminApp(props) { return h('div', { className: 'admin-app-content', dangerouslySetInnerHTML: { __html: props.html } }); }
     function getApp(doc) { return doc.getElementById('flex-admin-app') || doc.querySelector('.admin-shell'); }
     function isMobile() { return window.innerWidth <= breakpoint; }
     function widthLimit() { return Math.max(minWidth, Math.min(maxWidth, window.innerWidth - 320)); }

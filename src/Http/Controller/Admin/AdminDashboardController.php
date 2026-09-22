@@ -31,7 +31,6 @@ final readonly class AdminDashboardController
             return $this->responses->text('Forbidden', 403);
         }
 
-        $name = htmlspecialchars($user->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $csrfToken = htmlspecialchars($this->csrf->token(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $sidebarWidth = $this->settings->sidebarWidthForUser($user->id);
         $devReloadAttribute = ($_ENV['APP_ENV'] ?? 'production') === 'local' ? ' data-flex-dev-reload="true"' : '';
@@ -64,7 +63,7 @@ final readonly class AdminDashboardController
             <link rel="stylesheet" href="/assets/admin.css">
         </head>
         <body{$devReloadAttribute} style="--sidebar-width:{$sidebarWidth}px"><div id="flex-admin-app" class="admin-shell">{$this->sidebar->render('dashboard', $sidebarWidth)}<div class="admin-main">
-            <header><div class="brand">Flex CMS · Admin</div><div class="user">{$name} · <form method="post" action="/logout"><input type="hidden" name="_token" value="{$csrfToken}"><button class="logout" type="submit">Изход</button></form></div></header>
+            <header style="min-height:66px;height:66px;padding:0 max(18px,calc((100% - 1120px)/2));align-items:center"><div class="topbar-spacer" aria-hidden="true"></div><div class="topbar-actions"><form method="post" action="/logout"><input type="hidden" name="_token" value="{$csrfToken}"><button class="logout" type="submit">Изход</button></form></div></header>
             <main class="layout">
                 <h1>Административен панел</h1>
                 <p>Имате пълен достъп до системната администрация като супер администратор.</p>
