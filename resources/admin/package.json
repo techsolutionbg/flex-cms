@@ -8,6 +8,7 @@
     "build:dev": "tsc -b && vite build --mode development",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "check": "npm run typecheck && npm run lint && npm run build",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"

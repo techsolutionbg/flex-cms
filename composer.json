@@ -74,6 +74,10 @@
             "@test",
             "@analyse"
         ],
+        "check:all": [
+            "@check",
+            "npm --prefix resources/admin run check"
+        ],
         "test": "phpunit"
     }
 }

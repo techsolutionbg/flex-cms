@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     depends_on:
       mysql:
         condition: service_healthy
@@ -19,6 +20,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /workspace/resources/admin
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "${VITE_FORWARD_PORT:-5173}:5173"
+    volumes:
+      - .:/workspace
+      - frontend_node_modules:/workspace/resources/admin/node_modules
+    environment:
+      VITE_DEV_SERVER_URL: "http://localhost:${VITE_FORWARD_PORT:-5173}"
 
   mysql:
     image: mysql:8.0
@@ -55,3 +68,4 @@ services:
 volumes:
   mysql_data:
   vendor:
+  frontend_node_modules:
