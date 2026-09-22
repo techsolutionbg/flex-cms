@@ -56,10 +56,10 @@ final readonly class RequirementsChecker
     /** @return array<string, string> */
     private function writablePaths(): array
     {
-        $environmentPath = $this->basePath . '/.env';
+        $environmentPath = $this->basePath . '/storage/.env';
         $environment = is_file($environmentPath)
-            ? ['Environment file (.env)' => $environmentPath]
-            : ['Project directory (.env)' => $this->basePath];
+            ? ['Application environment file' => $environmentPath]
+            : ['Application environment directory' => $this->basePath . '/storage'];
 
         return $environment + [
             'Storage directory' => $this->basePath . '/storage',

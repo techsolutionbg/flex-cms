@@ -44,6 +44,10 @@ final class CoreServiceProvider implements ServiceProviderInterface
             LoggerFactory::class => autowire(),
             LoggerInterface::class => factory([LoggerFactory::class, 'create']),
             PlatformVersionRegistry::class => create()->constructor(get('base_path')),
+            \Flex\Http\Controller\Admin\AdminDevReloadController::class => create()->constructor(
+                get(\Flex\Contracts\Http\ResponseFactoryInterface::class),
+                get('base_path'),
+            ),
             PlatformPackageBuilder::class => create()->constructor(get('base_path'), get(PlatformVersionRegistry::class)),
             PlatformPackageInspectorFactory::class => autowire(),
             PlatformPackageInspector::class => factory([PlatformPackageInspectorFactory::class, 'create']),

@@ -25,6 +25,6 @@ final readonly class InstallationState
 
     public function environmentPath(): string
     {
-        return $this->basePath . '/.env';
+        return $this->basePath . '/storage/.env';
     }
 }

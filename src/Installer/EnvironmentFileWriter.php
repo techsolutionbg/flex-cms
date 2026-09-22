@@ -16,7 +16,7 @@ final readonly class EnvironmentFileWriter implements EnvironmentWriterInterface
     /** @param array<string, string> $values */
     public function write(array $values): void
     {
-        $target = $this->basePath . '/.env';
+        $target = $this->basePath . '/storage/.env';
         if (file_exists($target) && (filesize($target) ?: 0) > 0) {
             throw new InstallerException('The environment file already exists.');
         }
@@ -46,7 +46,7 @@ final readonly class EnvironmentFileWriter implements EnvironmentWriterInterface
 
     public function remove(): void
     {
-        @unlink($this->basePath . '/.env');
-        @unlink($this->basePath . '/.env.installing');
+        @unlink($this->basePath . '/storage/.env');
+        @unlink($this->basePath . '/storage/.env.installing');
     }
 }

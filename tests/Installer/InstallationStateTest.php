@@ -19,7 +19,7 @@ final class InstallationStateTest extends TestCase
 
     protected function tearDown(): void
     {
-        @unlink($this->directory . '/.env');
+        @unlink($this->directory . '/storage/.env');
         @unlink($this->directory . '/storage/installed.json');
         @rmdir($this->directory . '/storage');
         @rmdir($this->directory);
@@ -40,7 +40,7 @@ final class InstallationStateTest extends TestCase
 
     public function testItTreatsAnEmptyEnvironmentFileAsNotInstalled(): void
     {
-        file_put_contents($this->directory . '/.env', '');
+        file_put_contents($this->directory . '/storage/.env', '');
 
         self::assertTrue((new InstallationState($this->directory))->requiresInstallation());
     }

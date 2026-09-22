@@ -18,16 +18,8 @@ mkdir -p \
 
 chmod a+rwX storage
 
-# Create only the empty environment placeholder needed by the first-run
-# installer. The installer replaces it with the real .env atomically.
-if [ ! -s .env ]; then
-    touch .env
-    chown www-data:www-data .env
-    chmod 0600 .env
-fi
-
 # Development bind mounts retain host ownership. Only runtime-writable paths
-# are opened for Apache; application source and configuration remain read-only.
+# are opened for Apache; application source remains read-only.
 chmod -R a+rwX \
     public/media \
     storage/cache \

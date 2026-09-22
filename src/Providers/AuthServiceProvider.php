@@ -17,6 +17,8 @@ use Flex\Http\Controller\Auth\LoginController;
 use Flex\Http\Controller\Auth\LoginFormController;
 use Flex\Http\Controller\Auth\LogoutController;
 use Flex\Http\Controller\Admin\AdminDashboardController;
+use Flex\Http\Controller\Admin\AdminDevReloadController;
+use Flex\Http\Controller\Admin\AdminSidebarWidthController;
 use Flex\Http\Controller\Admin\AdminUpdatesController;
 use Flex\Http\Controller\Admin\AdminUpdatesInspectController;
 use Flex\Http\Controller\Admin\AdminUpdatesInstallController;
@@ -53,6 +55,8 @@ final class AuthServiceProvider implements ServiceProviderInterface
         $routes->add('GET', '/api/auth/me', CurrentUserController::class, 'api.auth.me', [RequireAuthenticationMiddleware::class]);
 
         $routes->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', [RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
+        $routes->add('GET', '/admin/dev/reload-token', AdminDevReloadController::class, 'admin.dev.reload', [RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
+        $routes->add('POST', '/admin/sidebar-width', AdminSidebarWidthController::class, 'admin.sidebar.width', [CsrfMiddleware::class, RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
         $routes->add('GET', '/admin/updates', AdminUpdatesController::class, 'admin.updates', [RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
         $routes->add('POST', '/admin/updates/inspect', AdminUpdatesInspectController::class, 'admin.updates.inspect', [CsrfMiddleware::class, RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);
         $routes->add('POST', '/admin/updates/install', AdminUpdatesInstallController::class, 'admin.updates.install', [CsrfMiddleware::class, RequireAuthenticationMiddleware::class, RequireSuperAdminMiddleware::class]);

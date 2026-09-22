@@ -10,6 +10,6 @@ final class EnvironmentLoader
 {
     public function load(string $basePath): void
     {
-        Dotenv::createImmutable($basePath)->safeLoad();
+        Dotenv::createImmutable($basePath . '/storage')->safeLoad();
     }
 }

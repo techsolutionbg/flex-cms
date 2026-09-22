@@ -10,6 +10,7 @@
 /storage/cache/*
 !/storage/cache/.gitkeep
 /storage/backups/
+/storage/.env
 /storage/logs/*
 !/storage/logs/.gitkeep
 /storage/installed.json

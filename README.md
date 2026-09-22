@@ -9,7 +9,6 @@ Flex CMS е платформа за бързо създаване и управ�
 Необходими са Docker и Docker Compose. Локални PHP, Composer и MySQL не са задължителни.
 
 ```bash
-cp .env.example .env
 docker compose up --build
 ```
 
@@ -38,9 +37,9 @@ docker compose exec app bin/flex config:cache
 docker compose exec app bin/flex config:clear
 ```
 
-Портовете могат да се променят чрез `APP_PORT`, `PMA_FORWARD_PORT` и `DB_FORWARD_PORT` в `.env`.
+Портовете могат да се променят чрез `APP_PORT`, `PMA_FORWARD_PORT` и `DB_FORWARD_PORT` при стартиране на Compose.
 
-phpMyAdmin е част само от локалната Docker среда и не е production зависимост на Flex CMS. За вход се използват `DB_USERNAME` и `DB_PASSWORD` от `.env`.
+phpMyAdmin е част само от локалната Docker среда и не е production зависимост на Flex CMS. За стандартната Docker конфигурация се използват `flex_cms` и `flex_cms`.
 
 ## Основни възможности
 
@@ -77,13 +76,13 @@ Flex CMS ще бъде **модулен монолит** със собствен
 
 ## Configuration и service container
 
-И HTTP, и CLI входната точка използват един bootstrap процес. Той зарежда `.env`, валидира задължителните environment стойности, събира файловете от `config/` и създава PSR-11 container чрез PHP-DI.
+И HTTP, и CLI входната точка използват един bootstrap процес. Той зарежда защитения `storage/.env`, валидира задължителните environment стойности, събира файловете от `config/` и създава PSR-11 container чрез PHP-DI.
 
 Конфигурацията се достъпва през `Flex\\Contracts\\Configuration\\ConfigRepositoryInterface` с dot notation, например `app.name` и `database.connections.mysql.host`. Application кодът не трябва да чете директно `$_ENV`, `getenv()` или конфигурационни PHP файлове.
 
 Основни правила:
 
-- `.env` е локален и не се commit-ва; `.env.example` е договорът за наличните променливи;
+- `storage/.env` съдържа локалните secrets и не се commit-ва; `.env.example` е договорът за наличните променливи;
 - secrets се маскират от `config:show`;
 - `config:validate` проверява типовете и задължителните production стойности;
 - `config:cache` създава `storage/cache/config.php`, а `config:clear` го премахва;
@@ -116,12 +115,12 @@ Database паролата никога не се показва от диагн�
 
 ## Web Installer
 
-Когато липсват едновременно `.env` и `storage/installed.json`, HTTP entry point-ът пренасочва към `/install`. Installer-ът работи преди нормалния application bootstrap, така че може да стартира и при все още липсваща database конфигурация.
+Когато липсват едновременно `storage/.env` и `storage/installed.json`, HTTP entry point-ът пренасочва към `/install`. Installer-ът работи преди нормалния application bootstrap, така че може да стартира и при все още липсваща database конфигурация.
 
 ### Инсталиране от чист platform ZIP
 
 За нова инсталация се качва release ZIP архивът в директорията на сайта без да
-се създава `.env` предварително. При първото отваряне на домейна системата
+не се създава environment файл предварително. При първото отваряне на домейна системата
 автоматично отваря `/install`. Формата се попълва еднократно със:
 
 - име и HTTPS адрес на сайта;
@@ -129,7 +128,7 @@ Database паролата никога не се показва от диагн�
 - MySQL host, port, име на базата, потребител и парола;
 - име, email и парола на първия администратор.
 
-След натискане на `Install Flex CMS` системата създава `.env` с настройките,
+След натискане на `Install Flex CMS` системата създава `storage/.env` с настройките,
 генерира `APP_KEY`, изпълнява началните миграции, създава първия потребител с
 роля `super_admin` и записва `storage/installed.json`. Този marker заключва
 installer-а; повторно отваряне на `/install` не позволява нова инсталация.
@@ -148,7 +147,7 @@ Admin паролата се генерира случайно при отвар�
 Практическият deployment flow е:
 
 1. качване и разархивиране на подписания platform ZIP;
-2. задаване на права за запис върху `.env` и `storage/`;
+2. задаване на права за запис върху `storage/`;
 3. отваряне на сайта в браузър;
 4. попълване на `/install`;
 5. вход с новия `super_admin` потребител.
@@ -176,7 +175,7 @@ Flex CMS не изисква Docker в production. За XAMPP са необхо�
    ```
 
 3. Добавете `127.0.0.1 flex-cms.test` във файла `hosts` и рестартирайте Apache.
-4. Уверете се, че `vendor/`, `storage/` и `.env` могат да се записват от PHP.
+4. Уверете се, че `vendor/` и `storage/` могат да се записват от PHP.
 5. Отворете `http://flex-cms.test/install` и попълнете формата.
 
 За локални XAMPP адреси `http://localhost`, `http://127.0.0.1`, `*.test` и
@@ -204,17 +203,17 @@ installer-ът вече е отворен.
 Процесът включва:
 
 1. проверка на PHP 8.3+, 64-bit runtime и задължителните PHP extensions;
-2. проверка на writable директориите и възможността за създаване на `.env`;
+2. проверка на writable директориите и възможността за създаване на `storage/.env`;
 3. валидиране на URL, locale, timezone, MySQL и administrator данните;
 4. проверка за MySQL 8.0+ с generic грешка, която не разкрива credentials;
-5. атомарно създаване на `.env` с генериран 256-bit `APP_KEY` и права `0600`;
+5. атомарно създаване на `storage/.env` с генериран 256-bit `APP_KEY` и права `0600`;
 6. изпълнение на началните Phinx миграции;
 7. създаване на първия `super_admin` потребител с `password_hash()`;
 8. записване на `storage/installed.json`, което заключва installer-а.
 
-Installer формата използва CSRF token, `SameSite=Strict`/HTTP-only session cookie, CSP, frame protection, non-cacheable responses и process lock срещу паралелна инсталация. Подадените database и administrator пароли не се връщат в HTML при грешка. Съществуващ `.env` никога не се презаписва.
+Installer формата използва CSRF token, `SameSite=Strict`/HTTP-only session cookie, CSP, frame protection, non-cacheable responses и process lock срещу паралелна инсталация. Подадените database и administrator пароли не се връщат в HTML при грешка. Съществуващ `storage/.env` никога не се презаписва.
 
-Първоначалната миграция създава таблиците `users` и `settings`; Phinx управлява собствената таблица `flex_migrations`. При production deployment `.env` не трябва да присъства в release архива — той се създава от Web Installer-а.
+Първоначалната миграция създава таблиците `users` и `settings`; Phinx управлява собствената таблица `flex_migrations`. При production deployment `storage/.env` не трябва да присъства в release архива — той се създава от Web Installer-а.
 
 ## Минимални изисквания към хостинга
 
