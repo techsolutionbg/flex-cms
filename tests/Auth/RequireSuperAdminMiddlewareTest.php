@@ -19,9 +19,18 @@ final class RequireSuperAdminMiddlewareTest extends TestCase
 {
     public function testItRejectsUnauthenticatedRequests(): void
     {
-        $response = $this->middleware(null)->process($this->request(), $this->next());
+        $response = $this->middleware(null)->process($this->request()->withHeader('Accept', 'application/json'), $this->next());
 
         self::assertSame(401, $response->getStatusCode());
+        self::assertStringContainsString('authentication_required', (string) $response->getBody());
+    }
+
+    public function testItRedirectsUnauthenticatedHtmlRequests(): void
+    {
+        $response = $this->middleware(null)->process($this->request(), $this->next());
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/login', $response->getHeaderLine('Location'));
     }
 
     public function testItRejectsAuthenticatedNonSuperAdmins(): void

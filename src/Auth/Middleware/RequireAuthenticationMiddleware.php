@@ -6,6 +6,8 @@ namespace Flex\Auth\Middleware;
 
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Http\ApiError;
+use Flex\Http\RequestFormat;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,16 +25,11 @@ final readonly class RequireAuthenticationMiddleware implements MiddlewareInterf
         if ($this->authentication->check()) {
             return $handler->handle($request);
         }
-        if ($this->expectsJson($request)) {
-            return $this->responses->json(['error' => ['status' => 401, 'message' => 'Authentication required.']], 401);
+        if (RequestFormat::expectsJson($request)) {
+            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Authentication required.'), 401);
         }
 
         return $this->responses->text('', 302, ['Location' => '/login']);
     }
 
-    private function expectsJson(ServerRequestInterface $request): bool
-    {
-        return str_starts_with($request->getUri()->getPath(), '/api/')
-            || str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json');
-    }
 }

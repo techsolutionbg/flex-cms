@@ -48,6 +48,16 @@ final class EnvironmentValidator
             if ($this->bool($configuration, 'app.force_https', $errors) !== true) {
                 $errors[] = 'app.force_https must be true in production.';
             }
+            if (($_ENV['VITE_DEV_SERVER_URL'] ?? '') !== '') {
+                $errors[] = 'VITE_DEV_SERVER_URL must be empty in production.';
+            }
+        }
+
+        if ($environment === 'local') {
+            $viteUrl = (string) ($_ENV['VITE_DEV_SERVER_URL'] ?? '');
+            if ($viteUrl !== '' && (filter_var($viteUrl, FILTER_VALIDATE_URL) === false || !in_array(parse_url($viteUrl, PHP_URL_SCHEME), ['http', 'https'], true))) {
+                $errors[] = 'VITE_DEV_SERVER_URL must be an HTTP or HTTPS URL when configured.';
+            }
         }
 
         $defaultConnection = $this->string($configuration, 'database.default', $errors);

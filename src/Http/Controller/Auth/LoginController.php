@@ -8,6 +8,8 @@ use Flex\Auth\Exception\TooManyLoginAttempts;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\RequestInput;
+use Flex\Http\ApiError;
+use Flex\Http\RequestFormat;
 use Flex\Session\CsrfTokenManager;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -41,7 +43,7 @@ final readonly class LoginController
         }
 
         $this->csrf->rotate();
-        if ($this->expectsJson($request)) {
+        if (RequestFormat::expectsJson($request)) {
             return $this->responses->json(['user' => $this->authentication->user()?->toArray()]);
         }
 
@@ -53,16 +55,12 @@ final readonly class LoginController
     /** @param array<string, string|list<string>> $headers */
     private function failure(ServerRequestInterface $request, string $message, int $status, array $headers = []): ResponseInterface
     {
-        if ($this->expectsJson($request)) {
-            return $this->responses->json(['error' => ['status' => $status, 'message' => $message]], $status, $headers);
+        if (RequestFormat::expectsJson($request)) {
+            $code = $status === 429 ? 'too_many_login_attempts' : 'invalid_credentials';
+            return $this->responses->json(ApiError::payload($status, $code, $message), $status, $headers);
         }
 
         return $this->responses->html($this->page->render($this->csrf->token(), $message), $status, $headers);
     }
 
-    private function expectsJson(ServerRequestInterface $request): bool
-    {
-        return str_starts_with($request->getUri()->getPath(), '/api/')
-            || str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json');
-    }
 }

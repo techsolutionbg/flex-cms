@@ -6,6 +6,8 @@ namespace Flex\Auth\Middleware;
 
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Http\ApiError;
+use Flex\Http\RequestFormat;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -22,10 +24,14 @@ final readonly class RequireSuperAdminMiddleware implements MiddlewareInterface
     {
         $user = $this->authentication->user();
         if ($user === null) {
-            return $this->responses->json(['error' => ['status' => 401, 'message' => 'Authentication required.']], 401);
+            if (!RequestFormat::expectsJson($request)) {
+                return $this->responses->text('', 302, ['Location' => '/login']);
+            }
+
+            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Authentication required.'), 401);
         }
         if (!$user->isSuperAdmin()) {
-            return $this->responses->json(['error' => ['status' => 403, 'message' => 'Super administrator access is required.']], 403);
+            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Super administrator access is required.'), 403);
         }
 
         return $handler->handle($request);

@@ -8,6 +8,8 @@ use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
+use Flex\Http\ApiError;
+use Flex\Http\RequestFormat;
 use Flex\Http\Exception\InvalidRequestBody;
 use Flex\Users\Exception\UserNotFound;
 use Flex\Users\Exception\UserValidationFailed;
@@ -53,13 +55,19 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
                 'status' => $status,
             ]);
 
-            if ($this->expectsJson($request)) {
-                return $this->responses->json([
-                    'error' => [
-                        'status' => $status,
-                        'message' => $message,
-                    ],
-                ], $status, $headers);
+            if (RequestFormat::expectsJson($request)) {
+                $code = match ($status) {
+                    400 => 'invalid_request',
+                    401 => 'authentication_required',
+                    403 => 'forbidden',
+                    404 => 'not_found',
+                    422 => 'validation_failed',
+                    429 => 'too_many_requests',
+                    default => 'internal_error',
+                };
+                $details = $exception instanceof UserValidationFailed ? ['fields' => $exception->errors] : [];
+
+                return $this->responses->json(ApiError::payload($status, $code, $message, $details), $status, $headers);
             }
 
             return $this->responses->html($this->views->render('system/error.twig', [
@@ -70,9 +78,4 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
         }
     }
 
-    private function expectsJson(ServerRequestInterface $request): bool
-    {
-        return str_starts_with($request->getUri()->getPath(), '/api/')
-            || str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json');
-    }
 }

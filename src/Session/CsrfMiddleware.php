@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Flex\Session;
 
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Http\ApiError;
+use Flex\Http\RequestFormat;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -32,19 +34,14 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         }
 
         if (!$this->tokens->validate($token)) {
-            if ($this->expectsJson($request)) {
-                return $this->responses->json(['error' => ['status' => 403, 'message' => 'CSRF token mismatch.']], 403);
+            if (RequestFormat::expectsJson($request)) {
+                return $this->responses->json(ApiError::payload(403, 'csrf_token_mismatch', 'CSRF token mismatch.'), 403);
             }
 
-            return $this->responses->html('<!doctype html><html lang="en"><meta charset="utf-8"><title>Forbidden</title><h1>Invalid security token</h1><p>Reload the page and try again.</p>', 403);
+            return $this->responses->text('Invalid security token. Reload the page and try again.', 403);
         }
 
         return $handler->handle($request);
     }
 
-    private function expectsJson(ServerRequestInterface $request): bool
-    {
-        return str_starts_with($request->getUri()->getPath(), '/api/')
-            || str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json');
-    }
 }
