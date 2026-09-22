@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 final class AdminSidebarTest extends TestCase
 {
-    public function testAdminShellUsesOneReactRootAndViteAssets(): void
+    public function testAdminShellUsesOneAlpineRootAndViteAssets(): void
     {
         $basePath = dirname(__DIR__, 2);
         $views = new TwigViewRenderer($basePath);
@@ -25,7 +25,7 @@ final class AdminSidebarTest extends TestCase
         self::assertSame(1, substr_count($html, 'id="flex-admin-root"'));
         self::assertStringContainsString('id="flex-admin-bootstrap"', $html);
         $usesDevelopmentAssets = str_contains($html, 'http://localhost:5173/@vite/client')
-            && str_contains($html, 'http://localhost:5173/src/admin.tsx');
+            && str_contains($html, 'http://localhost:5173/src/admin.ts');
         $usesProductionAssets = (bool) preg_match(
             '#/build/admin/assets/admin-[A-Za-z0-9_-]+\\.js#',
             $html,
@@ -36,5 +36,6 @@ final class AdminSidebarTest extends TestCase
             'The admin shell must load either the Vite development entrypoint or the production manifest asset.',
         );
         self::assertStringNotContainsString('/assets/admin.js', $html);
+        self::assertStringNotContainsString('admin.tsx', $html);
     }
 }

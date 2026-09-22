@@ -1,11 +1,10 @@
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
-import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [tailwindcss()],
   publicDir: false,
   server: {
     host: "0.0.0.0",
@@ -29,7 +28,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === "production",
     sourcemap: false,
     rollupOptions: {
-      input: path.resolve(import.meta.dirname, "./src/admin.tsx"),
+      input: path.resolve(import.meta.dirname, "./src/admin.ts"),
       output: {
         entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",

@@ -1,6 +1,6 @@
 {
-  "entry": ["src/admin.tsx", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests/browser/**/*.ts"],
-  "project": ["src/**/*.{ts,tsx}", "tests/browser/**/*.ts", "*.config.ts"],
-  "ignore": ["src/components/ui/**", "src/components/theme-provider.tsx"],
-  "ignoreDependencies": ["shadcn", "tailwindcss", "tw-animate-css", "@fontsource-variable/geist"]
+  "entry": ["src/admin.ts", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests/browser/**/*.ts"],
+  "project": ["src/**/*.ts", "tests/browser/**/*.ts", "*.config.ts"],
+  "ignore": ["src/**/*.d.ts"],
+  "ignoreDependencies": ["tailwindcss", "tw-animate-css", "@fontsource-variable/geist"]
 }

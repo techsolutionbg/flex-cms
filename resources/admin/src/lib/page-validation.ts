@@ -7,8 +7,6 @@ export const pageFormSchema = z.object({
   status: z.enum(["draft", "published"], "Изберете валиден статус."),
 })
 
-export type PageFormData = z.infer<typeof pageFormSchema>
-
 export function slugifyPageTitle(title: string): string {
   return title
     .trim()

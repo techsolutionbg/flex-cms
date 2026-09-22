@@ -6,7 +6,7 @@ namespace Flex\Http\View;
 
 final readonly class ViteAssetManager
 {
-    private const ENTRY = 'src/admin.tsx';
+    private const ENTRY = 'src/admin.ts';
 
     public function __construct(private string $basePath) {}
 
@@ -21,17 +21,10 @@ final readonly class ViteAssetManager
 
             $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-            return sprintf(<<<'HTML'
-            <script type="module">
-                import RefreshRuntime from '%1$s/@react-refresh';
-                RefreshRuntime.injectIntoGlobalHook(window);
-                window.$RefreshReg$ = () => {};
-                window.$RefreshSig$ = () => (type) => type;
-                window.__vite_plugin_react_preamble_installed__ = true;
-            </script>
-            <script type="module" src="%1$s/@vite/client"></script>
-            <script type="module" src="%1$s/src/admin.tsx"></script>
-            HTML, $url);
+            return sprintf(
+                '<script type="module" src="%1$s/@vite/client"></script>\n<script type="module" src="%1$s/src/admin.ts"></script>',
+                $url,
+            );
         }
 
         $manifestPath = $this->basePath . '/public/build/admin/.vite/manifest.json';
