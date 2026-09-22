@@ -50,7 +50,8 @@
     "autoload": {
         "psr-4": {
             "Flex\\": "src/",
-            "Flex\\Contracts\\": "contracts/"
+            "Flex\\Contracts\\": "contracts/",
+            "Flex\\Extension\\V1\\": "contracts/Extension/V1/"
         }
     },
     "autoload-dev": {

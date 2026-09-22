@@ -10,8 +10,6 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\ApplicationKernelFactory;
-use Flex\Http\Controller\HealthController;
-use Flex\Http\Controller\HomeController;
 use Flex\Http\ResponseFactory;
 use Flex\Http\View\TwigViewRenderer;
 use Flex\Http\View\ViteAssetManager;
@@ -48,8 +46,6 @@ final class HttpServiceProvider implements ServiceProviderInterface
             ViteAssetManager::class => create()->constructor(get('base_path')),
             RouteRegistry::class => create(),
             RouteRegistryInterface::class => get(RouteRegistry::class),
-            HealthController::class => autowire(),
-            HomeController::class => autowire(),
             RouterFactory::class => autowire(),
             ApplicationKernelFactory::class => autowire(),
             KernelInterface::class => factory([ApplicationKernelFactory::class, 'create']),
@@ -58,8 +54,6 @@ final class HttpServiceProvider implements ServiceProviderInterface
 
     public function boot(ContainerInterface $container): void
     {
-        $routes = $container->get(RouteRegistryInterface::class);
-        $routes->get('/', HomeController::class, 'home');
-        $routes->get('/health', HealthController::class, 'health');
+        // Infrastructure bindings only. Routes are registered by route providers.
     }
 }

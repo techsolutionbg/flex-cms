@@ -6,6 +6,11 @@ use Flex\Providers\AuthServiceProvider;
 use Flex\Providers\CoreServiceProvider;
 use Flex\Providers\DatabaseServiceProvider;
 use Flex\Providers\HttpServiceProvider;
+use Flex\Providers\UpdateServiceProvider;
+use Flex\Providers\CoreRouteServiceProvider;
+use Flex\Providers\AuthRouteServiceProvider;
+use Flex\Providers\AdminRouteServiceProvider;
+use Flex\Providers\UserRouteServiceProvider;
 
 return [
     'compile' => filter_var($_ENV['APP_CONTAINER_COMPILE'] ?? false, FILTER_VALIDATE_BOOL),
@@ -14,5 +19,10 @@ return [
         DatabaseServiceProvider::class,
         HttpServiceProvider::class,
         AuthServiceProvider::class,
+        UpdateServiceProvider::class,
+        CoreRouteServiceProvider::class,
+        AuthRouteServiceProvider::class,
+        AdminRouteServiceProvider::class,
+        UserRouteServiceProvider::class,
     ],
 ];
