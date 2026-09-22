@@ -27,5 +27,7 @@ final class InstallerRendererTest extends TestCase
         self::assertStringNotContainsString('database-secret', $html);
         self::assertStringNotContainsString('admin-secret', $html);
         self::assertStringContainsString('name="csrf_token"', $html);
+        self::assertStringNotContainsString('Server readiness', $html);
+        self::assertStringContainsString('name="database_name"', $html);
     }
 }

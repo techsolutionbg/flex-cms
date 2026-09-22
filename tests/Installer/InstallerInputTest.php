@@ -20,6 +20,16 @@ final class InstallerInputTest extends TestCase
         self::assertSame(3306, $input->databasePort);
     }
 
+    public function testItAllowsHttpForLocalXamppDevelopment(): void
+    {
+        $values = $this->validValues();
+        $values['site_url'] = 'http://localhost/flex-cms';
+
+        $input = InstallerInput::fromArray($values);
+
+        self::assertSame('http://localhost/flex-cms', $input->siteUrl);
+    }
+
     public function testItRejectsInvalidAndWeakValues(): void
     {
         $values = $this->validValues();
@@ -30,7 +40,7 @@ final class InstallerInputTest extends TestCase
         $values['admin_password'] = 'short';
 
         $this->expectException(InstallerException::class);
-        $this->expectExceptionMessage('Site URL must be a valid HTTPS URL.');
+        $this->expectExceptionMessage('Site URL must use HTTPS, except for local HTTP development hosts.');
 
         InstallerInput::fromArray($values);
     }

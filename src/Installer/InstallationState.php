@@ -12,7 +12,10 @@ final readonly class InstallationState
 
     public function requiresInstallation(): bool
     {
-        return !is_file($this->environmentPath()) && !is_file($this->markerPath());
+        $environment = $this->environmentPath();
+        $environmentIsEmpty = is_file($environment) && (filesize($environment) ?: 0) === 0;
+
+        return !is_file($this->markerPath()) && (!is_file($environment) || $environmentIsEmpty);
     }
 
     public function markerPath(): string

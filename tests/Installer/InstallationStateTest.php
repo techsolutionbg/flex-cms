@@ -37,4 +37,11 @@ final class InstallationStateTest extends TestCase
         file_put_contents($state->markerPath(), '{}');
         self::assertFalse($state->requiresInstallation());
     }
+
+    public function testItTreatsAnEmptyEnvironmentFileAsNotInstalled(): void
+    {
+        file_put_contents($this->directory . '/.env', '');
+
+        self::assertTrue((new InstallationState($this->directory))->requiresInstallation());
+    }
 }

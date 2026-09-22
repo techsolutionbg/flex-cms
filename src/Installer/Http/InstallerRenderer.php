@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Flex\Installer\Http;
 
-use Flex\Installer\Requirement;
 use Flex\Installer\RequirementsReport;
 
 final class InstallerRenderer
@@ -12,17 +11,12 @@ final class InstallerRenderer
     /** @param array<string, string> $values */
     public function form(RequirementsReport $report, string $csrfToken, array $values = [], ?string $error = null): string
     {
-        $requirements = implode('', array_map(
-            fn(Requirement $requirement): string => sprintf(
-                '<li class="requirement %s"><span>%s</span><small>%s</small></li>',
-                $requirement->passed ? 'passed' : 'failed',
-                $this->escape($requirement->label),
-                $this->escape($requirement->detail),
-            ),
-            $report->requirements,
-        ));
         $errorMarkup = $error === null ? '' : '<div class="alert" role="alert">' . $this->escape($error) . '</div>';
-        $disabled = $report->passed() ? '' : ' disabled';
+        $databasePassword = array_key_exists('database_password', $values) ? '' : 'flex_cms';
+        $defaultAdminPassword = array_key_exists('admin_password', $values) ? '' : bin2hex(random_bytes(12));
+        $adminPasswordNote = $defaultAdminPassword === ''
+            ? ''
+            : '<p class="field-note">Generated password: <code>' . $this->escape($defaultAdminPassword) . '</code>. Change it before production use.</p>';
 
         return $this->layout('Install Flex CMS', <<<HTML
             <header>
@@ -34,11 +28,7 @@ final class InstallerRenderer
             <form method="post" action="/install" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="{$this->escape($csrfToken)}">
                 <section>
-                    <div class="section-heading"><span>01</span><div><h2>Server readiness</h2><p>Every check must pass before installation.</p></div></div>
-                    <ul class="requirements">{$requirements}</ul>
-                </section>
-                <section>
-                    <div class="section-heading"><span>02</span><div><h2>Website</h2><p>The public identity and regional defaults.</p></div></div>
+                    <div class="section-heading"><span>01</span><div><h2>Website</h2><p>The public identity and regional defaults.</p></div></div>
                     <div class="grid">
                         {$this->field('site_name', 'Site name', $values['site_name'] ?? 'Flex CMS', 'text', 'My new website')}
                         {$this->field('site_url', 'Site URL', $values['site_url'] ?? $this->suggestedUrl(), 'url', 'https://example.com')}
@@ -47,24 +37,25 @@ final class InstallerRenderer
                     </div>
                 </section>
                 <section>
-                    <div class="section-heading"><span>03</span><div><h2>MySQL database</h2><p>Use an empty MySQL 8 database and a user with schema permissions.</p></div></div>
+                    <div class="section-heading"><span>02</span><div><h2>MySQL database</h2><p>Use an empty MySQL 8 database and a user with schema permissions.</p></div></div>
                     <div class="grid">
                         {$this->field('database_host', 'Host', $values['database_host'] ?? 'localhost', 'text', 'localhost')}
                         {$this->field('database_port', 'Port', $values['database_port'] ?? '3306', 'number', '3306')}
-                        {$this->field('database_name', 'Database', $values['database_name'] ?? '', 'text', 'flex_cms')}
-                        {$this->field('database_username', 'Username', $values['database_username'] ?? '', 'text', 'flex_cms')}
-                        {$this->field('database_password', 'Password', '', 'password', '')}
+                        {$this->field('database_name', 'Database', $values['database_name'] ?? 'flex_cms', 'text', 'flex_cms')}
+                        {$this->field('database_username', 'Username', $values['database_username'] ?? 'flex_cms', 'text', 'flex_cms')}
+                        {$this->field('database_password', 'Password', $databasePassword, 'password', 'flex_cms')}
                     </div>
                 </section>
                 <section>
-                    <div class="section-heading"><span>04</span><div><h2>Administrator</h2><p>This account receives full platform access.</p></div></div>
+                    <div class="section-heading"><span>03</span><div><h2>Administrator</h2><p>This account receives full platform access and is created as the first super administrator.</p></div></div>
                     <div class="grid">
-                        {$this->field('admin_name', 'Full name', $values['admin_name'] ?? '', 'text', 'Site Administrator')}
-                        {$this->field('admin_email', 'Email', $values['admin_email'] ?? '', 'email', 'admin@example.com')}
-                        {$this->field('admin_password', 'Password', '', 'password', 'At least 12 characters')}
+                        {$this->field('admin_name', 'Full name', $values['admin_name'] ?? 'Administrator', 'text', 'Administrator')}
+                        {$this->field('admin_email', 'Email', $values['admin_email'] ?? 'admin@example.com', 'email', 'admin@example.com')}
+                        {$this->field('admin_password', 'Password', $defaultAdminPassword, 'password', 'Generated automatically')}
+                        {$adminPasswordNote}
                     </div>
                 </section>
-                <button type="submit"{$disabled}>Install Flex CMS <span>→</span></button>
+                <button type="submit">Install Flex CMS <span>→</span></button>
             </form>
         HTML);
     }
@@ -112,7 +103,9 @@ final class InstallerRenderer
     {
         $host = preg_replace('/[^a-zA-Z0-9.:[\]-]/', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
 
-        return 'https://' . ($host ?: 'localhost');
+        $scheme = ($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off' ? 'https' : 'http';
+
+        return $scheme . '://' . ($host ?: 'localhost');
     }
 
     private function escape(string $value): string

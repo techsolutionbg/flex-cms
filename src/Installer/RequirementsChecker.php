@@ -17,6 +17,7 @@ final readonly class RequirementsChecker
 
     public function check(): RequirementsReport
     {
+        $this->prepareWritablePaths();
         $requirements = [
             new Requirement('PHP 8.3+', $this->supportsPhpVersion(PHP_VERSION), PHP_VERSION),
             new Requirement('64-bit PHP', PHP_INT_SIZE >= 8, sprintf('%d-bit', PHP_INT_SIZE * 8)),
@@ -43,11 +44,24 @@ final readonly class RequirementsChecker
         return new RequirementsReport($requirements);
     }
 
+    private function prepareWritablePaths(): void
+    {
+        foreach ($this->writablePaths() as $path) {
+            if (!is_dir($path) && !@mkdir($path, 0775, true) && !is_dir($path)) {
+                continue;
+            }
+        }
+    }
+
     /** @return array<string, string> */
     private function writablePaths(): array
     {
-        return [
-            'Project directory (.env)' => $this->basePath,
+        $environmentPath = $this->basePath . '/.env';
+        $environment = is_file($environmentPath)
+            ? ['Environment file (.env)' => $environmentPath]
+            : ['Project directory (.env)' => $this->basePath];
+
+        return $environment + [
             'Storage directory' => $this->basePath . '/storage',
             'Cache directory' => $this->basePath . '/storage/cache',
             'Log directory' => $this->basePath . '/storage/logs',
@@ -59,6 +73,10 @@ final readonly class RequirementsChecker
 
     private function isWritable(string $path): bool
     {
+        if (is_file($path)) {
+            return is_writable($path);
+        }
+
         if (!is_dir($path) && !@mkdir($path, 0775, true) && !is_dir($path)) {
             return false;
         }

@@ -78,7 +78,7 @@ final readonly class WebInstaller
     {
         return [
             'APP_NAME' => $input->siteName,
-            'APP_ENV' => 'production',
+            'APP_ENV' => str_starts_with($input->siteUrl, 'http://') ? 'local' : 'production',
             'APP_DEBUG' => 'false',
             'APP_URL' => $input->siteUrl,
             'APP_KEY' => bin2hex(random_bytes(32)),

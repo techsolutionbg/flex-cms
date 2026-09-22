@@ -51,8 +51,8 @@ final readonly class InstallerInput
         if ($this->siteName === '' || mb_strlen($this->siteName) > 120) {
             $errors[] = 'Site name is required and must not exceed 120 characters.';
         }
-        if (filter_var($this->siteUrl, FILTER_VALIDATE_URL) === false || parse_url($this->siteUrl, PHP_URL_SCHEME) !== 'https') {
-            $errors[] = 'Site URL must be a valid HTTPS URL.';
+        if (!$this->isAllowedSiteUrl()) {
+            $errors[] = 'Site URL must use HTTPS, except for local HTTP development hosts.';
         }
         if (!in_array($this->timezone, timezone_identifiers_list(), true)) {
             $errors[] = 'Timezone is invalid.';
@@ -93,5 +93,25 @@ final readonly class InstallerInput
         $value = $values[$key] ?? '';
 
         return is_string($value) ? trim($value) : '';
+    }
+
+    private function isAllowedSiteUrl(): bool
+    {
+        if (filter_var($this->siteUrl, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
+        $scheme = strtolower((string) parse_url($this->siteUrl, PHP_URL_SCHEME));
+        if ($scheme === 'https') {
+            return true;
+        }
+        if ($scheme !== 'http') {
+            return false;
+        }
+
+        $host = strtolower((string) parse_url($this->siteUrl, PHP_URL_HOST));
+        return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+            || str_ends_with($host, '.test')
+            || str_ends_with($host, '.local');
     }
 }

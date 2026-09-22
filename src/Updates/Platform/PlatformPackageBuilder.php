@@ -23,7 +23,7 @@ final readonly class PlatformPackageBuilder
         $current = $this->registry->current();
         $version = new PlatformVersion($options->version ?? $current->value);
         $compatibleFrom = $options->compatibleFrom ?? sprintf('>=%s <%d.0.0', $current->value, $this->major($current->value) + 1);
-        $outputPath = $options->outputPath ?? sprintf('%s/releases/flex-cms-%s%s.zip', $this->basePath, $version->value, $options->privateKeyPath === null ? '-unsigned' : '');
+        $outputPath = $options->outputPath ?? sprintf('%s/releases/%s/flex-cms-%s%s.zip', $this->basePath, $version->value, $version->value, $options->privateKeyPath === null ? '-unsigned' : '');
         $outputPath = $this->absolutePath($outputPath);
         $staging = sys_get_temp_dir() . '/flex-cms-platform-build-' . bin2hex(random_bytes(8));
 
@@ -68,10 +68,12 @@ final readonly class PlatformPackageBuilder
             file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL, LOCK_EX);
 
             $directory = dirname($outputPath);
-            if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
+            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
                 throw new RuntimeException('The release output directory cannot be created.');
             }
+            @chmod($directory, 0775);
             $this->createArchive($outputPath, $manifestPath, $payload, array_keys($files));
+            @chmod($outputPath, 0664);
             $checksum = hash_file('sha256', $outputPath);
             if ($checksum === false) {
                 throw new RuntimeException('The release package checksum cannot be calculated.');
@@ -79,6 +81,7 @@ final readonly class PlatformPackageBuilder
             if (file_put_contents($outputPath . '.sha256', $checksum . '  ' . basename($outputPath) . PHP_EOL, LOCK_EX) === false) {
                 throw new RuntimeException('The release checksum file cannot be written.');
             }
+            @chmod($outputPath . '.sha256', 0664);
 
             return new PlatformPackageBuildResult($outputPath, $checksum, $version->value, count($files), $options->privateKeyPath !== null);
         } finally {
@@ -96,7 +99,7 @@ final readonly class PlatformPackageBuilder
                 $this->copyDirectory($source, $payload . '/' . $directory, $files);
             }
         }
-        foreach (['composer.json', 'composer.lock', 'phinx.php'] as $file) {
+        foreach (['.env.example', 'composer.json', 'composer.lock', 'phinx.php'] as $file) {
             $source = $this->basePath . '/' . $file;
             if (is_file($source)) {
                 $destination = $payload . '/' . $file;

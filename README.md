@@ -18,7 +18,7 @@ docker compose up --build
 - приложението е достъпно на `http://localhost:8080`;
 - health endpoint-ът е на `http://localhost:8080/health`;
 - phpMyAdmin е достъпен на `http://localhost:8081`;
-- MySQL е достъпен от хост машината на порт `33060`.
+- MySQL е достъпен от хост машината на порт `3306`.
 
 Полезни команди:
 
@@ -117,6 +117,89 @@ Database паролата никога не се показва от диагн�
 ## Web Installer
 
 Когато липсват едновременно `.env` и `storage/installed.json`, HTTP entry point-ът пренасочва към `/install`. Installer-ът работи преди нормалния application bootstrap, така че може да стартира и при все още липсваща database конфигурация.
+
+### Инсталиране от чист platform ZIP
+
+За нова инсталация се качва release ZIP архивът в директорията на сайта без да
+се създава `.env` предварително. При първото отваряне на домейна системата
+автоматично отваря `/install`. Формата се попълва еднократно със:
+
+- име и HTTPS адрес на сайта;
+- timezone и locale;
+- MySQL host, port, име на базата, потребител и парола;
+- име, email и парола на първия администратор.
+
+След натискане на `Install Flex CMS` системата създава `.env` с настройките,
+генерира `APP_KEY`, изпълнява началните миграции, създава първия потребител с
+роля `super_admin` и записва `storage/installed.json`. Този marker заключва
+installer-а; повторно отваряне на `/install` не позволява нова инсталация.
+
+Формата управлява настройките на самата платформа: име и URL на сайта,
+timezone, locale, MySQL host/port/database/user/password и профила на първия
+супер администратор. Docker host портовете не се променят от тази форма, защото
+се задават при стартиране на контейнерите.
+
+При нова локална инсталация полетата са предварително попълнени със стандартни
+тестови стойности: `flex_cms` за database и user, `flex_cms` за Docker database
+парола, както и `Administrator` и `admin@example.com` за първия администратор.
+Admin паролата се генерира случайно при отваряне на формата и се показва за
+копиране; тя трябва да бъде сменена преди production инсталация.
+
+Практическият deployment flow е:
+
+1. качване и разархивиране на подписания platform ZIP;
+2. задаване на права за запис върху `.env` и `storage/`;
+3. отваряне на сайта в браузър;
+4. попълване на `/install`;
+5. вход с новия `super_admin` потребител.
+
+### Стартиране без Docker с XAMPP
+
+Flex CMS не изисква Docker в production. За XAMPP са необходими PHP 8.3 или
+по-нова версия, Apache с активен `mod_rewrite`, MySQL 8.0+ и всички PHP
+разширения от списъка по-долу.
+
+1. Разархивирайте съдържанието на `payload/` в отделна папка, например
+   `C:\xampp\htdocs\flex-cms`.
+2. Настройте Apache VirtualHost с `DocumentRoot` към папката `public/`, не към
+   project root:
+
+   ```apache
+   <VirtualHost *:80>
+       ServerName flex-cms.test
+       DocumentRoot "C:/xampp/htdocs/flex-cms/public"
+       <Directory "C:/xampp/htdocs/flex-cms/public">
+           AllowOverride All
+           Require all granted
+       </Directory>
+   </VirtualHost>
+   ```
+
+3. Добавете `127.0.0.1 flex-cms.test` във файла `hosts` и рестартирайте Apache.
+4. Уверете се, че `vendor/`, `storage/` и `.env` могат да се записват от PHP.
+5. Отворете `http://flex-cms.test/install` и попълнете формата.
+
+За локални XAMPP адреси `http://localhost`, `http://127.0.0.1`, `*.test` и
+`*.local` се допуска HTTP. За реален production домейн installer-ът изисква
+HTTPS.
+
+### Docker портове и phpMyAdmin
+
+При Docker стандартните host портове са:
+
+- приложение: `8080`;
+- MySQL: `3306`;
+- phpMyAdmin: `8081`.
+
+Вътре в Docker мрежата installer-ът трябва да използва `mysql` като database
+host и `3306` като database port. Host портът `3306` е нужен само за достъп от
+host системата. phpMyAdmin използва същия MySQL контейнер и не изисква отделна
+настройка в installer формата; отваря се на `http://localhost:8081`.
+
+Ако host портът вече е зает, променете го преди стартиране чрез environment
+стойности, например `APP_PORT=8090`, `DB_FORWARD_PORT=33061` и
+`PMA_FORWARD_PORT=8091`. Това се прави при `docker compose up`, а не след като
+installer-ът вече е отворен.
 
 Процесът включва:
 
@@ -438,8 +521,8 @@ docker compose exec app bin/flex platform:build --target-version=0.1.1 \
   --key-id=release-2026
 ```
 
-Генераторът създава `releases/flex-cms-<version>.zip` и съответния `.sha256`
-sidecar файл. Без `--private-key-file` пакетът е unsigned и е подходящ само за
+Генераторът създава `releases/<version>/flex-cms-<version>.zip` и съответния
+`.sha256` sidecar файл. Без `--private-key-file` пакетът е unsigned и е подходящ само за
 локален тест, когато `UPDATE_REQUIRE_SIGNATURE=false`. Версията, която се
 подава с `--version`, се записва и в payload `platform.json`; source tree-ът не
 се променя. В архива не се включват `.env`, `.git`, `storage`, `plugins`,

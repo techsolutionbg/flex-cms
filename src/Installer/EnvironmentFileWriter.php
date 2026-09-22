@@ -17,7 +17,7 @@ final readonly class EnvironmentFileWriter implements EnvironmentWriterInterface
     public function write(array $values): void
     {
         $target = $this->basePath . '/.env';
-        if (file_exists($target)) {
+        if (file_exists($target) && (filesize($target) ?: 0) > 0) {
             throw new InstallerException('The environment file already exists.');
         }
 
