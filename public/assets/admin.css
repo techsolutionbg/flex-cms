@@ -28,6 +28,7 @@
 .sidebar-collapsed .admin-sidebar{width:0;padding-right:0;padding-left:0;box-shadow:none}.sidebar-collapsed .admin-main{margin-left:0}.sidebar-collapsed .sidebar-toggle{left:14px}
 @media (prefers-reduced-motion:reduce){.admin-sidebar,.admin-main,.sidebar-toggle{transition:none}}
 @media (max-width:768px){.admin-sidebar{width:var(--sidebar-mobile-width);padding:16px 14px 14px}.admin-main{margin-left:72px}.sidebar-enhanced .admin-sidebar{transform:translateX(-101%);box-shadow:none}.sidebar-enhanced .admin-main{margin-left:0}.sidebar-enhanced.sidebar-mobile-open .admin-sidebar{transform:translateX(0);box-shadow:12px 0 36px rgba(12,19,15,.28)}.sidebar-toggle{left:14px}.sidebar-mobile-open .sidebar-toggle{left:calc(var(--sidebar-mobile-width) - 50px)}.sidebar-resizer{display:none}.sidebar-brand{padding-right:48px}}
+@media (max-width:768px){.admin-sidebar .sidebar-link{justify-content:flex-start}.admin-sidebar .sidebar-link>span{display:inline}.admin-sidebar .sidebar-icon{width:22px;flex:0 0 22px}}
 @media (max-width:520px){.admin-main>header{height:58px;min-height:58px;align-items:center;gap:10px;padding:0 16px 0 62px}.admin-main>header .brand,.admin-main>header .user,.admin-main>header .back{line-height:1.1}}
 .admin-main>main,.admin-main>.layout{width:100%;max-width:none;margin:18px 0;padding:0 var(--admin-content-gutter)}
 .admin-main>main h1,.admin-main>.layout h1{margin-top:0;font-size:2.2rem;line-height:1.1}

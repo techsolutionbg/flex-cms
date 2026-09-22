@@ -13,6 +13,22 @@
 
     function AdminApp(props) { return h('div', { className: 'admin-app-content', dangerouslySetInnerHTML: { __html: props.html } }); }
     function getApp(doc) { return doc.getElementById('flex-admin-app') || doc.querySelector('.admin-shell'); }
+    function loadShadcnAssets() {
+        if (!document.querySelector('link[data-flex-shadcn-css]')) {
+            var css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = '/assets/admin-shadcn/index.css';
+            css.dataset.flexShadcnCss = 'true';
+            document.head.appendChild(css);
+        }
+        if (!document.querySelector('script[data-flex-shadcn-js]')) {
+            var script = document.createElement('script');
+            script.src = '/assets/admin-shadcn/admin-shadcn.js';
+            script.dataset.flexShadcnJs = 'true';
+            script.onload = function () { window.dispatchEvent(new Event('flex-admin-content-updated')); };
+            document.head.appendChild(script);
+        }
+    }
     function isMobile() { return window.innerWidth <= breakpoint; }
     function widthLimit() { return Math.max(minWidth, Math.min(maxWidth, window.innerWidth - 320)); }
     function clamp(value) { return Math.max(minWidth, Math.min(widthLimit(), Math.round(value))); }
@@ -78,7 +94,10 @@
         if (!root || !window.React || !window.ReactDOM) { return; }
         reactRoot = reactRoot || window.ReactDOM.createRoot(root);
         reactRoot.render(h(AdminApp, { html: html }));
-        window.requestAnimationFrame(initialize);
+        window.requestAnimationFrame(function () {
+            initialize();
+            window.dispatchEvent(new Event('flex-admin-content-updated'));
+        });
     }
 
     function closeMobile(restoreFocus) {
@@ -228,6 +247,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        loadShadcnAssets();
         try { collapsed = window.localStorage.getItem(storageKey) === '1'; } catch (error) {}
         var app = getApp(document);
         if (app && window.React && window.ReactDOM) {
