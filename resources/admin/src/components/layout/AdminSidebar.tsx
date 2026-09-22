@@ -1,4 +1,4 @@
-import { Gauge, PanelLeft, RefreshCw } from "lucide-react"
+import { FileText, Gauge, PanelLeft, RefreshCw, UserRound } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -166,6 +166,18 @@ export function AdminSidebar({
                 href: "/admin/updates",
                 label: "Обновявания",
                 icon: RefreshCw,
+              },
+              {
+                id: "pages" as const,
+                href: "/admin/pages",
+                label: "Страници",
+                icon: FileText,
+              },
+              {
+                id: "profile" as const,
+                href: "/admin/profile",
+                label: "Профил",
+                icon: UserRound,
               },
             ].map((item) => {
               const active = page === item.id

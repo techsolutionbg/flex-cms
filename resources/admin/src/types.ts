@@ -15,7 +15,7 @@ export type Inspection = {
 }
 
 export type AdminBootstrap = {
-  page: "dashboard" | "updates"
+  page: "dashboard" | "updates" | "profile" | "pages"
   csrfToken: string
   sidebarWidth: number
   version: string
@@ -23,4 +23,24 @@ export type AdminBootstrap = {
   notice?: string | null
   error?: string | null
   inspection?: Inspection | null
+  user?: {
+    id: number
+    name: string
+    email: string
+    role: string
+    status: string
+  }
+  pages?: PageRecord[]
+}
+
+export type PageRecord = {
+  id: number
+  author_id: number | null
+  title: string
+  slug: string
+  content: string
+  status: "draft" | "published"
+  published_at: string | null
+  created_at: string | null
+  updated_at: string | null
 }

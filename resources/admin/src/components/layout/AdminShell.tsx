@@ -22,7 +22,7 @@ export function AdminShell({
         csrfToken={bootstrap.csrfToken}
       />
       <div className="admin-main">
-        <AdminTopbar csrfToken={bootstrap.csrfToken} />
+        <AdminTopbar csrfToken={bootstrap.csrfToken} page={bootstrap.page} />
         <main className="admin-content" aria-busy={navigating}>{children}</main>
       </div>
     </div>

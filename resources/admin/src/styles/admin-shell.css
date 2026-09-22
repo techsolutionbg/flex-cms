@@ -46,12 +46,17 @@
 }
 
 .admin-main > header {
+  position: sticky;
+  top: 0;
+  z-index: 70;
   height: 4.125rem;
   min-height: 4.125rem;
+  display: flex;
   align-items: center;
   padding: 0 var(--admin-content-gutter);
   background: var(--card);
-  border-bottom-color: var(--border);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .admin-main > header .brand,
@@ -77,6 +82,16 @@
 
 .topbar-spacer {
   flex: 1 1 auto;
+}
+
+.topbar-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topbar-actions,
@@ -153,12 +168,12 @@
 }
 
 .sidebar-link.is-active {
-  border-color: color-mix(in oklch, var(--sidebar-primary), transparent 68%);
-  background: color-mix(in oklch, var(--sidebar-primary), var(--sidebar) 82%);
-  color: var(--sidebar-foreground);
+  border-color: color-mix(in oklch, var(--sidebar-primary), transparent 42%);
+  background: color-mix(in oklch, var(--sidebar-primary), var(--sidebar) 72%);
+  color: var(--sidebar-primary-foreground);
   box-shadow:
-    inset 3px 0 var(--sidebar-primary),
-    0 1px 0 oklch(100% 0 0deg / 4%);
+    inset 4px 0 var(--sidebar-primary),
+    0 4px 14px color-mix(in oklch, var(--sidebar-primary), transparent 88%);
 }
 
 .sidebar-link.is-active::after {
@@ -167,7 +182,7 @@
   margin-left: auto;
   border-radius: 999px;
   background: var(--sidebar-primary);
-  box-shadow: 0 0 0 0.25rem color-mix(in oklch, var(--sidebar-primary), transparent 84%);
+  box-shadow: 0 0 0 0.25rem color-mix(in oklch, var(--sidebar-primary), transparent 76%);
   content: "";
 }
 

@@ -12,8 +12,13 @@ final readonly class ViteAssetManager
 
     public function tags(): string
     {
-        $devServer = rtrim((string) ($_ENV['VITE_DEV_SERVER_URL'] ?: 'http://localhost:5173'), '/');
-        if (($_ENV['APP_ENV'] ?? 'production') === 'local' && $devServer !== '') {
+        $environment = (string) ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
+        $devServer = rtrim((string) ($_ENV['VITE_DEV_SERVER_URL'] ?? $_SERVER['VITE_DEV_SERVER_URL'] ?? getenv('VITE_DEV_SERVER_URL') ?: 'http://localhost:5173'), '/');
+        if ($environment === 'local') {
+            if ($devServer === '') {
+                throw new \RuntimeException('Vite development server URL is required in local environment.');
+            }
+
             $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             return sprintf(<<<'HTML'

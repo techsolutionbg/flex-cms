@@ -11,6 +11,8 @@ use Flex\Http\ApiError;
 use Flex\Http\Exception\InvalidRequestBody;
 use Flex\Http\RequestFormat;
 use Flex\Http\View\ViteAssetManager;
+use Flex\Pages\Exception\PageNotFound;
+use Flex\Pages\Exception\PageValidationFailed;
 use Flex\Users\Exception\UserNotFound;
 use Flex\Users\Exception\UserValidationFailed;
 use League\Route\Http\Exception\HttpExceptionInterface;
@@ -40,6 +42,8 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
                 $exception instanceof InvalidRequestBody => 400,
                 $exception instanceof UserNotFound => 404,
                 $exception instanceof UserValidationFailed => 422,
+                $exception instanceof PageNotFound => 404,
+                $exception instanceof PageValidationFailed => 422,
                 default => 500,
             };
             $headers = $exception instanceof HttpExceptionInterface ? $exception->getHeaders() : [];
@@ -65,7 +69,11 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
                     429 => 'too_many_requests',
                     default => 'internal_error',
                 };
-                $details = $exception instanceof UserValidationFailed ? ['fields' => $exception->errors] : [];
+                $details = match (true) {
+                    $exception instanceof UserValidationFailed => ['fields' => $exception->errors],
+                    $exception instanceof PageValidationFailed => ['fields' => $exception->errors],
+                    default => [],
+                };
 
                 return $this->responses->json(ApiError::payload($status, $code, $message, $details), $status, $headers);
             }

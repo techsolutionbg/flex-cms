@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 import { AdminShell } from "@/components/layout/AdminShell"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { UpdatesPage } from "@/pages/UpdatesPage"
+import { ProfilePage } from "@/pages/ProfilePage"
+import { PagesPage } from "@/pages/PagesPage"
 import type { AdminBootstrap } from "@/types"
 
 export function App({ bootstrap }: { bootstrap: AdminBootstrap }) {
@@ -65,6 +67,10 @@ export function App({ bootstrap }: { bootstrap: AdminBootstrap }) {
     <AdminShell bootstrap={currentBootstrap} navigating={navigating}>
       {currentBootstrap.page === "updates" ? (
         <UpdatesPage bootstrap={currentBootstrap} />
+      ) : currentBootstrap.page === "profile" ? (
+        <ProfilePage bootstrap={currentBootstrap} />
+      ) : currentBootstrap.page === "pages" ? (
+        <PagesPage bootstrap={currentBootstrap} />
       ) : (
         <DashboardPage />
       )}

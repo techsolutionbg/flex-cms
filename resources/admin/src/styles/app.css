@@ -50,6 +50,139 @@
   font-size: 1.15rem;
 }
 
+.page-heading-row,
+.page-list-item,
+.page-list-meta,
+.page-form-actions {
+  display: flex;
+  align-items: center;
+}
+
+.page-heading-row,
+.page-list-item {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-form label {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.field-error {
+  color: var(--destructive);
+  font-size: 0.8125rem;
+}
+
+.page-form textarea {
+  width: 100%;
+  min-height: 12rem;
+  resize: vertical;
+  padding: 8px 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.page-form [data-slot="input"],
+.page-form [data-slot="select-trigger"],
+.page-heading-row > button,
+.page-form-actions button,
+.page-list-meta button {
+  box-sizing: border-box;
+  width: auto;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.page-form [data-slot="input"],
+.page-form [data-slot="select-trigger"] {
+  width: 100%;
+}
+
+.page-form-actions,
+.page-list-meta {
+  gap: 0.75rem;
+}
+
+.pages-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.page-list-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-list-item:last-child {
+  border-bottom: 0;
+}
+
+.page-list-item h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.page-list-item p {
+  margin: 0.25rem 0 0;
+}
+
+.page-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.page-status-draft {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.page-status-published {
+  background: color-mix(in oklch, var(--success) 15%, var(--card));
+  color: var(--success);
+}
+
+.profile-details {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.profile-details div {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-details dt,
+.profile-setting label {
+  font-weight: 700;
+}
+
+.profile-details dd {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.profile-setting {
+  display: grid;
+  gap: 0.625rem;
+}
+
 .content-card a {
   color: var(--foreground);
   font-weight: 700;
@@ -64,9 +197,9 @@
 .content-card input[type="file"],
 .content-card input[type="text"] {
   width: 100%;
-  padding: 0.75rem;
+  padding: 3px 5px;
   border: 1px solid var(--input);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--background);
   color: var(--foreground);
 }

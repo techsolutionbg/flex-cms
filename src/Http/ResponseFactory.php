@@ -25,7 +25,13 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
     /** @param array<string, string|list<string>> $headers */
     public function html(string $html, int $status = 200, array $headers = []): ResponseInterface
     {
-        return $this->create($html, $status, ['Content-Type' => 'text/html; charset=utf-8'] + $headers);
+        $defaults = ['Content-Type' => 'text/html; charset=utf-8'];
+        if (($_ENV['APP_ENV'] ?? 'production') === 'local') {
+            $defaults['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0';
+            $defaults['Pragma'] = 'no-cache';
+        }
+
+        return $this->create($html, $status, $defaults + $headers);
     }
 
     /** @param array<string, string|list<string>> $headers */
