@@ -20,6 +20,10 @@ final class PlatformPackageBuilderTest extends TestCase
         $this->basePath = sys_get_temp_dir() . '/flex-builder-test-' . bin2hex(random_bytes(6));
         mkdir($this->basePath . '/src', 0770, true);
         mkdir($this->basePath . '/public/media', 0770, true);
+        mkdir($this->basePath . '/public/build', 0770, true);
+        mkdir($this->basePath . '/resources/admin/node_modules/package', 0770, true);
+        mkdir($this->basePath . '/resources/admin/.git', 0770, true);
+        mkdir($this->basePath . '/resources/views', 0770, true);
         file_put_contents($this->basePath . '/platform.json', json_encode([
             'schema' => 1,
             'name' => 'flex-cms',
@@ -28,6 +32,11 @@ final class PlatformPackageBuilderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
         file_put_contents($this->basePath . '/src/example.php', '<?php return true;');
         file_put_contents($this->basePath . '/public/media/user.txt', 'must not ship');
+        file_put_contents($this->basePath . '/public/build/admin.js', 'production asset');
+        file_put_contents($this->basePath . '/resources/admin/source.tsx', 'must not ship');
+        file_put_contents($this->basePath . '/resources/admin/node_modules/package/index.js', 'must not ship');
+        file_put_contents($this->basePath . '/resources/admin/.git/config', 'must not ship');
+        file_put_contents($this->basePath . '/resources/views/runtime.php', '<?php return true;');
         file_put_contents($this->basePath . '/composer.json', '{}');
     }
 
@@ -55,7 +64,12 @@ final class PlatformPackageBuilderTest extends TestCase
         $archive = new ZipArchive();
         self::assertTrue($archive->open($output));
         self::assertNotFalse($archive->getFromName('payload/src/example.php'));
+        self::assertNotFalse($archive->getFromName('payload/resources/views/runtime.php'));
+        self::assertNotFalse($archive->getFromName('payload/public/build/admin.js'));
         self::assertFalse($archive->statName('payload/public/media/user.txt'));
+        self::assertFalse($archive->statName('payload/resources/admin/source.tsx'));
+        self::assertFalse($archive->statName('payload/resources/admin/node_modules/package/index.js'));
+        self::assertFalse($archive->statName('payload/resources/admin/.git/config'));
         $archive->close();
     }
 

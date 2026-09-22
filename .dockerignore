@@ -4,6 +4,9 @@
 .phpunit.cache
 .vscode
 node_modules
+resources/admin/node_modules
+resources/admin/dist
+public/build
 storage/cache/*
 storage/logs/*
 storage/sessions/*

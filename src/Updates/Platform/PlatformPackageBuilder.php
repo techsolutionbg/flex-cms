@@ -12,6 +12,14 @@ final readonly class PlatformPackageBuilder
     /** @var list<string> */
     private const DIRECTORIES = ['bin', 'config', 'contracts', 'database', 'public', 'resources', 'src', 'vendor'];
 
+    /** @var list<string> */
+    private const EXCLUDED_PATHS = [
+        '.git',
+        'node_modules',
+        'public/media',
+        'resources/admin',
+    ];
+
     public function __construct(
         private string $basePath,
         private PlatformVersionRegistry $registry,
@@ -132,7 +140,7 @@ final readonly class PlatformPackageBuilder
                 continue;
             }
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($this->basePath) + 1));
-            if ($relative === 'public/media' || str_starts_with($relative, 'public/media/')) {
+            if ($this->isExcluded($relative)) {
                 continue;
             }
             $target = $destination . '/' . substr($relative, strlen(basename($source)) + 1);
@@ -142,6 +150,22 @@ final readonly class PlatformPackageBuilder
             copy($file->getPathname(), $target);
             $files[$relative] = $this->checksum($target);
         }
+    }
+
+    private function isExcluded(string $relative): bool
+    {
+        $segments = explode('/', $relative);
+        if (in_array('.git', $segments, true) || in_array('node_modules', $segments, true)) {
+            return true;
+        }
+
+        foreach (self::EXCLUDED_PATHS as $excluded) {
+            if ($relative === $excluded || str_starts_with($relative, $excluded . '/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param list<string> $files */

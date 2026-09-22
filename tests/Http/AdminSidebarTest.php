@@ -35,8 +35,8 @@ final class AdminSidebarTest extends TestCase
 
         self::assertStringContainsString('Flex CMS', $html);
         self::assertStringContainsString('v0.0.3', $html);
-        self::assertStringContainsString('bi bi-speedometer2', $html);
-        self::assertStringContainsString('bi bi-arrow-repeat', $html);
+        self::assertSame(2, substr_count($html, 'class="sidebar-icon"'));
+        self::assertStringContainsString('class="sidebar-toggle-icon"', $html);
         self::assertStringContainsString('sidebar-resizer', $html);
         self::assertStringContainsString('sidebar-toggle', $html);
         self::assertStringContainsString('sidebar-backdrop', $html);

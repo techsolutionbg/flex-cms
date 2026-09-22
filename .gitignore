@@ -5,6 +5,11 @@
 /.phpunit.result.cache
 /.vscode/
 /composer.phar
+/node_modules/
+/resources/admin/node_modules/
+/resources/admin/dist/
+/resources/admin/.vite/
+/public/build/
 /public/media/*
 !/public/media/.gitkeep
 /storage/cache/*
