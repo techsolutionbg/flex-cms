@@ -1,53 +1,18 @@
-import { createRoot, type Root } from "react-dom/client"
+import { createRoot } from "react-dom/client"
+import { App } from "@/App"
+import { ThemeProvider } from "@/components/theme-provider"
+import type { AdminBootstrap } from "@/types"
+import "@/styles/globals.css"
 
-import App from "./App"
-import { ThemeProvider } from "./components/theme-provider"
-import "./styles/globals.css"
-
-type HistoryRecord = {
-  type?: string
-  id?: string
-  from?: string
-  to?: string
-  installed_at?: string
-  rolled_back_at?: string
-  migrations_ran?: boolean
-}
-
-const roots = new WeakMap<HTMLElement, Root>()
-
-function historyFrom(element: HTMLElement): HistoryRecord[] {
-  try {
-    return JSON.parse(element.dataset.history ?? "[]") as HistoryRecord[]
-  } catch {
-    return []
-  }
-}
-
-function mountHistory(): void {
-  const element = document.getElementById("flex-shadcn-history-root")
-  if (!element) return
-
-  let root = roots.get(element)
-  if (!root) {
-    root = createRoot(element)
-    roots.set(element, root)
-  }
-
-  root.render(
+const root = document.getElementById("flex-admin-root")
+const bootstrapElement = document.getElementById("flex-admin-bootstrap")
+if (root && bootstrapElement) {
+  const bootstrap = JSON.parse(
+    bootstrapElement.textContent ?? "{}"
+  ) as AdminBootstrap
+  createRoot(root).render(
     <ThemeProvider storageKey="flexcms.admin.theme">
-      <App
-        history={historyFrom(element)}
-        csrfToken={element.dataset.csrf ?? ""}
-      />
+      <App bootstrap={bootstrap} />
     </ThemeProvider>
   )
 }
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", mountHistory, { once: true })
-} else {
-  mountHistory()
-}
-
-window.addEventListener("flex-admin-content-updated", mountHistory)

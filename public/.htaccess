@@ -10,7 +10,8 @@ Options -Indexes
 <IfModule mod_headers.c>
     Header setifempty X-Content-Type-Options "nosniff"
     Header setifempty Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
-    Header always set Pragma "no-cache"
-    Header always set Expires "0"
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" "expr=%{REQUEST_URI} !~ m#^/build/.*/assets/#"
+    Header always set Pragma "no-cache" "expr=%{REQUEST_URI} !~ m#^/build/.*/assets/#"
+    Header always set Expires "0" "expr=%{REQUEST_URI} !~ m#^/build/.*/assets/#"
+    Header always set Cache-Control "public, max-age=31536000, immutable" "expr=%{REQUEST_URI} =~ m#^/build/.*/assets/#"
 </IfModule>

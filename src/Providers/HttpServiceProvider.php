@@ -8,10 +8,13 @@ use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\KernelInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
+use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\ApplicationKernelFactory;
 use Flex\Http\Controller\HealthController;
 use Flex\Http\Controller\HomeController;
 use Flex\Http\ResponseFactory;
+use Flex\Http\View\TwigViewRenderer;
+use Flex\Http\View\ViteAssetManager;
 use Flex\Http\Routing\RouteRegistry;
 use Flex\Http\Routing\RouterFactory;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -41,6 +44,8 @@ final class HttpServiceProvider implements ServiceProviderInterface
             UriFactoryInterface::class => get(Psr17Factory::class),
             ServerRequestCreator::class => autowire(),
             ResponseFactoryInterface::class => autowire(ResponseFactory::class),
+            ViewRendererInterface::class => create(TwigViewRenderer::class)->constructor(get('base_path')),
+            ViteAssetManager::class => create()->constructor(get('base_path')),
             RouteRegistry::class => create(),
             RouteRegistryInterface::class => get(RouteRegistry::class),
             HealthController::class => autowire(),

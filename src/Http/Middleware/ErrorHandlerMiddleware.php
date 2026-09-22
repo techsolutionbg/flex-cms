@@ -6,6 +6,8 @@ namespace Flex\Http\Middleware;
 
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Contracts\Http\ViewRendererInterface;
+use Flex\Http\View\ViteAssetManager;
 use Flex\Http\Exception\InvalidRequestBody;
 use Flex\Users\Exception\UserNotFound;
 use Flex\Users\Exception\UserValidationFailed;
@@ -22,6 +24,8 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
         private ResponseFactoryInterface $responses,
         private ConfigRepositoryInterface $configuration,
         private LoggerInterface $logger,
+        private ViewRendererInterface $views,
+        private ViteAssetManager $assets,
     ) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -58,14 +62,11 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
                 ], $status, $headers);
             }
 
-            $safeMessage = htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-            return $this->responses->html(sprintf(
-                '<!doctype html><html lang="en"><meta charset="utf-8"><title>%d</title><h1>%d</h1><p>%s</p>',
-                $status,
-                $status,
-                $safeMessage,
-            ), $status, $headers);
+            return $this->responses->html($this->views->render('system/error.twig', [
+                'status' => $status,
+                'message' => $message,
+                'vite_tags' => $this->assets->tags(),
+            ]), $status, $headers);
         }
     }
 

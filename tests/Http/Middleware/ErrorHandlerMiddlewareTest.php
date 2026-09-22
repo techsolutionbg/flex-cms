@@ -7,6 +7,8 @@ namespace Flex\Tests\Http\Middleware;
 use Flex\Configuration\ConfigurationRepository;
 use Flex\Http\Middleware\ErrorHandlerMiddleware;
 use Flex\Http\ResponseFactory;
+use Flex\Http\View\TwigViewRenderer;
+use Flex\Http\View\ViteAssetManager;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +25,8 @@ final class ErrorHandlerMiddlewareTest extends TestCase
             new ResponseFactory(new Psr17Factory()),
             new ConfigurationRepository(['app' => ['debug' => false]]),
             new NullLogger(),
+            new TwigViewRenderer(dirname(__DIR__, 3)),
+            new ViteAssetManager(dirname(__DIR__, 3)),
         );
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface

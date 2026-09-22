@@ -1,0 +1,267 @@
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.admin-content {
+  width: 100%;
+  max-width: none;
+  margin: 1.125rem 0;
+  padding: 0 var(--admin-content-gutter);
+}
+.admin-content h1 {
+  margin: 0 0 0.5rem;
+  font: 600 clamp(2rem, 4vw, 3.5rem)/1.05 var(--font-family-heading);
+  letter-spacing: -0.04em;
+}
+.lead,
+.muted {
+  color: var(--muted-foreground);
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.content-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-sm);
+}
+.content-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+.content-card a {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.content-card label {
+  display: block;
+  margin: 0.9rem 0 0.4rem;
+  font-weight: 700;
+}
+.content-card input[type="file"],
+.content-card input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+}
+.notice {
+  margin: 1rem 0;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+}
+.notice.success {
+  background: color-mix(in oklch, var(--success) 12%, var(--card));
+  color: var(--success);
+}
+.notice.error {
+  background: color-mix(in oklch, var(--destructive) 12%, var(--card));
+  color: var(--destructive);
+}
+.notice.info {
+  background: color-mix(in oklch, var(--info) 12%, var(--card));
+  color: var(--info);
+}
+.pagination,
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.pagination {
+  flex-wrap: wrap;
+  color: var(--muted-foreground);
+}
+.logout {
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-page,
+.system-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 15% 10%, var(--card), transparent 35%),
+    var(--background);
+}
+.auth-card,
+.system-card {
+  width: min(27rem, 100%);
+  padding: 2.375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+.auth-brand,
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.auth-card h1,
+.system-card h1 {
+  margin: 0.625rem 0 0.5rem;
+  font: 600 2.5rem/1 var(--font-family-heading);
+  letter-spacing: -0.03em;
+}
+.auth-card p,
+.system-card p {
+  color: var(--muted-foreground);
+}
+.auth-card label {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.auth-card input {
+  width: 100%;
+  margin-top: 0.45rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+.auth-card button {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.875rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: 700 1rem var(--font-family-sans);
+  cursor: pointer;
+}
+.system-card {
+  text-align: center;
+}
+
+.installer-page {
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  background:
+    radial-gradient(circle at 10% 0, var(--card), transparent 35%),
+    var(--background);
+}
+.installer-page > header,
+.installer-page > form,
+.installer-page > .notice {
+  width: min(61rem, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.installer-page > header {
+  padding: 4.5rem 0 2.375rem;
+}
+.installer-page h1 {
+  max-width: 48rem;
+  margin: 0;
+  font: 600 clamp(2.6rem, 7vw, 5.7rem)/0.95 var(--font-family-heading);
+  letter-spacing: -0.045em;
+}
+.installer-section {
+  margin: 1.125rem 0;
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+}
+.section-heading {
+  display: flex;
+  gap: 1.125rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+.section-heading > span {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.65rem;
+}
+.section-heading p {
+  margin: 0.2rem 0 0;
+  color: var(--muted-foreground);
+}
+.installer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.125rem;
+}
+.installer-grid label span {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.installer-grid input {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+.installer-page form > button {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: 700 1rem var(--font-family-sans);
+  cursor: pointer;
+}
+.field-note {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 45rem) {
+  .admin-content {
+    margin: 1rem 0;
+    padding: 0 0.75rem;
+  }
+  .content-card,
+  .installer-section {
+    padding: 1rem;
+  }
+  .installer-grid {
+    grid-template-columns: 1fr;
+  }
+}

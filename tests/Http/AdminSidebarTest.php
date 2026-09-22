@@ -4,47 +4,27 @@ declare(strict_types=1);
 
 namespace Flex\Tests\Http;
 
-use Flex\Http\Controller\Admin\AdminSidebar;
-use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Http\View\TwigViewRenderer;
+use Flex\Http\View\ViteAssetManager;
 use PHPUnit\Framework\TestCase;
 
 final class AdminSidebarTest extends TestCase
 {
-    private string $directory;
-
-    protected function setUp(): void
+    public function testAdminShellUsesOneReactRootAndManifestAssets(): void
     {
-        $this->directory = sys_get_temp_dir() . '/flex-sidebar-' . bin2hex(random_bytes(6));
-        mkdir($this->directory, 0775, true);
-        file_put_contents($this->directory . '/platform.json', json_encode([
-            'name' => 'flex-cms',
-            'version' => '0.0.3',
-            'api_version' => '1.0',
-        ], JSON_THROW_ON_ERROR));
-    }
+        $basePath = dirname(__DIR__, 2);
+        $views = new TwigViewRenderer($basePath);
+        $assets = new ViteAssetManager($basePath);
+        $html = $views->render('admin/app.twig', [
+            'title' => 'Обновявания',
+            'vite_tags' => $assets->tags(),
+            'bootstrap_json' => '{"page":"updates"}',
+        ]);
 
-    protected function tearDown(): void
-    {
-        @unlink($this->directory . '/platform.json');
-        @rmdir($this->directory);
-    }
-
-    public function testItRendersTheSystemNameVersionAndActiveNavigationItem(): void
-    {
-        $html = (new AdminSidebar(new PlatformVersionRegistry($this->directory)))->render('updates');
-
-        self::assertStringContainsString('Flex CMS', $html);
-        self::assertStringContainsString('v0.0.3', $html);
-        self::assertSame(2, substr_count($html, 'class="sidebar-icon"'));
-        self::assertStringContainsString('class="sidebar-toggle-icon"', $html);
-        self::assertStringContainsString('sidebar-resizer', $html);
-        self::assertStringContainsString('sidebar-toggle', $html);
-        self::assertStringContainsString('sidebar-backdrop', $html);
-        self::assertStringContainsString('data-sidebar-width="248"', $html);
-        self::assertStringContainsString('role="separator"', $html);
-        self::assertStringContainsString('aria-controls="admin-sidebar"', $html);
-        self::assertStringContainsString('Промени широчината', $html);
-        self::assertStringContainsString('href="/admin/updates" aria-current="page"', $html);
-        self::assertStringNotContainsString('href="/admin" aria-current="page"', $html);
+        self::assertStringContainsString('id="flex-admin-root"', $html);
+        self::assertSame(1, substr_count($html, 'id="flex-admin-root"'));
+        self::assertStringContainsString('id="flex-admin-bootstrap"', $html);
+        self::assertMatchesRegularExpression('#/build/admin/assets/admin-[A-Za-z0-9_-]+\\.js#', $html);
+        self::assertStringNotContainsString('/assets/admin.js', $html);
     }
 }

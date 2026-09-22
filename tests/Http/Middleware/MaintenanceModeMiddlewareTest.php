@@ -8,6 +8,8 @@ use Flex\Configuration\ConfigurationRepository;
 use Flex\Configuration\ProjectPaths;
 use Flex\Http\Middleware\MaintenanceModeMiddleware;
 use Flex\Http\ResponseFactory;
+use Flex\Http\View\TwigViewRenderer;
+use Flex\Http\View\ViteAssetManager;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
@@ -40,6 +42,8 @@ final class MaintenanceModeMiddlewareTest extends TestCase
         $middleware = new MaintenanceModeMiddleware(
             new ProjectPaths($this->directory, $configuration),
             new ResponseFactory(new Psr17Factory()),
+            new TwigViewRenderer(dirname(__DIR__, 3)),
+            new ViteAssetManager(dirname(__DIR__, 3)),
         );
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface

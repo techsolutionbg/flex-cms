@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" type="image/png" href="/assets/brand/favicon.png">
+    <title>Вход · Flex CMS</title>
+    {{ vite_tags|raw }}
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <div class="auth-brand">Flex CMS</div>
+        <h1>Добре дошли.</h1>
+        <p>Влезте, за да управлявате сайта.</p>
+        {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+        <form method="post" action="/login">
+            <input type="hidden" name="_token" value="{{ csrf_token }}">
+            <label>Имейл<input type="email" name="email" autocomplete="username" required autofocus></label>
+            <label>Парола<input type="password" name="password" autocomplete="current-password" required></label>
+            <button type="submit">Вход →</button>
+        </form>
+    </main>
+</body>
+</html>
