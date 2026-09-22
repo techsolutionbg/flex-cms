@@ -2,7 +2,7 @@ import { createRoot, type Root } from "react-dom/client"
 
 import App from "./App"
 import { ThemeProvider } from "./components/theme-provider"
-import "./index.css"
+import "./styles/globals.css"
 
 type HistoryRecord = {
   type?: string
@@ -36,8 +36,11 @@ function mountHistory(): void {
 
   root.render(
     <ThemeProvider storageKey="flexcms.admin.theme">
-      <App history={historyFrom(element)} csrfToken={element.dataset.csrf ?? ""} />
-    </ThemeProvider>,
+      <App
+        history={historyFrom(element)}
+        csrfToken={element.dataset.csrf ?? ""}
+      />
+    </ThemeProvider>
   )
 }
 

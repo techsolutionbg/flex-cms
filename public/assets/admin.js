@@ -11,13 +11,6 @@
 
     function getApp(doc) { return doc.getElementById('flex-admin-app') || doc.querySelector('.admin-shell'); }
     function loadShadcnAssets() {
-        if (!document.querySelector('link[data-flex-shadcn-css]')) {
-            var css = document.createElement('link');
-            css.rel = 'stylesheet';
-            css.href = '/build/admin/admin.css';
-            css.dataset.flexShadcnCss = 'true';
-            document.head.appendChild(css);
-        }
         if (!document.querySelector('script[data-flex-shadcn-js]')) {
             var script = document.createElement('script');
             script.src = '/build/admin/admin.js';
