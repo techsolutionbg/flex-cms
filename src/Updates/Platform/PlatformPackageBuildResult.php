@@ -12,6 +12,5 @@ final readonly class PlatformPackageBuildResult
         public string $version,
         public int $fileCount,
         public bool $signed,
-    ) {
-    }
+    ) {}
 }

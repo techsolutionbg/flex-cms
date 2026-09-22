@@ -11,8 +11,7 @@ final readonly class ProjectPaths
     public function __construct(
         private string $basePath,
         private ConfigRepositoryInterface $configuration,
-    ) {
-    }
+    ) {}
 
     public function base(): string
     {

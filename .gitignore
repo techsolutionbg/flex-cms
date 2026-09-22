@@ -9,6 +9,8 @@
 /resources/admin/node_modules/
 /resources/admin/dist/
 /resources/admin/.vite/
+/resources/admin/playwright-report/
+/resources/admin/test-results/
 /public/build/
 /public/media/*
 !/public/media/.gitkeep

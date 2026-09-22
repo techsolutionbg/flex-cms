@@ -13,8 +13,7 @@ final readonly class ConfigurationRepository implements ConfigRepositoryInterfac
     /** @param array<string, mixed> $values */
     public function __construct(
         private array $values,
-    ) {
-    }
+    ) {}
 
     public function has(string $key): bool
     {

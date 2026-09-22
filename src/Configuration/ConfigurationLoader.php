@@ -36,7 +36,7 @@ final class ConfigurationLoader
     /** @return array<string, mixed> */
     private function requireConfiguration(string $path): array
     {
-        $configuration = (static fn (string $file): mixed => require $file)($path);
+        $configuration = (static fn(string $file): mixed => require $file)($path);
         if (!is_array($configuration)) {
             throw new ConfigurationException(sprintf('Configuration file "%s" must return an array.', $path));
         }

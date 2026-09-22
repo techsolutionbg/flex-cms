@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Flex\Console\Command;
 
-use Flex\Updates\Platform\PlatformPackageSignature;
 use Flex\Updates\Platform\PlatformPackageManifest;
+use Flex\Updates\Platform\PlatformPackageSignature;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

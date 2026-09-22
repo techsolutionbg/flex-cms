@@ -12,8 +12,7 @@ final readonly class ConfigurationCache
     public function __construct(
         private string $basePath,
         private ConfigRepositoryInterface $configuration,
-    ) {
-    }
+    ) {}
 
     public function path(): string
     {

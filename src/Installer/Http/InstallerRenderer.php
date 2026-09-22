@@ -25,7 +25,7 @@ final readonly class InstallerRenderer
     {
         $databasePassword = array_key_exists('database_password', $values) ? '' : 'flex_cms';
         $adminPassword = array_key_exists('admin_password', $values) ? '' : bin2hex(random_bytes(12));
-        $field = static fn (string $name, string $label, string $value, string $type, string $placeholder): array => compact('name', 'label', 'value', 'type', 'placeholder');
+        $field = static fn(string $name, string $label, string $value, string $type, string $placeholder): array => compact('name', 'label', 'value', 'type', 'placeholder');
         $sections = [
             ['title' => 'Website', 'description' => 'The public identity and regional defaults.', 'fields' => [
                 $field('site_name', 'Site name', $values['site_name'] ?? 'Flex CMS', 'text', 'My new website'),
@@ -50,8 +50,14 @@ final readonly class InstallerRenderer
         return $this->views->render('installer/form.twig', ['csrf_token' => $csrfToken, 'error' => $error, 'sections' => $sections, 'generated_password' => $adminPassword, 'vite_tags' => $this->assets->tags()]);
     }
 
-    public function success(string $siteUrl): string { return $this->status('Flex CMS is ready', 'Your foundation is ready.', 'Flex CMS, the database schema and your administrator account were created successfully.', $siteUrl, 'Open the website'); }
-    public function unavailable(): string { return $this->status('Installer unavailable', 'The installer is locked.', 'This installation is already configured.', '/', 'Return to the website'); }
+    public function success(string $siteUrl): string
+    {
+        return $this->status('Flex CMS is ready', 'Your foundation is ready.', 'Flex CMS, the database schema and your administrator account were created successfully.', $siteUrl, 'Open the website');
+    }
+    public function unavailable(): string
+    {
+        return $this->status('Installer unavailable', 'The installer is locked.', 'This installation is already configured.', '/', 'Return to the website');
+    }
 
     private function status(string $title, string $heading, string $message, string $url, string $action): string
     {

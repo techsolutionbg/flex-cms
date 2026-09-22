@@ -11,6 +11,5 @@ final readonly class InspectedPlatformPackage
         public string $checksum,
         public PlatformPackageManifest $manifest,
         public int $uncompressedBytes,
-    ) {
-    }
+    ) {}
 }

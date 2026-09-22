@@ -15,8 +15,7 @@ final readonly class Bootstrap
 {
     private function __construct(
         private ContainerInterface $container,
-    ) {
-    }
+    ) {}
 
     public static function boot(string $basePath): self
     {

@@ -10,8 +10,7 @@ final readonly class PlatformPackageInspectorFactory
 {
     public function __construct(
         private ConfigRepositoryInterface $configuration,
-    ) {
-    }
+    ) {}
 
     public function create(): PlatformPackageInspector
     {

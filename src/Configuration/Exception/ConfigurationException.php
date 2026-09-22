@@ -6,6 +6,4 @@ namespace Flex\Configuration\Exception;
 
 use RuntimeException;
 
-class ConfigurationException extends RuntimeException
-{
-}
+class ConfigurationException extends RuntimeException {}

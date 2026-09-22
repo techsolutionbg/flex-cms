@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
+use Flex\Providers\AdminRouteServiceProvider;
+use Flex\Providers\AuthRouteServiceProvider;
 use Flex\Providers\AuthServiceProvider;
+use Flex\Providers\CoreRouteServiceProvider;
 use Flex\Providers\CoreServiceProvider;
 use Flex\Providers\DatabaseServiceProvider;
 use Flex\Providers\HttpServiceProvider;
 use Flex\Providers\UpdateServiceProvider;
-use Flex\Providers\CoreRouteServiceProvider;
-use Flex\Providers\AuthRouteServiceProvider;
-use Flex\Providers\AdminRouteServiceProvider;
 use Flex\Providers\UserRouteServiceProvider;
 
 return [

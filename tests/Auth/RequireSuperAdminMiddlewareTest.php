@@ -53,9 +53,18 @@ final class RequireSuperAdminMiddlewareTest extends TestCase
     {
         $authentication = new class ($user) implements AuthenticationInterface {
             public function __construct(private readonly ?AuthenticatedUser $user) {}
-            public function user(): ?AuthenticatedUser { return $this->user; }
-            public function check(): bool { return $this->user !== null; }
-            public function attempt(string $email, string $password, string $ipAddress): bool { return false; }
+            public function user(): ?AuthenticatedUser
+            {
+                return $this->user;
+            }
+            public function check(): bool
+            {
+                return $this->user !== null;
+            }
+            public function attempt(string $email, string $password, string $ipAddress): bool
+            {
+                return false;
+            }
             public function logout(): void {}
         };
 

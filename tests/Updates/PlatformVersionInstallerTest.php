@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Flex\Tests\Updates;
 
-use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
-use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
 use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
+use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
+use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 use Flex\Updates\Exception\PlatformUpdateException;
 use Flex\Updates\Platform\PlatformInstallOptions;
@@ -136,7 +136,10 @@ final class PlatformVersionInstallerTest extends TestCase
         ]);
         $health = new class implements PlatformHealthCheckerInterface {
             public int $calls = 0;
-            public function check(): void { ++$this->calls; }
+            public function check(): void
+            {
+                ++$this->calls;
+            }
         };
 
         $this->installer(healthChecker: $health)->install($package, new PlatformInstallOptions(
@@ -151,12 +154,9 @@ final class PlatformVersionInstallerTest extends TestCase
         ?PlatformMigrationRunnerInterface $migrationRunner = null,
         ?PlatformHealthCheckerInterface $healthChecker = null,
         ?PlatformDatabaseBackupInterface $databaseBackup = null,
-    ): PlatformVersionInstaller
-    {
+    ): PlatformVersionInstaller {
         $migrationRunner ??= new class implements PlatformMigrationRunnerInterface {
-            public function migrate(): void
-            {
-            }
+            public function migrate(): void {}
         };
 
         return new PlatformVersionInstaller(

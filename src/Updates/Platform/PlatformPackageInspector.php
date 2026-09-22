@@ -23,8 +23,7 @@ final readonly class PlatformPackageInspector
         private int $maximumUncompressedBytes = 268_435_456,
         private ?string $signingPublicKey = null,
         private bool $requireSignature = false,
-    ) {
-    }
+    ) {}
 
     public function inspect(string $packagePath, ?string $expectedChecksum = null): InspectedPlatformPackage
     {

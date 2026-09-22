@@ -10,8 +10,7 @@ final readonly class PlatformVersionRegistry
 {
     public function __construct(
         private string $basePath,
-    ) {
-    }
+    ) {}
 
     public function current(): PlatformVersion
     {

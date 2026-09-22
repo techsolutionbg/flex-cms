@@ -6,11 +6,11 @@ namespace Flex\Tests\Container;
 
 use Flex\Application;
 use Flex\Bootstrap;
-use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Console\FlexConsoleApplication;
+use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
-use Flex\Database\DatabaseManager;
 use Flex\Contracts\Http\KernelInterface;
+use Flex\Database\DatabaseManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 

@@ -6,6 +6,4 @@ namespace Flex\Updates\Exception;
 
 use RuntimeException;
 
-class PlatformUpdateException extends RuntimeException
-{
-}
+class PlatformUpdateException extends RuntimeException {}

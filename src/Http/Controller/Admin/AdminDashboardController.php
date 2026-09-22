@@ -23,7 +23,9 @@ final readonly class AdminDashboardController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         $user = $this->authentication->user();
-        if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) return $this->responses->text('Forbidden', 403);
+        if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
+            return $this->responses->text('Forbidden', 403);
+        }
 
         $bootstrap = ['page' => 'dashboard', 'csrfToken' => $this->csrf->token(), 'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id), 'version' => $this->versions->current()->value];
 

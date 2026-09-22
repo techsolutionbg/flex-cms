@@ -27,8 +27,7 @@ final readonly class PlatformPackageManifest
         public ?string $keyId,
         /** @var list<string> */
         public array $requiredExtensions,
-    ) {
-    }
+    ) {}
 
     /** @param array<mixed> $data */
     public static function fromArray(array $data): self

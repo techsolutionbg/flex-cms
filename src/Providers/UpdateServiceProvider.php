@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Flex\Providers;
 
+use function DI\autowire;
+use function DI\create;
+use function DI\factory;
+use function DI\get;
+
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
 use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Updates\Platform\{MySqlPlatformDatabaseBackup, PhinxPlatformMigrationRunner, PlatformHealthChecker, PlatformHistory, PlatformPackageBuilder, PlatformPackageInspector, PlatformPackageInspectorFactory, PlatformPackageUpload, PlatformPreflightChecker, PlatformRollback, PlatformUpdateRecovery, PlatformUpdateStateStore, PlatformVersionInstaller, PlatformVersionRegistry};
 use Psr\Container\ContainerInterface;
-
-use function DI\autowire;
-use function DI\create;
-use function DI\factory;
-use function DI\get;
 
 final class UpdateServiceProvider implements ServiceProviderInterface
 {
@@ -32,7 +32,5 @@ final class UpdateServiceProvider implements ServiceProviderInterface
             PlatformRollback::class => create()->constructor(get('base_path'), get(PlatformHistory::class), get(PlatformVersionRegistry::class), get(PlatformDatabaseBackupInterface::class)),
         ];
     }
-    public function boot(ContainerInterface $container): void
-    {
-    }
+    public function boot(ContainerInterface $container): void {}
 }

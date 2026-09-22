@@ -16,6 +16,5 @@ final readonly class PlatformPackageBuildOptions
         public ?string $keyId = null,
         public ?string $outputPath = null,
         public array $requiredExtensions = ['pdo_mysql', 'mbstring', 'curl', 'dom', 'xml'],
-    ) {
-    }
+    ) {}
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Flex\Logging;
 
-use Flex\Configuration\ProjectPaths;
 use Flex\Configuration\Exception\InvalidConfigurationValue;
+use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
@@ -18,8 +18,7 @@ final readonly class LoggerFactory
     public function __construct(
         private ConfigRepositoryInterface $configuration,
         private ProjectPaths $paths,
-    ) {
-    }
+    ) {}
 
     public function create(): LoggerInterface
     {

@@ -14,8 +14,7 @@ final readonly class PhinxPlatformMigrationRunner implements PlatformMigrationRu
 {
     public function __construct(
         private string $basePath,
-    ) {
-    }
+    ) {}
 
     public function migrate(): void
     {

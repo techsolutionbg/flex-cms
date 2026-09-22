@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Flex\Container;
 
 use DI\ContainerBuilder;
+
+use function DI\create;
+use function DI\get;
+
 use Flex\Configuration\ConfigurationCache;
 use Flex\Configuration\ConfigurationRepository;
 use Flex\Configuration\ProjectPaths;
 use Flex\Container\Exception\ContainerException;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Psr\Container\ContainerInterface;
-
-use function DI\create;
-use function DI\get;
 
 final readonly class ContainerFactory
 {

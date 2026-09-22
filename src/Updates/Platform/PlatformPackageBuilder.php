@@ -20,14 +20,27 @@ final readonly class PlatformPackageBuilder
         'resources/admin',
     ];
 
+    /** @var list<string> */
+    private const PUBLIC_ALLOWLIST = [
+        'public/.htaccess',
+        'public/index.php',
+        'public/assets',
+        'public/build',
+    ];
+
+    private const MAX_ARCHIVE_BYTES = 268_435_456;
+
     public function __construct(
         private string $basePath,
         private PlatformVersionRegistry $registry,
-    ) {
-    }
+    ) {}
 
     public function build(PlatformPackageBuildOptions $options): PlatformPackageBuildResult
     {
+        if (!is_file($this->basePath . '/public/build/admin/.vite/manifest.json')) {
+            throw new RuntimeException('Production admin assets are missing. Run the frontend production build first.');
+        }
+
         $current = $this->registry->current();
         $version = new PlatformVersion($options->version ?? $current->value);
         $compatibleFrom = $options->compatibleFrom ?? sprintf('>=%s <%d.0.0', $current->value, $this->major($current->value) + 1);
@@ -82,6 +95,10 @@ final readonly class PlatformPackageBuilder
             @chmod($directory, 0775);
             $this->createArchive($outputPath, $manifestPath, $payload, array_keys($files));
             @chmod($outputPath, 0664);
+            $archiveSize = filesize($outputPath);
+            if ($archiveSize === false || $archiveSize > self::MAX_ARCHIVE_BYTES) {
+                throw new RuntimeException('The release package exceeds the 256 MB size limit.');
+            }
             $checksum = hash_file('sha256', $outputPath);
             if ($checksum === false) {
                 throw new RuntimeException('The release package checksum cannot be calculated.');
@@ -163,6 +180,16 @@ final readonly class PlatformPackageBuilder
             if ($relative === $excluded || str_starts_with($relative, $excluded . '/')) {
                 return true;
             }
+        }
+
+        if (str_starts_with($relative, 'public/')) {
+            foreach (self::PUBLIC_ALLOWLIST as $allowed) {
+                if ($relative === $allowed || str_starts_with($relative, $allowed . '/')) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         return false;

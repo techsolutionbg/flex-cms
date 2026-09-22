@@ -11,6 +11,5 @@ final readonly class PlatformInstallOptions
         public bool $allowDowngrade = false,
         public bool $dryRun = false,
         public bool $requireChecksum = true,
-    ) {
-    }
+    ) {}
 }

@@ -12,6 +12,5 @@ final readonly class PlatformInstallResult
         public string $packageChecksum,
         public ?string $backupPath,
         public bool $dryRun,
-    ) {
-    }
+    ) {}
 }

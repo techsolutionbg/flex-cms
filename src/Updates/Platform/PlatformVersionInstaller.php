@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Flex\Updates\Platform;
 
 use Composer\Semver\Semver;
-use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
-use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
 use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
+use Flex\Contracts\Updates\PlatformHealthCheckerInterface;
+use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 use Flex\Updates\Exception\PlatformUpdateException;
