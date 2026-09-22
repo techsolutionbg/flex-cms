@@ -12,7 +12,7 @@ final readonly class ViteAssetManager
 
     public function tags(): string
     {
-        $devServer = rtrim((string) ($_ENV['VITE_DEV_SERVER_URL'] ?? ''), '/');
+        $devServer = rtrim((string) ($_ENV['VITE_DEV_SERVER_URL'] ?: 'http://localhost:5173'), '/');
         if (($_ENV['APP_ENV'] ?? 'production') === 'local' && $devServer !== '') {
             $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 

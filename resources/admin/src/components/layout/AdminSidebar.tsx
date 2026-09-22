@@ -1,10 +1,16 @@
 import { Gauge, PanelLeft, RefreshCw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
+import { cn } from "@/lib/utils"
 import type { AdminBootstrap } from "@/types"
 
 const MIN_WIDTH = 180
 const MAX_WIDTH = 420
+const MOBILE_QUERY = "(max-width: 48rem)"
+
+function matchesMobileQuery(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches
+}
 
 export function AdminSidebar({
   page,
@@ -24,14 +30,37 @@ export function AdminSidebar({
     () => localStorage.getItem("flexcms.admin.sidebarCollapsed") === "true"
   )
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(matchesMobileQuery)
   const dragging = useRef(false)
 
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-width", `${width}px`)
   }, [width])
 
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const media = window.matchMedia(MOBILE_QUERY)
+    const sync = () => setIsMobile(media.matches)
+    sync()
+    media.addEventListener("change", sync)
+    window.addEventListener("resize", sync)
+    return () => {
+      media.removeEventListener("change", sync)
+      window.removeEventListener("resize", sync)
+    }
+  }, [])
+
+  useEffect(() => {
+    document.body.classList.add("sidebar-enhanced")
+    document.body.classList.toggle("sidebar-collapsed", !isMobile && collapsed)
+    document.body.classList.toggle("sidebar-mobile-open", isMobile && mobileOpen)
+    return () => {
+      document.body.classList.remove("sidebar-enhanced", "sidebar-collapsed", "sidebar-mobile-open")
+    }
+  }, [collapsed, isMobile, mobileOpen])
+
   function toggle(): void {
-    if (window.matchMedia("(max-width: 48rem)").matches) {
+    if (isMobile) {
       setMobileOpen((value) => !value)
       return
     }
@@ -76,7 +105,7 @@ export function AdminSidebar({
     persist(width)
   }
 
-  const expanded = !collapsed || mobileOpen
+  const expanded = isMobile ? mobileOpen : !collapsed
   const shellClass = [
     collapsed ? "sidebar-collapsed" : "",
     mobileOpen ? "sidebar-mobile-open" : "",
@@ -124,22 +153,44 @@ export function AdminSidebar({
           />
         </div>
         <nav aria-label="Административна навигация">
-          <a
-            className={`sidebar-link${page === "dashboard" ? "is-active" : ""}`}
-            href="/admin"
-            aria-current={page === "dashboard" ? "page" : undefined}
-          >
-            <Gauge className="sidebar-icon" aria-hidden="true" />
-            <span>Табло</span>
-          </a>
-          <a
-            className={`sidebar-link${page === "updates" ? "is-active" : ""}`}
-            href="/admin/updates"
-            aria-current={page === "updates" ? "page" : undefined}
-          >
-            <RefreshCw className="sidebar-icon" aria-hidden="true" />
-            <span>Обновявания</span>
-          </a>
+          <ul className="sidebar-nav-list">
+            {[
+              {
+                id: "dashboard" as const,
+                href: "/admin",
+                label: "Табло",
+                icon: Gauge,
+              },
+              {
+                id: "updates" as const,
+                href: "/admin/updates",
+                label: "Обновявания",
+                icon: RefreshCw,
+              },
+            ].map((item) => {
+              const active = page === item.id
+              const Icon = item.icon
+
+              return (
+                <li key={item.id}>
+                  <a
+                    className={cn("sidebar-link", active && "is-active")}
+                    data-active={active || undefined}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => {
+                      if (isMobile) setMobileOpen(false)
+                    }}
+                  >
+                    <span className="sidebar-icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <span className="sidebar-link-label">{item.label}</span>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
         </nav>
         <div className="sidebar-footer">
           <span>Flex CMS</span>

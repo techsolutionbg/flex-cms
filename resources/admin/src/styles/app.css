@@ -13,8 +13,14 @@
 
 .admin-content h1 {
   margin: 0 0 0.5rem;
-  font: 600 clamp(2rem, 4vw, 3.5rem)/1.05 var(--font-family-heading);
+  font: 600 24px/1.15 var(--font-family-heading);
   letter-spacing: -0.04em;
+}
+
+@media (width <= 48rem) {
+  .admin-content h1 {
+    font-size: 22px;
+  }
 }
 
 .lead,
@@ -86,17 +92,10 @@
   color: var(--info);
 }
 
-.pagination,
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.pagination {
-  flex-wrap: wrap;
-  color: var(--muted-foreground);
+@media (width <= 40rem) {
+  .content-card {
+    padding: 1rem;
+  }
 }
 
 .logout {

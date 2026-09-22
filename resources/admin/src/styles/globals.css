@@ -1,10 +1,10 @@
-@import url("tailwindcss");
-@import url("tw-animate-css");
-@import url("shadcn/tailwind.css");
-@import url("@fontsource-variable/geist");
-@import url("./tokens.css");
-@import url("./admin-shell.css");
-@import url("./app.css");
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "./tokens.css";
+@import "./admin-shell.css";
+@import "./app.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -7,9 +7,11 @@ import type { AdminBootstrap } from "@/types"
 export function AdminShell({
   bootstrap,
   children,
+  navigating = false,
 }: {
   bootstrap: AdminBootstrap
   children: ReactNode
+  navigating?: boolean
 }) {
   return (
     <div className="admin-shell">
@@ -21,7 +23,7 @@ export function AdminShell({
       />
       <div className="admin-main">
         <AdminTopbar csrfToken={bootstrap.csrfToken} />
-        <main className="admin-content">{children}</main>
+        <main className="admin-content" aria-busy={navigating}>{children}</main>
       </div>
     </div>
   )
