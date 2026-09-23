@@ -51,6 +51,8 @@ final readonly class PageService
         $slug = $this->slug($title);
         $content = is_string($attributes['content'] ?? null) ? $attributes['content'] : '';
         $status = is_string($attributes['status'] ?? null) ? $attributes['status'] : 'draft';
+        $rawParentId = $attributes['parent_id'] ?? null;
+        $parentId = $rawParentId === null || $rawParentId === '' ? null : filter_var($rawParentId, FILTER_VALIDATE_INT);
         $errors = [];
 
         if ($title === '' || mb_strlen($title) > 190) {
@@ -64,11 +66,37 @@ final readonly class PageService
         if (!in_array($status, self::STATUSES, true)) {
             $errors['status'][] = 'Изберете валиден статус.';
         }
+        if ($parentId !== null && (!is_int($parentId) || $parentId < 1 || $this->pages->find($parentId) === null)) {
+            $errors['parent_id'][] = 'Изберете съществуваща родителска страница.';
+            $parentId = null;
+        } elseif ($parentId !== null && $parentId === $exceptId) {
+            $errors['parent_id'][] = 'Страницата не може да бъде свой собствен родител.';
+            $parentId = null;
+        } elseif ($parentId !== null && $exceptId !== null && $this->isDescendantOf($parentId, $exceptId)) {
+            $errors['parent_id'][] = 'Не можете да изберете подчинена страница като родител.';
+            $parentId = null;
+        }
         if ($errors !== []) {
             throw new PageValidationFailed($errors);
         }
 
-        return compact('title', 'slug', 'content', 'status');
+        return ['title' => $title, 'slug' => $slug, 'content' => $content, 'status' => $status, 'parent_id' => $parentId];
+    }
+
+    private function isDescendantOf(int $candidateId, int $ancestorId): bool
+    {
+        $visited = [];
+        $current = $candidateId;
+        while ($current > 0 && !isset($visited[$current])) {
+            $visited[$current] = true;
+            $page = $this->pages->find($current);
+            if ($page === null) return false;
+            $parent = $page->getAttribute('parent_id');
+            if ($parent === null) return false;
+            if ((int) $parent === $ancestorId) return true;
+            $current = (int) $parent;
+        }
+        return false;
     }
 
     private function slug(string $value): string

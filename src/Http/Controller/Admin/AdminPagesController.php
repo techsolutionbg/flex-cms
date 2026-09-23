@@ -37,6 +37,56 @@ final readonly class AdminPagesController
             return $this->responses->text('Forbidden', 403);
         }
 
+        $pages = $this->pages->all()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all();
+        $pagesById = [];
+        $childrenByParent = [];
+        foreach ($pages as $page) {
+            $pagesById[$page['id']] = $page;
+        }
+        foreach ($pages as $page) {
+            $parentKey = is_int($page['parent_id'] ?? null) && isset($pagesById[$page['parent_id']])
+                ? (string) $page['parent_id']
+                : 'root';
+            $childrenByParent[$parentKey][] = $page['id'];
+        }
+
+        foreach ($childrenByParent as &$childIds) {
+            usort($childIds, static function (int $leftId, int $rightId) use ($pagesById): int {
+                return strnatcasecmp(
+                    mb_strtolower((string) $pagesById[$leftId]['title']),
+                    mb_strtolower((string) $pagesById[$rightId]['title']),
+                );
+            });
+        }
+        unset($childIds);
+
+        $orderedPages = [];
+        $visited = [];
+        $appendTree = function (string $parentKey, int $depth) use (&$appendTree, &$childrenByParent, &$pagesById, &$orderedPages, &$visited): void {
+            foreach ($childrenByParent[$parentKey] ?? [] as $pageId) {
+                if (isset($visited[$pageId])) {
+                    continue;
+                }
+                $visited[$pageId] = true;
+                $page = $pagesById[$pageId];
+                $page['depth'] = $depth;
+                $orderedPages[] = $page;
+                $appendTree((string) $pageId, $depth + 1);
+            }
+        };
+        $appendTree('root', 0);
+
+        foreach ($pagesById as $pageId => $page) {
+            if (isset($visited[$pageId])) {
+                continue;
+            }
+            $childrenByParent['root'][] = $pageId;
+        }
+        if (count($orderedPages) !== count($pagesById)) {
+            $appendTree('root', 0);
+        }
+        $pages = $orderedPages;
+
         $bootstrap = [
             'page' => 'pages',
             'csrfToken' => $this->csrf->token(),
@@ -44,7 +94,7 @@ final readonly class AdminPagesController
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
-            'pages' => $this->pages->all()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all(),
+            'pages' => $pages,
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

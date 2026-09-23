@@ -44,6 +44,7 @@ final readonly class AdminPagesFormController
         }
 
         $isEdit = $page !== null;
+        $pages = $this->hierarchicalPages($this->pages->all()->map(static fn(\Flex\Pages\Page $item): array => $item->toPublicArray())->all());
         $bootstrap = [
             'page' => $isEdit ? 'pages-edit' : 'pages-create',
             'csrfToken' => $this->csrf->token(),
@@ -52,6 +53,7 @@ final readonly class AdminPagesFormController
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
             'pageData' => $page?->toPublicArray(),
+            'pages' => $pages,
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
@@ -59,5 +61,45 @@ final readonly class AdminPagesFormController
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));
+    }
+
+    /** @param list<array<string, mixed>> $pages @return list<array<string, mixed>> */
+    private function hierarchicalPages(array $pages): array
+    {
+        $byId = [];
+        foreach ($pages as $page) {
+            $byId[(int) $page['id']] = $page;
+        }
+
+        $children = [];
+        foreach ($pages as $page) {
+            $parentId = $page['parent_id'] ?? null;
+            $parentKey = is_int($parentId) && isset($byId[$parentId]) ? (string) $parentId : 'root';
+            $children[$parentKey][] = (int) $page['id'];
+        }
+        foreach ($children as &$ids) {
+            usort($ids, static fn(int $left, int $right): int => strnatcasecmp(mb_strtolower((string) $byId[$left]['title']), mb_strtolower((string) $byId[$right]['title'])));
+        }
+        unset($ids);
+
+        $ordered = [];
+        $visited = [];
+        $append = function (string $parentKey, int $depth) use (&$append, &$children, &$byId, &$ordered, &$visited): void {
+            foreach ($children[$parentKey] ?? [] as $id) {
+                if (isset($visited[$id])) continue;
+                $visited[$id] = true;
+                $page = $byId[$id];
+                $page['depth'] = $depth;
+                $ordered[] = $page;
+                $append((string) $id, $depth + 1);
+            }
+        };
+        $append('root', 0);
+        foreach ($byId as $id => $page) {
+            if (!isset($visited[$id])) $children['root'][] = $id;
+        }
+        $append('root', 0);
+
+        return $ordered;
     }
 }

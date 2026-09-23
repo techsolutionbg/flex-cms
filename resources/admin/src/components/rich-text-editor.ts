@@ -10,7 +10,7 @@ type RichTextEditorState = {
 }
 
 export function richTextEditorMarkup(model: string, label: string): string {
-  return `<div class="rich-text-field"><label class="rich-text-label">${label}</label><div class="rich-text-editor" x-data="richTextEditor" x-modelable="value" x-model="${model}" x-init="init()"><div x-ref="editor"></div></div></div>`
+  return `<div class="rich-text-field"><label class="rich-text-label">${label}</label><div class="rich-text-editor" x-data="richTextEditor" x-modelable="value" x-model="${model}"><div x-ref="editor"></div></div></div>`
 }
 
 export function registerRichTextEditor(Alpine: typeof import("alpinejs").default): void {
@@ -23,11 +23,17 @@ export function registerRichTextEditor(Alpine: typeof import("alpinejs").default
         placeholder: "Въведете съдържанието на страницата…",
         modules: {
           toolbar: [
+            // Заглавия
             [{ header: [1, 2, 3, false] }],
+            // Форматиране на текста
             ["bold", "italic", "underline", "strike"],
+            // Списъци
             [{ list: "ordered" }, { list: "bullet" }],
+            // Подравняване
             [{ align: [] }],
+            // Блокови елементи и връзки
             ["blockquote", "code-block", "link"],
+            // Изчистване на форматирането
             ["clean"],
           ],
         },

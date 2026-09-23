@@ -10,13 +10,14 @@ final class Page extends Model
 {
     protected $table = 'pages';
 
-    protected $fillable = ['author_id', 'title', 'slug', 'content', 'status', 'published_at'];
+    protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at'];
 
     protected function casts(): array
     {
         return [
             'id' => 'integer',
             'author_id' => 'integer',
+            'parent_id' => 'integer',
             'published_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
@@ -29,6 +30,7 @@ final class Page extends Model
         return [
             'id' => (int) $this->getAttribute('id'),
             'author_id' => $this->getAttribute('author_id') === null ? null : (int) $this->getAttribute('author_id'),
+            'parent_id' => $this->getAttribute('parent_id') === null ? null : (int) $this->getAttribute('parent_id'),
             'title' => (string) $this->getAttribute('title'),
             'slug' => (string) $this->getAttribute('slug'),
             'content' => (string) ($this->getAttribute('content') ?? ''),
