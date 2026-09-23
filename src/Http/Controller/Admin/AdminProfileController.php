@@ -39,6 +39,8 @@ final readonly class AdminProfileController
             'page' => 'profile',
             'csrfToken' => $this->csrf->token(),
             'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
+            'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
+            'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
             'user' => $user->toArray(),
         ];

@@ -16,7 +16,7 @@ use Flex\Updates\Platform\PlatformVersionRegistry;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-final readonly class AdminPagesController
+final readonly class AdminPagesFormController
 {
     public function __construct(
         private AuthenticationInterface $authentication,
@@ -37,18 +37,25 @@ final readonly class AdminPagesController
             return $this->responses->text('Forbidden', 403);
         }
 
+        $id = isset($arguments['id']) ? filter_var($arguments['id'], FILTER_VALIDATE_INT) : false;
+        $page = $id !== false && $id > 0 ? $this->pages->find((int) $id) : null;
+        if ($id !== false && $id > 0 && $page === null) {
+            return $this->responses->text('Page not found', 404);
+        }
+
+        $isEdit = $page !== null;
         $bootstrap = [
-            'page' => 'pages',
+            'page' => $isEdit ? 'pages-edit' : 'pages-create',
             'csrfToken' => $this->csrf->token(),
             'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
-            'pages' => $this->pages->all()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all(),
+            'pageData' => $page?->toPublicArray(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
-            'title' => 'Страници',
+            'title' => $isEdit ? 'Редактиране на страница' : 'Създаване на страница',
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));

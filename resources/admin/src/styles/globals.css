@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@fontsource-variable/geist";
 @import "./tokens.css";
 @import "./admin-shell.css";
 @import "./app.css";

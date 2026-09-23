@@ -31,6 +31,17 @@ final readonly class AdminSidebarWidthController
         }
 
         $value = $this->input->all($request)['width'] ?? null;
+        $collapsedValue = $this->input->all($request)['collapsed'] ?? null;
+        if ($collapsedValue !== null) {
+            $collapsed = filter_var($collapsedValue, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+            if ($collapsed === null) {
+                return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Sidebar collapsed state must be boolean.'), 422);
+            }
+
+            return $this->responses->json([
+                'collapsed' => $this->settings->saveSidebarCollapsedForUser($user->id, $collapsed),
+            ]);
+        }
         if (!is_int($value) && !is_string($value)) {
             return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Sidebar width must be an integer.', ['fields' => ['width' => ['Must be an integer.']]]), 422);
         }

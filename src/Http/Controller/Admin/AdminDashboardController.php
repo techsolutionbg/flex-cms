@@ -27,7 +27,7 @@ final readonly class AdminDashboardController
             return $this->responses->text('Forbidden', 403);
         }
 
-        $bootstrap = ['page' => 'dashboard', 'csrfToken' => $this->csrf->token(), 'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id), 'version' => $this->versions->current()->value];
+        $bootstrap = ['page' => 'dashboard', 'csrfToken' => $this->csrf->token(), 'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id), 'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id), 'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id), 'version' => $this->versions->current()->value];
 
         return $this->responses->html($this->views->render('admin/app.twig', ['title' => 'Административен панел', 'vite_tags' => $this->assets->tags(), 'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)]));
     }

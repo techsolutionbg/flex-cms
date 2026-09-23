@@ -21,6 +21,7 @@
   "dependencies": {
     "alpinejs": "^3.17.4",
     "jquery": "^4.0.0",
+    "quill": "^2.0.3",
     "zod": "^4.6.5"
   },
   "devDependencies": {

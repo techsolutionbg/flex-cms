@@ -1,0 +1,6 @@
+{% macro input(label, name, type = 'text', value = '', placeholder = '', autocomplete = 'off', autofocus = false) %}
+    <label class="form-field">
+        <span>{{ label }}</span>
+        <input class="form-control" name="{{ name }}" type="{{ type }}" value="{{ value }}" placeholder="{{ placeholder }}" autocomplete="{{ autocomplete }}"{% if autofocus %} autofocus{% endif %} required>
+    </label>
+{% endmacro %}

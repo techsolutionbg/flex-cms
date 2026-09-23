@@ -22,7 +22,7 @@ final readonly class ViteAssetManager
             $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             return sprintf(
-                '<script type="module" src="%1$s/@vite/client"></script>\n<script type="module" src="%1$s/src/admin.ts"></script>',
+                "<script type=\"module\" src=\"%1\$s/@vite/client\"></script>\n<script type=\"module\" src=\"%1\$s/src/admin.ts\"></script>",
                 $url,
             );
         }

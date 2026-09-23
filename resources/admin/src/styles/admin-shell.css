@@ -38,6 +38,7 @@
 }
 
 .admin-main {
+  position: relative;
   width: auto;
   min-width: 0;
   flex: 1 1 auto;
@@ -48,6 +49,8 @@
 .admin-main > header {
   position: sticky;
   top: 0;
+  margin: 0;
+  align-self: stretch;
   z-index: 70;
   height: 4.125rem;
   min-height: 4.125rem;
@@ -57,6 +60,7 @@
   background: var(--card);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  gap: 0.75rem;
 }
 
 .admin-main > header .brand,
@@ -168,12 +172,10 @@
 }
 
 .sidebar-link.is-active {
-  border-color: color-mix(in oklch, var(--sidebar-primary), transparent 42%);
-  background: color-mix(in oklch, var(--sidebar-primary), var(--sidebar) 72%);
-  color: var(--sidebar-primary-foreground);
-  box-shadow:
-    inset 4px 0 var(--sidebar-primary),
-    0 4px 14px color-mix(in oklch, var(--sidebar-primary), transparent 88%);
+  border-color: transparent;
+  background: #f2f2ec;
+  color: oklch(24% 0.025 145deg);
+  box-shadow: 0 4px 14px oklch(10% 0.02 145deg / 8%);
 }
 
 .sidebar-link.is-active::after {
@@ -193,17 +195,26 @@
 
 .sidebar-icon {
   display: grid;
-  width: 1.375rem;
-  height: 1.375rem;
-  flex: 0 0 1.375rem;
+  width: 1.625rem;
+  height: 1.625rem;
+  flex: 0 0 1.625rem;
   place-items: center;
   color: currentcolor;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
-.sidebar-icon svg {
+.sidebar-toggle svg {
   display: block;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-width: 1.8;
 }
 
 .sidebar-link-label {
@@ -232,10 +243,8 @@
 }
 
 .sidebar-toggle {
-  position: fixed;
-  top: 0.9375rem;
-  left: max(0.875rem, calc(var(--sidebar-width) - 3.125rem));
-  z-index: 110;
+  position: relative;
+  z-index: 1;
   display: grid;
   width: 2.25rem;
   height: 2.25rem;
@@ -250,7 +259,6 @@
   cursor: pointer;
   font: inherit;
   transition:
-    left var(--sidebar-transition),
     background var(--motion-fast) ease,
     transform var(--motion-fast) ease;
 }
@@ -323,10 +331,6 @@
   margin-left: 0;
 }
 
-.sidebar-collapsed .sidebar-toggle {
-  left: 0.875rem;
-}
-
 .admin-main > main,
 .admin-main > .layout {
   width: 100%;
@@ -380,14 +384,6 @@
     box-shadow: var(--shadow-lg);
   }
 
-  .sidebar-toggle {
-    left: 0.875rem;
-  }
-
-  .sidebar-mobile-open .sidebar-toggle {
-    left: calc(var(--sidebar-mobile-width) - 3.125rem);
-  }
-
   .sidebar-resizer {
     display: none;
   }
@@ -405,8 +401,8 @@
   }
 
   .admin-sidebar .sidebar-icon {
-    width: 1.375rem;
-    flex: 0 0 1.375rem;
+    width: 1.625rem;
+    flex: 0 0 1.625rem;
   }
 }
 
@@ -415,7 +411,7 @@
     height: 3.625rem;
     min-height: 3.625rem;
     gap: 0.625rem;
-    padding: 0 1rem 0 3.875rem;
+    padding: 0 1rem;
   }
 
   .admin-main > header .brand,
@@ -423,6 +419,7 @@
   .admin-main > header .back {
     line-height: 1.1;
   }
+
 }
 
 @media (width <= 45rem) {

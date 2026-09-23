@@ -14,10 +14,11 @@
         <h1>Добре дошли.</h1>
         <p>Влезте, за да управлявате сайта.</p>
         {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+        {% import 'components/form-fields.twig' as fields %}
         <form method="post" action="/login" @submit="submitting = true">
             <input type="hidden" name="_token" value="{{ csrf_token }}">
-            <label>Имейл<input type="email" name="email" autocomplete="username" required autofocus></label>
-            <label>Парола<input type="password" name="password" autocomplete="current-password" required></label>
+            {{ fields.input('Имейл', 'email', 'email', '', '', 'username', true) }}
+            {{ fields.input('Парола', 'password', 'password', '', '', 'current-password') }}
             <button type="submit" :disabled="submitting" x-text="submitting ? 'Проверка…' : 'Вход →'">Вход →</button>
         </form>
     </main>
