@@ -21,9 +21,16 @@ use Flex\Console\Command\PlatformRecoverCommand;
 use Flex\Console\Command\PlatformRollbackCommand;
 use Flex\Console\Command\PlatformSignManifestCommand;
 use Flex\Console\Command\PlatformVersionCommand;
+use Flex\Console\Command\PluginActivateCommand;
+use Flex\Console\Command\PluginDeactivateCommand;
+use Flex\Console\Command\PluginInstallCommand;
+use Flex\Console\Command\PluginListCommand;
+use Flex\Console\Command\PluginUninstallCommand;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Database\DatabaseManager;
+use Flex\Extensions\PluginManager;
+use Flex\Extensions\PluginRegistry;
 use Flex\Updates\Platform\PlatformHistory;
 use Flex\Updates\Platform\PlatformPackageBuilder;
 use Flex\Updates\Platform\PlatformPackageInspector;
@@ -51,6 +58,8 @@ final class FlexConsoleApplication extends Application
         PlatformHistory $updateHistory,
         PlatformRollback $platformRollback,
         PlatformPackageBuilder $platformPackageBuilder,
+        PluginManager $pluginManager,
+        PluginRegistry $pluginRegistry,
     ) {
         parent::__construct('Flex CMS', $registry->current()->value);
 
@@ -69,6 +78,11 @@ final class FlexConsoleApplication extends Application
             new PlatformRollbackCommand($platformRollback),
             new PlatformSignManifestCommand(),
             new PlatformBuildCommand($platformPackageBuilder),
+            new PluginListCommand($pluginRegistry),
+            new PluginInstallCommand($pluginManager),
+            new PluginActivateCommand($pluginManager),
+            new PluginDeactivateCommand($pluginManager),
+            new PluginUninstallCommand($pluginManager),
         ]);
     }
 }

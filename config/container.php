@@ -8,6 +8,7 @@ use Flex\Providers\AuthServiceProvider;
 use Flex\Providers\CoreRouteServiceProvider;
 use Flex\Providers\CoreServiceProvider;
 use Flex\Providers\DatabaseServiceProvider;
+use Flex\Providers\ExtensionServiceProvider;
 use Flex\Providers\HttpServiceProvider;
 use Flex\Providers\UpdateServiceProvider;
 use Flex\Providers\UserRouteServiceProvider;
@@ -17,6 +18,7 @@ return [
     'providers' => [
         CoreServiceProvider::class,
         DatabaseServiceProvider::class,
+        ExtensionServiceProvider::class,
         HttpServiceProvider::class,
         AuthServiceProvider::class,
         UpdateServiceProvider::class,

@@ -7,7 +7,7 @@ namespace Flex\Providers;
 use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMiddleware};
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
-use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesRollbackController};
+use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesRollbackController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
@@ -24,6 +24,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $write = [CsrfMiddleware::class,...$auth];
         $r->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', $auth);
         $r->add('GET', '/admin/profile', AdminProfileController::class, 'admin.profile', $auth);
+        $r->add('GET', '/admin/plugins', AdminPluginsController::class, 'admin.plugins', $auth);
         $r->add('GET', '/admin/pages/create', AdminPagesFormController::class, 'admin.pages.create', $auth);
         $r->add('GET', '/admin/pages/{id:number}/edit', AdminPagesFormController::class, 'admin.pages.edit', $auth);
         $r->add('GET', '/admin/pages/{id:number}/settings', AdminPagesFormController::class, 'admin.pages.settings', $auth);
@@ -34,6 +35,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('POST', '/admin/updates/inspect', AdminUpdatesInspectController::class, 'admin.updates.inspect', $write);
         $r->add('POST', '/admin/updates/install', AdminUpdatesInstallController::class, 'admin.updates.install', $write);
         $r->add('POST', '/admin/updates/rollback', AdminUpdatesRollbackController::class, 'admin.updates.rollback', $write);
+        $r->add('POST', '/api/plugins/action', AdminPluginActionController::class, 'api.plugins.action', $write);
         $r->add('GET', '/api/pages', ListPagesController::class, 'api.pages.index', $auth);
         $r->add('POST', '/api/pages', CreatePageController::class, 'api.pages.create', $write);
         $r->add(['PATCH', 'PUT'], '/api/pages/{id:number}', UpdatePageController::class, 'api.pages.update', $write);
