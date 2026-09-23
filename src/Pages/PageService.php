@@ -71,6 +71,28 @@ final readonly class PageService
         $page->restore();
     }
 
+    /** @param array<string, mixed> $settings */
+    public function updateSettings(int $id, array $settings): Page
+    {
+        $page = $this->pages->find($id);
+        if ($page === null) throw new PageNotFound(sprintf('Page %d was not found.', $id));
+
+        $page->setAttribute('settings', [
+            'seo_title' => mb_substr(trim((string) ($settings['seo_title'] ?? '')), 0, 190),
+            'meta_description' => mb_substr(trim((string) ($settings['meta_description'] ?? '')), 0, 320),
+            'canonical_url' => mb_substr(trim((string) ($settings['canonical_url'] ?? '')), 0, 500),
+            'template' => in_array($settings['template'] ?? 'default', ['default', 'full_width', 'landing'], true) ? (string) $settings['template'] : 'default',
+            'menu_order' => max(0, (int) ($settings['menu_order'] ?? 0)),
+            'use_parent_slugs' => filter_var($settings['use_parent_slugs'] ?? false, FILTER_VALIDATE_BOOL),
+            'no_index' => filter_var($settings['no_index'] ?? false, FILTER_VALIDATE_BOOL),
+            'show_in_navigation' => filter_var($settings['show_in_navigation'] ?? true, FILTER_VALIDATE_BOOL),
+            'show_in_sitemap' => filter_var($settings['show_in_sitemap'] ?? true, FILTER_VALIDATE_BOOL),
+        ]);
+        $page->saveOrFail();
+
+        return $page;
+    }
+
     /** @param array<string, mixed> $attributes */
     private function validate(array $attributes, ?int $exceptId = null): array
     {

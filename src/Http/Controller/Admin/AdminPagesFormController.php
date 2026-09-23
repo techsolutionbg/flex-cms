@@ -44,9 +44,10 @@ final readonly class AdminPagesFormController
         }
 
         $isEdit = $page !== null;
+        $isSettings = str_ends_with($request->getUri()->getPath(), '/settings');
         $pages = $this->hierarchicalPages($this->pages->all()->map(static fn(\Flex\Pages\Page $item): array => $item->toPublicArray())->all());
         $bootstrap = [
-            'page' => $isEdit ? 'pages-edit' : 'pages-create',
+            'page' => $isSettings ? 'pages-settings' : ($isEdit ? 'pages-edit' : 'pages-create'),
             'csrfToken' => $this->csrf->token(),
             'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
@@ -57,7 +58,7 @@ final readonly class AdminPagesFormController
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
-            'title' => $isEdit ? 'Редактиране на страница' : 'Създаване на страница',
+            'title' => $isSettings ? 'Настройки на страница' : ($isEdit ? 'Редактиране на страница' : 'Създаване на страница'),
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));
