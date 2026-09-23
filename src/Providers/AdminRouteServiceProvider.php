@@ -8,7 +8,7 @@ use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMidd
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesRollbackController};
-use Flex\Http\Controller\Pages\{CreatePageController, ListPagesController, UpdatePageController};
+use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
 
@@ -36,5 +36,8 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/pages', ListPagesController::class, 'api.pages.index', $auth);
         $r->add('POST', '/api/pages', CreatePageController::class, 'api.pages.create', $write);
         $r->add(['PATCH', 'PUT'], '/api/pages/{id:number}', UpdatePageController::class, 'api.pages.update', $write);
+        $r->add('DELETE', '/api/pages/{id:number}', DeletePageController::class, 'api.pages.delete', $write);
+        $r->add('DELETE', '/api/pages/{id:number}/force', ForceDeletePageController::class, 'api.pages.force-delete', $write);
+        $r->add('POST', '/api/pages/{id:number}/restore', RestorePageController::class, 'api.pages.restore', $write);
     }
 }

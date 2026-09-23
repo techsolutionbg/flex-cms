@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Flex\Pages;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Page extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'pages';
 
     protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at'];
@@ -21,6 +24,7 @@ final class Page extends Model
             'published_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
+            'deleted_at' => 'immutable_datetime',
         ];
     }
 
@@ -38,6 +42,7 @@ final class Page extends Model
             'published_at' => $this->getAttribute('published_at')?->toIso8601String(),
             'created_at' => $this->getAttribute('created_at')?->toIso8601String(),
             'updated_at' => $this->getAttribute('updated_at')?->toIso8601String(),
+            'deleted_at' => $this->getAttribute('deleted_at')?->toIso8601String(),
         ];
     }
 }

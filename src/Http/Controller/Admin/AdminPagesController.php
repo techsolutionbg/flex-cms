@@ -95,6 +95,7 @@ final readonly class AdminPagesController
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
             'pages' => $pages,
+            'trashedPages' => $this->pages->trashed()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

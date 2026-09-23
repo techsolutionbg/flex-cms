@@ -17,9 +17,18 @@ final class PageRepository
         return $pages;
     }
 
-    public function find(int $id): ?Page
+    /** @return Collection<int, Page> */
+    public function trashed(): Collection
     {
-        $page = Page::query()->find($id);
+        /** @var Collection<int, Page> $pages */
+        $pages = Page::onlyTrashed()->orderByDesc('deleted_at')->get();
+
+        return $pages;
+    }
+
+    public function find(int $id, bool $withTrashed = false): ?Page
+    {
+        $page = ($withTrashed ? Page::withTrashed() : Page::query())->find($id);
 
         return $page instanceof Page ? $page : null;
     }

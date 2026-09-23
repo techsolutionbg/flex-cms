@@ -44,11 +44,39 @@ final readonly class PageService
         return $page;
     }
 
+    public function trash(int $id): void
+    {
+        $page = $this->pages->find($id);
+        if ($page === null) {
+            throw new PageNotFound(sprintf('Page %d was not found.', $id));
+        }
+        $page->delete();
+    }
+
+    public function forceDelete(int $id): void
+    {
+        $page = $this->pages->find($id, true);
+        if ($page === null || $page->deleted_at === null) {
+            throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
+        }
+        $page->forceDelete();
+    }
+
+    public function restore(int $id): void
+    {
+        $page = $this->pages->find($id, true);
+        if ($page === null || $page->deleted_at === null) {
+            throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
+        }
+        $page->restore();
+    }
+
     /** @param array<string, mixed> $attributes */
     private function validate(array $attributes, ?int $exceptId = null): array
     {
         $title = trim((string) ($attributes['title'] ?? ''));
-        $slug = $this->slug($title);
+        $requestedSlug = trim((string) ($attributes['slug'] ?? ''));
+        $slug = $this->slug($requestedSlug !== '' ? $requestedSlug : $title);
         $content = is_string($attributes['content'] ?? null) ? $attributes['content'] : '';
         $status = is_string($attributes['status'] ?? null) ? $attributes['status'] : 'draft';
         $rawParentId = $attributes['parent_id'] ?? null;
