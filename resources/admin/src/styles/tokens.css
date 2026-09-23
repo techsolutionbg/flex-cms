@@ -17,6 +17,8 @@
   --secondary-foreground: var(--foreground);
   --muted: oklch(94.5% 0.01 110deg);
   --muted-foreground: oklch(50% 0.025 145deg);
+  --editor-control-hover: oklch(87% 0.014 110deg);
+  --editor-control-foreground: var(--foreground);
   --accent: oklch(67.5% 0.205 35deg);
   --accent-foreground: oklch(99% 0.004 100deg);
   --destructive: oklch(56.% 0.21 27deg);
@@ -69,6 +71,8 @@
   --secondary-foreground: var(--foreground);
   --muted: oklch(28.5% 0.018 145deg);
   --muted-foreground: oklch(72% 0.018 130deg);
+  --editor-control-hover: oklch(25% 0.028 145deg);
+  --editor-control-foreground: var(--foreground);
   --accent: oklch(72% 0.19 38deg);
   --accent-foreground: oklch(18% 0.02 145deg);
   --destructive: oklch(69% 0.19 25deg);

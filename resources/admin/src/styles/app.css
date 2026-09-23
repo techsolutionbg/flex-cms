@@ -516,6 +516,31 @@ button:focus-visible {
   background: var(--muted);
 }
 
+:where(.rich-text-editor .ql-toolbar button:hover,
+.rich-text-editor .ql-toolbar button:focus-visible,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover,
+.rich-text-editor .ql-toolbar .ql-picker-label:focus-visible,
+.rich-text-editor .ql-toolbar .ql-picker-item:hover,
+.rich-text-editor .ql-toolbar .ql-picker-item:focus-visible) {
+  border-radius: calc(var(--radius-sm) * 0.75);
+  background: var(--editor-control-hover);
+  transition: background-color var(--motion-fast) ease;
+}
+
+:where(.rich-text-editor .ql-toolbar button:hover .ql-stroke,
+.rich-text-editor .ql-toolbar button:focus-visible .ql-stroke,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover .ql-stroke,
+.rich-text-editor .ql-toolbar .ql-picker-label:focus-visible .ql-stroke) {
+  stroke: var(--editor-control-foreground) !important;
+}
+
+:where(.rich-text-editor .ql-toolbar button:hover .ql-fill,
+.rich-text-editor .ql-toolbar button:focus-visible .ql-fill,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover .ql-fill,
+.rich-text-editor .ql-toolbar .ql-picker-label:focus-visible .ql-fill) {
+  fill: var(--editor-control-foreground) !important;
+}
+
 .rich-text-editor .ql-toolbar .ql-formats {
   display: inline-flex;
   align-items: center;
@@ -550,19 +575,131 @@ button:focus-visible {
 }
 
 .rich-text-editor .ql-snow .ql-stroke {
-  stroke: var(--muted-foreground);
+  stroke: var(--editor-control-foreground);
 }
 
 .rich-text-editor .ql-snow .ql-fill,
 .rich-text-editor .ql-snow .ql-picker {
-  fill: var(--muted-foreground);
-  color: var(--muted-foreground);
+  fill: var(--editor-control-foreground);
+  color: var(--editor-control-foreground);
+}
+
+:where(.rich-text-editor .ql-toolbar button,
+.rich-text-editor .ql-toolbar .ql-picker-label) {
+  color: var(--editor-control-foreground);
 }
 
 .rich-text-editor .ql-snow .ql-picker-options {
   z-index: 5;
   border-color: var(--input);
   background: var(--background);
+}
+
+.rich-text-editor .ql-editor .ql-font-arial,
+.rich-text-editor .ql-toolbar .ql-font-arial { font-family: Arial, sans-serif; }
+
+.rich-text-editor .ql-editor .ql-font-georgia,
+.rich-text-editor .ql-toolbar .ql-font-georgia { font-family: Georgia, serif; }
+
+.rich-text-editor .ql-editor .ql-font-roboto,
+.rich-text-editor .ql-toolbar .ql-font-roboto { font-family: Roboto, Arial, sans-serif; }
+
+.rich-text-editor .ql-editor .ql-font-inter,
+.rich-text-editor .ql-toolbar .ql-font-inter { font-family: Inter, Arial, sans-serif; }
+
+.rich-text-editor .ql-editor .ql-font-times-new-roman,
+.rich-text-editor .ql-toolbar .ql-font-times-new-roman { font-family: "Times New Roman", serif; }
+
+.rich-text-editor .ql-editor .ql-font-verdana,
+.rich-text-editor .ql-toolbar .ql-font-verdana { font-family: Verdana, sans-serif; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before { content: "Arial"; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before { content: "Georgia"; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="roboto"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="roboto"]::before { content: "Roboto"; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="inter"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="inter"]::before { content: "Inter"; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before { content: "Times New Roman"; }
+
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
+.rich-text-editor .ql-toolbar .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before { content: "Verdana"; }
+
+:where(.rich-text-editor .ql-toolbar button.ql-active,
+.rich-text-editor .ql-toolbar .ql-picker.ql-expanded .ql-picker-label,
+.rich-text-editor .ql-toolbar .ql-picker-item.ql-selected,
+.rich-text-editor .ql-toolbar .ql-picker-item:hover) {
+  background: var(--editor-control-hover);
+  color: var(--editor-control-foreground);
+}
+
+:where(.rich-text-editor .ql-toolbar button.ql-active .ql-stroke,
+.rich-text-editor .ql-toolbar .ql-picker.ql-expanded .ql-picker-label .ql-stroke) {
+  stroke: var(--editor-control-foreground) !important;
+}
+
+:where(.rich-text-editor .ql-toolbar button.ql-active .ql-fill,
+.rich-text-editor .ql-toolbar .ql-picker.ql-expanded .ql-picker-label .ql-fill) {
+  fill: var(--editor-control-foreground) !important;
+}
+
+:where(.rich-text-editor .ql-toolbar button,
+.rich-text-editor .ql-toolbar .ql-picker-label,
+.rich-text-editor .ql-toolbar .ql-picker-item) {
+  transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+
+:where(.rich-text-editor .ql-toolbar button:hover,
+.rich-text-editor .ql-toolbar button:focus-visible,
+.rich-text-editor .ql-toolbar button.ql-active,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover,
+.rich-text-editor .ql-toolbar .ql-picker-label:focus-visible,
+.rich-text-editor .ql-toolbar .ql-picker.ql-expanded .ql-picker-label,
+.rich-text-editor .ql-toolbar .ql-picker-item:hover,
+.rich-text-editor .ql-toolbar .ql-picker-item.ql-selected) {
+  background: var(--editor-control-hover) !important;
+  color: var(--editor-control-foreground) !important;
+}
+
+.rich-text-context-menu {
+  position: fixed;
+  z-index: 180;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--popover);
+  box-shadow: var(--shadow-md);
+}
+
+:where(.rich-text-context-menu button) {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  border-radius: calc(var(--radius-sm) * 0.75);
+  background: transparent;
+  color: var(--popover-foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+:where(.rich-text-context-menu button:hover,
+.rich-text-context-menu button:focus-visible) {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+:where(.rich-text-context-menu button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .field-error {
