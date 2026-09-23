@@ -21,6 +21,7 @@ final class CreatePluginsTable extends AbstractMigration
             ->addColumn('path', 'string', ['limit' => 500])
             ->addColumn('status', 'string', ['limit' => 30, 'default' => 'inactive'])
             ->addColumn('manifest', 'text', ['null' => true])
+            ->addColumn('last_error', 'text', ['null' => true])
             ->addColumn('installed_at', 'datetime', ['null' => true])
             ->addColumn('activated_at', 'datetime', ['null' => true])
             ->addColumn('created_at', 'datetime')

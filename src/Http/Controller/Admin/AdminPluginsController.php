@@ -54,6 +54,7 @@ final readonly class AdminPluginsController
                 'path' => $entry['path'],
                 'status' => 'discovered',
                 'manifest' => $entry['manifest']->toArray(),
+                'last_error' => null,
                 'installed_at' => null,
                 'activated_at' => null,
             ];

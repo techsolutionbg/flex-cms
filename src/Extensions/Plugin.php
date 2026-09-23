@@ -14,7 +14,7 @@ final class Plugin extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'name', 'version', 'description', 'entrypoint', 'path', 'status', 'manifest', 'installed_at', 'activated_at'];
+    protected $fillable = ['id', 'name', 'version', 'description', 'entrypoint', 'path', 'status', 'manifest', 'last_error', 'installed_at', 'activated_at'];
 
     protected function casts(): array
     {
@@ -39,6 +39,7 @@ final class Plugin extends Model
             'path' => (string) $this->getAttribute('path'),
             'status' => (string) $this->getAttribute('status'),
             'manifest' => is_array($this->getAttribute('manifest')) ? $this->getAttribute('manifest') : [],
+            'last_error' => $this->getAttribute('last_error'),
             'installed_at' => $this->getAttribute('installed_at')?->toIso8601String(),
             'activated_at' => $this->getAttribute('activated_at')?->toIso8601String(),
         ];

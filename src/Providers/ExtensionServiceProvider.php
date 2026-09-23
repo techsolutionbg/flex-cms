@@ -8,6 +8,7 @@ use function DI\autowire;
 
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Extensions\PluginManager;
+use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Psr\Container\ContainerInterface;
 
@@ -17,6 +18,7 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
     {
         return [
             PluginRegistry::class => autowire(),
+            PluginEntrypointLoader::class => autowire(),
             PluginManager::class => autowire(),
         ];
     }
