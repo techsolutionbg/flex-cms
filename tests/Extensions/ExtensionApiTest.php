@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Flex\Tests\Extensions;
 
 use Flex\Extensions\ExtensionApi;
+use Flex\Extension\V1\EventNames;
+use Flex\Extension\V1\PageEvent;
 use PHPUnit\Framework\TestCase;
 
 final class ExtensionApiTest extends TestCase
@@ -22,5 +24,18 @@ final class ExtensionApiTest extends TestCase
         self::assertSame('HOME [bg]', $api->applyFilters('page.title', 'Home', ['locale' => 'bg']));
         $api->doAction('page.saved', ['id' => 42]);
         self::assertSame([42], $actions);
+    }
+
+    public function testEventsRunByPriorityWithTypedPublicPayload(): void
+    {
+        $api = new ExtensionApi();
+        $received = [];
+        $api->listen(EventNames::PAGE_CREATED, static function (PageEvent $event) use (&$received): void {
+            $received[] = $event->payload()['page']['id'];
+        }, 20);
+
+        $api->dispatch(new PageEvent(EventNames::PAGE_CREATED, ['id' => 7, 'title' => 'Home']));
+
+        self::assertSame([7], $received);
     }
 }

@@ -9,4 +9,8 @@ exposed through this API. An optional `UpdatablePluginInterface` can run plugin-
 migrations when a discovered package has a newer version than the installed one.
 The `ExtensionApiInterface` provides namespaced actions and filters. Plugins can register
 callbacks during their lifecycle and use `applyFilters()` or `doAction()` without depending
-on internal framework services.
+on internal framework services. Active plugins that implement `BootablePluginInterface` are
+booted once per application request before routing starts.
+Core events are exposed through `EventNames` and immutable event objects such as
+`PluginEvent` and `PageEvent`. Listeners are ordered by priority and receive only the
+validated public payload.

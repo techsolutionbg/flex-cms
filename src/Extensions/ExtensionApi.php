@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Flex\Extensions;
 
 use Flex\Extension\V1\ExtensionApiInterface;
+use Flex\Extension\V1\ExtensionEventInterface;
 
 final class ExtensionApi implements ExtensionApiInterface
 {
@@ -13,6 +14,9 @@ final class ExtensionApi implements ExtensionApiInterface
 
     /** @var array<string, list<array{priority: int, callback: callable}>> */
     private array $actions = [];
+
+    /** @var array<string, list<array{priority: int, callback: callable}>> */
+    private array $listeners = [];
 
     public function addFilter(string $name, callable $callback, int $priority = 10): void
     {
@@ -39,6 +43,19 @@ final class ExtensionApi implements ExtensionApiInterface
     {
         foreach ($this->actions[$name] ?? [] as $action) {
             ($action['callback'])($context);
+        }
+    }
+
+    public function listen(string $eventName, callable $listener, int $priority = 10): void
+    {
+        $this->listeners[$eventName][] = ['priority' => $priority, 'callback' => $listener];
+        $this->sort($this->listeners[$eventName]);
+    }
+
+    public function dispatch(ExtensionEventInterface $event): void
+    {
+        foreach ($this->listeners[$event->name()] ?? [] as $listener) {
+            ($listener['callback'])($event);
         }
     }
 

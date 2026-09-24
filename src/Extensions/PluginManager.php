@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Flex\Extensions;
 
 use Flex\Extension\V1\ExtensionApiInterface;
+use Flex\Extension\V1\EventNames;
+use Flex\Extension\V1\PluginEvent;
 use Flex\Extension\V1\PluginContext;
 use Flex\Extension\V1\UpdatablePluginInterface;
 use Flex\Extension\V1\UninstallablePluginInterface;
@@ -68,6 +70,14 @@ final readonly class PluginManager
             throw new PluginLifecycleException(sprintf('Installing plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
         }
 
+        $this->extensionApi->dispatch(new PluginEvent(
+            $isUpdate ? EventNames::PLUGIN_UPDATED : EventNames::PLUGIN_INSTALLED,
+            $manifest->id,
+            $manifest->version,
+            $entry['path'],
+            $isUpdate ? $fromVersion : '',
+        ));
+
         return $plugin;
     }
 
@@ -92,6 +102,7 @@ final readonly class PluginManager
             'last_error' => null,
         ]);
         $plugin->saveOrFail();
+        $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_ACTIVATED, $manifest->id, $manifest->version, $path));
 
         return $plugin;
     }
@@ -117,6 +128,7 @@ final readonly class PluginManager
             'last_error' => null,
         ]);
         $plugin->saveOrFail();
+        $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_DEACTIVATED, $manifest->id, $manifest->version, $path));
 
         return $plugin;
     }
@@ -145,8 +157,11 @@ final readonly class PluginManager
             throw new \RuntimeException(sprintf('Plugin "%s" has an unsafe installation path.', $id));
         }
 
+        $pluginId = (string) $plugin->getAttribute('id');
+        $pluginVersion = (string) $plugin->getAttribute('version');
         $plugin->delete();
         $this->deleteDirectory($path);
+        $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_UNINSTALLED, $pluginId, $pluginVersion, $path));
     }
 
     /** @return array{manifest: PluginManifest, path: string} */

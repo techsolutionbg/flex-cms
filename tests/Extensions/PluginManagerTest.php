@@ -11,6 +11,7 @@ use Flex\Extensions\PluginManager;
 use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\ExtensionApi;
+use Flex\Extensions\PluginRuntime;
 use PHPUnit\Framework\TestCase;
 
 final class PluginManagerTest extends TestCase
@@ -18,6 +19,7 @@ final class PluginManagerTest extends TestCase
     private string $directory;
     private DatabaseManager $database;
     private PluginManager $manager;
+    private PluginRuntime $runtime;
 
     protected function setUp(): void
     {
@@ -33,7 +35,8 @@ use Flex\Extension\V1\PluginContext;
 use Flex\Extension\V1\PluginInterface;
 use Flex\Extension\V1\UninstallablePluginInterface;
 use Flex\Extension\V1\UpdatablePluginInterface;
-final class Plugin implements PluginInterface, UninstallablePluginInterface, UpdatablePluginInterface
+use Flex\Extension\V1\BootablePluginInterface;
+final class Plugin implements PluginInterface, UninstallablePluginInterface, UpdatablePluginInterface, BootablePluginInterface
 {
     public static array $events = [];
 
@@ -42,6 +45,7 @@ final class Plugin implements PluginInterface, UninstallablePluginInterface, Upd
     public function deactivate(PluginContext $context): void { self::$events[] = 'deactivate'; }
     public function uninstall(PluginContext $context): void { self::$events[] = 'uninstall'; }
     public function update(PluginContext $context, string $fromVersion): void { self::$events[] = 'update:' . $fromVersion; }
+    public function boot(PluginContext $context): void { self::$events[] = 'boot'; }
 }
 PHP);
         file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
@@ -74,7 +78,10 @@ PHP);
         });
 
         $paths = new ProjectPaths($this->directory, new ConfigurationRepository(['paths' => ['plugins' => 'plugins']]));
-        $this->manager = new PluginManager(new PluginRegistry($paths), new PluginEntrypointLoader(), new ExtensionApi());
+        $registry = new PluginRegistry($paths);
+        $api = new ExtensionApi();
+        $this->manager = new PluginManager($registry, new PluginEntrypointLoader(), $api);
+        $this->runtime = new PluginRuntime($registry, new PluginEntrypointLoader(), $api);
     }
 
     protected function tearDown(): void
@@ -98,10 +105,13 @@ PHP);
         self::assertNotNull($plugin->getAttribute('activated_at'));
         self::assertSame(['install', 'activate'], \Flex\Tests\PluginLifecycle\Plugin::$events);
 
+        $this->runtime->bootActive();
+        self::assertSame(['install', 'activate', 'boot'], \Flex\Tests\PluginLifecycle\Plugin::$events);
+
         $plugin = $this->manager->deactivate('acme/forms');
         self::assertSame(PluginManager::STATUS_INACTIVE, $plugin->getAttribute('status'));
         self::assertNull($plugin->getAttribute('activated_at'));
-        self::assertSame(['install', 'activate', 'deactivate'], \Flex\Tests\PluginLifecycle\Plugin::$events);
+        self::assertSame(['install', 'activate', 'boot', 'deactivate'], \Flex\Tests\PluginLifecycle\Plugin::$events);
 
         file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
             'id' => 'acme/forms',
@@ -112,10 +122,10 @@ PHP);
         ], JSON_THROW_ON_ERROR));
         $plugin = $this->manager->install('acme/forms');
         self::assertSame('1.1.0', $plugin->getAttribute('version'));
-        self::assertSame(['install', 'activate', 'deactivate', 'update:1.0.0'], \Flex\Tests\PluginLifecycle\Plugin::$events);
+        self::assertSame(['install', 'activate', 'boot', 'deactivate', 'update:1.0.0'], \Flex\Tests\PluginLifecycle\Plugin::$events);
 
         $this->manager->uninstall('acme/forms');
-        self::assertSame(['install', 'activate', 'deactivate', 'update:1.0.0', 'uninstall'], \Flex\Tests\PluginLifecycle\Plugin::$events);
+        self::assertSame(['install', 'activate', 'boot', 'deactivate', 'update:1.0.0', 'uninstall'], \Flex\Tests\PluginLifecycle\Plugin::$events);
         self::assertFileDoesNotExist($this->directory . '/plugins/acme/forms');
     }
 

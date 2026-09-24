@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Flex\Pages;
 
+use Flex\Extension\V1\EventNames;
+use Flex\Extension\V1\ExtensionApiInterface;
+use Flex\Extension\V1\PageEvent;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
 
@@ -11,7 +14,10 @@ final readonly class PageService
 {
     private const STATUSES = ['draft', 'published'];
 
-    public function __construct(private PageRepository $pages) {}
+    public function __construct(
+        private PageRepository $pages,
+        private ExtensionApiInterface $extensionApi,
+    ) {}
 
     /** @param array<string, mixed> $attributes */
     public function create(array $attributes, int $authorId): Page
@@ -20,7 +26,10 @@ final readonly class PageService
         $data['author_id'] = $authorId;
         $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable() : null;
 
-        return $this->pages->create($data);
+        $page = $this->pages->create($data);
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_CREATED, $page->toPublicArray()));
+
+        return $page;
     }
 
     /** @param array<string, mixed> $attributes */
@@ -40,6 +49,7 @@ final readonly class PageService
             $page->setAttribute('published_at', null);
         }
         $page->saveOrFail();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray()));
 
         return $page;
     }
@@ -51,6 +61,7 @@ final readonly class PageService
             throw new PageNotFound(sprintf('Page %d was not found.', $id));
         }
         $page->delete();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_TRASHED, $page->toPublicArray()));
     }
 
     public function forceDelete(int $id): void
@@ -60,6 +71,7 @@ final readonly class PageService
             throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
         }
         $page->forceDelete();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_DELETED, $page->toPublicArray()));
     }
 
     public function restore(int $id): void
@@ -69,6 +81,7 @@ final readonly class PageService
             throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
         }
         $page->restore();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_RESTORED, $page->toPublicArray()));
     }
 
     /** @param array<string, mixed> $settings */
@@ -89,6 +102,7 @@ final readonly class PageService
             'show_in_sitemap' => filter_var($settings['show_in_sitemap'] ?? true, FILTER_VALIDATE_BOOL),
         ]);
         $page->saveOrFail();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray()));
 
         return $page;
     }

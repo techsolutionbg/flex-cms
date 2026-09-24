@@ -17,4 +17,9 @@ interface ExtensionApiInterface
 
     /** @param array<string, mixed> $context */
     public function doAction(string $name, array $context = []): void;
+
+    /** @param callable(ExtensionEventInterface): void $listener */
+    public function listen(string $eventName, callable $listener, int $priority = 10): void;
+
+    public function dispatch(ExtensionEventInterface $event): void;
 }
