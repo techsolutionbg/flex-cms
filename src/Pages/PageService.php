@@ -114,6 +114,7 @@ final readonly class PageService
         $requestedSlug = trim((string) ($attributes['slug'] ?? ''));
         $slug = $this->slug($requestedSlug !== '' ? $requestedSlug : $title);
         $content = is_string($attributes['content'] ?? null) ? $attributes['content'] : '';
+        $blocks = $this->blocks($attributes['blocks'] ?? []);
         $status = is_string($attributes['status'] ?? null) ? $attributes['status'] : 'draft';
         $rawParentId = $attributes['parent_id'] ?? null;
         $parentId = $rawParentId === null || $rawParentId === '' ? null : filter_var($rawParentId, FILTER_VALIDATE_INT);
@@ -144,7 +145,29 @@ final readonly class PageService
             throw new PageValidationFailed($errors);
         }
 
-        return ['title' => $title, 'slug' => $slug, 'content' => $content, 'status' => $status, 'parent_id' => $parentId];
+        return ['title' => $title, 'slug' => $slug, 'content' => $content, 'blocks' => $blocks, 'status' => $status, 'parent_id' => $parentId];
+    }
+
+    /** @return list<array{type: string, data: array<string, mixed>}> */
+    private function blocks(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $blocks = [];
+        foreach ($value as $block) {
+            if (!is_array($block) || !is_string($block['type'] ?? null) || !is_array($block['data'] ?? null)) {
+                continue;
+            }
+            $type = trim($block['type']);
+            if (!in_array($type, ['paragraph', 'heading', 'image', 'button'], true)) {
+                continue;
+            }
+            $blocks[] = ['type' => $type, 'data' => $block['data']];
+        }
+
+        return array_values(array_slice($blocks, 0, 100));
     }
 
     private function isDescendantOf(int $candidateId, int $ancestorId): bool

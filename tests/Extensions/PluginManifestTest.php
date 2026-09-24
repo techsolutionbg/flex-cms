@@ -57,4 +57,32 @@ final class PluginManifestTest extends TestCase
             'autoload' => ['Acme\\Forms\\' => '../src'],
         ]);
     }
+
+    public function testItParsesFrontendAssets(): void
+    {
+        $manifest = PluginManifest::fromArray([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Acme\\Forms\\Plugin',
+            'frontend' => ['scripts' => ['assets/forms.js'], 'styles' => ['assets/forms.css']],
+        ]);
+
+        self::assertSame(['assets/forms.js'], $manifest->frontend['scripts'] ?? []);
+        self::assertSame(['assets/forms.css'], $manifest->frontend['styles'] ?? []);
+    }
+
+    public function testItRejectsUnsafeFrontendAssets(): void
+    {
+        $this->expectException(InvalidPluginManifest::class);
+        $this->expectExceptionMessage('unsafe asset path');
+
+        PluginManifest::fromArray([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Acme\\Forms\\Plugin',
+            'frontend' => ['scripts' => ['../secret.js']],
+        ]);
+    }
 }

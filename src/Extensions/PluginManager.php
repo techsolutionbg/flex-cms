@@ -199,7 +199,7 @@ final readonly class PluginManager
 
     private function context(PluginManifest $manifest, string $path): PluginContext
     {
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), $this->extensionApi);
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), $this->extensionApi, null, $manifest->permissions);
     }
 
     private function recordFailure(Plugin $plugin, \Throwable $exception): void

@@ -1,6 +1,5 @@
 {
-  "entry": ["src/admin.ts", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests/browser/**/*.ts"],
   "project": ["src/**/*.ts", "tests/browser/**/*.ts", "*.config.ts"],
   "ignore": ["src/**/*.d.ts"],
-  "ignoreDependencies": ["tailwindcss", "tw-animate-css", "@fontsource-variable/geist"]
+  "ignoreDependencies": ["tailwindcss", "tw-animate-css"]
 }

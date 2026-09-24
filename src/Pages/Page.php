@@ -13,7 +13,7 @@ final class Page extends Model
 
     protected $table = 'pages';
 
-    protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at', 'settings'];
+    protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at', 'settings', 'blocks'];
 
     protected function casts(): array
     {
@@ -26,6 +26,7 @@ final class Page extends Model
             'updated_at' => 'immutable_datetime',
             'deleted_at' => 'immutable_datetime',
             'settings' => 'array',
+            'blocks' => 'array',
         ];
     }
 
@@ -45,6 +46,7 @@ final class Page extends Model
             'updated_at' => $this->getAttribute('updated_at')?->toIso8601String(),
             'deleted_at' => $this->getAttribute('deleted_at')?->toIso8601String(),
             'settings' => is_array($this->getAttribute('settings')) ? $this->getAttribute('settings') : [],
+            'blocks' => is_array($this->getAttribute('blocks')) ? $this->getAttribute('blocks') : [],
         ];
     }
 }

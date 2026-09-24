@@ -1,4 +1,4 @@
-export type DataTableColumn = {
+type DataTableColumn = {
   key: string
   label: string
   sortable?: boolean

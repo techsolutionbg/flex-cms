@@ -43,7 +43,7 @@ final class HttpServiceProvider implements ServiceProviderInterface
             ServerRequestCreator::class => autowire(),
             ResponseFactoryInterface::class => autowire(ResponseFactory::class),
             ViewRendererInterface::class => create(TwigViewRenderer::class)->constructor(get('base_path')),
-            ViteAssetManager::class => create()->constructor(get('base_path')),
+            ViteAssetManager::class => create()->constructor(get('base_path'), get(\Flex\Extensions\FrontendExtensionAssets::class)),
             RouteRegistry::class => create(),
             RouteRegistryInterface::class => get(RouteRegistry::class),
             RouterFactory::class => autowire(),

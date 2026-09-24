@@ -46,7 +46,7 @@ export function richTextEditorMarkup(model: string, label: string): string {
 export function registerRichTextEditor(Alpine: typeof import("alpinejs").default): void {
   const Font = Quill.import("formats/font") as { whitelist?: string[] }
   Font.whitelist = ["sans-serif", "serif", "monospace", "arial", "georgia", "roboto", "inter", "times-new-roman", "verdana"]
-  Quill.register(Font, true)
+  Quill.register("formats/font", Font, true)
 
   Alpine.data("richTextEditor", () => ({
     value: "",

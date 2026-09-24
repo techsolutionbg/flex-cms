@@ -12,6 +12,7 @@ final readonly class PluginManifest
      * @param array<string, string> $autoload
      * @param list<string> $permissions
      * @param array<string, string> $dependencies
+     * @param array{scripts?: list<string>, styles?: list<string>} $frontend
      * @param array<string, mixed> $metadata
      */
     public function __construct(
@@ -24,6 +25,7 @@ final readonly class PluginManifest
         public array $autoload = [],
         public array $permissions = [],
         public array $dependencies = [],
+        public array $frontend = [],
         public array $metadata = [],
     ) {}
 
@@ -52,6 +54,7 @@ final readonly class PluginManifest
         if (!is_array($metadata)) {
             throw new InvalidPluginManifest('Manifest field "metadata" must be an object.');
         }
+        $frontend = self::frontend($data['frontend'] ?? []);
 
         return new self(
             id: $id,
@@ -63,6 +66,7 @@ final readonly class PluginManifest
             autoload: $autoload,
             permissions: $permissions,
             dependencies: $dependencies,
+            frontend: $frontend,
             metadata: $metadata,
         );
     }
@@ -99,6 +103,7 @@ final readonly class PluginManifest
             'autoload' => $this->autoload,
             'permissions' => $this->permissions,
             'dependencies' => $this->dependencies,
+            'frontend' => $this->frontend,
             'metadata' => $this->metadata,
         ];
     }
@@ -186,6 +191,30 @@ final readonly class PluginManifest
 
         /** @var list<string> $result */
         $result = array_values(array_unique(array_map('trim', $value)));
+
+        return $result;
+    }
+
+    /** @return array{scripts: list<string>, styles: list<string>} */
+    private static function frontend(mixed $value): array
+    {
+        if (!is_array($value)) {
+            throw new InvalidPluginManifest('Manifest field "frontend" must be an object.');
+        }
+
+        $result = ['scripts' => [], 'styles' => []];
+        foreach (['scripts', 'styles'] as $type) {
+            $assets = $value[$type] ?? [];
+            if (!is_array($assets)) {
+                throw new InvalidPluginManifest(sprintf('Manifest field "frontend.%s" must be an array of paths.', $type));
+            }
+            foreach ($assets as $asset) {
+                if (!is_string($asset) || $asset === '' || str_starts_with($asset, '/') || str_contains($asset, '..') || preg_match('/\A[A-Za-z0-9_\/.\-]+\z/D', $asset) !== 1) {
+                    throw new InvalidPluginManifest(sprintf('Manifest field "frontend.%s" contains an unsafe asset path.', $type));
+                }
+                $result[$type][] = $asset;
+            }
+        }
 
         return $result;
     }

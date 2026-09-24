@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Flex\Tests\Http\Routing;
 
 use Flex\Http\Routing\RouteRegistry;
+use Flex\Extensions\PluginRouteRegistrar;
 use PHPUnit\Framework\TestCase;
 
 final class RouteRegistryTest extends TestCase
@@ -36,5 +37,30 @@ final class RouteRegistryTest extends TestCase
         $registry->freeze();
         $this->expectException(\LogicException::class);
         $registry->post('/late', static fn() => null);
+    }
+
+    public function testPluginRoutesAreNamespaced(): void
+    {
+        $registry = new RouteRegistry();
+        $registrar = new PluginRouteRegistrar($registry, 'acme/forms', ['routes.public']);
+
+        $registrar->get('/health', static fn() => null, 'health');
+
+        self::assertSame('/plugins/acme/forms/health', $registry->all()[0]->path);
+        self::assertSame('plugin.acme_forms.health', $registry->all()[0]->name);
+    }
+
+    public function testPluginRoutesRejectTraversalPaths(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms', ['routes.public']))->get('/../escape', static fn() => null);
+    }
+
+    public function testPluginRoutesRequireExplicitPermission(): void
+    {
+        $this->expectException(\Flex\Extensions\Exception\PluginPermissionDenied::class);
+
+        (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms'))->get('/health', static fn() => null);
     }
 }

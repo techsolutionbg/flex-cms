@@ -1,7 +1,7 @@
 import Toastify from "toastify-js"
 import "toastify-js/src/toastify.css"
 
-export type ToastVariant = "success" | "error" | "info"
+type ToastVariant = "success" | "error" | "info"
 
 export function showToast(message: string, variant: ToastVariant = "info"): void {
   Toastify({

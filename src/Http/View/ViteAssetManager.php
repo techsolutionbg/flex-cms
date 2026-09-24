@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Flex\Http\View;
 
+use Flex\Extensions\FrontendExtensionAssets;
+
 final readonly class ViteAssetManager
 {
     private const ENTRY = 'src/admin.ts';
 
-    public function __construct(private string $basePath) {}
+    public function __construct(
+        private string $basePath,
+        private ?FrontendExtensionAssets $extensions = null,
+    ) {}
 
     public function tags(): string
     {
@@ -24,7 +29,7 @@ final readonly class ViteAssetManager
             return sprintf(
                 "<script type=\"module\" src=\"%1\$s/@vite/client\"></script>\n<script type=\"module\" src=\"%1\$s/src/admin.ts\"></script>",
                 $url,
-            );
+            ) . "\n" . ($this->extensions?->tags() ?? '');
         }
 
         $manifestPath = $this->basePath . '/public/build/admin/.vite/manifest.json';
@@ -40,7 +45,7 @@ final readonly class ViteAssetManager
         }
         $tags[] = sprintf('<script type="module" src="/build/admin/%s"></script>', $this->asset((string) $entry['file']));
 
-        return implode("\n", $tags);
+        return implode("\n", $tags) . "\n" . ($this->extensions?->tags() ?? '');
     }
 
     private function asset(string $file): string

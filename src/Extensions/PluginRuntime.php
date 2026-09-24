@@ -7,6 +7,7 @@ namespace Flex\Extensions;
 use Flex\Extension\V1\BootablePluginInterface;
 use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extension\V1\PluginContext;
+use Flex\Contracts\Http\RouteRegistryInterface;
 
 final readonly class PluginRuntime
 {
@@ -14,6 +15,7 @@ final readonly class PluginRuntime
         private PluginRegistry $registry,
         private PluginEntrypointLoader $entrypointLoader,
         private ExtensionApiInterface $extensionApi,
+        private ?RouteRegistryInterface $routes = null,
     ) {}
 
     public function bootActive(): void
@@ -41,6 +43,8 @@ final readonly class PluginRuntime
                 $path,
                 $validatedManifest->toArray(),
                 $this->extensionApi,
+                $this->routes === null ? null : new PluginRouteRegistrar($this->routes, $validatedManifest->id, $validatedManifest->permissions),
+                $validatedManifest->permissions,
             ));
         }
     }
