@@ -7,6 +7,7 @@ namespace Flex\Pages;
 use Flex\Extension\V1\EventNames;
 use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extension\V1\PageEvent;
+use Flex\Extensions\ContentBlockRegistry;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
 
@@ -17,6 +18,7 @@ final readonly class PageService
     public function __construct(
         private PageRepository $pages,
         private ExtensionApiInterface $extensionApi,
+        private ?ContentBlockRegistry $contentBlocks = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -162,7 +164,15 @@ final readonly class PageService
             }
             $type = trim($block['type']);
             if (!in_array($type, ['paragraph', 'heading', 'image', 'button'], true)) {
-                continue;
+                $normalizer = $this->contentBlocks?->normalizer($type);
+                if ($normalizer === null) {
+                    continue;
+                }
+                try {
+                    $block['data'] = $normalizer($block['data']);
+                } catch (\Throwable) {
+                    continue;
+                }
             }
             $blocks[] = ['type' => $type, 'data' => $block['data']];
         }
