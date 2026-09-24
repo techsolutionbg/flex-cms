@@ -25,6 +25,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', $auth);
         $r->add('GET', '/admin/profile', AdminProfileController::class, 'admin.profile', $auth);
         $r->add('GET', '/admin/plugins', AdminPluginsController::class, 'admin.plugins', $auth);
+        $r->add('GET', '/admin/plugins/{id}', AdminPluginsController::class, 'admin.plugins.detail', $auth);
         $r->add('GET', '/admin/pages/create', AdminPagesFormController::class, 'admin.pages.create', $auth);
         $r->add('GET', '/admin/pages/{id:number}/edit', AdminPagesFormController::class, 'admin.pages.edit', $auth);
         $r->add('GET', '/admin/pages/{id:number}/settings', AdminPagesFormController::class, 'admin.pages.settings', $auth);

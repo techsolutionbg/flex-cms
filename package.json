@@ -1,1 +1,11 @@
-{"name":"flex-cms","private":true,"scripts":{"frontend:dev":"npm --prefix resources/admin run dev","build:dev":"npm --prefix resources/admin run build:dev","build":"npm --prefix resources/admin run build","check:frontend":"npm --prefix resources/admin run check","check":"npm run check:frontend && composer check"}}
+{
+  "name": "flex-cms",
+  "private": true,
+  "scripts": {
+    "frontend:dev": "npm --prefix resources/admin run dev",
+    "build:dev": "npm --prefix resources/admin run build:dev",
+    "build": "npm --prefix resources/admin run build",
+    "check:frontend": "npm --prefix resources/admin run check",
+    "check": "npm run check:frontend && composer check"
+  }
+}

@@ -38,6 +38,7 @@ final readonly class AdminPluginsController
         }
 
         $plugins = [];
+        $pluginDetail = null;
         foreach ($this->plugins->discover() as $entry) {
             $registered = null;
             try {
@@ -45,7 +46,7 @@ final readonly class AdminPluginsController
             } catch (\Throwable) {
                 // The migration may not have run yet; discovered plugins remain visible.
             }
-            $plugins[] = $registered?->toPublicArray() ?? [
+            $record = $registered?->toPublicArray() ?? [
                 'id' => $entry['manifest']->id,
                 'name' => $entry['manifest']->name,
                 'version' => $entry['manifest']->version,
@@ -58,20 +59,29 @@ final readonly class AdminPluginsController
                 'installed_at' => null,
                 'activated_at' => null,
             ];
+            $plugins[] = $record;
+            if (isset($arguments['id']) && hash_equals((string) $arguments['id'], (string) $record['id'])) {
+                $pluginDetail = $record;
+            }
+        }
+
+        if (isset($arguments['id']) && $pluginDetail === null) {
+            return $this->responses->text('Plugin not found', 404);
         }
 
         $bootstrap = [
-            'page' => 'plugins',
+            'page' => $pluginDetail === null ? 'plugins' : 'plugin-detail',
             'csrfToken' => $this->csrf->token(),
             'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
             'plugins' => $plugins,
+            'pluginDetail' => $pluginDetail,
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
-            'title' => 'Разширения',
+            'title' => $pluginDetail === null ? 'Разширения' : (string) $pluginDetail['name'],
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));

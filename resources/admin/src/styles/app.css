@@ -1515,6 +1515,10 @@ button:focus-visible {
   gap: 1.125rem;
 }
 
+.plugin-detail-list span {
+  color: var(--muted-foreground);
+}
+
 .installer-grid label span {
   display: block;
   margin-bottom: 0.45rem;
@@ -1537,6 +1541,38 @@ button:focus-visible {
 
 .field-note {
   color: var(--muted-foreground);
+}
+
+.plugin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.plugin-detail-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.plugin-detail-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.65rem;
+}
+
+.plugin-manifest {
+  max-height: 25rem;
+  overflow: auto;
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--foreground);
+  font: 0.8rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .form-control {
@@ -1573,6 +1609,10 @@ button:focus-visible {
   }
 
   .installer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-detail-grid {
     grid-template-columns: 1fr;
   }
 }
