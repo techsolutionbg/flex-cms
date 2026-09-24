@@ -16,6 +16,7 @@ final readonly class PluginRuntime
         private PluginEntrypointLoader $entrypointLoader,
         private ExtensionApiInterface $extensionApi,
         private ?ContentBlockRegistry $contentBlocks = null,
+        private ?AdminExtensionRegistry $adminExtensions = null,
         private ?RouteRegistryInterface $routes = null,
     ) {}
 
@@ -47,6 +48,7 @@ final readonly class PluginRuntime
                 $this->routes === null ? null : new PluginRouteRegistrar($this->routes, $validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
                 $this->approvedPermissions($plugin, $validatedManifest),
                 $this->contentBlocks?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
+                $this->adminExtensions?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
             ));
         }
     }

@@ -80,6 +80,10 @@ type Bootstrap = {
   inspection?: { version?: string; files?: number; migrations?: boolean } | null
   plugins?: PluginRecord[]
   pluginDetail?: PluginRecord | null
+  adminExtensions?: {
+    sidebar: Array<{ id: string; label: string; href: string }>
+    slots: Record<string, Array<{ kind: "notice" | "card" | "link"; title: string; text: string; href: string | null }>>
+  }
 }
 
 type FieldErrors = Partial<Record<"title" | "slug" | "parent_id" | "status", string>>
@@ -158,6 +162,14 @@ function contentBlocksMarkup(): string {
   return `<section class="content-card content-blocks-card"><header><div class="section-heading"><h2>Content blocks</h2><p>Добавяйте структурирани елементи към страницата.</p></div></header><div class="section-body"><div class="content-block-list"><template x-for="(block, index) in form.blocks" :key="index"><article class="content-block-item"><div class="content-block-item-header"><strong x-text="block.type"></strong><button class="button secondary" type="button" @click="removeContentBlock(index)">Премахни</button></div><select class="form-control" x-model="block.type"><option value="paragraph">Параграф</option><option value="heading">Заглавие</option><option value="image">Изображение</option><option value="button">Бутон</option></select><textarea class="form-control" x-model="block.data.text" x-show="block.type === 'paragraph' || block.type === 'heading'" rows="3" placeholder="Текст на блока"></textarea><div class="content-block-two-column" x-show="block.type === 'image'"><input class="form-control" type="url" x-model="block.data.url" placeholder="URL на изображението"><input class="form-control" type="text" x-model="block.data.alt" placeholder="Алтернативен текст"></div><div class="content-block-two-column" x-show="block.type === 'button'"><input class="form-control" type="text" x-model="block.data.label" placeholder="Текст на бутона"><input class="form-control" type="url" x-model="block.data.url" placeholder="URL адрес"></div></article></template></div><button class="button secondary" type="button" @click="addContentBlock('paragraph')">Добави content block</button></div></section>`
 }
 
+function adminSlotMarkup(name: string): string {
+  return `<div class="admin-extension-slot" x-show="(adminExtensions.slots['${name}'] || []).length"><template x-for="item in (adminExtensions.slots['${name}'] || [])" :key="item.kind + item.title"><div x-show="item.kind === 'notice'" class="notice info"><strong x-text="item.title"></strong><span x-text="item.text"></span></div><article x-show="item.kind === 'card'" class="content-card admin-extension-card"><h2 x-text="item.title"></h2><p x-text="item.text"></p></article><a x-show="item.kind === 'link'" class="admin-extension-link" :href="item.href" @click.prevent="navigate(item.href)"><strong x-text="item.title"></strong><span x-text="item.text"></span></a></template></div>`
+}
+
+function adminSidebarMarkup(): string {
+  return `<template x-for="item in adminExtensions.sidebar" :key="item.id"><li><a class="sidebar-link" :href="item.href" @click.prevent="navigate(item.href)"><span class="sidebar-link-label" x-text="item.label"></span></a></li></template>`
+}
+
 function adminMarkup(): string {
   const markup = `
     <div class="admin-shell sidebar-enhanced" x-data="adminApp" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-mobile-open': mobileOpen }" :style="\`--sidebar-width: \${width}px\`"><div class="admin-loading-bar" x-show="loading" x-cloak></div>
@@ -188,7 +200,20 @@ function adminMarkup(): string {
       ${confirmModalMarkup()}${filterModalMarkup(dropdownMarkup("draftPageFilters.status", [{ value: "all", label: "Всички статуси" }, { value: "draft", label: "Чернови" }, { value: "published", label: "Публикувани" }]), dropdownMarkup("draftPageFilters.structure", [{ value: "all", label: "Всички страници" }, { value: "root", label: "Родителски страници" }, { value: "child", label: "Дъщерни страници" }]), dropdownMarkup("draftPageFilters.view", [{ value: "active", label: "Активни страници" }, { value: "trash", label: "Кошче" }]))}${bulkActionModalMarkup(dropdownMarkup("bulkModal.action", [{ value: "trash", label: "Премести в кошчето" }, { value: "force", label: "Изтрий завинаги" }, { value: "settings", label: "Редактиране на настройки" }]))}<div class="admin-system-footer"><span>Flex CMS</span><strong>v${escapeHtml(readBootstrap()?.version ?? "")}</strong></div>
     </div>`
 
-  const withDropdowns = markup
+  const withAdminExtensions = markup
+    .replace("</ul></nav>", `${adminSidebarMarkup()}</ul></nav>`)
+    .replace('<h1>Административен панел', `${adminSlotMarkup("admin.dashboard.before")}<h1>Административен панел`)
+    .replace('<p class="lead">Имате пълен достъп до системната администрация като супер администратор.</p>', `<p class="lead">Имате пълен достъп до системната администрация като супер администратор.</p>${adminSlotMarkup("admin.dashboard.after")}`)
+    .replace('<h1>Профил</h1>', `${adminSlotMarkup("admin.profile.before")}<h1>Профил</h1>`)
+    .replace('<p class="lead">Основни данни за текущия потребител.</p>', `<p class="lead">Основни данни за текущия потребител.</p>${adminSlotMarkup("admin.profile.after")}`)
+    .replace('<div class="pages-table">', `${adminSlotMarkup("admin.pages.table.before")}<div class="pages-table">`)
+    .replace('<form class="page-form"', `${adminSlotMarkup("admin.page.form.before")}<form class="page-form"`)
+    .replace('<div class="page-form-actions">', `${adminSlotMarkup("admin.page.form.after")}<div class="page-form-actions">`)
+    .replace('<section class="content-card"><header>${sectionHeader("Качване на platform пакет", "updates-upload")}', `${adminSlotMarkup("admin.updates.before")}<section class="content-card"><header>${sectionHeader("Качване на platform пакет", "updates-upload")}`)
+    .replace('<section class="content-card"><header>${sectionHeader("История", "updates-history")}', `<section class="content-card"><header>${sectionHeader("История", "updates-history")}${adminSlotMarkup("admin.updates.after")}`)
+    .replace('<div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper">', `${adminSlotMarkup("admin.plugins.before")}<div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper">${adminSlotMarkup("admin.plugins.after")}`)
+
+  const withDropdowns = withAdminExtensions
     .replace(/<select x-model="theme" @change="saveTheme">.*?<\/select>/, dropdownMarkup("theme", [{ value: "system", label: "Системна" }, { value: "light", label: "Светла" }, { value: "dark", label: "Тъмна" }], "saveTheme()"))
     .replace(/<select data-slot="select-trigger" x-model="form.status"[^>]*>.*?<\/select>/, dropdownMarkup("form.status", [{ value: "draft", label: "Чернова" }, { value: "published", label: "Публикувана" }]))
     .replace(/<select data-slot="select-trigger" x-model="pageSettings.template"[^>]*>.*?<\/select>/, dropdownMarkup("pageSettings.template", [{ value: "default", label: "Стандартен" }, { value: "full_width", label: "Пълна ширина" }, { value: "landing", label: "Landing page" }], undefined, '<span class="field-hint-text">Определя основната структура и визуализация на страницата.</span>'))
@@ -237,7 +262,7 @@ function createAdminState(initial: Bootstrap) {
     page: initial.page, pageTitle: "", csrfToken: initial.csrfToken, version: initial.version,
     width: initial.sidebarWidth, collapsed: initial.sidebarCollapsed ?? false, mobileOpen: false, isMobile: false, loading: false,
     user: initial.user ?? { name: "", email: "", role: "", status: "" }, theme: localStorage.getItem("flexcms.admin.theme") ?? "system",
-    pages: initial.pages ?? [], trashedPages: initial.trashedPages ?? [], plugins: initial.plugins ?? [], pluginDetail: initial.pluginDetail ?? null, pluginPermissionDraft: initial.pluginDetail?.approved_permissions ?? [] as string[], pluginBusy: "", trashMode: pageFilters.view === "trash", pageFilters, draftPageFilters: { ...pageFilters }, filterModalOpen: false, history: initial.history ?? [], notice: initial.notice ?? "", error: initial.error ?? "", inspection: initial.inspection, collapsedSections: initial.collapsedSections ?? {},
+    pages: initial.pages ?? [], trashedPages: initial.trashedPages ?? [], plugins: initial.plugins ?? [], pluginDetail: initial.pluginDetail ?? null, pluginPermissionDraft: initial.pluginDetail?.approved_permissions ?? [] as string[], adminExtensions: initial.adminExtensions ?? { sidebar: [], slots: {} }, pluginBusy: "", trashMode: pageFilters.view === "trash", pageFilters, draftPageFilters: { ...pageFilters }, filterModalOpen: false, history: initial.history ?? [], notice: initial.notice ?? "", error: initial.error ?? "", inspection: initial.inspection, collapsedSections: initial.collapsedSections ?? {},
     pageModal: { open: false, action: "trash" as "trash" | "restore" | "force", title: "", message: "", confirmLabel: "", page: null as PageRecord | null, busy: false },
     selectedPageIds: [] as number[], bulkModal: { open: false, action: "trash" as "trash" | "force" | "settings", busy: false, settings: { use_parent_slugs: false, no_index: false, show_in_navigation: true, show_in_sitemap: true } },
     editingId: null as number | null, saving: false, slugManuallyEdited: false, fieldErrors: {} as FieldErrors,
@@ -282,6 +307,7 @@ function createAdminState(initial: Bootstrap) {
   state.form = initialPageData ? { title: initialPageData.title, slug: initialPageData.slug, content: initialPageData.content, blocks: initialPageData.blocks ?? [], parentId: initialPageData.parent_id ?? "", status: initialPageData.status } : state.form
   state.pageSettings = initialPageData?.settings ? { ...state.pageSettings, ...initialPageData.settings } : state.pageSettings
   state.pluginDetail = initial.pluginDetail ?? null
+  state.adminExtensions = initial.adminExtensions ?? { sidebar: [], slots: {} }
   state.pluginPermissionDraft = initial.pluginDetail?.approved_permissions ?? []
   state.pageTitle = ({ dashboard: "Табло", updates: "Обновявания", pages: "Страници", "pages-create": "Създаване на страница", "pages-edit": "Редактиране на страница", "pages-settings": "Настройки на страница", profile: "Профил", plugins: "Разширения", "plugin-detail": "Детайли на разширение" } as Record<string, string>)[initial.page]
   return state

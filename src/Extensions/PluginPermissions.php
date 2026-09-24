@@ -11,6 +11,7 @@ final class PluginPermissions
     public const ROUTES_ADMIN = 'routes.admin';
     public const CONTENT_BLOCKS = 'content.blocks';
     public const EVENTS_LISTEN = 'events.listen';
+    public const ADMIN_UI = 'admin.ui';
 
     /** @param list<string> $permissions */
     public static function allows(array $permissions, string $permission): bool

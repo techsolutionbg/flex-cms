@@ -30,6 +30,7 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
             PluginManager::class => autowire(),
             PluginRuntime::class => autowire(),
             ContentBlockRegistry::class => autowire(),
+            AdminExtensionRegistry::class => autowire(),
             FrontendExtensionAssets::class => autowire(),
             PluginRouteRegistrar::class => autowire(),
         ];

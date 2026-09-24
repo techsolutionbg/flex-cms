@@ -9,6 +9,7 @@ use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
+use Flex\Extensions\AdminExtensionRegistry;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
 use Flex\Updates\Platform\PlatformVersionRegistry;
@@ -25,6 +26,7 @@ final readonly class AdminProfileController
         private PlatformVersionRegistry $versions,
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
+        private AdminExtensionRegistry $adminExtensions,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -43,6 +45,7 @@ final readonly class AdminProfileController
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
             'user' => $user->toArray(),
+            'adminExtensions' => $this->adminExtensions->bootstrap(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

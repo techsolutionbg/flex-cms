@@ -28,6 +28,7 @@ final readonly class PluginManager
         private PluginEntrypointLoader $entrypointLoader,
         private ExtensionApiInterface $extensionApi,
         private ?ContentBlockRegistry $contentBlocks = null,
+        private ?AdminExtensionRegistry $adminExtensions = null,
         private ?LoggerInterface $logger = null,
     ) {}
 
@@ -239,7 +240,7 @@ final readonly class PluginManager
     {
         $effectivePermissions = $permissions ?? $manifest->permissions;
 
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions));
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions), $this->adminExtensions?->registrar($manifest->id, $effectivePermissions));
     }
 
     /** @param list<string> $requested */

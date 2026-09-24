@@ -9,6 +9,7 @@ use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
+use Flex\Extensions\AdminExtensionRegistry;
 use Flex\Pages\PageRepository;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
@@ -27,6 +28,7 @@ final readonly class AdminPagesFormController
         private PlatformVersionRegistry $versions,
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
+        private AdminExtensionRegistry $adminExtensions,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -45,7 +47,7 @@ final readonly class AdminPagesFormController
 
         $isEdit = $page !== null;
         $isSettings = str_ends_with($request->getUri()->getPath(), '/settings');
-        $pages = $this->hierarchicalPages($this->pages->all()->map(static fn(\Flex\Pages\Page $item): array => $item->toPublicArray())->all());
+        $pages = $this->hierarchicalPages(array_values($this->pages->all()->map(static fn(\Flex\Pages\Page $item): array => $item->toPublicArray())->all()));
         $bootstrap = [
             'page' => $isSettings ? 'pages-settings' : ($isEdit ? 'pages-edit' : 'pages-create'),
             'csrfToken' => $this->csrf->token(),
@@ -55,6 +57,7 @@ final readonly class AdminPagesFormController
             'version' => $this->versions->current()->value,
             'pageData' => $page?->toPublicArray(),
             'pages' => $pages,
+            'adminExtensions' => $this->adminExtensions->bootstrap(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
@@ -64,7 +67,10 @@ final readonly class AdminPagesFormController
         ]));
     }
 
-    /** @param list<array<string, mixed>> $pages @return list<array<string, mixed>> */
+    /**
+     * @param list<array<string, mixed>> $pages
+     * @return list<array<string, mixed>>
+     */
     private function hierarchicalPages(array $pages): array
     {
         $byId = [];

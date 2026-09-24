@@ -9,6 +9,7 @@ use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Extensions\PluginRegistry;
+use Flex\Extensions\AdminExtensionRegistry;
 use Flex\Http\View\ViteAssetManager;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
@@ -27,6 +28,7 @@ final readonly class AdminPluginsController
         private PlatformVersionRegistry $versions,
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
+        private AdminExtensionRegistry $adminExtensions,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -80,6 +82,7 @@ final readonly class AdminPluginsController
             'version' => $this->versions->current()->value,
             'plugins' => $plugins,
             'pluginDetail' => $pluginDetail,
+            'adminExtensions' => $this->adminExtensions->bootstrap(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

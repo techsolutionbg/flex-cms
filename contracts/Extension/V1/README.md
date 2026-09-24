@@ -14,6 +14,11 @@ Declared permissions are stored as requested permissions during installation. A 
 administrator must approve them before activation; runtime contexts, routes and frontend
 assets receive only approved permissions. Permission changes require the plugin to be inactive.
 
+Plugins with the `admin.ui` permission can register safe administrative UI descriptors:
+sidebar links and `notice`, `card` or `link` components in approved slots such as
+`admin.dashboard.before`, `admin.pages.table.before` and `admin.page.form.after`.
+Raw HTML and editor slots are intentionally not part of this API.
+
 Declared permissions are stored as requested permissions during installation. A super
 administrator must approve them before activation; runtime contexts and frontend assets
 receive only approved permissions. Permission changes require the plugin to be inactive.

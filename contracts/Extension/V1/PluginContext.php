@@ -19,6 +19,7 @@ final readonly class PluginContext
         public ?PluginRouteRegistrarInterface $routes = null,
         public array $permissions = [],
         public ?ContentBlockRegistrarInterface $contentBlocks = null,
+        public ?AdminExtensionRegistrarInterface $admin = null,
     ) {}
 
     public function can(string $permission): bool
