@@ -12,5 +12,6 @@ final readonly class PluginContext
         public string $version,
         public string $path,
         public array $manifest,
+        public ExtensionApiInterface $api,
     ) {}
 }

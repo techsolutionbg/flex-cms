@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Extensions;
 
+use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extension\V1\PluginContext;
 use Flex\Extension\V1\UpdatablePluginInterface;
 use Flex\Extension\V1\UninstallablePluginInterface;
@@ -20,6 +21,7 @@ final readonly class PluginManager
     public function __construct(
         private PluginRegistry $registry,
         private PluginEntrypointLoader $entrypointLoader,
+        private ExtensionApiInterface $extensionApi,
     ) {}
 
     public function install(string $id): Plugin
@@ -182,7 +184,7 @@ final readonly class PluginManager
 
     private function context(PluginManifest $manifest, string $path): PluginContext
     {
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray());
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), $this->extensionApi);
     }
 
     private function recordFailure(Plugin $plugin, \Throwable $exception): void

@@ -7,3 +7,6 @@ manifest data. An optional `UninstallablePluginInterface` can be implemented whe
 needs to remove its own versioned data. Internal platform services are deliberately not
 exposed through this API. An optional `UpdatablePluginInterface` can run plugin-specific
 migrations when a discovered package has a newer version than the installed one.
+The `ExtensionApiInterface` provides namespaced actions and filters. Plugins can register
+callbacks during their lifecycle and use `applyFilters()` or `doAction()` without depending
+on internal framework services.

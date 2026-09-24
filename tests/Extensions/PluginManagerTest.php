@@ -10,6 +10,7 @@ use Flex\Database\DatabaseManager;
 use Flex\Extensions\PluginManager;
 use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
+use Flex\Extensions\ExtensionApi;
 use PHPUnit\Framework\TestCase;
 
 final class PluginManagerTest extends TestCase
@@ -32,7 +33,6 @@ use Flex\Extension\V1\PluginContext;
 use Flex\Extension\V1\PluginInterface;
 use Flex\Extension\V1\UninstallablePluginInterface;
 use Flex\Extension\V1\UpdatablePluginInterface;
-
 final class Plugin implements PluginInterface, UninstallablePluginInterface, UpdatablePluginInterface
 {
     public static array $events = [];
@@ -74,7 +74,7 @@ PHP);
         });
 
         $paths = new ProjectPaths($this->directory, new ConfigurationRepository(['paths' => ['plugins' => 'plugins']]));
-        $this->manager = new PluginManager(new PluginRegistry($paths), new PluginEntrypointLoader());
+        $this->manager = new PluginManager(new PluginRegistry($paths), new PluginEntrypointLoader(), new ExtensionApi());
     }
 
     protected function tearDown(): void
