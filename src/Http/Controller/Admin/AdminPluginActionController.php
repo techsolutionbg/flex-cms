@@ -33,12 +33,19 @@ final readonly class AdminPluginActionController
         $input = $this->input->all($request);
         $id = $input['id'] ?? null;
         $action = $input['action'] ?? null;
-        if (!is_string($id) || $id === '' || !is_string($action) || !in_array($action, ['install', 'activate', 'deactivate', 'uninstall'], true)) {
+        if (!is_string($id) || $id === '' || !is_string($action) || !in_array($action, ['install', 'activate', 'deactivate', 'uninstall', 'approve_permissions'], true)) {
             return $this->responses->json(ApiError::payload(422, 'validation_failed', 'A valid plugin ID and action are required.'), 422);
         }
 
         try {
-            if ($action === 'install') {
+            if ($action === 'approve_permissions') {
+                $permissions = $input['permissions'] ?? [];
+                if (!is_array($permissions)) {
+                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Permissions must be an array.'), 422);
+                }
+                /** @var list<string> $permissions */
+                $plugin = $this->plugins->approvePermissions($id, $permissions);
+            } elseif ($action === 'install') {
                 $plugin = $this->plugins->install($id);
             } elseif ($action === 'activate') {
                 $plugin = $this->plugins->activate($id);

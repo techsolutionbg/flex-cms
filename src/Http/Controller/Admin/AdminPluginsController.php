@@ -55,6 +55,8 @@ final readonly class AdminPluginsController
                 'path' => $entry['path'],
                 'status' => 'discovered',
                 'manifest' => $entry['manifest']->toArray(),
+                'requested_permissions' => $entry['manifest']->permissions,
+                'approved_permissions' => [],
                 'last_error' => null,
                 'installed_at' => null,
                 'activated_at' => null,

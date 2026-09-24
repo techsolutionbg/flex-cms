@@ -24,7 +24,7 @@ final readonly class FrontendExtensionAssets
                 }
 
                 $validated = PluginManifest::fromArray($manifest);
-                if (!PluginPermissions::allows($validated->permissions, PluginPermissions::FRONTEND_ASSETS)) {
+                if (!PluginPermissions::allows($this->approvedPermissions($plugin, $validated), PluginPermissions::FRONTEND_ASSETS)) {
                     continue;
                 }
                 foreach ($validated->frontend['styles'] ?? [] as $asset) {
@@ -55,7 +55,7 @@ final readonly class FrontendExtensionAssets
                 return null;
             }
             $validated = PluginManifest::fromArray($manifest);
-            if (!PluginPermissions::allows($validated->permissions, PluginPermissions::FRONTEND_ASSETS)) {
+            if (!PluginPermissions::allows($this->approvedPermissions($plugin, $validated), PluginPermissions::FRONTEND_ASSETS)) {
                 return null;
             }
             $allowedType = in_array($asset, $validated->frontend['styles'] ?? [], true) ? 'style' : (in_array($asset, $validated->frontend['scripts'] ?? [], true) ? 'script' : null);
@@ -80,5 +80,15 @@ final readonly class FrontendExtensionAssets
         $segments = array_map(static fn(string $segment): string => rawurlencode($segment), explode('/', $asset));
 
         return '/extensions/' . rawurlencode($id) . '/assets/' . implode('/', $segments);
+    }
+
+    /** @return list<string> */
+    private function approvedPermissions(Plugin $plugin, PluginManifest $manifest): array
+    {
+        if (array_key_exists('approved_permissions', $plugin->getAttributes())) {
+            return $plugin->approvedPermissions();
+        }
+
+        return $manifest->permissions;
     }
 }

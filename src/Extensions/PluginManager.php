@@ -12,6 +12,9 @@ use Flex\Extension\V1\UpdatablePluginInterface;
 use Flex\Extension\V1\UninstallablePluginInterface;
 use Flex\Extensions\Exception\PluginLifecycleException;
 use Flex\Extensions\Exception\PluginNotFound;
+use Flex\Extensions\Exception\PluginPermissionDenied;
+use Illuminate\Database\Connection;
+use Psr\Log\LoggerInterface;
 
 final readonly class PluginManager
 {
@@ -24,6 +27,8 @@ final readonly class PluginManager
         private PluginRegistry $registry,
         private PluginEntrypointLoader $entrypointLoader,
         private ExtensionApiInterface $extensionApi,
+        private ?ContentBlockRegistry $contentBlocks = null,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     public function install(string $id): Plugin
@@ -50,7 +55,9 @@ final readonly class PluginManager
             'last_error' => null,
             'installed_at' => $plugin->exists ? $plugin->getAttribute('installed_at') : new \DateTimeImmutable(),
         ]);
+        $this->storePermissions($plugin, $manifest->permissions);
         $plugin->saveOrFail();
+        $this->audit($isUpdate ? 'update' : 'install', $id, ['version' => $manifest->version]);
 
         if ($wasInstalled && !$isUpdate) {
             return $plugin;
@@ -60,10 +67,10 @@ final readonly class PluginManager
             $entrypoint = $this->entrypointLoader->load($manifest, $entry['path']);
             if ($isUpdate) {
                 if ($entrypoint instanceof UpdatablePluginInterface) {
-                    $entrypoint->update($this->context($manifest, $entry['path']), $fromVersion);
+                    $entrypoint->update($this->context($manifest, $entry['path'], $this->approvedPermissions($plugin, $manifest)), $fromVersion);
                 }
             } else {
-                $entrypoint->install($this->context($manifest, $entry['path']));
+                $entrypoint->install($this->context($manifest, $entry['path'], $this->approvedPermissions($plugin, $manifest)));
             }
         } catch (\Throwable $exception) {
             $this->recordFailure($plugin, $exception);
@@ -89,8 +96,9 @@ final readonly class PluginManager
         }
 
         [$manifest, $path] = $this->manifestAndPath($plugin);
+        $this->assertPermissionsApproved($plugin, $manifest);
         try {
-            $this->entrypointLoader->load($manifest, $path)->activate($this->context($manifest, $path));
+            $this->entrypointLoader->load($manifest, $path)->activate($this->context($manifest, $path, $this->approvedPermissions($plugin, $manifest)));
         } catch (\Throwable $exception) {
             $this->recordFailure($plugin, $exception);
             throw new PluginLifecycleException(sprintf('Activating plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
@@ -102,7 +110,34 @@ final readonly class PluginManager
             'last_error' => null,
         ]);
         $plugin->saveOrFail();
+        $this->audit('activate', $id, ['version' => $manifest->version]);
         $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_ACTIVATED, $manifest->id, $manifest->version, $path));
+
+        return $plugin;
+    }
+
+    /** @param list<string> $approved */
+    public function approvePermissions(string $id, array $approved): Plugin
+    {
+        $plugin = $this->installed($id);
+        if ($plugin->getAttribute('status') === self::STATUS_ACTIVE) {
+            throw new \RuntimeException('Deactivate the plugin before changing its permissions.');
+        }
+
+        [$manifest] = $this->manifestAndPath($plugin);
+        $requested = $this->requestedPermissions($plugin, $manifest);
+        $approved = array_values(array_unique(array_filter($approved, 'is_string')));
+        $unknown = array_diff($approved, $requested);
+        if ($unknown !== []) {
+            throw new PluginPermissionDenied(sprintf('Unknown permissions: %s.', implode(', ', $unknown)));
+        }
+        if (!$this->permissionsColumnsAvailable()) {
+            throw new PluginPermissionDenied('The plugin permission storage migration has not been applied.');
+        }
+
+        $plugin->setAttribute('approved_permissions', $approved);
+        $plugin->saveOrFail();
+        $this->audit('approve_permissions', $id, ['permissions' => $approved]);
 
         return $plugin;
     }
@@ -116,7 +151,7 @@ final readonly class PluginManager
 
         [$manifest, $path] = $this->manifestAndPath($plugin);
         try {
-            $this->entrypointLoader->load($manifest, $path)->deactivate($this->context($manifest, $path));
+            $this->entrypointLoader->load($manifest, $path)->deactivate($this->context($manifest, $path, $this->approvedPermissions($plugin, $manifest)));
         } catch (\Throwable $exception) {
             $this->recordFailure($plugin, $exception);
             throw new PluginLifecycleException(sprintf('Deactivating plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
@@ -128,6 +163,7 @@ final readonly class PluginManager
             'last_error' => null,
         ]);
         $plugin->saveOrFail();
+        $this->audit('deactivate', $id, ['version' => $manifest->version]);
         $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_DEACTIVATED, $manifest->id, $manifest->version, $path));
 
         return $plugin;
@@ -144,7 +180,7 @@ final readonly class PluginManager
         try {
             $entrypoint = $this->entrypointLoader->load($manifest, $pluginPath);
             if ($entrypoint instanceof UninstallablePluginInterface) {
-                $entrypoint->uninstall($this->context($manifest, $pluginPath));
+                $entrypoint->uninstall($this->context($manifest, $pluginPath, $this->approvedPermissions($plugin, $manifest)));
             }
         } catch (\Throwable $exception) {
             $this->recordFailure($plugin, $exception);
@@ -161,6 +197,7 @@ final readonly class PluginManager
         $pluginVersion = (string) $plugin->getAttribute('version');
         $plugin->delete();
         $this->deleteDirectory($path);
+        $this->audit('uninstall', $pluginId, ['version' => $pluginVersion]);
         $this->extensionApi->dispatch(new PluginEvent(EventNames::PLUGIN_UNINSTALLED, $pluginId, $pluginVersion, $path));
     }
 
@@ -197,9 +234,67 @@ final readonly class PluginManager
         return [PluginManifest::fromArray($manifest), (string) $plugin->getAttribute('path')];
     }
 
-    private function context(PluginManifest $manifest, string $path): PluginContext
+    /** @param list<string>|null $permissions */
+    private function context(PluginManifest $manifest, string $path, ?array $permissions = null): PluginContext
     {
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), $this->extensionApi, null, $manifest->permissions);
+        $effectivePermissions = $permissions ?? $manifest->permissions;
+
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions));
+    }
+
+    /** @param list<string> $requested */
+    private function storePermissions(Plugin $plugin, array $requested): void
+    {
+        if (!$this->permissionsColumnsAvailable()) {
+            return;
+        }
+
+        $approved = array_values(array_intersect($plugin->approvedPermissions(), $requested));
+        $plugin->setAttribute('requested_permissions', $requested);
+        $plugin->setAttribute('approved_permissions', $approved);
+    }
+
+    private function assertPermissionsApproved(Plugin $plugin, PluginManifest $manifest): void
+    {
+        $requested = $this->requestedPermissions($plugin, $manifest);
+        $approved = $this->approvedPermissions($plugin, $manifest);
+        $missing = PluginPermissions::missing($requested, $approved);
+        if ($missing !== []) {
+            $this->audit('permission_denied', $manifest->id, ['permissions' => $missing, 'action' => 'activate']);
+            throw new PluginPermissionDenied(sprintf('Plugin "%s" requires approval for: %s.', $manifest->id, implode(', ', $missing)));
+        }
+    }
+
+    /** @return list<string> */
+    private function requestedPermissions(Plugin $plugin, PluginManifest $manifest): array
+    {
+        return $this->permissionsColumnsAvailable() ? $plugin->requestedPermissions() : $manifest->permissions;
+    }
+
+    /** @return list<string> */
+    private function approvedPermissions(Plugin $plugin, PluginManifest $manifest): array
+    {
+        return $this->permissionsColumnsAvailable() ? $plugin->approvedPermissions() : $manifest->permissions;
+    }
+
+    private function permissionsColumnsAvailable(): bool
+    {
+        try {
+            $connection = Plugin::query()->getConnection();
+            if (!$connection instanceof Connection) {
+                return false;
+            }
+
+            return $connection->getSchemaBuilder()->hasColumn('plugins', 'approved_permissions');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /** @param array<string, mixed> $context */
+    private function audit(string $action, string $pluginId, array $context = []): void
+    {
+        $this->logger?->info('Plugin audit event.', ['plugin_id' => $pluginId, 'action' => $action] + $context);
     }
 
     private function recordFailure(Plugin $plugin, \Throwable $exception): void

@@ -12,6 +12,7 @@ use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\ExtensionApi;
 use Flex\Extensions\PluginRuntime;
+use Flex\Extensions\Exception\PluginPermissionDenied;
 use PHPUnit\Framework\TestCase;
 
 final class PluginManagerTest extends TestCase
@@ -72,6 +73,8 @@ PHP);
             $table->string('status', 30)->default('inactive');
             $table->text('manifest')->nullable();
             $table->text('last_error')->nullable();
+            $table->text('requested_permissions')->nullable();
+            $table->text('approved_permissions')->nullable();
             $table->dateTime('installed_at')->nullable();
             $table->dateTime('activated_at')->nullable();
             $table->timestamps();
@@ -127,6 +130,42 @@ PHP);
         $this->manager->uninstall('acme/forms');
         self::assertSame(['install', 'activate', 'boot', 'deactivate', 'update:1.0.0', 'uninstall'], \Flex\Tests\PluginLifecycle\Plugin::$events);
         self::assertFileDoesNotExist($this->directory . '/plugins/acme/forms');
+    }
+
+    public function testActivationRequiresApprovedManifestPermissions(): void
+    {
+        file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Flex\\Tests\\PluginLifecycle\\Plugin',
+            'permissions' => ['routes.public'],
+            'autoload' => ['Flex\\Tests\\PluginLifecycle\\' => 'src'],
+        ], JSON_THROW_ON_ERROR));
+
+        $plugin = $this->manager->install('acme/forms');
+        self::assertSame(['routes.public'], $plugin->requestedPermissions());
+        self::assertSame([], $plugin->approvedPermissions());
+
+        $this->expectException(PluginPermissionDenied::class);
+        $this->manager->activate('acme/forms');
+    }
+
+    public function testApprovedManifestPermissionsAllowActivation(): void
+    {
+        file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Flex\\Tests\\PluginLifecycle\\Plugin',
+            'permissions' => ['routes.public'],
+            'autoload' => ['Flex\\Tests\\PluginLifecycle\\' => 'src'],
+        ], JSON_THROW_ON_ERROR));
+
+        $this->manager->install('acme/forms');
+        $plugin = $this->manager->approvePermissions('acme/forms', ['routes.public']);
+        self::assertSame(['routes.public'], $plugin->approvedPermissions());
+        self::assertSame(PluginManager::STATUS_ACTIVE, $this->manager->activate('acme/forms')->getAttribute('status'));
     }
 
 }

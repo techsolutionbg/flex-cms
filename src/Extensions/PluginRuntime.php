@@ -15,6 +15,7 @@ final readonly class PluginRuntime
         private PluginRegistry $registry,
         private PluginEntrypointLoader $entrypointLoader,
         private ExtensionApiInterface $extensionApi,
+        private ?ContentBlockRegistry $contentBlocks = null,
         private ?RouteRegistryInterface $routes = null,
     ) {}
 
@@ -42,10 +43,21 @@ final readonly class PluginRuntime
                 $validatedManifest->version,
                 $path,
                 $validatedManifest->toArray(),
-                $this->extensionApi,
-                $this->routes === null ? null : new PluginRouteRegistrar($this->routes, $validatedManifest->id, $validatedManifest->permissions),
-                $validatedManifest->permissions,
+                new ScopedExtensionApi($this->extensionApi, $validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
+                $this->routes === null ? null : new PluginRouteRegistrar($this->routes, $validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
+                $this->approvedPermissions($plugin, $validatedManifest),
+                $this->contentBlocks?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
             ));
         }
+    }
+
+    /** @return list<string> */
+    private function approvedPermissions(Plugin $plugin, PluginManifest $manifest): array
+    {
+        if (array_key_exists('approved_permissions', $plugin->getAttributes())) {
+            return $plugin->approvedPermissions();
+        }
+
+        return $manifest->permissions;
     }
 }

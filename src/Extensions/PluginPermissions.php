@@ -18,5 +18,15 @@ final class PluginPermissions
         return in_array($permission, $permissions, true);
     }
 
+    /**
+     * @param list<string> $requested
+     * @param list<string> $approved
+     * @return list<string>
+     */
+    public static function missing(array $requested, array $approved): array
+    {
+        return array_values(array_diff($requested, $approved));
+    }
+
     private function __construct() {}
 }

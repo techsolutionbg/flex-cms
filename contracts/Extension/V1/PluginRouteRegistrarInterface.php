@@ -27,4 +27,14 @@ interface PluginRouteRegistrarInterface
      * @param list<class-string<MiddlewareInterface>|MiddlewareInterface> $middleware
      */
     public function post(string $path, callable|array|string|RequestHandlerInterface $handler, ?string $name = null, array $middleware = []): void;
+
+    /**
+     * Register a namespaced administrative route. The platform adds authentication
+     * and super-admin authorization middleware automatically.
+     *
+     * @param string|list<string> $methods
+     * @param callable|array{class-string, string}|class-string|RequestHandlerInterface $handler
+     * @param list<class-string<MiddlewareInterface>|MiddlewareInterface> $middleware
+     */
+    public function admin(string|array $methods, string $path, callable|array|string|RequestHandlerInterface $handler, ?string $name = null, array $middleware = []): void;
 }

@@ -9,6 +9,14 @@ frontend CSS/JavaScript assets. An optional `UninstallablePluginInterface` can b
 needs to remove its own versioned data. Internal platform services are deliberately not
 exposed through this API. An optional `UpdatablePluginInterface` can run plugin-specific
 migrations when a discovered package has a newer version than the installed one.
+
+Declared permissions are stored as requested permissions during installation. A super
+administrator must approve them before activation; runtime contexts, routes and frontend
+assets receive only approved permissions. Permission changes require the plugin to be inactive.
+
+Declared permissions are stored as requested permissions during installation. A super
+administrator must approve them before activation; runtime contexts and frontend assets
+receive only approved permissions. Permission changes require the plugin to be inactive.
 The `ExtensionApiInterface` provides namespaced actions and filters. Plugins can register
 callbacks during their lifecycle and use `applyFilters()` or `doAction()` without depending
 on internal framework services. Active plugins that implement `BootablePluginInterface` are

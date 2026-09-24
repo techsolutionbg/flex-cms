@@ -63,4 +63,25 @@ final class RouteRegistryTest extends TestCase
 
         (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms'))->get('/health', static fn() => null);
     }
+
+    public function testPluginAdminRoutesRequirePermissionAndAuthentication(): void
+    {
+        $registry = new RouteRegistry();
+        (new PluginRouteRegistrar($registry, 'acme/forms', ['routes.admin']))->admin('GET', '/settings', static fn() => null, 'settings');
+
+        self::assertSame('/admin/plugins/acme/forms/settings', $registry->all()[0]->path);
+        self::assertSame('plugin.admin.acme_forms.settings', $registry->all()[0]->name);
+        self::assertSame([
+            \Flex\Session\CsrfMiddleware::class,
+            \Flex\Auth\Middleware\RequireAuthenticationMiddleware::class,
+            \Flex\Auth\Middleware\RequireSuperAdminMiddleware::class,
+        ], $registry->all()[0]->middleware);
+    }
+
+    public function testPluginAdminRoutesRejectMissingPermission(): void
+    {
+        $this->expectException(\Flex\Extensions\Exception\PluginPermissionDenied::class);
+
+        (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms'))->admin('GET', '/settings', static fn() => null);
+    }
 }
