@@ -8,6 +8,7 @@ use Flex\Extension\V1\EventNames;
 use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extension\V1\PageEvent;
 use Flex\Extensions\ContentBlockRegistry;
+use Flex\Extensions\PageFieldRegistry;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
 
@@ -19,6 +20,7 @@ final readonly class PageService
         private PageRepository $pages,
         private ExtensionApiInterface $extensionApi,
         private ?ContentBlockRegistry $contentBlocks = null,
+        private ?PageFieldRegistry $pageFields = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -29,7 +31,8 @@ final readonly class PageService
         $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable() : null;
 
         $page = $this->pages->create($data);
-        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_CREATED, $page->toPublicArray()));
+        $fields = $this->pageFields?->normalize(is_array($attributes['plugin_fields'] ?? null) ? $attributes['plugin_fields'] : []) ?? [];
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_CREATED, $page->toPublicArray(), $fields));
 
         return $page;
     }
@@ -51,7 +54,8 @@ final readonly class PageService
             $page->setAttribute('published_at', null);
         }
         $page->saveOrFail();
-        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray()));
+        $fields = $this->pageFields?->normalize(is_array($attributes['plugin_fields'] ?? null) ? $attributes['plugin_fields'] : []) ?? [];
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
         return $page;
     }

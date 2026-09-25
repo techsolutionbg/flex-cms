@@ -28,6 +28,8 @@
 /storage/updates/
 /releases/
 /vendor/
+/plugins/*
+!/plugins/.gitkeep
 Thumbs.db
 .DS_Store
 /websites

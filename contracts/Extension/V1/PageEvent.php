@@ -6,10 +6,11 @@ namespace Flex\Extension\V1;
 
 final readonly class PageEvent implements ExtensionEventInterface
 {
-    /** @param array<string, mixed> $page */
+    /** @param array<string, mixed> $page @param array<string, array<string, string|bool>> $fields */
     public function __construct(
         private string $eventName,
         public array $page,
+        public array $fields = [],
     ) {}
 
     public function name(): string
@@ -19,6 +20,6 @@ final readonly class PageEvent implements ExtensionEventInterface
 
     public function payload(): array
     {
-        return ['page' => $this->page];
+        return ['page' => $this->page, 'fields' => $this->fields];
     }
 }

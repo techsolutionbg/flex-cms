@@ -8,6 +8,7 @@ export const pageFormSchema = z.object({
     type: z.enum(["paragraph", "heading", "image", "button"]),
     data: z.record(z.string(), z.unknown()),
   })).max(100),
+  plugin_fields: z.record(z.string(), z.record(z.string(), z.union([z.string(), z.boolean()]))).default({}),
   parent_id: z.number().int().positive().nullable(),
   status: z.enum(["draft", "published"], "Изберете валиден статус."),
 })

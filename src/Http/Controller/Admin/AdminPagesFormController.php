@@ -10,6 +10,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
 use Flex\Extensions\AdminExtensionRegistry;
+use Flex\Extensions\PageFieldRegistry;
 use Flex\Pages\PageRepository;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
@@ -29,6 +30,7 @@ final readonly class AdminPagesFormController
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
         private AdminExtensionRegistry $adminExtensions,
+        private PageFieldRegistry $pageFields,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -48,6 +50,10 @@ final readonly class AdminPagesFormController
         $isEdit = $page !== null;
         $isSettings = str_ends_with($request->getUri()->getPath(), '/settings');
         $pages = $this->hierarchicalPages(array_values($this->pages->all()->map(static fn(\Flex\Pages\Page $item): array => $item->toPublicArray())->all()));
+        $pageData = $page?->toPublicArray();
+        if ($pageData !== null && $id !== false) {
+            $pageData['plugin_fields'] = $this->pageFields->valuesForPage((int) $id);
+        }
         $bootstrap = [
             'page' => $isSettings ? 'pages-settings' : ($isEdit ? 'pages-edit' : 'pages-create'),
             'csrfToken' => $this->csrf->token(),
@@ -55,9 +61,10 @@ final readonly class AdminPagesFormController
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
             'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
             'version' => $this->versions->current()->value,
-            'pageData' => $page?->toPublicArray(),
+            'pageData' => $pageData,
             'pages' => $pages,
             'adminExtensions' => $this->adminExtensions->bootstrap(),
+            'pageFields' => $this->pageFields->bootstrap(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

@@ -10,6 +10,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
 use Flex\Extensions\AdminExtensionRegistry;
+use Flex\Extensions\PageFieldRegistry;
 use Flex\Pages\PageRepository;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
@@ -29,6 +30,7 @@ final readonly class AdminPagesController
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
         private AdminExtensionRegistry $adminExtensions,
+        private PageFieldRegistry $pageFields,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -99,6 +101,7 @@ final readonly class AdminPagesController
             'pages' => $pages,
             'trashedPages' => $this->pages->trashed()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all(),
             'adminExtensions' => $this->adminExtensions->bootstrap(),
+            'pageFields' => $this->pageFields->bootstrap(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

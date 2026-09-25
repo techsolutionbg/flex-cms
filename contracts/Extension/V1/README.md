@@ -19,6 +19,17 @@ sidebar links and `notice`, `card` or `link` components in approved slots such a
 `admin.dashboard.before`, `admin.pages.table.before` and `admin.page.form.after`.
 Raw HTML and editor slots are intentionally not part of this API.
 
+Plugins with `admin.ui` can also register structured page fields through
+`PluginContext::$pageFields`: `text`, `textarea` and `checkbox`. Submitted values
+are namespaced by plugin ID and exposed on `PageEvent::$fields`, allowing the
+plugin to store them in its own table. The platform does not persist plugin fields
+in the core pages table.
+
+The registrar's `values()` method accepts a resolver that receives a page ID and
+returns the plugin's saved values. Those values are included when the page form is
+opened, so edit forms can be hydrated without coupling the platform to the plugin's
+storage.
+
 Declared permissions are stored as requested permissions during installation. A super
 administrator must approve them before activation; runtime contexts and frontend assets
 receive only approved permissions. Permission changes require the plugin to be inactive.
