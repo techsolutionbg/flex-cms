@@ -11,6 +11,8 @@ use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\View\ViteAssetManager;
 use Flex\Extensions\AdminExtensionRegistry;
 use Flex\Extensions\PageFieldRegistry;
+use Flex\Extensions\PageSettingsRegistry;
+use Flex\Extensions\PluginRegistry;
 use Flex\Pages\PageRepository;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
@@ -31,6 +33,8 @@ final readonly class AdminPagesFormController
         private ViteAssetManager $assets,
         private AdminExtensionRegistry $adminExtensions,
         private PageFieldRegistry $pageFields,
+        private PageSettingsRegistry $pageSettings,
+        private PluginRegistry $plugins,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -53,6 +57,7 @@ final readonly class AdminPagesFormController
         $pageData = $page?->toPublicArray();
         if ($pageData !== null && $id !== false) {
             $pageData['plugin_fields'] = $this->pageFields->valuesForPage((int) $id);
+            $pageData['plugin_settings'] = $this->pageSettings->valuesForPage((int) $id);
         }
         $bootstrap = [
             'page' => $isSettings ? 'pages-settings' : ($isEdit ? 'pages-edit' : 'pages-create'),
@@ -65,6 +70,8 @@ final readonly class AdminPagesFormController
             'pages' => $pages,
             'adminExtensions' => $this->adminExtensions->bootstrap(),
             'pageFields' => $this->pageFields->bootstrap(),
+            'pageSettingsFields' => $this->pageSettings->bootstrap(),
+            'plugins' => $this->plugins->all()->map(static fn(\Flex\Extensions\Plugin $plugin): array => $plugin->toPublicArray())->all(),
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [

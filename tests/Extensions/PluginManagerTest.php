@@ -12,7 +12,6 @@ use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\ExtensionApi;
 use Flex\Extensions\PluginRuntime;
-use Flex\Extensions\Exception\PluginPermissionDenied;
 use PHPUnit\Framework\TestCase;
 
 final class PluginManagerTest extends TestCase
@@ -132,7 +131,7 @@ PHP);
         self::assertFileDoesNotExist($this->directory . '/plugins/acme/forms');
     }
 
-    public function testActivationRequiresApprovedManifestPermissions(): void
+    public function testInstallationApprovesManifestPermissionsForActivation(): void
     {
         file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
             'id' => 'acme/forms',
@@ -145,10 +144,8 @@ PHP);
 
         $plugin = $this->manager->install('acme/forms');
         self::assertSame(['routes.public'], $plugin->requestedPermissions());
-        self::assertSame([], $plugin->approvedPermissions());
-
-        $this->expectException(PluginPermissionDenied::class);
-        $this->manager->activate('acme/forms');
+        self::assertSame(['routes.public'], $plugin->approvedPermissions());
+        self::assertSame(PluginManager::STATUS_ACTIVE, $this->manager->activate('acme/forms')->getAttribute('status'));
     }
 
     public function testApprovedManifestPermissionsAllowActivation(): void

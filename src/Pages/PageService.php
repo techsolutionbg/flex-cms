@@ -9,6 +9,7 @@ use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extension\V1\PageEvent;
 use Flex\Extensions\ContentBlockRegistry;
 use Flex\Extensions\PageFieldRegistry;
+use Flex\Extensions\PageSettingsRegistry;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
 
@@ -21,6 +22,7 @@ final readonly class PageService
         private ExtensionApiInterface $extensionApi,
         private ?ContentBlockRegistry $contentBlocks = null,
         private ?PageFieldRegistry $pageFields = null,
+        private ?PageSettingsRegistry $pageSettings = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -31,7 +33,7 @@ final readonly class PageService
         $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable() : null;
 
         $page = $this->pages->create($data);
-        $fields = $this->pageFields?->normalize(is_array($attributes['plugin_fields'] ?? null) ? $attributes['plugin_fields'] : []) ?? [];
+        $fields = $this->pluginFieldsForEvent($attributes['plugin_fields'] ?? null, $attributes['plugin_settings'] ?? null);
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_CREATED, $page->toPublicArray(), $fields));
 
         return $page;
@@ -54,7 +56,7 @@ final readonly class PageService
             $page->setAttribute('published_at', null);
         }
         $page->saveOrFail();
-        $fields = $this->pageFields?->normalize(is_array($attributes['plugin_fields'] ?? null) ? $attributes['plugin_fields'] : []) ?? [];
+        $fields = $this->pluginFieldsForEvent($attributes['plugin_fields'] ?? null, $attributes['plugin_settings'] ?? null);
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
         return $page;
@@ -108,9 +110,23 @@ final readonly class PageService
             'show_in_sitemap' => filter_var($settings['show_in_sitemap'] ?? true, FILTER_VALIDATE_BOOL),
         ]);
         $page->saveOrFail();
-        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray()));
+        $fields = $this->pluginFieldsForEvent($settings['plugin_fields'] ?? null, $settings['plugin_settings'] ?? null);
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
         return $page;
+    }
+
+    /** @return array<string, array<string, string|bool>> */
+    private function pluginFieldsForEvent(mixed $pageFields, mixed $pageSettings): array
+    {
+        $fields = $this->pageFields?->normalize(is_array($pageFields) ? $pageFields : []) ?? [];
+        $settings = $this->pageSettings?->normalize(is_array($pageSettings) ? $pageSettings : []) ?? [];
+
+        foreach ($settings as $plugin => $values) {
+            $fields[$plugin] = [...($fields[$plugin] ?? []), ...$values];
+        }
+
+        return $fields;
     }
 
     /** @param array<string, mixed> $attributes */

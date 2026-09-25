@@ -21,6 +21,7 @@ final readonly class PluginContext
         public ?ContentBlockRegistrarInterface $contentBlocks = null,
         public ?AdminExtensionRegistrarInterface $admin = null,
         public ?PageFieldRegistrarInterface $pageFields = null,
+        public ?PageFieldRegistrarInterface $pageSettings = null,
     ) {}
 
     public function can(string $permission): bool

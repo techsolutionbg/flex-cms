@@ -18,6 +18,7 @@ final readonly class PluginRuntime
         private ?ContentBlockRegistry $contentBlocks = null,
         private ?AdminExtensionRegistry $adminExtensions = null,
         private ?PageFieldRegistry $pageFields = null,
+        private ?PageSettingsRegistry $pageSettings = null,
         private ?RouteRegistryInterface $routes = null,
     ) {}
 
@@ -51,6 +52,7 @@ final readonly class PluginRuntime
                 $this->contentBlocks?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
                 $this->adminExtensions?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
                 $this->pageFields?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
+                $this->pageSettings?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
             ));
         }
     }

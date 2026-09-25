@@ -30,6 +30,7 @@ final readonly class PluginManager
         private ?ContentBlockRegistry $contentBlocks = null,
         private ?AdminExtensionRegistry $adminExtensions = null,
         private ?PageFieldRegistry $pageFields = null,
+        private ?PageSettingsRegistry $pageSettings = null,
         private ?LoggerInterface $logger = null,
     ) {}
 
@@ -241,7 +242,7 @@ final readonly class PluginManager
     {
         $effectivePermissions = $permissions ?? $manifest->permissions;
 
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions), $this->adminExtensions?->registrar($manifest->id, $effectivePermissions), $this->pageFields?->registrar($manifest->id, $effectivePermissions));
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions), $this->adminExtensions?->registrar($manifest->id, $effectivePermissions), $this->pageFields?->registrar($manifest->id, $effectivePermissions), $this->pageSettings?->registrar($manifest->id, $effectivePermissions));
     }
 
     /** @param list<string> $requested */
@@ -251,7 +252,10 @@ final readonly class PluginManager
             return;
         }
 
-        $approved = array_values(array_intersect($plugin->approvedPermissions(), $requested));
+        // Installation is the explicit trust boundary for a plugin. Approve
+        // the permissions declared by its manifest so activation works
+        // immediately; they can still be changed while the plugin is inactive.
+        $approved = $requested;
         $plugin->setAttribute('requested_permissions', $requested);
         $plugin->setAttribute('approved_permissions', $approved);
     }

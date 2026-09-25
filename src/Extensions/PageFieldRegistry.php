@@ -7,7 +7,7 @@ namespace Flex\Extensions;
 use Flex\Extension\V1\PageFieldRegistrarInterface;
 use Flex\Extensions\Exception\PluginPermissionDenied;
 
-final class PageFieldRegistry
+class PageFieldRegistry
 {
     /** @var array<string, array{plugin: string, id: string, type: string, label: string, default: string|bool, hint: string, max_length: int, priority: int}> */
     private array $fields = [];
