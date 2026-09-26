@@ -14,5 +14,6 @@ return [
         'signing_public_key' => $_ENV['UPDATE_SIGNING_PUBLIC_KEY'] ?? '',
         'healthcheck_url' => $_ENV['UPDATE_HEALTHCHECK_URL'] ?? 'http://127.0.0.1/health',
         'max_uncompressed_mb' => (int) ($_ENV['UPDATE_MAX_UNCOMPRESSED_MB'] ?? 256),
+        'max_download_mb' => (int) ($_ENV['UPDATE_MAX_DOWNLOAD_MB'] ?? 256),
     ],
 ];

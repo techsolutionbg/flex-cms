@@ -60,4 +60,47 @@ UPDATE_REQUIRE_CHECKSUM=true
 UPDATE_REQUIRE_SIGNATURE=true
 ```
 
-В тази стъпка е дефиниран договорът и неговата валидация. Реалното сваляне, подписване/проверка на remote catalog и инсталиране ще бъдат реализирани в следващите стъпки.
+В тази стъпка е дефиниран договорът и неговата валидация. Реалното сваляне и инсталиране ще бъдат реализирани в следващите стъпки.
+
+## Подписване на release manifest
+
+Ключова двойка се генерира локално или в CI среда:
+
+```bash
+bin/flex updates:keygen /secure/path/flex-updates.private /secure/path/flex-updates.public
+```
+
+Private key файлът трябва да остане извън Git repository и извън публичната директория на update сървъра. С него се подписва предварително подготвен unsigned manifest:
+
+```bash
+bin/flex updates:sign-manifest \
+  release.json \
+  signed-release.json \
+  --private-key-file=/secure/path/flex-updates.private \
+  --key-id=release-2026
+```
+
+Само `signed-release.json` се публикува в catalog-а. Публичният ключ се задава в production чрез `UPDATE_SIGNING_PUBLIC_KEY`.
+
+## Catalog client
+
+Платформата използва общ `RemoteCatalogClient` за platform и plugin каталозите. Той кешира JSON отговорите в `storage/cache/updates/` и изпраща `If-None-Match`/`If-Modified-Since`, когато update сървърът предостави съответните headers.
+
+Клиентът приема само HTTPS update server URL. Проверяването на цифровите подписи и свалянето на ZIP artifact-ите са отделни операции и ще се извършват преди инсталация.
+
+## Сигурно сваляне на artifact-и
+
+`RemotePackageDownloader` приема само HTTPS URL към host-а от `UPDATE_SERVER_URL`, проверява release manifest подписа, ограничава размера чрез `UPDATE_MAX_DOWNLOAD_MB`, записва първо в `.zip.part` файл и проверява размера и SHA-256 преди финализиране.
+
+Няма redirect следване при сваляне. Пълната ZIP структура и вътрешният package manifest се валидират от съществуващия platform package inspector непосредствено преди инсталация.
+
+## Remote platform update
+
+Съществуващият platform installer вече може да бъде извикан през remote catalog:
+
+```bash
+bin/flex platform:remote-update --dry-run
+bin/flex platform:remote-update
+```
+
+Командата избира най-високата съвместима версия от конфигурирания канал, сваля пакета, подава го към същия installer като ръчно качен ZIP и изтрива временния файл след края на операцията. Backup, maintenance mode, migrations, health check и recovery остават в съществуващия installer pipeline.

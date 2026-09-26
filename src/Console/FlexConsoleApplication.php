@@ -17,10 +17,13 @@ use Flex\Console\Command\PlatformBuildCommand;
 use Flex\Console\Command\PlatformHistoryCommand;
 use Flex\Console\Command\PlatformInspectCommand;
 use Flex\Console\Command\PlatformInstallCommand;
+use Flex\Console\Command\PlatformRemoteUpdateCommand;
 use Flex\Console\Command\PlatformRecoverCommand;
 use Flex\Console\Command\PlatformRollbackCommand;
 use Flex\Console\Command\PlatformSignManifestCommand;
 use Flex\Console\Command\PlatformVersionCommand;
+use Flex\Console\Command\UpdateKeygenCommand;
+use Flex\Console\Command\UpdateSignManifestCommand;
 use Flex\Console\Command\PluginActivateCommand;
 use Flex\Console\Command\PluginDeactivateCommand;
 use Flex\Console\Command\PluginInstallCommand;
@@ -37,6 +40,7 @@ use Flex\Updates\Platform\PlatformPackageInspector;
 use Flex\Updates\Platform\PlatformRollback;
 use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Updates\Remote\RemotePlatformUpdater;
 use Flex\Users\UserRepository;
 use Flex\Users\UserService;
 use Symfony\Component\Console\Application;
@@ -58,6 +62,7 @@ final class FlexConsoleApplication extends Application
         PlatformHistory $updateHistory,
         PlatformRollback $platformRollback,
         PlatformPackageBuilder $platformPackageBuilder,
+        RemotePlatformUpdater $remotePlatformUpdater,
         PluginManager $pluginManager,
         PluginRegistry $pluginRegistry,
     ) {
@@ -73,10 +78,13 @@ final class FlexConsoleApplication extends Application
             new PlatformVersionCommand($registry),
             new PlatformInspectCommand($inspector),
             new PlatformInstallCommand($installer, $configuration->bool('extensions.updates.require_checksum')),
+            new PlatformRemoteUpdateCommand($remotePlatformUpdater),
             new PlatformRecoverCommand($updateRecovery),
             new PlatformHistoryCommand($updateHistory),
             new PlatformRollbackCommand($platformRollback),
             new PlatformSignManifestCommand(),
+            new UpdateKeygenCommand(),
+            new UpdateSignManifestCommand(),
             new PlatformBuildCommand($platformPackageBuilder),
             new PluginListCommand($pluginRegistry),
             new PluginInstallCommand($pluginManager),

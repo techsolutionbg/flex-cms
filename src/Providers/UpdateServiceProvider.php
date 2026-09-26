@@ -10,10 +10,14 @@ use function DI\factory;
 use function DI\get;
 
 use Flex\Contracts\Container\ServiceProviderInterface;
+use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Updates\PlatformDatabaseBackupInterface;
 use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
+use Flex\Contracts\Updates\RemoteCatalogTransportInterface;
+use Flex\Contracts\Updates\RemotePackageTransportInterface;
 use Flex\Updates\Platform\{MySqlPlatformDatabaseBackup, PhinxPlatformMigrationRunner, PlatformHealthChecker, PlatformHistory, PlatformPackageBuilder, PlatformPackageInspector, PlatformPackageInspectorFactory, PlatformPackageUpload, PlatformPreflightChecker, PlatformRollback, PlatformUpdateRecovery, PlatformUpdateStateStore, PlatformVersionInstaller, PlatformVersionRegistry};
+use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater};
 use Psr\Container\ContainerInterface;
 
 final class UpdateServiceProvider implements ServiceProviderInterface
@@ -22,6 +26,11 @@ final class UpdateServiceProvider implements ServiceProviderInterface
     {
         return [
             PlatformVersionRegistry::class => create()->constructor(get('base_path')),
+            RemoteCatalogTransportInterface::class => autowire(CurlRemoteCatalogTransport::class),
+            RemoteCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path')),
+            RemotePackageTransportInterface::class => autowire(CurlRemotePackageTransport::class),
+            RemotePackageDownloader::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemotePackageTransportInterface::class), get('base_path')),
+            RemotePlatformUpdater::class => autowire(),
             PlatformPackageBuilder::class => create()->constructor(get('base_path'), get(PlatformVersionRegistry::class)),
             PlatformPackageInspectorFactory::class => autowire(), PlatformPackageInspector::class => factory([PlatformPackageInspectorFactory::class, 'create']),
             PlatformMigrationRunnerInterface::class => create(PhinxPlatformMigrationRunner::class)->constructor(get('base_path')),
