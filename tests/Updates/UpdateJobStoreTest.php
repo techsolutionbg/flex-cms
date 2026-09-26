@@ -50,4 +50,16 @@ final class UpdateJobStoreTest extends TestCase
         self::assertSame(UpdateJobStore::STATUS_COMPLETED, $completed->status);
         self::assertSame('1.1.0', $store->all()[0]->result['version']);
     }
+
+    public function testItQueuesEquivalentPluginJobsById(): void
+    {
+        $store = new UpdateJobStore($this->basePath);
+
+        $first = $store->queuePluginUpdate('flex/seo');
+        $second = $store->queuePluginUpdate('flex/seo');
+
+        self::assertSame($first->id, $second->id);
+        self::assertSame('plugin', $first->type);
+        self::assertSame('flex/seo', $first->packageId);
+    }
 }

@@ -8,6 +8,7 @@ use Flex\Updates\Jobs\UpdateJobStore;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -22,12 +23,14 @@ final class UpdateQueueCommand extends Command
 
     protected function configure(): void
     {
+        $this->addArgument('plugin', InputArgument::OPTIONAL, 'Plugin ID to update remotely.');
         $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Queue validation without changing files.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $job = $this->jobs->queuePlatformUpdate((bool) $input->getOption('dry-run'));
+        $plugin = $input->getArgument('plugin');
+        $job = is_string($plugin) && $plugin !== '' ? $this->jobs->queuePluginUpdate($plugin) : $this->jobs->queuePlatformUpdate((bool) $input->getOption('dry-run'));
         (new SymfonyStyle($input, $output))->success(sprintf('Update job %s is %s.', $job->id, $job->status));
 
         return self::SUCCESS;

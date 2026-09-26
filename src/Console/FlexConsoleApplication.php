@@ -31,6 +31,7 @@ use Flex\Console\Command\PluginActivateCommand;
 use Flex\Console\Command\PluginDeactivateCommand;
 use Flex\Console\Command\PluginInstallCommand;
 use Flex\Console\Command\PluginListCommand;
+use Flex\Console\Command\PluginRollbackCommand;
 use Flex\Console\Command\PluginUninstallCommand;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
@@ -45,6 +46,7 @@ use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Remote\RemotePlatformUpdater;
 use Flex\Updates\Jobs\UpdateJobProcessor;
+use Flex\Updates\Remote\PluginRollback;
 use Flex\Updates\Jobs\UpdateJobStore;
 use Flex\Users\UserRepository;
 use Flex\Users\UserService;
@@ -70,6 +72,7 @@ final class FlexConsoleApplication extends Application
         RemotePlatformUpdater $remotePlatformUpdater,
         UpdateJobProcessor $updateJobProcessor,
         UpdateJobStore $updateJobStore,
+        PluginRollback $pluginRollback,
         PluginManager $pluginManager,
         PluginRegistry $pluginRegistry,
     ) {
@@ -95,6 +98,7 @@ final class FlexConsoleApplication extends Application
             new UpdateQueueCommand($updateJobStore),
             new UpdateProcessCommand($updateJobProcessor),
             new UpdateStatusCommand($updateJobStore),
+            new PluginRollbackCommand($pluginRollback),
             new PlatformBuildCommand($platformPackageBuilder),
             new PluginListCommand($pluginRegistry),
             new PluginInstallCommand($pluginManager),

@@ -33,6 +33,21 @@ final class UpdateJobStore
         });
     }
 
+    public function queuePluginUpdate(string $pluginId): UpdateJob
+    {
+        return $this->withLock(function () use ($pluginId): UpdateJob {
+            $jobs = $this->read();
+            foreach ($jobs as $job) {
+                if ($job->type === 'plugin' && $job->packageId === $pluginId && in_array($job->status, [self::STATUS_PENDING, self::STATUS_RUNNING], true)) return $job;
+            }
+            $job = new UpdateJob('plugin-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(5)), 'plugin', self::STATUS_PENDING, false, gmdate(DATE_ATOM), packageId: $pluginId);
+            $jobs[] = $job;
+            $this->write($jobs);
+
+            return $job;
+        });
+    }
+
     public function claimNext(): ?UpdateJob
     {
         return $this->withLock(function (): ?UpdateJob {
@@ -41,7 +56,7 @@ final class UpdateJobStore
                 if ($job->status !== self::STATUS_PENDING) {
                     continue;
                 }
-                $claimed = new UpdateJob($job->id, $job->type, self::STATUS_RUNNING, $job->dryRun, $job->createdAt, gmdate(DATE_ATOM));
+                $claimed = new UpdateJob($job->id, $job->type, self::STATUS_RUNNING, $job->dryRun, $job->createdAt, gmdate(DATE_ATOM), packageId: $job->packageId);
                 $jobs[$index] = $claimed;
                 $this->write($jobs);
 
@@ -56,12 +71,12 @@ final class UpdateJobStore
     /** @param array<string, mixed> $result */
     public function complete(UpdateJob $job, array $result = []): UpdateJob
     {
-        return $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_COMPLETED, $job->dryRun, $job->createdAt, $job->startedAt, gmdate(DATE_ATOM), null, $result));
+        return $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_COMPLETED, $job->dryRun, $job->createdAt, $job->startedAt, gmdate(DATE_ATOM), null, $result, $job->packageId));
     }
 
     public function fail(UpdateJob $job, string $error): UpdateJob
     {
-        return $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_FAILED, $job->dryRun, $job->createdAt, $job->startedAt, gmdate(DATE_ATOM), $error));
+        return $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_FAILED, $job->dryRun, $job->createdAt, $job->startedAt, gmdate(DATE_ATOM), $error, [], $job->packageId));
     }
 
     /** @return list<UpdateJob> */
@@ -129,7 +144,7 @@ final class UpdateJobStore
                 return $job;
             }
 
-            return new UpdateJob($job->id, $job->type, self::STATUS_PENDING, $job->dryRun, $job->createdAt, null, null, 'Previous worker timed out; job was requeued.');
+            return new UpdateJob($job->id, $job->type, self::STATUS_PENDING, $job->dryRun, $job->createdAt, null, null, 'Previous worker timed out; job was requeued.', [], $job->packageId);
         }, $jobs);
     }
 

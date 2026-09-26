@@ -126,6 +126,26 @@ bin/flex updates:queue
 bin/flex updates:status
 ```
 
+Remote plugin update се поставя в същата опашка с plugin ID:
+
+```bash
+bin/flex updates:queue flex/seo
+```
+
+Worker-ът сваля подписания plugin artifact от plugin catalog-а, валидира checksum-а и manifest-а, заменя файловете атомарно и извиква стандартния plugin lifecycle update. Ако плъгинът е бил активен, той се деактивира временно и се активира отново след успешна инсталация.
+
+## Plugin rollback и recovery
+
+След успешно remote plugin update предишната версия се съхранява в `storage/backups/plugins/`, а metadata-та се записва в `storage/updates/plugins-history.json`. При неуспех по време на замяната updater-ът възстановява предишните файлове и активния статус в рамките на същата операция.
+
+Rollback се изпълнява от CLI с history ID:
+
+```bash
+bin/flex plugin:rollback plugin-update-20260926-abc123
+```
+
+Rollback използва същия lifecycle на плъгина и възстановява активния статус само ако той е бил активен преди обновяването. Backup-ът се пази до успешен rollback или до изрично зададена по-късна retention политика.
+
 Ако worker остане прекъснат повече от 15 минути, следващото изпълнение автоматично връща job-а в `pending` състояние. Опашката е подходяща за един production worker и не изисква Redis или Supervisor.
 
 ## Административен интерфейс за remote обновявания

@@ -17,7 +17,7 @@ use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Contracts\Updates\RemoteCatalogTransportInterface;
 use Flex\Contracts\Updates\RemotePackageTransportInterface;
 use Flex\Updates\Platform\{MySqlPlatformDatabaseBackup, PhinxPlatformMigrationRunner, PlatformHealthChecker, PlatformHistory, PlatformPackageBuilder, PlatformPackageInspector, PlatformPackageInspectorFactory, PlatformPackageUpload, PlatformPreflightChecker, PlatformRollback, PlatformUpdateRecovery, PlatformUpdateStateStore, PlatformVersionInstaller, PlatformVersionRegistry};
-use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater};
+use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, PluginRollback, PluginUpdateHistory, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater, RemotePluginUpdater};
 use Flex\Updates\Jobs\{UpdateJobProcessor, UpdateJobStore};
 use Psr\Container\ContainerInterface;
 
@@ -32,6 +32,9 @@ final class UpdateServiceProvider implements ServiceProviderInterface
             RemotePackageTransportInterface::class => autowire(CurlRemotePackageTransport::class),
             RemotePackageDownloader::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemotePackageTransportInterface::class), get('base_path')),
             RemotePlatformUpdater::class => autowire(),
+            RemotePluginUpdater::class => autowire(),
+            PluginUpdateHistory::class => create()->constructor(get('base_path')),
+            PluginRollback::class => autowire(),
             UpdateJobStore::class => create()->constructor(get('base_path')),
             UpdateJobProcessor::class => autowire(),
             PlatformPackageBuilder::class => create()->constructor(get('base_path'), get(PlatformVersionRegistry::class)),
