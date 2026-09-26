@@ -2,5 +2,23 @@
   "schema": 1,
   "repository": "flex-cms",
   "type": "platform",
-  "releases": []
+  "releases": [
+    {
+      "schema": 1,
+      "package": "flex-cms",
+      "type": "platform",
+      "version": "0.1.0",
+      "channel": "stable",
+      "download_url": "https://updates-flex-cms.kriskata.com/platform/releases/0.1.0/flex-cms-0.1.0.zip",
+      "checksum": "26210aa04a6acda04e66d08c14d0ced3cd7977cfc876929ec38d50abd87aa614",
+      "size": 1124056,
+      "minimum_php": ">=8.3",
+      "compatible_from": ">=0.1.0 <1.0.0",
+      "published_at": "2026-09-26T22:54:06+00:00",
+      "release_notes": "Първа подписана версия на Flex CMS.",
+      "signature_algorithm": "ed25519",
+      "key_id": "release-2026",
+      "signature": "6iNJ3z7CkS/UPrvmwPV2q5uHfjF+2y9rdWaZUtO3EVOYHM+dixuHKRG4q2YW+osaD3kvPVZfhyr+o8vNX5A/Bg=="
+    }
+  ]
 }
