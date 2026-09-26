@@ -41,5 +41,13 @@ final readonly class PluginUpdateHistory
         throw new PlatformUpdateException(sprintf('Plugin update history record "%s" was not found.', $id));
     }
 
+    public function assertBackupPath(string $path): void
+    {
+        $prefix = rtrim($this->basePath, '/') . '/storage/backups/plugins/';
+        if (!str_starts_with($path, $prefix) || str_contains($path, "\0") || str_contains($path, '\\') || in_array('.', explode('/', $path), true) || in_array('..', explode('/', $path), true)) {
+            throw new PlatformUpdateException('The plugin backup path is outside the managed backup directory.');
+        }
+    }
+
     private function path(): string { return $this->basePath . '/storage/updates/plugins-history.json'; }
 }

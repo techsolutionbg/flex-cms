@@ -1,9 +1,9 @@
-# Distribution scaffold за `updates.flex-cms.com`
+# Distribution scaffold за `updates-flex-cms.kriskata.com`
 
 Тази директория е статичният release root на update сървъра. Тя трябва да бъде публикувана като document root на:
 
 ```text
-https://updates.flex-cms.com/
+https://updates-flex-cms.kriskata.com/
 ```
 
 На shared hosting не е необходим PHP runtime за тази директория. Тя съдържа само JSON metadata, ZIP artifacts и `.sha256` sidecar файлове.
@@ -46,7 +46,7 @@ updates/
       "type": "platform",
       "version": "1.1.0",
       "channel": "stable",
-      "download_url": "https://updates.flex-cms.com/platform/releases/1.1.0/flex-cms-1.1.0.zip",
+      "download_url": "https://updates-flex-cms.kriskata.com/platform/releases/1.1.0/flex-cms-1.1.0.zip",
       "checksum": "<sha256>",
       "size": 123456,
       "minimum_php": ">=8.3",
@@ -73,7 +73,7 @@ updates/
   "plugins": [
     {
       "id": "flex/seo",
-      "manifest_url": "https://updates.flex-cms.com/plugins/flex/seo/manifest.json"
+      "manifest_url": "https://updates-flex-cms.kriskata.com/plugins/flex/seo/manifest.json"
     }
   ]
 }

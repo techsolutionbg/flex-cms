@@ -19,6 +19,8 @@ final readonly class PluginRollback
         $pluginId = $record['plugin_id'] ?? null;
         $backup = $record['backup_path'] ?? null;
         if (!is_string($pluginId) || !is_string($backup) || !is_dir($backup)) throw new PlatformUpdateException('The plugin update history record has no usable backup.');
+        if (preg_match('/^[a-z0-9]+(?:[._-][a-z0-9]+)*\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/', $pluginId) !== 1) throw new PlatformUpdateException('The plugin update history contains an invalid plugin ID.');
+        $this->history->assertBackupPath($backup);
         $plugin = $this->plugins->find($pluginId);
         if ($plugin === null) throw new PlatformUpdateException(sprintf('Plugin "%s" is not installed.', $pluginId));
         $path = (string) $plugin->getAttribute('path');

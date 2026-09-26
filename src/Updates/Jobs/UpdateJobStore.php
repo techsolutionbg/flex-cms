@@ -35,6 +35,9 @@ final class UpdateJobStore
 
     public function queuePluginUpdate(string $pluginId): UpdateJob
     {
+        if (preg_match('/^[a-z0-9]+(?:[._-][a-z0-9]+)*\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/', $pluginId) !== 1) {
+            throw new \InvalidArgumentException('The plugin ID must use vendor/name format.');
+        }
         return $this->withLock(function () use ($pluginId): UpdateJob {
             $jobs = $this->read();
             foreach ($jobs as $job) {

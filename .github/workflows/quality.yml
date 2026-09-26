@@ -1,0 +1,40 @@
+name: Quality and security checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, dom, fileinfo, mbstring, openssl, pdo, pdo_mysql, zip
+          tools: composer
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer validate --strict
+      - run: vendor/bin/phpunit
+      - run: vendor/bin/phpstan analyse
+      - run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
+      - run: composer audit --locked
+  admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: resources/admin/package-lock.json
+      - run: npm ci
+        working-directory: resources/admin
+      - run: npm run check
+        working-directory: resources/admin
+      - run: npm run build
+        working-directory: resources/admin

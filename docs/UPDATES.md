@@ -1,6 +1,6 @@
 # Договор за автоматични обновявания
 
-Този документ описва първата версия на договора между Flex CMS и distribution сървъра `https://updates.flex-cms.com`.
+Този документ описва първата версия на договора между Flex CMS и distribution сървъра `https://updates-flex-cms.kriskata.com`.
 
 ## Канали
 
@@ -23,7 +23,7 @@
   "type": "platform",
   "version": "1.1.0",
   "channel": "stable",
-  "download_url": "https://updates.flex-cms.com/platform/releases/1.1.0/flex-cms-1.1.0.zip",
+      "download_url": "https://updates-flex-cms.kriskata.com/platform/releases/1.1.0/flex-cms-1.1.0.zip",
   "checksum": "<sha256>",
   "size": 123456,
   "minimum_php": ">=8.3",
@@ -53,7 +53,7 @@
 ## Конфигурация
 
 ```dotenv
-UPDATE_SERVER_URL=https://updates.flex-cms.com
+UPDATE_SERVER_URL=https://updates-flex-cms.kriskata.com
 UPDATE_CHANNEL=stable
 UPDATE_CHECK_ENABLED=true
 UPDATE_REQUIRE_CHECKSUM=true
@@ -153,3 +153,25 @@ Rollback използва същия lifecycle на плъгина и възст
 Страницата `/admin/updates` проверява remote platform каталога и показва текущата версия, update канала, наличната съвместима версия, release notes и размера на пакета. При налична версия администраторът може да постави обновяването във файловата опашка. Заявката не изпълнява инсталация в HTTP заявката; тя се обработва от `updates:process`, което е подходящо за shared hosting.
 
 Същата страница показва последните jobs и техните статуси (`pending`, `running`, `completed`, `failed`). Ако remote каталогът е временно недостъпен, това се показва като грешка в интерфейса, без да блокира ръчния ZIP upload и rollback функционалността.
+
+## Release publishing workflow
+
+Добавен е `scripts/release_catalog.py` и GitHub Actions workflow `.github/workflows/publish-platform-release.yml`. Workflow-ът се стартира ръчно с версия, release notes и флаг за миграции. Той изгражда production assets, създава подписан platform ZIP, генерира release entry, публикува ZIP файловете и каталога чрез rsync към shared hosting и записва metadata-та в Git.
+
+В GitHub трябва да се зададат `UPDATE_SIGNING_PRIVATE_KEY` и `UPDATE_DEPLOY_SSH_KEY` като secrets, както и `UPDATE_SIGNING_KEY_ID`, `UPDATE_DEPLOY_HOST`, `UPDATE_DEPLOY_USER` и `UPDATE_DEPLOY_PATH` като repository variables. Каталогът се публикува последен, след като ZIP artifact-ът вече е наличен на хостинга.
+
+Същият catalog tool поддържа и plugin release entries чрез `--type plugin --package vendor/name`; plugin build pipeline-ът може да подаде готовия, проверен plugin ZIP към този tool, без да променя формата на remote каталога.
+
+## Production hardening checklist
+
+Добавен е `.github/workflows/quality.yml`, който изпълнява PHPUnit, PHPStan, PHP CS Fixer, Composer audit, TypeScript проверка и production build. Преди production activation трябва да се потвърди:
+
+- private signing key-ът да е само GitHub secret и никога да не се качва в `updates/`;
+- `updates/` да е read-only за приложението и да изпълнява само статични JSON/ZIP файлове;
+- `storage/updates`, `storage/backups/plugins` и `storage/tmp` да са writable само от application user;
+- cron worker-ът да е единствен активен worker за конкретната инсталация;
+- `UPDATE_REQUIRE_SIGNATURE=true` и `UPDATE_REQUIRE_CHECKSUM=true` да са включени;
+- първо да се тества `--dry-run`, след това реално обновяване и rollback върху backup среда;
+- да има backup на базата данни преди platform update с миграции.
+
+Кодът валидира plugin ID, managed backup path и инсталационния plugin path, за да не допуска path traversal или запис извън контролирани директории.

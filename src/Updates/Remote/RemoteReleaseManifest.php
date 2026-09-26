@@ -9,7 +9,7 @@ use Flex\Updates\Exception\InvalidRemoteReleaseManifest;
 use Flex\Updates\Platform\PlatformVersion;
 
 /**
- * The signed catalog entry used by updates.flex-cms.com.
+ * The signed catalog entry used by the configured update distribution host.
  *
  * It describes a release, not the manifest embedded in the ZIP package. The
  * embedded package manifest remains the source of truth for the files that

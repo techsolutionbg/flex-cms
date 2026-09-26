@@ -45,6 +45,11 @@ final class RemotePluginUpdater
         $active = $plugin->getAttribute('status') === PluginManager::STATUS_ACTIVE;
         $fromVersion = (string) $plugin->getAttribute('version');
         $oldPath = (string) $plugin->getAttribute('path');
+        $pluginsRoot = realpath($this->plugins->pluginsPath());
+        $installedPath = realpath($oldPath);
+        if ($pluginsRoot === false || $installedPath === false || is_link($oldPath) || $installedPath === $pluginsRoot || !str_starts_with($installedPath, rtrim($pluginsRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            throw new RemoteCatalogException('The installed plugin path is outside the managed plugins directory.');
+        }
         $backup = $oldPath . '.backup-' . bin2hex(random_bytes(5));
         $persistentBackup = null;
         try {
