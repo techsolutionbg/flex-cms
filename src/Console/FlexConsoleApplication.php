@@ -23,7 +23,10 @@ use Flex\Console\Command\PlatformRollbackCommand;
 use Flex\Console\Command\PlatformSignManifestCommand;
 use Flex\Console\Command\PlatformVersionCommand;
 use Flex\Console\Command\UpdateKeygenCommand;
+use Flex\Console\Command\UpdateProcessCommand;
+use Flex\Console\Command\UpdateQueueCommand;
 use Flex\Console\Command\UpdateSignManifestCommand;
+use Flex\Console\Command\UpdateStatusCommand;
 use Flex\Console\Command\PluginActivateCommand;
 use Flex\Console\Command\PluginDeactivateCommand;
 use Flex\Console\Command\PluginInstallCommand;
@@ -41,6 +44,8 @@ use Flex\Updates\Platform\PlatformRollback;
 use Flex\Updates\Platform\PlatformUpdateRecovery;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Remote\RemotePlatformUpdater;
+use Flex\Updates\Jobs\UpdateJobProcessor;
+use Flex\Updates\Jobs\UpdateJobStore;
 use Flex\Users\UserRepository;
 use Flex\Users\UserService;
 use Symfony\Component\Console\Application;
@@ -63,6 +68,8 @@ final class FlexConsoleApplication extends Application
         PlatformRollback $platformRollback,
         PlatformPackageBuilder $platformPackageBuilder,
         RemotePlatformUpdater $remotePlatformUpdater,
+        UpdateJobProcessor $updateJobProcessor,
+        UpdateJobStore $updateJobStore,
         PluginManager $pluginManager,
         PluginRegistry $pluginRegistry,
     ) {
@@ -85,6 +92,9 @@ final class FlexConsoleApplication extends Application
             new PlatformSignManifestCommand(),
             new UpdateKeygenCommand(),
             new UpdateSignManifestCommand(),
+            new UpdateQueueCommand($updateJobStore),
+            new UpdateProcessCommand($updateJobProcessor),
+            new UpdateStatusCommand($updateJobStore),
             new PlatformBuildCommand($platformPackageBuilder),
             new PluginListCommand($pluginRegistry),
             new PluginInstallCommand($pluginManager),

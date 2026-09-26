@@ -104,3 +104,32 @@ bin/flex platform:remote-update
 ```
 
 Командата избира най-високата съвместима версия от конфигурирания канал, сваля пакета, подава го към същия installer като ръчно качен ZIP и изтрива временния файл след края на операцията. Backup, maintenance mode, migrations, health check и recovery остават в съществуващия installer pipeline.
+
+## Shared hosting worker
+
+За хостинг без queue server обновяването се записва във файловата опашка `storage/updates/jobs.json`. Worker-ът използва file lock и може да бъде стартиран от cPanel Cron:
+
+```bash
+php /path/to/flex-cms/bin/flex updates:process
+```
+
+Пример за периодично изпълнение на всеки 15 минути:
+
+```cron
+*/15 * * * * /usr/bin/php /path/to/flex-cms/bin/flex updates:process >/dev/null 2>&1
+```
+
+Ръчно добавяне и наблюдение на job:
+
+```bash
+bin/flex updates:queue
+bin/flex updates:status
+```
+
+Ако worker остане прекъснат повече от 15 минути, следващото изпълнение автоматично връща job-а в `pending` състояние. Опашката е подходяща за един production worker и не изисква Redis или Supervisor.
+
+## Административен интерфейс за remote обновявания
+
+Страницата `/admin/updates` проверява remote platform каталога и показва текущата версия, update канала, наличната съвместима версия, release notes и размера на пакета. При налична версия администраторът може да постави обновяването във файловата опашка. Заявката не изпълнява инсталация в HTTP заявката; тя се обработва от `updates:process`, което е подходящо за shared hosting.
+
+Същата страница показва последните jobs и техните статуси (`pending`, `running`, `completed`, `failed`). Ако remote каталогът е временно недостъпен, това се показва като грешка в интерфейса, без да блокира ръчния ZIP upload и rollback функционалността.

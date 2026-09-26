@@ -115,6 +115,8 @@ type Bootstrap = {
   notice?: string | null
   error?: string | null
   inspection?: { version?: string; files?: number; migrations?: boolean } | null
+  remoteUpdate?: { current_version: string; channel: string; error: string | null; available: { version: string; release_notes: string; size: number; published_at: string; channel: string } | null }
+  updateJobs?: Array<{ id: string; type: string; status: string; created_at: string; started_at: string | null; finished_at: string | null; error: string | null; result: Record<string, unknown> }>
   plugins?: PluginRecord[]
   pluginDetail?: PluginRecord | null
   adminExtensions?: {
@@ -205,6 +207,10 @@ function adminSidebarMarkup(): string {
   return `<template x-for="item in adminExtensions.sidebar" :key="item.id"><li><a class="sidebar-link" :href="item.href" @click.prevent="navigate(item.href)"><span class="sidebar-link-label" x-text="item.label"></span></a></li></template>`
 }
 
+function remoteUpdatesMarkup(): string {
+  return `<section class="content-card"><header>${sectionHeader("Автоматични обновявания", "updates-remote")}</header><div class="section-body" x-show="!isSectionCollapsed('updates-remote')"><div class="update-summary"><p><strong>Текуща версия:</strong> <span x-text="remoteUpdate.current_version"></span></p><p><strong>Канал:</strong> <span x-text="remoteUpdate.channel"></span></p><p class="notice error" x-show="remoteUpdate.error" x-text="remoteUpdate.error"></p><template x-if="remoteUpdate.available"><div><p><strong>Налична версия:</strong> <span x-text="remoteUpdate.available.version"></span></p><p class="muted" x-text="remoteUpdate.available.release_notes || 'Няма допълнителни бележки към изданието.'"></p><p class="muted" x-text="'Публикувана: ' + remoteUpdate.available.published_at + ' · Размер: ' + Math.round(remoteUpdate.available.size / 1024 / 1024 * 10) / 10 + ' MB'"></p><form method="post" action="/admin/updates/queue"><input type="hidden" name="_token" :value="csrfToken"><button class="button primary" type="submit">Постави в опашката</button></form></div></template><p x-show="!remoteUpdate.error && !remoteUpdate.available" class="muted">Няма налична съвместима версия за избрания канал.</p></div><div class="table-wrapper" x-show="updateJobs.length"><table><thead><tr><th>Заявка</th><th>Статус</th><th>Създадена</th><th>Грешка</th></tr></thead><tbody><template x-for="job in updateJobs" :key="job.id"><tr><td x-text="job.id"></td><td x-text="job.status"></td><td x-text="job.created_at"></td><td x-text="job.error || '—'"></td></tr></template></tbody></table></div></div></section>`
+}
+
 function adminMarkup(): string {
   const markup = `
     <div class="admin-shell sidebar-enhanced" x-data="adminApp" :class="{ 'sidebar-collapsed': collapsed, 'sidebar-mobile-open': mobileOpen }" :style="\`--sidebar-width: \${width}px\`"><div class="admin-loading-bar" x-show="loading" x-cloak></div>
@@ -236,6 +242,7 @@ function adminMarkup(): string {
     </div>`
 
   const withAdminExtensions = markup
+    .replace('<h1>Обновявания</h1><p class="lead">', `<h1>Обновявания</h1>${remoteUpdatesMarkup()}<p class="lead">`)
     .replace("</ul></nav>", `${adminSidebarMarkup()}</ul></nav>`)
     .replace('<h1>Административен панел', `${adminSlotMarkup("admin.dashboard.before")}<h1>Административен панел`)
     .replace('<p class="lead">Имате пълен достъп до системната администрация като супер администратор.</p>', `<p class="lead">Имате пълен достъп до системната администрация като супер администратор.</p>${adminSlotMarkup("admin.dashboard.after")}`)
@@ -303,6 +310,7 @@ function groupPageSettingsCheckboxes(): void {
 function createAdminState(initial: Bootstrap) {
   const pageFilters = readPageFiltersFromUrl()
   const state = {
+    remoteUpdate: initial.remoteUpdate ?? { current_version: initial.version, channel: "stable", error: null, available: null }, updateJobs: initial.updateJobs ?? [],
     page: initial.page, pageTitle: "", csrfToken: initial.csrfToken, version: initial.version,
     width: initial.sidebarWidth, collapsed: initial.sidebarCollapsed ?? false, mobileOpen: false, isMobile: false, loading: false,
     user: initial.user ?? { name: "", email: "", role: "", status: "" }, theme: localStorage.getItem("flexcms.admin.theme") ?? "system",
@@ -317,7 +325,7 @@ function createAdminState(initial: Bootstrap) {
     toggleSection(key: string, element: HTMLElement) { this.collapsedSections[key] = !this.collapsedSections[key]; element.closest(".content-card")?.classList.toggle("is-collapsed", this.collapsedSections[key]); $.ajax({ url: "/admin/section-state", method: "POST", data: { _token: this.csrfToken, key, collapsed: this.collapsedSections[key] ? "1" : "0" }, headers: { "X-CSRF-Token": this.csrfToken } }) },
     isSectionCollapsed(key: string) { return this.collapsedSections[key] === true },
     syncCollapsedSections() { document.querySelectorAll<HTMLElement>(".section-header[data-section-key]").forEach((header) => { header.closest(".content-card")?.classList.toggle("is-collapsed", this.isSectionCollapsed(header.dataset.sectionKey ?? "")) }) },
-    navigate(url: string, pushHistory = true) { this.loading = true; $.get(url, (markup: string) => { const next = new DOMParser().parseFromString(markup, "text/html").getElementById("flex-admin-bootstrap"); if (!next) return; this.applyBootstrap(JSON.parse(next.textContent ?? "{}") as Bootstrap); if (pushHistory) window.history.pushState({}, "", url); window.scrollTo({ top: 0, behavior: "smooth" }) }, "html").fail(() => { this.error = "Страницата не можа да бъде заредена."; showToast(this.error, "error") }).always(() => { this.loading = false }) },
+    navigate(url: string, pushHistory = true) { this.loading = true; $.get(url, (markup: string) => { const next = new DOMParser().parseFromString(markup, "text/html").getElementById("flex-admin-bootstrap"); if (!next) return; const bootstrap = JSON.parse(next.textContent ?? "{}") as Bootstrap; this.applyBootstrap(bootstrap); this.remoteUpdate = bootstrap.remoteUpdate ?? this.remoteUpdate; this.updateJobs = bootstrap.updateJobs ?? []; if (pushHistory) window.history.pushState({}, "", url); window.scrollTo({ top: 0, behavior: "smooth" }) }, "html").fail(() => { this.error = "Страницата не можа да бъде заредена."; showToast(this.error, "error") }).always(() => { this.loading = false }) },
     pluginAction(action: "install" | "activate" | "deactivate" | "uninstall", plugin: PluginRecord) { if (action === "uninstall" && !window.confirm(`Сигурни ли сте, че искате да премахнете „${plugin.name}“? Това действие изтрива файловете на плъгина.`)) return; this.pluginBusy = plugin.id; $.ajax({ url: "/api/plugins/action", method: "POST", contentType: "application/json", dataType: "json", headers: { "X-CSRF-Token": this.csrfToken }, data: JSON.stringify({ id: plugin.id, action }) }).done((response: { plugin?: PluginRecord }) => { showToast(action === "install" ? "Плъгинът е инсталиран." : action === "activate" ? "Плъгинът е активиран." : action === "deactivate" ? "Плъгинът е деактивиран." : "Плъгинът е премахнат.", "success"); if (action === "uninstall") { this.navigate("/admin/plugins"); return } if (response.plugin) { this.pluginDetail = response.plugin; this.plugins = this.plugins.map((item: PluginRecord) => item.id === response.plugin?.id ? response.plugin : item) } }).fail((xhr: JQuery.jqXHR) => { const message = xhr.responseJSON?.error?.message ?? "Операцията с плъгина не беше изпълнена."; this.error = message; showToast(message, "error") }).always(() => { this.pluginBusy = "" }) },
     approvePluginPermissions() { if (!this.pluginDetail || this.pluginPermissionBusy) return; this.pluginPermissionBusy = true; $.ajax({ url: "/api/plugins/action", method: "POST", contentType: "application/json", dataType: "json", headers: { "X-CSRF-Token": this.csrfToken }, data: JSON.stringify({ id: this.pluginDetail.id, action: "approve_permissions", permissions: this.pluginPermissionDraft }) }).done((response: { plugin?: PluginRecord }) => { if (response.plugin) { this.pluginDetail = response.plugin; this.plugins = this.plugins.map((plugin: PluginRecord) => plugin.id === response.plugin?.id ? response.plugin : plugin) } showToast("Разрешенията са запазени.", "success") }).fail((xhr: JQuery.jqXHR) => { const message = xhr.responseJSON?.error?.message ?? "Разрешенията не можаха да бъдат запазени."; this.error = message; showToast(message, "error") }).always(() => { this.pluginPermissionBusy = false }) },
     slugify(value: string) { return slugifyPageTitle(value) },
