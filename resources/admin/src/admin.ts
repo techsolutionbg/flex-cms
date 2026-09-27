@@ -242,6 +242,11 @@ function adminSidebarMarkup(): string {
   return `<template x-for="item in adminExtensions.sidebar" :key="item.id"><li><a class="sidebar-link" :href="item.href" @click.prevent="navigate(item.href)"><span class="sidebar-link-label" x-text="item.label"></span></a></li></template>`
 }
 
+function pluginsPageMarkup(): string {
+  const actions = actionDropdownMarkup('<button class="dropdown-option" type="button" x-show="row.status === \'discovered\' || row.status === \'error\'" :disabled="pluginBusy === row.id" @click="pluginAction(\'install\', row)" x-text="pluginBusy === row.id ? \'Изпълнение…\' : \'Инсталирай\'"></button><button class="dropdown-option" type="button" x-show="row.status === \'installed\' || row.status === \'inactive\'" :disabled="pluginBusy === row.id" @click="pluginAction(\'activate\', row)" x-text="pluginBusy === row.id ? \'Изпълнение…\' : \'Активирай\'"></button><button class="dropdown-option" type="button" x-show="row.status === \'active\'" :disabled="pluginBusy === row.id" @click="pluginAction(\'deactivate\', row)" x-text="pluginBusy === row.id ? \'Изпълнение…\' : \'Деактивирай\'"></button><button class="dropdown-option" type="button" x-show="row.status === \'inactive\' || row.status === \'installed\' || row.status === \'error\'" :disabled="pluginBusy === row.id" @click="pluginAction(\'uninstall\', row)">Премахни</button>')
+  return `<template x-if="page === 'plugins'"><section><div class="page-heading-row"><div><h1>Разширения</h1>${breadcrumbsMarkup("'Разширения'")}${collapsibleTextMarkup("Тук управлявате всички разширения на Flex CMS. От тази таблица можете да преглеждате инсталираните и откритите плъгини, да отваряте подробната им информация, да ги инсталирате, активирате, деактивирате или премахвате. Използвайте менюто „Действия“, за да изпълните операция върху конкретен плъгин.")}</div></div><div class="notice error" x-show="error" x-text="error"></div>${adminSlotMarkup("admin.plugins.before")}<div class="pages-table">${dataTableMarkup("plugins", [{ key: "name", label: "Име", sortable: true, linkTemplate: "/admin/plugins/{id}" }, { key: "description", label: "Описание", sortable: true }, { key: "id", label: "ID", sortable: true }, { key: "version", label: "Версия", sortable: true }, { key: "status", label: "Статус", sortable: true }], actions)}</div>${adminSlotMarkup("admin.plugins.after")}</section></template>`
+}
+
 function remoteUpdatesMarkup(): string {
   return `<section class="content-card updates-remote-card"><header>${sectionHeader("Автоматични обновявания", "updates-remote")}</header><div class="section-body" x-show="!isSectionCollapsed('updates-remote')"><div class="update-summary"><p><strong>Текуща версия:</strong> <span x-text="remoteUpdate.current_version"></span></p><p><strong>Канал:</strong> <span x-text="remoteUpdate.channel"></span></p><p class="notice error" x-show="remoteUpdate.error" x-text="remoteUpdate.error"></p><template x-if="remoteUpdate.available"><div><p><strong>Налична версия:</strong> <span x-text="remoteUpdate.available.version"></span></p><p class="muted" x-text="remoteUpdate.available.release_notes || 'Няма допълнителни бележки към изданието.'"></p><p class="muted" x-text="'Публикувана: ' + remoteUpdate.available.published_at + ' · Размер: ' + Math.round(remoteUpdate.available.size / 1024 / 1024 * 10) / 10 + ' MB'"></p><form method="post" action="/admin/updates/remote"><input type="hidden" name="_token" :value="csrfToken"><button class="button primary" type="submit">Обнови сега</button></form></div></template><p x-show="!remoteUpdate.error && !remoteUpdate.available" class="muted">Няма налична съвместима версия за избрания канал.</p></div><div class="table-wrapper" x-show="updateJobs.length"><table><thead><tr><th>Заявка</th><th>Статус</th><th>Създадена</th><th>Грешка</th></tr></thead><tbody><template x-for="job in updateJobs" :key="job.id"><tr><td x-text="job.id"></td><td>${statusBadgeMarkup("job.status")}</td><td x-text="job.created_at"></td><td x-text="job.error || '—'"></td></tr></template></tbody></table></div></div></section>`
 }
@@ -282,6 +287,7 @@ function adminMarkup(): string {
     </div>`
 
   const withAdminExtensions = markup
+    .replace(/<template x-if="page === 'plugins'">[\s\S]*?<\/section><\/template>/, pluginsPageMarkup())
     .replace('<h1>Обновявания</h1>', `<h1>Обновявания</h1>${remoteUpdatesMarkup()}`)
     .replace("</ul></nav>", `${adminSidebarMarkup()}</ul></nav>`)
     .replace(`<template x-if="page === 'plugins'">`, `${userFormPageMarkup()}${usersPageMarkup()}<template x-if="page === 'plugins'">`)
@@ -295,15 +301,6 @@ function adminMarkup(): string {
     .replace('<div class="page-form-actions">', `${adminSlotMarkup("admin.page.form.after")}<div class="page-form-actions">`)
     .replace('<section class="content-card"><header>${sectionHeader("Качване на platform пакет", "updates-upload")}', `${adminSlotMarkup("admin.updates.before")}<section class="content-card"><header>${sectionHeader("Качване на platform пакет", "updates-upload")}`)
     .replace('<section class="content-card"><header>${sectionHeader("История", "updates-history")}', `<section class="content-card"><header>${sectionHeader("История", "updates-history")}${adminSlotMarkup("admin.updates.after")}`)
-    .replace(
-      '<div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>ID</th><th>Версия</th><th>Статус</th><th>Действия</th></tr></thead>',
-      `<section class="content-card"><header>${sectionHeader("Списък с разширения", "plugins-list")}</header><div class="section-body" x-show="!isSectionCollapsed('plugins-list')"><div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>ID</th><th>Версия</th><th>Статус</th><th>Действия</th></tr></thead>`,
-    )
-    .replace(
-      '<tr x-show="plugins.length === 0"><td colspan="5" class="empty-state">Няма открити плъгини.</td></tr></tbody></table></div></section></template>',
-      '<tr x-show="plugins.length === 0"><td colspan="5" class="empty-state">Няма открити плъгини.</td></tr></tbody></table></div></div></section></section></template>',
-    )
-    .replace('<div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper">', `${adminSlotMarkup("admin.plugins.before")}<div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper">${adminSlotMarkup("admin.plugins.after")}`)
 
   const withDropdowns = withAdminExtensions
     .replace(/<select x-model="theme" @change="saveTheme">.*?<\/select>/, dropdownMarkup("theme", [{ value: "system", label: "Системна" }, { value: "light", label: "Светла" }, { value: "dark", label: "Тъмна" }], "saveTheme()"))
