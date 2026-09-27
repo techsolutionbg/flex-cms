@@ -252,11 +252,15 @@ function adminMarkup(): string {
       <aside id="admin-sidebar" class="admin-sidebar" :aria-hidden="isMobile && !mobileOpen">
         <div class="sidebar-brand"><img class="sidebar-logo" src="/assets/brand/logo.png" alt="Flex CMS"></div>
         <nav aria-label="Административна навигация"><ul class="sidebar-nav-list">
+          <li class="sidebar-group-label">Основни</li>
           <li><a class="sidebar-link" href="/admin" :class="{ 'is-active': page === 'dashboard' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 11 8-7 8 7v8a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1v-8Z" /></svg><span class="sidebar-link-label">Табло</span></a></li>
-          <li><a class="sidebar-link" href="/admin/updates" :class="{ 'is-active': page === 'updates' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4M4 5v4h4M4 13a8 8 0 0 0 14.8 4M20 19v-4h-4" /></svg><span class="sidebar-link-label">Обновявания</span></a></li>
-          <li><a class="sidebar-link" href="/admin/plugins" :class="{ 'is-active': page === 'plugins' || page === 'plugin-detail' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v4M16 3v4M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8Zm3 4h8M8 16h5" /></svg><span class="sidebar-link-label">Разширения</span></a></li>
           <li><a class="sidebar-link" href="/admin/pages" :class="{ 'is-active': page === 'pages' || page === 'pages-create' || page === 'pages-edit' || page === 'pages-settings' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3Zm9 0v4h3M9 12h6M9 16h6M9 8h2" /></svg><span class="sidebar-link-label">Страници</span></a></li>
+          <li class="sidebar-group-label">Управление</li>
           <li><a class="sidebar-link" href="/admin/users" :class="{ 'is-active': page === 'users' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 19a4 4 0 0 1 7 0" /></svg><span class="sidebar-link-label">Потребители</span></a></li>
+          <li><a class="sidebar-link" href="/admin/plugins" :class="{ 'is-active': page === 'plugins' || page === 'plugin-detail' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v4M16 3v4M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8Zm3 4h8M8 16h5" /></svg><span class="sidebar-link-label">Разширения</span></a></li>
+          <li class="sidebar-group-label">Система</li>
+          <li><a class="sidebar-link" href="/admin/updates" :class="{ 'is-active': page === 'updates' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4M4 5v4h4M4 13a8 8 0 0 0 14.8 4M20 19v-4h-4" /></svg><span class="sidebar-link-label">Обновявания</span></a></li>
+          <li class="sidebar-group-label">Акаунт</li>
           <li><a class="sidebar-link" href="/admin/profile" :class="{ 'is-active': page === 'profile' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></svg><span class="sidebar-link-label">Профил</span></a></li>
         </ul></nav>
       </aside>

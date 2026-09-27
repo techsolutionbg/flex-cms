@@ -145,6 +145,21 @@
   list-style: none;
 }
 
+.sidebar-group-label {
+  margin: 0.9rem 0 0.15rem;
+  padding: 0 0.875rem;
+  color: var(--sidebar-muted-foreground);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.sidebar-group-label:first-child {
+  margin-top: 0;
+}
+
 .sidebar-link {
   position: relative;
   display: flex;

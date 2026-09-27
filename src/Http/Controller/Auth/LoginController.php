@@ -11,6 +11,7 @@ use Flex\Http\ApiError;
 use Flex\Http\RequestFormat;
 use Flex\Http\RequestInput;
 use Flex\Session\CsrfTokenManager;
+use Flex\Contracts\Session\SessionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -22,6 +23,7 @@ final readonly class LoginController
         private CsrfTokenManager $csrf,
         private LoginPage $page,
         private ResponseFactoryInterface $responses,
+        private SessionInterface $session,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -47,9 +49,21 @@ final readonly class LoginController
             return $this->responses->json(['user' => $this->authentication->user()?->toArray()]);
         }
 
-        $location = $this->authentication->user()?->isSuperAdmin() === true ? '/admin' : '/';
+        $location = $this->authentication->user()?->isSuperAdmin() === true ? $this->intendedLocation() ?? '/admin' : '/';
 
         return $this->responses->text('', 302, ['Location' => $location]);
+    }
+
+    private function intendedLocation(): ?string
+    {
+        $location = $this->session->get('auth.intended_url');
+        $this->session->remove('auth.intended_url');
+
+        if (!is_string($location) || $location === '' || !str_starts_with($location, '/') || str_starts_with($location, '//') || $location === '/login') {
+            return null;
+        }
+
+        return $location;
     }
 
     /** @param array<string, string|list<string>> $headers */

@@ -26,6 +26,7 @@
 /storage/tmp/*
 !/storage/tmp/.gitkeep
 /storage/updates/
+/updates/
 /releases/
 /vendor/
 /plugins/*
