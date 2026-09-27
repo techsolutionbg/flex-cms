@@ -7,7 +7,7 @@ namespace Flex\Providers;
 use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMiddleware};
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
-use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
+use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginUploadController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
@@ -28,6 +28,8 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/admin/users/create', AdminUsersFormController::class, 'admin.users.create', $auth);
         $r->add('GET', '/admin/users/{id:number}/edit', AdminUsersFormController::class, 'admin.users.edit', $auth);
         $r->add('GET', '/admin/plugins', AdminPluginsController::class, 'admin.plugins', $auth);
+        $r->add('GET', '/admin/plugins/catalog', AdminPluginsController::class, 'admin.plugins.catalog', $auth);
+        $r->add('GET', '/admin/plugins/catalog/{catalogId:.+}', AdminPluginsController::class, 'admin.plugins.catalog.detail', $auth);
         $r->add('GET', '/admin/plugins/{id:.+}', AdminPluginsController::class, 'admin.plugins.detail', $auth);
         $r->add('GET', '/admin/pages/create', AdminPagesFormController::class, 'admin.pages.create', $auth);
         $r->add('GET', '/admin/pages/{id:number}/edit', AdminPagesFormController::class, 'admin.pages.edit', $auth);
@@ -42,6 +44,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('POST', '/admin/updates/install', AdminUpdatesInstallController::class, 'admin.updates.install', $write);
         $r->add('POST', '/admin/updates/rollback', AdminUpdatesRollbackController::class, 'admin.updates.rollback', $write);
         $r->add('POST', '/api/plugins/action', AdminPluginActionController::class, 'api.plugins.action', $write);
+        $r->add('POST', '/api/plugins/upload', AdminPluginUploadController::class, 'api.plugins.upload', $write);
         $r->add('GET', '/api/pages', ListPagesController::class, 'api.pages.index', $auth);
         $r->add('POST', '/api/pages', CreatePageController::class, 'api.pages.create', $write);
         $r->add(['PATCH', 'PUT'], '/api/pages/{id:number}', UpdatePageController::class, 'api.pages.update', $write);

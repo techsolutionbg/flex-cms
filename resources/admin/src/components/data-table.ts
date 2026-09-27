@@ -109,6 +109,7 @@ export function registerDataTable(Alpine: typeof import("alpinejs").default): vo
       if (key === "title" && typeof row.depth === "number" && row.depth > 0) return `${"— ".repeat(row.depth)}${String(value ?? "—")}`
       if (key === "status") return value === "published" ? "Публикувана" : value === "active" ? "Активен" : value === "disabled" ? "Деактивиран" : "Чернова"
       if (key === "role") return ({ user: "Потребител", editor: "Редактор", admin: "Администратор", super_admin: "Супер администратор" } as Record<string, string>)[String(value)] ?? String(value ?? "—")
+      if (key === "name" && row.source) return `${String(value ?? "—")} · ${row.source === "catalog" ? "Каталог" : "Локален пакет"}`
       if (key.endsWith("_at") && value) return new Date(String(value)).toLocaleString("bg-BG")
       return String(value ?? "—")
     },

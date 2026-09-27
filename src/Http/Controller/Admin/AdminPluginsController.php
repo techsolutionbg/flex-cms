@@ -14,6 +14,7 @@ use Flex\Http\View\ViteAssetManager;
 use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
 use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Updates\Remote\RemoteCatalogClient;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,6 +30,7 @@ final readonly class AdminPluginsController
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
         private AdminExtensionRegistry $adminExtensions,
+        private RemoteCatalogClient $remoteCatalog,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -41,6 +43,35 @@ final readonly class AdminPluginsController
 
         $plugins = [];
         $pluginDetail = null;
+        $catalogDetail = null;
+        $catalogPage = rtrim($request->getUri()->getPath(), '/') === '/admin/plugins/catalog';
+        $pluginCatalog = [];
+        try {
+            $channel = 'stable';
+            $index = $this->remoteCatalog->pluginIndex();
+            foreach ($index->manifests as $id => $manifestUrl) {
+                $catalog = $this->remoteCatalog->pluginManifest($id);
+                $releases = array_values(array_filter($catalog->releases, static fn($release): bool => $release->channel->value === $channel));
+                usort($releases, static fn($left, $right): int => version_compare($right->version->value, $left->version->value));
+                $latest = $releases[0] ?? null;
+                if ($latest !== null) {
+                    $pluginCatalog[] = ['id' => $id, 'version' => $latest->version->value, 'release_notes' => $latest->releaseNotes, 'size' => $latest->size, 'published_at' => $latest->publishedAt, 'compatible_from' => $latest->compatibleFrom, 'minimum_php' => $latest->minimumPhp] + ($index->metadata[$id] ?? ['name' => $id, 'description' => '', 'author' => '', 'icon_url' => '', 'minimum_platform_version' => '', 'permissions' => []]);
+                }
+            }
+        } catch (\Throwable) {
+            // The installed plugin list remains usable when the remote catalog is unavailable.
+        }
+        if (isset($arguments['catalogId'])) {
+            foreach ($pluginCatalog as $catalogItem) {
+                if (hash_equals((string) $arguments['catalogId'], (string) ($catalogItem['id'] ?? ''))) {
+                    $catalogDetail = $catalogItem;
+                    break;
+                }
+            }
+            if ($catalogDetail === null) {
+                return $this->responses->text('Catalog plugin not found', 404);
+            }
+        }
         foreach ($this->plugins->discover() as $entry) {
             $registered = null;
             try {
@@ -74,7 +105,7 @@ final readonly class AdminPluginsController
         }
 
         $bootstrap = [
-            'page' => $pluginDetail === null ? 'plugins' : 'plugin-detail',
+            'page' => $catalogDetail !== null ? 'plugin-catalog-detail' : ($catalogPage ? 'plugin-catalog' : ($pluginDetail === null ? 'plugins' : 'plugin-detail')),
             'csrfToken' => $this->csrf->token(),
             'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
             'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
@@ -82,11 +113,13 @@ final readonly class AdminPluginsController
             'version' => $this->versions->current()->value,
             'plugins' => $plugins,
             'pluginDetail' => $pluginDetail,
+            'catalogDetail' => $catalogDetail,
             'adminExtensions' => $this->adminExtensions->bootstrap(),
+            'pluginCatalog' => $pluginCatalog,
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
-            'title' => $pluginDetail === null ? 'Разширения' : (string) $pluginDetail['name'],
+            'title' => $catalogDetail !== null ? (string) ($catalogDetail['name'] ?? $catalogDetail['id']) : ($catalogPage ? 'Каталог с плъгини' : ($pluginDetail === null ? 'Разширения' : (string) $pluginDetail['name'])),
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));

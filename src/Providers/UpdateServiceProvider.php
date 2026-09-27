@@ -17,7 +17,7 @@ use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Contracts\Updates\RemoteCatalogTransportInterface;
 use Flex\Contracts\Updates\RemotePackageTransportInterface;
 use Flex\Updates\Platform\{MySqlPlatformDatabaseBackup, PhinxPlatformMigrationRunner, PlatformHealthChecker, PlatformHistory, PlatformPackageBuilder, PlatformPackageInspector, PlatformPackageInspectorFactory, PlatformPackageUpload, PlatformPreflightChecker, PlatformRollback, PlatformUpdateRecovery, PlatformUpdateStateStore, PlatformVersionInstaller, PlatformVersionRegistry};
-use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, PluginRollback, PluginUpdateHistory, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater, RemotePluginUpdater};
+use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, PluginPackageInstaller, PluginRollback, PluginUpdateHistory, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater, RemotePluginInstaller, RemotePluginUpdater};
 use Flex\Updates\Jobs\{UpdateJobProcessor, UpdateJobStore};
 use Psr\Container\ContainerInterface;
 
@@ -31,6 +31,8 @@ final class UpdateServiceProvider implements ServiceProviderInterface
             RemoteCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path')),
             RemotePackageTransportInterface::class => autowire(CurlRemotePackageTransport::class),
             RemotePackageDownloader::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemotePackageTransportInterface::class), get('base_path')),
+            PluginPackageInstaller::class => create()->constructor(get(\Flex\Extensions\PluginRegistry::class), get(\Flex\Extensions\PluginManager::class), get('base_path')),
+            RemotePluginInstaller::class => create()->constructor(get(RemoteCatalogClient::class), get(RemotePackageDownloader::class), get(PluginPackageInstaller::class), get(ConfigRepositoryInterface::class)),
             RemotePlatformUpdater::class => autowire(),
             RemotePluginUpdater::class => create()->constructor(
                 get(RemoteCatalogClient::class),

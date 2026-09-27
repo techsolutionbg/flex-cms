@@ -14,7 +14,7 @@ final class Plugin extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'name', 'version', 'description', 'entrypoint', 'path', 'status', 'manifest', 'last_error', 'requested_permissions', 'approved_permissions', 'installed_at', 'activated_at'];
+    protected $fillable = ['id', 'name', 'version', 'description', 'entrypoint', 'path', 'status', 'source', 'manifest', 'last_error', 'requested_permissions', 'approved_permissions', 'installed_at', 'activated_at'];
 
     protected function casts(): array
     {
@@ -40,6 +40,7 @@ final class Plugin extends Model
             'entrypoint' => (string) $this->getAttribute('entrypoint'),
             'path' => (string) $this->getAttribute('path'),
             'status' => (string) $this->getAttribute('status'),
+            'source' => (string) ($this->getAttribute('source') ?: 'local'),
             'manifest' => is_array($this->getAttribute('manifest')) ? $this->getAttribute('manifest') : [],
             'requested_permissions' => $this->requestedPermissions(),
             'approved_permissions' => $this->approvedPermissions(),

@@ -272,6 +272,36 @@ button:focus-visible {
   gap: 1rem;
 }
 
+.plugin-install-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.plugin-install-grid > form,
+.plugin-install-grid > div {
+  min-width: 0;
+}
+
+.plugin-install-grid > div {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--background) 88%, var(--card));
+}
+
+.plugin-install-grid h3 {
+  margin: 0 0 0.5rem;
+}
+
+.plugin-install-grid .table-wrapper {
+  width: 100%;
+  margin-top: 1rem;
+}
+
 .updates-upload-form {
   gap: 1.25rem;
 }
@@ -2057,6 +2087,10 @@ button:focus-visible {
   }
 
   .installer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-install-grid {
     grid-template-columns: 1fr;
   }
 
