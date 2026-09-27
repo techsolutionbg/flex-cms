@@ -24,6 +24,9 @@ final readonly class UserService
     public function create(array $attributes): User
     {
         $data = $this->validate($attributes, true);
+        if ($data['role'] === 'super_admin' && $this->users->countSuperAdmins() > 0) {
+            throw new UserValidationFailed(['Only one super administrator is allowed.']);
+        }
 
         return $this->database->transaction(fn(): User => $this->users->create([
             'name' => $data['name'],
@@ -39,6 +42,21 @@ final readonly class UserService
     {
         $user = $this->requireUser($id);
         $data = $this->validate($attributes, false, $id, $user);
+
+        if ($data['role'] === 'super_admin'
+            && $user->getAttribute('role') !== 'super_admin'
+            && $this->users->countSuperAdmins() > 0) {
+            throw new UserValidationFailed(['Only one super administrator is allowed.']);
+        }
+
+        if ($data['password'] !== '') {
+            $actingUser = $this->requireUser($actingUserId);
+            $currentPassword = is_string($attributes['current_password'] ?? null) ? $attributes['current_password'] : '';
+            if ($actingUser->getAttribute('role') !== 'super_admin'
+                && ($currentPassword === '' || !$this->passwords->verify($currentPassword, (string) $actingUser->getAttribute('password_hash')))) {
+                throw new UserValidationFailed(['Current password is required and must be correct.']);
+            }
+        }
 
         if ($id === $actingUserId && ($data['status'] !== 'active' || $data['role'] !== $user->getAttribute('role'))) {
             throw new UserValidationFailed(['You cannot disable your own account or change your own role.']);

@@ -87,6 +87,40 @@
       "signature_algorithm": "ed25519",
       "key_id": "release-2026",
       "signature": "KOQ2dZkAZ9/dJdyYEksikNwxFNBKvmh0LoRZwBuo0H4bqjtYoLAMth0Jy7LLb0Ng6BR8dEydh8JWdDroufhhBA=="
+    },
+    {
+      "schema": 1,
+      "package": "flex-cms",
+      "type": "platform",
+      "version": "0.1.5",
+      "channel": "stable",
+      "download_url": "https://updates-flex-cms.kriskata.com/platform/releases/0.1.5/flex-cms-0.1.5.zip",
+      "checksum": "c9ae3ea9d3c3ad135ff46510da76b4179c1613966b83e9454af444787a2e8d85",
+      "size": 22439605,
+      "minimum_php": ">=8.3",
+      "compatible_from": ">=0.1.0 <1.0.0",
+      "published_at": "2026-09-27T02:41:34+00:00",
+      "release_notes": "Реални данни в таблото, универсални collapsible секции, стилизиран редактор и sticky toolbar.",
+      "signature_algorithm": "ed25519",
+      "key_id": "release-2026",
+      "signature": "A6ITZtXKkHb/xBShX2FMh1sR74qAIbShMF34lQC3mLKxp32CjopcqGoJmn2YexIFpS8z4z1YUhvqWxmi3nq0AQ=="
+    },
+    {
+      "schema": 1,
+      "package": "flex-cms",
+      "type": "platform",
+      "version": "0.1.6",
+      "channel": "stable",
+      "download_url": "https://updates-flex-cms.kriskata.com/platform/releases/0.1.6/flex-cms-0.1.6.zip",
+      "checksum": "56dd4f8f847c58f152904cdfbbdced7271468c52c14db052d72c78a7e827b161",
+      "size": 22439590,
+      "minimum_php": ">=8.3",
+      "compatible_from": ">=0.1.4 <1.0.0",
+      "published_at": "2026-09-27T02:49:10+00:00",
+      "release_notes": "Поправено е показването на автоматичните обновявания в административния панел.",
+      "signature_algorithm": "ed25519",
+      "key_id": "release-2026",
+      "signature": "ShSh6CPKQLmP5I2hnUj4LYOzAgx8JHJaGMDpsf6YveGYabjIqEyaitqe/KPXzJ3J2vpcnzW63PuusDPxIG3tBA=="
     }
   ]
 }

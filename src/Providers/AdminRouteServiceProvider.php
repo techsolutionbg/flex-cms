@@ -7,7 +7,7 @@ namespace Flex\Providers;
 use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMiddleware};
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
-use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController};
+use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
@@ -24,6 +24,9 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $write = [CsrfMiddleware::class,...$auth];
         $r->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', $auth);
         $r->add('GET', '/admin/profile', AdminProfileController::class, 'admin.profile', $auth);
+        $r->add('GET', '/admin/users', AdminUsersController::class, 'admin.users', $auth);
+        $r->add('GET', '/admin/users/create', AdminUsersFormController::class, 'admin.users.create', $auth);
+        $r->add('GET', '/admin/users/{id:number}/edit', AdminUsersFormController::class, 'admin.users.edit', $auth);
         $r->add('GET', '/admin/plugins', AdminPluginsController::class, 'admin.plugins', $auth);
         $r->add('GET', '/admin/plugins/{id:.+}', AdminPluginsController::class, 'admin.plugins.detail', $auth);
         $r->add('GET', '/admin/pages/create', AdminPagesFormController::class, 'admin.pages.create', $auth);

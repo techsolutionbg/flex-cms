@@ -54,4 +54,9 @@ final class UserRepository
     {
         return User::query()->where('role', 'super_admin')->where('status', 'active')->count();
     }
+
+    public function countSuperAdmins(): int
+    {
+        return User::query()->where('role', 'super_admin')->count();
+    }
 }
