@@ -145,7 +145,25 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-grid > .content-card {
+  margin-top: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboard-stat-value {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--foreground);
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
 .content-card {
@@ -205,29 +223,22 @@ button:focus-visible {
   min-width: 0;
   display: grid;
   gap: 1rem;
-  max-height: 300rem;
+  max-height: var(--section-content-height, 300rem);
   overflow: hidden;
-  opacity: 1;
-  transition:
-    max-height var(--motion-normal) var(--ease-standard),
-    opacity var(--motion-fast) ease;
+  transition: max-height var(--motion-normal) var(--ease-standard);
 }
 
 .section-transition {
   overflow: hidden;
-  transition:
-    max-height var(--motion-normal) var(--ease-standard),
-    opacity var(--motion-fast) ease;
+  transition: max-height var(--motion-normal) var(--ease-standard);
 }
 
 .section-transition-start {
   max-height: 0;
-  opacity: 0;
 }
 
 .section-transition-end {
-  max-height: 300rem;
-  opacity: 1;
+  max-height: var(--section-content-height, 300rem);
 }
 
 .content-card.is-collapsed {
@@ -237,14 +248,137 @@ button:focus-visible {
 }
 
 .content-card.is-collapsed .section-body {
-  max-height: 0;
-  opacity: 0;
   pointer-events: none;
 }
 
 .section-body > form {
   display: grid;
   gap: 1rem;
+}
+
+.updates-upload-form {
+  gap: 1.25rem;
+}
+
+.updates-upload-field {
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--background) 88%, var(--card));
+}
+
+.updates-upload-field input[type="file"] {
+  min-height: 3.25rem;
+  padding: 0.6rem 0.75rem;
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.updates-upload-field input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+
+.updates-upload-field input[type="file"]:hover::file-selector-button {
+  background: var(--muted);
+  border-color: var(--ring);
+}
+
+.updates-upload-submit {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.updates-upload-submit svg,
+.updates-upload-help svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.updates-upload-help {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in oklch, var(--ring) 35%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--ring) 7%, var(--card));
+  color: var(--muted-foreground);
+}
+
+.updates-upload-help svg {
+  margin-top: 0.1rem;
+  color: var(--ring);
+}
+
+.updates-upload-help p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.update-summary {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-content h1 + .updates-remote-card {
+  margin-top: 1.125rem;
+}
+
+.update-summary > p {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+}
+
+.update-summary > p strong {
+  margin-right: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.update-summary > div {
+  padding: 1rem;
+  border: 1px solid color-mix(in oklch, var(--primary) 35%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--primary) 6%, var(--card));
+}
+
+.update-summary > div p {
+  margin: 0 0 0.55rem;
+}
+
+.update-summary > div p:last-of-type {
+  margin-bottom: 0;
+}
+
+.update-summary > div form {
+  margin-top: 0.9rem;
+}
+
+.update-summary > .muted {
+  color: var(--muted-foreground);
 }
 
 .custom-dropdown {
@@ -510,16 +644,20 @@ button:focus-visible {
 }
 
 .rich-text-editor {
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--input);
   border-radius: var(--radius-sm);
   background: var(--background);
 }
 
 .rich-text-editor .ql-toolbar.ql-snow {
+  position: sticky;
+  top: var(--admin-topbar-height);
+  z-index: 60;
   border: 0;
   border-bottom: 1px solid var(--input);
   background: var(--muted);
+  box-shadow: var(--shadow-md);
 }
 
 :where(.rich-text-editor .ql-toolbar button:hover,
@@ -572,6 +710,83 @@ button:focus-visible {
   min-height: 16rem;
   padding: 0.75rem 1.25rem;
   color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.rich-text-editor .ql-editor h1,
+.rich-text-editor .ql-editor h2,
+.rich-text-editor .ql-editor h3,
+.rich-text-editor .ql-editor h4,
+.rich-text-editor .ql-editor h5,
+.rich-text-editor .ql-editor h6 {
+  margin: 1.35rem 0 0.55rem;
+  color: var(--foreground);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.rich-text-editor .ql-editor h1:first-child,
+.rich-text-editor .ql-editor h2:first-child,
+.rich-text-editor .ql-editor h3:first-child {
+  margin-top: 0;
+}
+
+.rich-text-editor .ql-editor h1 {
+  font-size: 1.85rem;
+}
+
+.rich-text-editor .ql-editor h2 {
+  font-size: 1.5rem;
+}
+
+.rich-text-editor .ql-editor h3 {
+  font-size: 1.25rem;
+}
+
+.rich-text-editor .ql-editor p {
+  margin: 0 0 0.85rem;
+}
+
+.rich-text-editor .ql-editor ul,
+.rich-text-editor .ql-editor ol {
+  margin: 0.35rem 0 1rem;
+  padding-left: 1.75rem;
+}
+
+.rich-text-editor .ql-editor li {
+  margin: 0.25rem 0;
+  padding-left: 0.25rem;
+}
+
+.rich-text-editor .ql-editor a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.rich-text-editor .ql-editor blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 0.25rem solid var(--ring);
+  background: color-mix(in oklch, var(--ring) 8%, var(--background));
+  color: var(--muted-foreground);
+}
+
+.rich-text-editor .ql-editor pre.ql-syntax {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--foreground);
+  white-space: pre-wrap;
+}
+
+.rich-text-editor .ql-editor img,
+.rich-text-editor .ql-editor video {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
 }
 
 .rich-text-editor .ql-editor.ql-blank::before {

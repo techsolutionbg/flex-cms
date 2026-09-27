@@ -3,6 +3,7 @@
   --sidebar-mobile-width: min(86vw, 20rem);
   --sidebar-transition: var(--motion-normal) var(--ease-standard);
   --admin-content-gutter: var(--space-page);
+  --admin-topbar-height: 4.125rem;
 }
 
 .admin-shell {
@@ -52,8 +53,8 @@
   margin: 0;
   align-self: stretch;
   z-index: 70;
-  height: 4.125rem;
-  min-height: 4.125rem;
+  height: var(--admin-topbar-height);
+  min-height: var(--admin-topbar-height);
   display: flex;
   align-items: center;
   padding: 0 var(--admin-content-gutter);
