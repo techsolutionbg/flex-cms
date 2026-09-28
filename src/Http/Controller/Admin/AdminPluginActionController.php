@@ -11,6 +11,8 @@ use Flex\Http\ApiError;
 use Flex\Http\RequestInput;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Updates\Remote\RemotePluginInstaller;
+use Flex\Updates\Remote\RemotePluginUpdater;
+use Flex\Updates\Remote\PluginRollback;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,6 +22,8 @@ final readonly class AdminPluginActionController
         private AuthenticationInterface $authentication,
         private PluginManager $plugins,
         private RemotePluginInstaller $remoteInstaller,
+        private RemotePluginUpdater $remoteUpdater,
+        private PluginRollback $pluginRollback,
         private RequestInput $input,
         private ResponseFactoryInterface $responses,
     ) {}
@@ -35,7 +39,7 @@ final readonly class AdminPluginActionController
         $input = $this->input->all($request);
         $id = $input['id'] ?? null;
         $action = $input['action'] ?? null;
-        if (!is_string($id) || $id === '' || !is_string($action) || !in_array($action, ['install', 'install_remote', 'activate', 'deactivate', 'uninstall', 'approve_permissions'], true)) {
+        if (!is_string($id) || $id === '' || !is_string($action) || !in_array($action, ['install', 'install_remote', 'update_remote', 'rollback_remote', 'activate', 'deactivate', 'uninstall', 'approve_permissions'], true)) {
             return $this->responses->json(ApiError::payload(422, 'validation_failed', 'A valid plugin ID and action are required.'), 422);
         }
 
@@ -54,6 +58,22 @@ final readonly class AdminPluginActionController
                 $plugin = $this->plugins->find($id);
                 if ($plugin === null) {
                     throw new \RuntimeException('The plugin was installed but could not be registered.');
+                }
+            } elseif ($action === 'update_remote') {
+                $this->remoteUpdater->update($id);
+                $plugin = $this->plugins->find($id);
+                if ($plugin === null) {
+                    throw new \RuntimeException('The plugin was updated but could not be loaded.');
+                }
+            } elseif ($action === 'rollback_remote') {
+                $historyId = $input['history_id'] ?? null;
+                if (!is_string($historyId) || $historyId === '') {
+                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'A valid plugin update history ID is required.'), 422);
+                }
+                $this->pluginRollback->rollback($historyId);
+                $plugin = $this->plugins->find($id);
+                if ($plugin === null) {
+                    throw new \RuntimeException('The plugin rollback completed but the plugin could not be loaded.');
                 }
             } elseif ($action === 'activate') {
                 $plugin = $this->plugins->activate($id);

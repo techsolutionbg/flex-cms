@@ -15,6 +15,7 @@ use Flex\Session\CsrfTokenManager;
 use Flex\Settings\SettingRepository;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Remote\RemoteCatalogClient;
+use Flex\Updates\Remote\PluginUpdateHistory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -31,6 +32,7 @@ final readonly class AdminPluginsController
         private ViteAssetManager $assets,
         private AdminExtensionRegistry $adminExtensions,
         private RemoteCatalogClient $remoteCatalog,
+        private PluginUpdateHistory $pluginUpdateHistory,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -104,15 +106,45 @@ final readonly class AdminPluginsController
             return $this->responses->text('Plugin not found', 404);
         }
 
+        $pluginHistory = $this->pluginUpdateHistory->all();
+        foreach ($plugins as &$plugin) {
+            $updates = array_values(array_filter($pluginHistory, static fn(array $record): bool => ($record['type'] ?? null) === 'plugin_update' && ($record['plugin_id'] ?? null) === ($plugin['id'] ?? null)));
+            usort($updates, static fn(array $left, array $right): int => strcmp((string) ($right['updated_at'] ?? ''), (string) ($left['updated_at'] ?? '')));
+            $plugin['last_update_id'] = $updates[0]['id'] ?? null;
+            $plugin['last_update_from'] = $updates[0]['from'] ?? null;
+            $plugin['last_update_to'] = $updates[0]['to'] ?? null;
+        }
+        unset($plugin);
+        if ($pluginDetail !== null) {
+            foreach ($plugins as $plugin) {
+                if (($plugin['id'] ?? null) === ($pluginDetail['id'] ?? null)) {
+                    $pluginDetail = $plugin;
+                    break;
+                }
+            }
+        }
+
         $installedStatuses = [];
+        $installedVersions = [];
         foreach ($plugins as $plugin) {
             $status = (string) ($plugin['status'] ?? '');
-            $installedStatuses[(string) ($plugin['id'] ?? '')] = $status === 'active'
+            $pluginId = (string) ($plugin['id'] ?? '');
+            $installedStatuses[$pluginId] = $status === 'active'
                 ? 'active'
                 : (in_array($status, ['installed', 'inactive', 'error'], true) ? 'installed' : 'not_installed');
+            if ($installedStatuses[$pluginId] !== 'not_installed') {
+                $installedVersions[$pluginId] = (string) ($plugin['version'] ?? '');
+            }
         }
         $pluginCatalog = array_map(static function (array $item) use ($installedStatuses): array {
             $item['installation_status'] = $installedStatuses[(string) ($item['id'] ?? '')] ?? 'not_installed';
+            return $item;
+        }, $pluginCatalog);
+        $pluginCatalog = array_map(static function (array $item) use ($installedVersions): array {
+            $id = (string) ($item['id'] ?? '');
+            $installedVersion = $installedVersions[$id] ?? null;
+            $item['installed_version'] = $installedVersion;
+            $item['update_available'] = is_string($installedVersion) && $installedVersion !== '' && version_compare((string) ($item['version'] ?? ''), $installedVersion, '>');
             return $item;
         }, $pluginCatalog);
         if (isset($arguments['catalogId'])) {

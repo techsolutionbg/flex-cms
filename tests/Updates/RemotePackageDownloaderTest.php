@@ -57,7 +57,7 @@ final class RemotePackageDownloaderTest extends TestCase
         $downloader = new RemotePackageDownloader($this->configuration(), new FakePackageTransport('changed package'), $this->basePath);
 
         $this->expectException(InvalidPlatformPackage::class);
-        $this->expectExceptionMessage('checksum');
+        $this->expectExceptionMessage('size');
         $downloader->download($release);
     }
 

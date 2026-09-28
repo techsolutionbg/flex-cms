@@ -7,6 +7,7 @@ namespace Flex\Tests\Updates;
 use Flex\Updates\Exception\InvalidRemoteReleaseManifest;
 use Flex\Updates\Remote\RemoteReleaseManifest;
 use Flex\Updates\Remote\UpdateChannel;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class RemoteReleaseManifestTest extends TestCase
@@ -34,7 +35,7 @@ final class RemoteReleaseManifestTest extends TestCase
         self::assertSame('plugin', $manifest->type);
     }
 
-    /** @dataProvider invalidDataProvider */
+    #[DataProvider('invalidDataProvider')]
     public function testItRejectsUnsafeOrInvalidContract(array $changes, string $message): void
     {
         $this->expectException(InvalidRemoteReleaseManifest::class);

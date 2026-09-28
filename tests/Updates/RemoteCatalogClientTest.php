@@ -41,8 +41,8 @@ final class RemoteCatalogClientTest extends TestCase
         $client = $this->client($transport);
 
         self::assertSame('1.1.0', $client->platformCatalog()->releases[0]->version->value);
-        self::assertSame('"platform-v1"', $transport->requests[1]['headers'][1]);
         self::assertSame('1.1.0', $client->platformCatalog()->releases[0]->version->value);
+        self::assertSame('If-None-Match: "platform-v1"', $transport->requests[1]['headers'][1]);
     }
 
     public function testItFetchesPluginManifestFromTheIndex(): void
