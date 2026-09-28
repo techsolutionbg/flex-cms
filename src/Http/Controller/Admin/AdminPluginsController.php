@@ -104,6 +104,26 @@ final readonly class AdminPluginsController
             return $this->responses->text('Plugin not found', 404);
         }
 
+        $installedStatuses = [];
+        foreach ($plugins as $plugin) {
+            $status = (string) ($plugin['status'] ?? '');
+            $installedStatuses[(string) ($plugin['id'] ?? '')] = $status === 'active'
+                ? 'active'
+                : (in_array($status, ['installed', 'inactive', 'error'], true) ? 'installed' : 'not_installed');
+        }
+        $pluginCatalog = array_map(static function (array $item) use ($installedStatuses): array {
+            $item['installation_status'] = $installedStatuses[(string) ($item['id'] ?? '')] ?? 'not_installed';
+            return $item;
+        }, $pluginCatalog);
+        if (isset($arguments['catalogId'])) {
+            foreach ($pluginCatalog as $catalogItem) {
+                if (hash_equals((string) $arguments['catalogId'], (string) ($catalogItem['id'] ?? ''))) {
+                    $catalogDetail = $catalogItem;
+                    break;
+                }
+            }
+        }
+
         $bootstrap = [
             'page' => $catalogDetail !== null ? 'plugin-catalog-detail' : ($catalogPage ? 'plugin-catalog' : ($pluginDetail === null ? 'plugins' : 'plugin-detail')),
             'csrfToken' => $this->csrf->token(),
@@ -119,7 +139,7 @@ final readonly class AdminPluginsController
         ];
 
         return $this->responses->html($this->views->render('admin/app.twig', [
-            'title' => $catalogDetail !== null ? (string) ($catalogDetail['name'] ?? $catalogDetail['id']) : ($catalogPage ? 'Каталог с плъгини' : ($pluginDetail === null ? 'Разширения' : (string) $pluginDetail['name'])),
+            'title' => $catalogDetail !== null ? (string) ($catalogDetail['name'] ?? $catalogDetail['id']) : ($catalogPage ? 'Каталог с разширения' : ($pluginDetail === null ? 'Разширения' : (string) $pluginDetail['name'])),
             'vite_tags' => $this->assets->tags(),
             'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
         ]));

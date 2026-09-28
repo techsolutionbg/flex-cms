@@ -114,7 +114,11 @@ export function registerDataTable(Alpine: typeof import("alpinejs").default): vo
       return String(value ?? "—")
     },
     linkFor(row: DataTableRow, column: DataTableColumn) {
-      return (column.linkTemplate ?? "").replace(/\{([^}]+)\}/g, (_, key: string) => encodeURIComponent(String(row[key] ?? "")))
+      const pluginLink = (column.linkTemplate ?? "").startsWith("/admin/plugins/")
+      return (column.linkTemplate ?? "").replace(/\{([^}]+)\}/g, (_, key: string) => {
+        const value = encodeURIComponent(String(row[key] ?? ""))
+        return pluginLink ? value.replace(/%2F/gi, "/") : value
+      })
     },
   }))
 }

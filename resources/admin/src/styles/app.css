@@ -555,6 +555,10 @@ button:focus-visible {
   margin-top: 2rem;
 }
 
+.plugin-catalog-table {
+  margin-top: 1.5rem;
+}
+
 .collapsible-text {
   max-width: 60rem;
 }
@@ -1273,6 +1277,7 @@ button:focus-visible {
 .status-badge-draft,
 .status-badge-inactive,
 .status-badge-installed,
+.status-badge-not_installed,
 .status-badge-disabled {
   color: var(--muted-foreground);
 }
@@ -1969,6 +1974,58 @@ button:focus-visible {
   max-width: 70%;
   overflow-wrap: anywhere;
   text-align: right;
+}
+
+.plugin-catalog-requirements,
+.plugin-catalog-notes {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.plugin-catalog-requirements > .field-hint,
+.plugin-catalog-notes > .field-hint {
+  position: static;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  align-items: initial;
+  justify-content: initial;
+  line-height: 1.5;
+}
+
+.plugin-requirement-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.plugin-requirement-list > div {
+  display: grid;
+  grid-template-columns: minmax(10rem, auto) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--background) 70%, var(--card));
+}
+
+.plugin-requirement-list strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.plugin-permission-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.plugin-permission-list .status-badge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .plugin-permissions {
