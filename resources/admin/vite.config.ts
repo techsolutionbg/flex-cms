@@ -10,13 +10,14 @@ export default defineConfig(({ mode }) => ({
     host: "0.0.0.0",
     port: 5173,
     strictPort: true,
-    origin: "http://localhost:5173",
+    cors: true,
+    origin: "http://192.168.1.225:5173",
     watch: {
       usePolling: true,
       interval: 100,
     },
     hmr: {
-      host: "localhost",
+      host: "192.168.1.225",
       port: 5173,
       clientPort: 5173,
       protocol: "ws",
