@@ -35,10 +35,10 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
 
         if (!$this->tokens->validate($token)) {
             if (RequestFormat::expectsJson($request)) {
-                return $this->responses->json(ApiError::payload(403, 'csrf_token_mismatch', 'CSRF token mismatch.'), 403);
+                return $this->responses->json(ApiError::payload(403, 'csrf_token_mismatch', 'Сигурността на заявката не може да бъде потвърдена.'), 403);
             }
 
-            return $this->responses->text('Invalid security token. Reload the page and try again.', 403);
+            return $this->responses->text('Невалиден токен за сигурност. Презаредете страницата и опитайте отново.', 403);
         }
 
         return $handler->handle($request);

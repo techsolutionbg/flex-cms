@@ -17,8 +17,8 @@ final readonly class DeletePageController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         $id = filter_var($arguments['id'] ?? null, FILTER_VALIDATE_INT);
-        if (!is_int($id) || $id < 1) return $this->responses->json(['error' => 'Page ID is invalid.'], 422);
+        if (!is_int($id) || $id < 1) return $this->responses->json(['error' => 'ID на страницата е невалидно.'], 422);
         $this->pages->trash($id);
-        return $this->responses->json(['message' => 'Page moved to trash.']);
+        return $this->responses->json(['message' => 'Страницата е преместена в кошчето.']);
     }
 }

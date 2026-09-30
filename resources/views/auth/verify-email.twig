@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" type="image/png" href="/assets/brand/favicon.png">
+    <title>Потвърждение на имейл · Flex CMS</title>
+    {{ vite_tags|raw }}
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <a class="auth-brand" href="/" aria-label="Flex CMS">
+            <img src="/assets/brand/logo.png" alt="Flex CMS">
+        </a>
+        {% if success %}
+            <h1>Имейлът е потвърден.</h1>
+            <p>Потвърждението е успешно. Вече можете да влезете в системата.</p>
+            <a class="auth-submit-link" href="/login">Към входа →</a>
+        {% else %}
+            <h1>Потвърдете имейла си.</h1>
+            <p>Въведете шестцифрения код, който получихте по имейл.</p>
+            {% if error %}
+                <div class="auth-alert" role="alert">
+                    <span class="auth-alert-icon" aria-hidden="true">!</span>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+            <form method="post" action="/verify-email">
+                <input type="hidden" name="_token" value="{{ csrf_token }}">
+                {% import 'components/form-fields.twig' as fields %}
+                {{ fields.input('Имейл', 'email', 'email', '', '', 'email', true) }}
+                {{ fields.input('Код за потвърждение', 'code', 'text', '', '', 'one-time-code', true) }}
+                <button type="submit">Потвърди имейла →</button>
+            </form>
+        {% endif %}
+    </main>
+</body>
+</html>

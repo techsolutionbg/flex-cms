@@ -42,13 +42,13 @@ final readonly class AdminPagesFormController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->text('Forbidden', 403);
+            return $this->responses->text('Достъпът е забранен.', 403);
         }
 
         $id = isset($arguments['id']) ? filter_var($arguments['id'], FILTER_VALIDATE_INT) : false;
         $page = $id !== false && $id > 0 ? $this->pages->find((int) $id) : null;
         if ($id !== false && $id > 0 && $page === null) {
-            return $this->responses->text('Page not found', 404);
+            return $this->responses->text('Страницата не е намерена.', 404);
         }
 
         $isEdit = $page !== null;

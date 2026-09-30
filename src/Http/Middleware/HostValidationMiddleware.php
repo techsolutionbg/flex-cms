@@ -24,7 +24,7 @@ final readonly class HostValidationMiddleware implements MiddlewareInterface
         $host = strtolower($request->getUri()->getHost());
 
         if ($trustedHosts !== [] && !$this->isTrusted($host, $trustedHosts)) {
-            return $this->responses->text('Bad Request', 400);
+            return $this->responses->text('Невалидна заявка.', 400);
         }
 
         return $handler->handle($request);

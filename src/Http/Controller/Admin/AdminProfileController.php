@@ -34,7 +34,7 @@ final readonly class AdminProfileController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->text('Forbidden', 403);
+            return $this->responses->text('Достъпът е забранен.', 403);
         }
 
         $bootstrap = [

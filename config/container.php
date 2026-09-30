@@ -10,6 +10,7 @@ use Flex\Providers\CoreServiceProvider;
 use Flex\Providers\DatabaseServiceProvider;
 use Flex\Providers\ExtensionServiceProvider;
 use Flex\Providers\HttpServiceProvider;
+use Flex\Providers\MailServiceProvider;
 use Flex\Providers\UpdateServiceProvider;
 use Flex\Providers\UserRouteServiceProvider;
 
@@ -20,6 +21,7 @@ return [
         DatabaseServiceProvider::class,
         ExtensionServiceProvider::class,
         HttpServiceProvider::class,
+        MailServiceProvider::class,
         AuthServiceProvider::class,
         UpdateServiceProvider::class,
         CoreRouteServiceProvider::class,

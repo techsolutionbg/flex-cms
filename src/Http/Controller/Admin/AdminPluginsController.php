@@ -40,7 +40,7 @@ final readonly class AdminPluginsController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->text('Forbidden', 403);
+            return $this->responses->text('Достъпът е забранен.', 403);
         }
 
         $plugins = [];
@@ -71,7 +71,7 @@ final readonly class AdminPluginsController
                 }
             }
             if ($catalogDetail === null) {
-                return $this->responses->text('Catalog plugin not found', 404);
+                return $this->responses->text('Разширението не е намерено в каталога.', 404);
             }
         }
         foreach ($this->plugins->discover() as $entry) {
@@ -103,7 +103,7 @@ final readonly class AdminPluginsController
         }
 
         if (isset($arguments['id']) && $pluginDetail === null) {
-            return $this->responses->text('Plugin not found', 404);
+            return $this->responses->text('Разширението не е намерено.', 404);
         }
 
         $pluginHistory = $this->pluginUpdateHistory->all();

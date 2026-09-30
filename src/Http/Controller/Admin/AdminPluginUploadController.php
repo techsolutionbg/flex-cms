@@ -24,17 +24,17 @@ final readonly class AdminPluginUploadController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Super administrator access is required.'), 403);
+            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Необходим е достъп на супер администратор.'), 403);
         }
 
         try {
             $uploaded = $request->getUploadedFiles()['plugin'] ?? null;
             if (!$uploaded instanceof \Psr\Http\Message\UploadedFileInterface) {
-                throw new \RuntimeException('Please select a plugin ZIP package.');
+                throw new \RuntimeException('Изберете ZIP пакет на разширение.');
             }
             $id = $this->installer->installUpload($uploaded);
 
-            return $this->responses->json(['plugin_id' => $id, 'message' => 'Plugin uploaded and installed.']);
+            return $this->responses->json(['plugin_id' => $id, 'message' => 'Разширението е качено и инсталирано.']);
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'plugin_upload_failed', $exception->getMessage()), 422);
         }

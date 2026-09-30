@@ -66,6 +66,6 @@ final class ApplicationKernelTest extends TestCase
         $response = $this->kernel->handle(new ServerRequest('GET', 'http://malicious.example/health'));
 
         self::assertSame(400, $response->getStatusCode());
-        self::assertSame('Bad Request', (string) $response->getBody());
+        self::assertSame('Невалидна заявка.', (string) $response->getBody());
     }
 }

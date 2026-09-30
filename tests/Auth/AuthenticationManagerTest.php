@@ -94,6 +94,22 @@ final class AuthenticationManagerTest extends TestCase
         self::assertFalse($authentication->check());
     }
 
+    public function testItRejectsUsersWhoAreNotSuperAdministrators(): void
+    {
+        $this->users->create([
+            'name' => 'Editor',
+            'email' => 'editor@example.test',
+            'password_hash' => $this->passwords->hash('correct-password'),
+            'role' => 'editor',
+            'status' => 'active',
+        ]);
+        $authentication = $this->manager();
+
+        self::assertFalse($authentication->attempt('editor@example.test', 'correct-password', '127.0.0.1'));
+        self::assertFalse($authentication->check());
+        self::assertNull($this->session->get('auth_user_id'));
+    }
+
     public function testLogoutInvalidatesTheSession(): void
     {
         $this->session->put('auth_user_id', 10);

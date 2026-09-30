@@ -21,12 +21,12 @@ final readonly class ExtensionFrontendAssetController
     {
         $asset = $this->assets->resolve((string) ($arguments['id'] ?? ''), (string) ($arguments['asset'] ?? ''));
         if ($asset === null) {
-            return $this->responses->text('Not found', 404);
+            return $this->responses->text('Ресурсът не е намерен.', 404);
         }
 
         $contents = file_get_contents($asset['path']);
         if ($contents === false) {
-            return $this->responses->text('Not found', 404);
+            return $this->responses->text('Ресурсът не е намерен.', 404);
         }
 
         $mime = $asset['type'] === 'style' ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8';

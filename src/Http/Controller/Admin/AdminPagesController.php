@@ -40,7 +40,7 @@ final readonly class AdminPagesController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->text('Forbidden', 403);
+            return $this->responses->text('Достъпът е забранен.', 403);
         }
 
         $pages = $this->pages->all()->map(static fn(\Flex\Pages\Page $page): array => $page->toPublicArray())->all();

@@ -49,7 +49,7 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
             $headers = $exception instanceof HttpExceptionInterface ? $exception->getHeaders() : [];
             $message = $status < 500 || $this->configuration->bool('app.debug')
                 ? $exception->getMessage()
-                : 'Internal Server Error';
+                : 'Вътрешна грешка в сървъра.';
 
             $this->logger->error('HTTP request failed.', [
                 'exception' => $exception,

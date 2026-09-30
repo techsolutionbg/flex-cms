@@ -41,7 +41,7 @@ final readonly class LoginController
             return $this->failure($request, $exception->getMessage(), 429, ['Retry-After' => '900']);
         }
         if (!$authenticated) {
-            return $this->failure($request, 'Invalid email address or password.', 401);
+            return $this->failure($request, 'Невалиден имейл или парола.', 401);
         }
 
         $this->csrf->rotate();

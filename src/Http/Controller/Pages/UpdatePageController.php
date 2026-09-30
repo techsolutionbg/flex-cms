@@ -19,7 +19,7 @@ final readonly class UpdatePageController
     {
         $id = filter_var($arguments['id'] ?? null, FILTER_VALIDATE_INT);
         if (!is_int($id) || $id < 1) {
-            return $this->responses->json(['error' => 'Page ID is invalid.'], 422);
+            return $this->responses->json(['error' => 'ID на страницата е невалидно.'], 422);
         }
 
         return $this->responses->json(['page' => $this->pages->update($id, $this->input->all($request))->toPublicArray()]);

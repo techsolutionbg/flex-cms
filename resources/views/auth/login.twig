@@ -10,10 +10,16 @@
 </head>
 <body class="auth-page" x-data="loginForm">
     <main class="auth-card">
-        <div class="auth-brand">Flex CMS</div>
-        <h1>Добре дошли.</h1>
+        <a class="auth-brand" href="/" aria-label="Flex CMS">
+            <img src="/assets/brand/logo.png" alt="Flex CMS">
+        </a>
         <p>Влезте, за да управлявате сайта.</p>
-        {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+        {% if error %}
+            <div class="auth-alert" role="alert">
+                <span class="auth-alert-icon" aria-hidden="true">!</span>
+                <span>{{ error }}</span>
+            </div>
+        {% endif %}
         {% import 'components/form-fields.twig' as fields %}
         <form method="post" action="/login" @submit="submitting = true">
             <input type="hidden" name="_token" value="{{ csrf_token }}">

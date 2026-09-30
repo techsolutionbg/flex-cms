@@ -18,6 +18,8 @@ final class User extends Model
         'role',
         'status',
         'last_login_at',
+        'email_verification_required',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -29,6 +31,8 @@ final class User extends Model
         return [
             'id' => 'integer',
             'last_login_at' => 'immutable_datetime',
+            'email_verification_required' => 'boolean',
+            'email_verified_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

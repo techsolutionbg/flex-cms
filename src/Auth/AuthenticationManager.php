@@ -38,7 +38,7 @@ final class AuthenticationManager implements AuthenticationInterface
         }
 
         $user = $this->users->find((int) $userId);
-        if ($user === null || $user->getAttribute('status') !== 'active') {
+        if ($user === null || $user->getAttribute('status') !== 'active' || ($user->getAttribute('email_verification_required') === true && $user->getAttribute('email_verified_at') === null)) {
             $this->session->remove(self::SESSION_KEY);
 
             return null;
@@ -56,13 +56,17 @@ final class AuthenticationManager implements AuthenticationInterface
     {
         $email = strtolower(trim($email));
         if ($this->throttle->tooManyAttempts($email, $ipAddress)) {
-            throw new TooManyLoginAttempts('Too many login attempts. Try again in 15 minutes.');
+            throw new TooManyLoginAttempts('Твърде много опити за вход. Опитайте отново след 15 минути.');
         }
 
         $user = $this->users->findByEmail($email);
         $hash = $user instanceof User ? (string) $user->getAttribute('password_hash') : self::DUMMY_HASH;
         $valid = $this->passwords->verify($password, $hash);
-        if (!$valid || !$user instanceof User || $user->getAttribute('status') !== 'active') {
+        if (!$valid
+            || !$user instanceof User
+            || $user->getAttribute('status') !== 'active'
+            || $user->getAttribute('role') !== 'super_admin'
+            || ($user->getAttribute('email_verification_required') === true && $user->getAttribute('email_verified_at') === null)) {
             $this->throttle->recordFailure($email, $ipAddress);
 
             return false;

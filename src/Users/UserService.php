@@ -25,7 +25,7 @@ final readonly class UserService
     {
         $data = $this->validate($attributes, true);
         if ($data['role'] === 'super_admin' && $this->users->countSuperAdmins() > 0) {
-            throw new UserValidationFailed(['Only one super administrator is allowed.']);
+            throw new UserValidationFailed(['Разрешен е само един супер администратор.']);
         }
 
         return $this->database->transaction(fn(): User => $this->users->create([
@@ -34,6 +34,7 @@ final readonly class UserService
             'password_hash' => $this->passwords->hash($data['password']),
             'role' => $data['role'],
             'status' => $data['status'],
+            'email_verification_required' => filter_var($attributes['send_confirmation'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ]));
     }
 
@@ -46,7 +47,7 @@ final readonly class UserService
         if ($data['role'] === 'super_admin'
             && $user->getAttribute('role') !== 'super_admin'
             && $this->users->countSuperAdmins() > 0) {
-            throw new UserValidationFailed(['Only one super administrator is allowed.']);
+            throw new UserValidationFailed(['Разрешен е само един супер администратор.']);
         }
 
         if ($data['password'] !== '') {
@@ -54,19 +55,19 @@ final readonly class UserService
             $currentPassword = is_string($attributes['current_password'] ?? null) ? $attributes['current_password'] : '';
             if ($actingUser->getAttribute('role') !== 'super_admin'
                 && ($currentPassword === '' || !$this->passwords->verify($currentPassword, (string) $actingUser->getAttribute('password_hash')))) {
-                throw new UserValidationFailed(['Current password is required and must be correct.']);
+                throw new UserValidationFailed(['Текущата парола е задължителна и трябва да бъде правилна.']);
             }
         }
 
         if ($id === $actingUserId && ($data['status'] !== 'active' || $data['role'] !== $user->getAttribute('role'))) {
-            throw new UserValidationFailed(['You cannot disable your own account or change your own role.']);
+            throw new UserValidationFailed(['Не можете да деактивирате собствения си профил или да промените собствената си роля.']);
         }
 
         $removesActiveSuperAdmin = $user->getAttribute('role') === 'super_admin'
             && $user->getAttribute('status') === 'active'
             && ($data['role'] !== 'super_admin' || $data['status'] !== 'active');
         if ($removesActiveSuperAdmin && $this->users->countActiveSuperAdmins() <= 1) {
-            throw new UserValidationFailed(['The last active super administrator cannot be changed or disabled.']);
+            throw new UserValidationFailed(['Последният активен супер администратор не може да бъде променян или деактивиран.']);
         }
 
         $user->setAttribute('name', $data['name']);
@@ -84,18 +85,18 @@ final readonly class UserService
     public function delete(int $id, int $actingUserId): void
     {
         if ($id === $actingUserId) {
-            throw new UserValidationFailed(['You cannot delete your own account.']);
+            throw new UserValidationFailed(['Не можете да изтриете собствения си профил.']);
         }
 
         $user = $this->requireUser($id);
         if (in_array($user->getAttribute('role'), ['admin', 'super_admin'], true)) {
-            throw new UserValidationFailed(['Administrators and super administrators cannot be deleted.']);
+            throw new UserValidationFailed(['Администраторите и супер администраторите не могат да бъдат изтривани.']);
         }
 
         if ($user->getAttribute('role') === 'super_admin'
             && $user->getAttribute('status') === 'active'
             && $this->users->countActiveSuperAdmins() <= 1) {
-            throw new UserValidationFailed(['The last active super administrator cannot be deleted.']);
+            throw new UserValidationFailed(['Последният активен супер администратор не може да бъде изтрит.']);
         }
 
         $user->delete();
@@ -125,21 +126,21 @@ final readonly class UserService
         $errors = [];
 
         if ($name === '' || mb_strlen($name) > 120) {
-            $errors[] = 'Name is required and must not exceed 120 characters.';
+            $errors[] = 'Името е задължително и не може да надвишава 120 символа.';
         }
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || strlen($email) > 190) {
-            $errors[] = 'Email address is invalid.';
+            $errors[] = 'Имейл адресът е невалиден.';
         } elseif ($this->users->emailExists($email, $id)) {
-            $errors[] = 'Email address is already in use.';
+            $errors[] = 'Имейл адресът вече се използва.';
         }
         if (($creating || $password !== '') && strlen($password) < 12) {
-            $errors[] = 'Password must contain at least 12 characters.';
+            $errors[] = 'Паролата трябва да съдържа поне 12 символа.';
         }
         if (!in_array($role, self::ROLES, true)) {
-            $errors[] = 'Role is invalid.';
+            $errors[] = 'Ролята е невалидна.';
         }
         if (!in_array($status, self::STATUSES, true)) {
-            $errors[] = 'Status is invalid.';
+            $errors[] = 'Статусът е невалиден.';
         }
 
         if ($errors !== []) {

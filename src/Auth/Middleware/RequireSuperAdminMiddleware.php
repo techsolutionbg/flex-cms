@@ -28,10 +28,10 @@ final readonly class RequireSuperAdminMiddleware implements MiddlewareInterface
                 return $this->responses->text('', 302, ['Location' => '/login']);
             }
 
-            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Authentication required.'), 401);
+            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Необходимо е вписване.'), 401);
         }
         if (!$user->isSuperAdmin()) {
-            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Super administrator access is required.'), 403);
+            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Необходим е достъп на супер администратор.'), 403);
         }
 
         return $handler->handle($request);

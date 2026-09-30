@@ -20,7 +20,7 @@ final readonly class CreatePageController
     {
         $user = $request->getAttribute('auth.user');
         if (!$user instanceof AuthenticatedUser) {
-            return $this->responses->json(['error' => 'Authentication required.'], 401);
+            return $this->responses->json(['error' => 'Необходимо е вписване.'], 401);
         }
 
         return $this->responses->json(['page' => $this->pages->create($this->input->all($request), $user->id)->toPublicArray()], 201);

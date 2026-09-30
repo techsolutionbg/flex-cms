@@ -41,7 +41,7 @@ final class ErrorHandlerMiddlewareTest extends TestCase
         );
 
         self::assertSame(500, $response->getStatusCode());
-        self::assertStringContainsString('Internal Server Error', (string) $response->getBody());
+        self::assertStringContainsString('Вътрешна грешка в сървъра.', (string) $response->getBody());
         self::assertStringNotContainsString('Sensitive internal detail', (string) $response->getBody());
     }
 }

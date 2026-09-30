@@ -33,21 +33,21 @@ final readonly class AdminPluginActionController
     {
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
-            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Super administrator access is required.'), 403);
+            return $this->responses->json(ApiError::payload(403, 'super_admin_required', 'Необходим е достъп на супер администратор.'), 403);
         }
 
         $input = $this->input->all($request);
         $id = $input['id'] ?? null;
         $action = $input['action'] ?? null;
         if (!is_string($id) || $id === '' || !is_string($action) || !in_array($action, ['install', 'install_remote', 'update_remote', 'rollback_remote', 'activate', 'deactivate', 'uninstall', 'approve_permissions'], true)) {
-            return $this->responses->json(ApiError::payload(422, 'validation_failed', 'A valid plugin ID and action are required.'), 422);
+            return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Необходимо е валидно ID на разширение и валидно действие.'), 422);
         }
 
         try {
             if ($action === 'approve_permissions') {
                 $permissions = $input['permissions'] ?? [];
                 if (!is_array($permissions)) {
-                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Permissions must be an array.'), 422);
+                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Разрешенията трябва да бъдат списък.'), 422);
                 }
                 /** @var list<string> $permissions */
                 $plugin = $this->plugins->approvePermissions($id, $permissions);
@@ -68,7 +68,7 @@ final readonly class AdminPluginActionController
             } elseif ($action === 'rollback_remote') {
                 $historyId = $input['history_id'] ?? null;
                 if (!is_string($historyId) || $historyId === '') {
-                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'A valid plugin update history ID is required.'), 422);
+                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Необходимо е валидно ID от историята на обновяванията.'), 422);
                 }
                 $this->pluginRollback->rollback($historyId);
                 $plugin = $this->plugins->find($id);
@@ -81,7 +81,7 @@ final readonly class AdminPluginActionController
                 $plugin = $this->plugins->deactivate($id);
             } else {
                 $this->plugins->uninstall($id);
-                return $this->responses->json(['message' => 'Plugin uninstalled.']);
+                return $this->responses->json(['message' => 'Разширението е премахнато.']);
             }
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'plugin_action_failed', $exception->getMessage()), 422);

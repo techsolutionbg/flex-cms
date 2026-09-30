@@ -28,7 +28,7 @@ final readonly class RequireAuthenticationMiddleware implements MiddlewareInterf
             return $handler->handle($request);
         }
         if (RequestFormat::expectsJson($request)) {
-            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Authentication required.'), 401);
+            return $this->responses->json(ApiError::payload(401, 'authentication_required', 'Необходимо е вписване.'), 401);
         }
 
         if ($request->getMethod() === 'GET') {

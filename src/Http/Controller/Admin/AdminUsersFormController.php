@@ -37,13 +37,13 @@ final readonly class AdminUsersFormController
     {
         $actingUser = $this->authentication->user();
         if (!$actingUser instanceof AuthenticatedUser || !$actingUser->isSuperAdmin()) {
-            return $this->responses->text('Forbidden', 403);
+            return $this->responses->text('Достъпът е забранен.', 403);
         }
 
         $id = isset($arguments['id']) ? filter_var($arguments['id'], FILTER_VALIDATE_INT) : false;
         $user = is_int($id) && $id > 0 ? $this->users->find($id) : null;
         if ($id !== false && !$user instanceof User) {
-            return $this->responses->text('Not Found', 404);
+            return $this->responses->text('Потребителят не е намерен.', 404);
         }
 
         $bootstrap = [
