@@ -5,7 +5,7 @@
   --font-family-heading: "Geist Variable", system-ui, sans-serif;
   --font-size-body: 1rem;
   --line-height-body: 1.5;
-  --background: oklch(97.4% 0.01 107deg);
+  --background: oklch(99.7% 0.003 107deg);
   --foreground: oklch(24% 0.025 145deg);
   --card: oklch(100% 0 0deg);
   --card-foreground: var(--foreground);

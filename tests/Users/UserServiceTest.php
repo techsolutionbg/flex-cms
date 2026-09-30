@@ -97,4 +97,15 @@ final class UserServiceTest extends TestCase
         $this->expectException(UserValidationFailed::class);
         $this->service->update($id, ['status' => 'disabled'], 999);
     }
+
+    public function testItDoesNotAllowDeletingAdministrators(): void
+    {
+        $administrator = $this->service->create([
+            'name' => 'Administrator', 'email' => 'administrator@example.test', 'password' => 'secure-password',
+            'role' => 'admin', 'status' => 'active',
+        ]);
+
+        $this->expectException(UserValidationFailed::class);
+        $this->service->delete((int) $administrator->getAttribute('id'), 999);
+    }
 }

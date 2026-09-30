@@ -88,6 +88,10 @@ final readonly class UserService
         }
 
         $user = $this->requireUser($id);
+        if (in_array($user->getAttribute('role'), ['admin', 'super_admin'], true)) {
+            throw new UserValidationFailed(['Administrators and super administrators cannot be deleted.']);
+        }
+
         if ($user->getAttribute('role') === 'super_admin'
             && $user->getAttribute('status') === 'active'
             && $this->users->countActiveSuperAdmins() <= 1) {
