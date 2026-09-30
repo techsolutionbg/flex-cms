@@ -7,6 +7,8 @@ return [
     'environment' => $_ENV['APP_ENV'] ?? 'production',
     'debug' => filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOL),
     'url' => $_ENV['APP_URL'] ?? 'http://localhost',
+    'public_home_slug' => $_ENV['PUBLIC_HOME_SLUG'] ?? 'home',
+    'active_theme' => $_ENV['ACTIVE_THEME'] ?? 'flex-default',
     'key' => $_ENV['APP_KEY'] ?? '',
     'timezone' => $_ENV['APP_TIMEZONE'] ?? 'UTC',
     'locale' => $_ENV['APP_LOCALE'] ?? 'en',

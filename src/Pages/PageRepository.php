@@ -51,4 +51,11 @@ final class PageRepository
 
         return $query->exists();
     }
+
+    public function findPublishedBySlug(string $slug): ?Page
+    {
+        $page = Page::query()->where('slug', $slug)->where('status', 'published')->whereNull('deleted_at')->first();
+
+        return $page instanceof Page ? $page : null;
+    }
 }

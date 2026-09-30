@@ -62,6 +62,29 @@ final readonly class PageService
         return $page;
     }
 
+    public function setStatus(int $id, string $status): Page
+    {
+        $page = $this->pages->find($id);
+        if ($page === null) {
+            throw new PageNotFound(sprintf('Page %d was not found.', $id));
+        }
+        if (!in_array($status, self::STATUSES, true)) {
+            throw new PageValidationFailed(['status' => ['Изберете валиден статус.']]);
+        }
+
+        $wasPublished = $page->getAttribute('status') === 'published';
+        $page->setAttribute('status', $status);
+        if ($status === 'published' && !$wasPublished) {
+            $page->setAttribute('published_at', new \DateTimeImmutable());
+        } elseif ($status === 'draft') {
+            $page->setAttribute('published_at', null);
+        }
+        $page->saveOrFail();
+        $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray()));
+
+        return $page;
+    }
+
     public function trash(int $id): void
     {
         $page = $this->pages->find($id);

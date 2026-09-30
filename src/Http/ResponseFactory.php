@@ -37,7 +37,7 @@ final readonly class ResponseFactory implements ResponseFactoryInterface
     /** @param array<string, string|list<string>> $headers */
     public function text(string $text, int $status = 200, array $headers = []): ResponseInterface
     {
-        return $this->create($text, $status, ['Content-Type' => 'text/plain; charset=utf-8'] + $headers);
+        return $this->create($text, $status, $headers + ['Content-Type' => 'text/plain; charset=utf-8']);
     }
 
     /** @param array<string, string|list<string>> $headers */

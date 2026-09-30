@@ -18,6 +18,7 @@ services:
       VITE_DEV_SERVER_URL: "http://localhost:${VITE_FORWARD_PORT:-5173}"
     volumes:
       - .:/var/www/html
+      - ../flex-cms-themes:/var/www/html/themes-external
       - vendor:/var/www/html/vendor
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/health"]

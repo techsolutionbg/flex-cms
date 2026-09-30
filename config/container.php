@@ -11,6 +11,7 @@ use Flex\Providers\DatabaseServiceProvider;
 use Flex\Providers\ExtensionServiceProvider;
 use Flex\Providers\HttpServiceProvider;
 use Flex\Providers\MailServiceProvider;
+use Flex\Providers\PublicRouteServiceProvider;
 use Flex\Providers\UpdateServiceProvider;
 use Flex\Providers\UserRouteServiceProvider;
 
@@ -28,5 +29,6 @@ return [
         AuthRouteServiceProvider::class,
         AdminRouteServiceProvider::class,
         UserRouteServiceProvider::class,
+        PublicRouteServiceProvider::class,
     ],
 ];

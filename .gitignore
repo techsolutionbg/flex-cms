@@ -31,6 +31,8 @@
 /vendor/
 /plugins/*
 !/plugins/.gitkeep
+/themes/*
+!/themes/.gitkeep
 Thumbs.db
 .DS_Store
 /websites

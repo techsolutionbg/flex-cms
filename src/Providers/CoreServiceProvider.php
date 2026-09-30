@@ -14,6 +14,7 @@ use Flex\Configuration\EnvironmentValidator;
 use Flex\Console\FlexConsoleApplication;
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Logging\LoggerFactory;
+use Flex\Themes\ThemeManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -21,7 +22,7 @@ final class CoreServiceProvider implements ServiceProviderInterface
 {
     public function definitions(): array
     {
-        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
+        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), ThemeManager::class => autowire(), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
     }
     public function boot(ContainerInterface $container): void {}
 }
