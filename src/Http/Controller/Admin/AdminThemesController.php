@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Flex\Http\Controller\Admin;
+
+use Flex\Auth\AuthenticatedUser;
+use Flex\Contracts\Auth\AuthenticationInterface;
+use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Contracts\Http\ViewRendererInterface;
+use Flex\Http\View\ViteAssetManager;
+use Flex\Session\CsrfTokenManager;
+use Flex\Settings\SettingRepository;
+use Flex\Themes\ThemeManager;
+use Flex\Updates\Platform\PlatformVersionRegistry;
+use Flex\Updates\Remote\ThemeCatalogClient;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+final readonly class AdminThemesController
+{
+    public function __construct(
+        private AuthenticationInterface $authentication,
+        private ThemeManager $themes,
+        private ResponseFactoryInterface $responses,
+        private CsrfTokenManager $csrf,
+        private SettingRepository $settings,
+        private PlatformVersionRegistry $versions,
+        private ViewRendererInterface $views,
+        private ViteAssetManager $assets,
+        private ThemeCatalogClient $catalog,
+    ) {}
+
+    /** @param array<string, string> $arguments */
+    public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
+    {
+        $user = $this->authentication->user();
+        if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
+            return $this->responses->text('Достъпът е забранен.', 403);
+        }
+
+        $themes = $this->themes->all();
+        try {
+            $index = $this->catalog->index();
+            foreach ($themes as &$theme) {
+                $remoteId = (string) $theme['id'];
+                if (!isset($index->manifests[$remoteId])) continue;
+                $releases = array_values(array_filter($this->catalog->manifest($remoteId)->releases, static fn($release): bool => $release->channel->value === 'stable'));
+                usort($releases, static fn($left, $right): int => version_compare($right->version, $left->version));
+                $latest = $releases[0] ?? null;
+                if ($latest !== null) {
+                    $theme['available_version'] = $latest->version;
+                    $theme['update_available'] = version_compare((string) $latest->version, (string) $theme['version'], '>');
+                    $theme['release_notes'] = $latest->releaseNotes;
+                }
+            }
+            unset($theme);
+        } catch (\Throwable) {
+            // The local theme list remains usable when the remote catalog is unavailable.
+        }
+
+        $bootstrap = [
+            'page' => 'themes',
+            'csrfToken' => $this->csrf->token(),
+            'sidebarWidth' => $this->settings->sidebarWidthForUser($user->id),
+            'sidebarCollapsed' => $this->settings->sidebarCollapsedForUser($user->id),
+            'collapsedSections' => $this->settings->collapsedSectionsForUser($user->id),
+            'version' => $this->versions->current()->value,
+            'themes' => $themes,
+        ];
+
+        return $this->responses->html($this->views->render('admin/app.twig', [
+            'title' => 'Теми',
+            'vite_tags' => $this->assets->tags(),
+            'bootstrap_json' => json_encode($bootstrap, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
+        ]));
+    }
+}

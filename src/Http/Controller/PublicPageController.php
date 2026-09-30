@@ -6,6 +6,7 @@ namespace Flex\Http\Controller;
 
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
 use Flex\Themes\ThemeManager;
@@ -14,7 +15,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class PublicPageController
 {
-    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses) {}
+    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi) {}
 
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
@@ -29,9 +30,17 @@ final readonly class PublicPageController
             return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена']), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
-        $title = trim((string) ($settings['seo_title'] ?? '')) ?: (string) $page->getAttribute('title');
+        $navigation = array_map(static fn(Page $item): array => [
+            'title' => (string) $item->getAttribute('title'),
+            'slug' => (string) $item->getAttribute('slug'),
+        ], $this->pages->publishedNavigation());
+        $headTags = $this->extensionApi->applyFilters('public.head', '', [
+            'page' => $page->toPublicArray(),
+            'request' => $request,
+        ]);
+        $headTags = is_string($headTags) ? $headTags : '';
 
-        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_settings' => $settings, 'meta_title' => $title, 'meta_description' => (string) ($settings['meta_description'] ?? ''), 'canonical_url' => (string) ($settings['canonical_url'] ?? '')]));
+        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation]));
     }
 
     private function homePage(): ?Page

@@ -58,4 +58,27 @@ final class PageRepository
 
         return $page instanceof Page ? $page : null;
     }
+
+    /** @return list<Page> */
+    public function publishedNavigation(): array
+    {
+        return Page::query()
+            ->where('status', 'published')
+            ->whereNull('deleted_at')
+            ->get()
+            ->filter(static function (Page $page): bool {
+                $settings = $page->getAttribute('settings');
+
+                return !is_array($settings) || ($settings['show_in_navigation'] ?? true) !== false;
+            })
+            ->sort(static function (Page $left, Page $right): int {
+                $leftSettings = is_array($left->getAttribute('settings')) ? $left->getAttribute('settings') : [];
+                $rightSettings = is_array($right->getAttribute('settings')) ? $right->getAttribute('settings') : [];
+                $order = ((int) ($leftSettings['menu_order'] ?? 0)) <=> ((int) ($rightSettings['menu_order'] ?? 0));
+
+                return $order !== 0 ? $order : strnatcasecmp((string) $left->getAttribute('title'), (string) $right->getAttribute('title'));
+            })
+            ->values()
+            ->all();
+    }
 }
