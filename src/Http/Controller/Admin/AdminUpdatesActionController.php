@@ -9,7 +9,6 @@ use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\ApiError;
 use Flex\Http\RequestInput;
-use Flex\Updates\Platform\PlatformRollback;
 use Flex\Updates\Jobs\UpdateJobStore;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -20,7 +19,6 @@ final readonly class AdminUpdatesActionController
         private AuthenticationInterface $authentication,
         private RequestInput $input,
         private UpdateJobStore $jobs,
-        private PlatformRollback $rollback,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -52,8 +50,12 @@ final readonly class AdminUpdatesActionController
             if (!is_string($id) || $id === '') {
                 return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Необходимо е валидно ID на обновяването.'), 422);
             }
-            $record = $this->rollback->rollback($id);
-            return $this->responses->json(['message' => sprintf('Връщането от %s към %s завърши успешно.', $record['to'], $record['from'])]);
+            $job = $this->jobs->queuePlatformRollback($id);
+            return $this->responses->json([
+                'message' => sprintf('Възстановяването е поставено в опашката (%s) и ще бъде обработено от updater процеса.', $job->id),
+                'job_id' => $job->id,
+                'queued' => true,
+            ], 202);
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'update_action_failed', $exception->getMessage()), 422);
         }

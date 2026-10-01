@@ -8,7 +8,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\RequestInput;
 use Flex\Session\CsrfTokenManager;
 use Flex\Updates\Platform\PlatformHistory;
-use Flex\Updates\Platform\PlatformRollback;
+use Flex\Updates\Jobs\UpdateJobStore;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -16,7 +16,7 @@ final readonly class AdminUpdatesRollbackController
 {
     public function __construct(
         private PlatformHistory $history,
-        private PlatformRollback $rollback,
+        private UpdateJobStore $jobs,
         private RequestInput $input,
         private AdminUpdatesPage $page,
         private CsrfTokenManager $csrf,
@@ -35,12 +35,12 @@ final readonly class AdminUpdatesRollbackController
             if (!is_string($id) || $id === '') {
                 throw new \InvalidArgumentException('A valid update ID is required.');
             }
-            $record = $this->rollback->rollback($id);
+            $job = $this->jobs->queuePlatformRollback($id);
 
             return $this->responses->html($this->page->render(
                 $this->csrf->token(),
                 $this->history->all(),
-                sprintf('Rollback от %s към %s завърши успешно.', $record['to'], $record['from']),
+                sprintf('Възстановяването е поставено в опашката (%s) и ще бъде обработено от updater процеса.', $job->id),
             ));
         } catch (\Throwable $exception) {
             return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, $exception->getMessage()), 422);

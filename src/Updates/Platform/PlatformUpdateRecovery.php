@@ -52,10 +52,7 @@ final readonly class PlatformUpdateRecovery
                 }
 
                 if (is_file($backup)) {
-                    $this->ensureDirectory(dirname($destination));
-                    if (!copy($backup, $destination)) {
-                        throw new PlatformUpdateException(sprintf('Recovery could not restore "%s".', $path));
-                    }
+                    $this->replaceFile($backup, $destination, $path);
                 } elseif (is_file($destination) && !unlink($destination)) {
                     throw new PlatformUpdateException(sprintf('Recovery could not remove newly installed file "%s".', $path));
                 }
@@ -103,6 +100,19 @@ final readonly class PlatformUpdateRecovery
     {
         if (!is_dir($path) && !mkdir($path, 0775, true) && !is_dir($path)) {
             throw new PlatformUpdateException(sprintf('Recovery cannot create directory "%s".', $path));
+        }
+    }
+
+    private function replaceFile(string $source, string $destination, string $path): void
+    {
+        $this->ensureDirectory(dirname($destination));
+        $temporary = $destination . '.flex-recovery-' . bin2hex(random_bytes(4));
+        try {
+            if (!copy($source, $temporary) || !rename($temporary, $destination)) {
+                throw new PlatformUpdateException(sprintf('Recovery could not restore "%s".', $path));
+            }
+        } finally {
+            @unlink($temporary);
         }
     }
 

@@ -18,6 +18,10 @@ final readonly class PlatformPackageBuilder
         'node_modules',
         'public/media',
         'resources/admin',
+        // The Vite config belongs to the local development container. Replacing
+        // it during a platform update makes Vite restart its HTTP server and
+        // briefly exposes ERR_EMPTY_RESPONSE to the browser.
+        'resources/admin-react/vite.config.js',
     ];
 
     /** @var list<string> */

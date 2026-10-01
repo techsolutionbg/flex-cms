@@ -175,8 +175,11 @@ body { margin: 0; min-width: 320px; }
 .updates-page-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .updates-summary-card, .updates-available-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; border: 1px solid #d4d9d0; border-radius: .7rem; background: white; }
 .updates-platform-status { display: grid; gap: 1rem; }
-.updates-platform-status .collapsible-section-body-inner { padding-top: .75rem; }
+.updates-platform-status .collapsible-section-body-inner { padding-top: .5rem; }
 .updates-platform-status .updates-summary-card, .updates-platform-status .updates-available-card { border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+.updates-platform-status .updates-summary-card { padding-bottom: .75rem; }
+.updates-platform-status .updates-summary-card > div:last-child { padding-top: .1rem; }
+.updates-platform-status .updates-summary-card > div:last-child > span:last-child { margin-top: .35rem; }
 .updates-platform-status .updates-available-card.is-available { padding: .9rem 1rem; border: 1px solid #b9d8bf; border-left: 4px solid #287a48; border-radius: .6rem; background: #eff8f0; }
 .updates-summary-icon { display: grid; width: 3rem; height: 3rem; flex: 0 0 auto; place-items: center; border-radius: .65rem; background: #eef1eb; color: #536257; }
 .updates-summary-card strong { display: block; margin-top: .15rem; color: #1d2a20; font-size: 1.5rem; }

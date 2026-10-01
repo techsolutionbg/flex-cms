@@ -33,6 +33,27 @@ final class UpdateJobStore
         });
     }
 
+    public function queuePlatformRollback(string $historyId): UpdateJob
+    {
+        if ($historyId === '') {
+            throw new \InvalidArgumentException('The platform update ID is required.');
+        }
+
+        return $this->withLock(function () use ($historyId): UpdateJob {
+            $jobs = $this->read();
+            foreach ($jobs as $job) {
+                if ($job->type === 'platform_rollback' && $job->packageId === $historyId && in_array($job->status, [self::STATUS_PENDING, self::STATUS_RUNNING], true)) {
+                    return $job;
+                }
+            }
+            $job = new UpdateJob('rollback-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(5)), 'platform_rollback', self::STATUS_PENDING, false, gmdate(DATE_ATOM), packageId: $historyId);
+            $jobs[] = $job;
+            $this->write($jobs);
+
+            return $job;
+        });
+    }
+
     public function queuePluginUpdate(string $pluginId): UpdateJob
     {
         if (preg_match('/^[a-z0-9]+(?:[._-][a-z0-9]+)*\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/', $pluginId) !== 1) {

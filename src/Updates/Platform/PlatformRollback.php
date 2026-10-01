@@ -31,6 +31,7 @@ final readonly class PlatformRollback
             throw new PlatformUpdateException('The update history record is missing rollback metadata.');
         }
         $this->assertManagedPath($backup, '/storage/backups/platform/');
+        $this->assertRollbackDirectories($paths);
         if (($record['migrations_ran'] ?? false) === true) {
             $databaseBackup = $record['database_backup'] ?? null;
             if ($this->databaseBackup === null || !is_string($databaseBackup) || !is_file($databaseBackup)) {
@@ -42,6 +43,7 @@ final readonly class PlatformRollback
         $lock = PlatformUpdateLock::acquire($this->basePath);
         $maintenancePath = $this->basePath . '/storage/maintenance.json';
         $completed = false;
+        $changed = false;
         try {
             $maintenance = json_encode([
                 'reason' => 'platform-rollback',
@@ -62,19 +64,19 @@ final readonly class PlatformRollback
                 $destination = $this->destination($path);
                 $backupFile = $backup . '/files/' . $path;
                 if (is_file($backupFile)) {
-                    $this->ensureDirectory(dirname($destination));
-                    if (!copy($backupFile, $destination)) {
-                        throw new PlatformUpdateException(sprintf('Rollback could not restore "%s".', $path));
-                    }
+                    $this->replaceFile($backupFile, $destination, $path);
+                    $changed = true;
                 } elseif (is_file($destination) && !unlink($destination)) {
                     throw new PlatformUpdateException(sprintf('Rollback could not remove "%s".', $path));
+                } elseif (is_file($destination)) {
+                    $changed = true;
                 }
             }
 
             $this->appendRollbackHistory($record, $id);
             $completed = true;
         } finally {
-            if ($completed) {
+            if ($completed || !$changed) {
                 @unlink($maintenancePath);
             }
             $lock->release();
@@ -111,6 +113,20 @@ final readonly class PlatformRollback
         }
     }
 
+    /** @param list<mixed> $paths */
+    private function assertRollbackDirectories(array $paths): void
+    {
+        foreach ($paths as $path) {
+            if (!is_string($path)) {
+                throw new PlatformUpdateException('The rollback metadata contains an invalid path.');
+            }
+            $directory = dirname($this->destination($path));
+            if (!is_dir($directory) || !is_writable($directory)) {
+                throw new PlatformUpdateException(sprintf('The rollback directory "%s" is not writable.', $directory));
+            }
+        }
+    }
+
     private function destination(string $path): string
     {
         if ($path === '' || str_contains($path, "\0") || str_contains($path, '\\') || str_starts_with($path, '/')
@@ -133,6 +149,19 @@ final readonly class PlatformRollback
     {
         if (!is_dir($path) && !mkdir($path, 0775, true) && !is_dir($path)) {
             throw new PlatformUpdateException(sprintf('Rollback cannot create directory "%s".', $path));
+        }
+    }
+
+    private function replaceFile(string $source, string $destination, string $path): void
+    {
+        $this->ensureDirectory(dirname($destination));
+        $temporary = $destination . '.flex-rollback-' . bin2hex(random_bytes(4));
+        try {
+            if (!copy($source, $temporary) || !rename($temporary, $destination)) {
+                throw new PlatformUpdateException(sprintf('Rollback could not restore "%s".', $path));
+            }
+        } finally {
+            @unlink($temporary);
         }
     }
 }
