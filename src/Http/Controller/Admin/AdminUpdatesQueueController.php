@@ -9,6 +9,7 @@ use Flex\Http\RequestInput;
 use Flex\Session\CsrfTokenManager;
 use Flex\Updates\Jobs\UpdateJobStore;
 use Flex\Updates\Platform\PlatformHistory;
+use Flex\Updates\UpdateErrorMessage;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -37,7 +38,7 @@ final readonly class AdminUpdatesQueueController
                 sprintf('Обновяването е поставено в опашката (%s). Стартирайте updates:process чрез cron.', $job->id),
             ));
         } catch (\Throwable $exception) {
-            return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, $exception->getMessage()), 422);
+            return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, UpdateErrorMessage::forAdmin($exception)), 422);
         }
     }
 }

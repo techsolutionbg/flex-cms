@@ -120,8 +120,25 @@ type ThemeRecord = {
   release_notes?: string
 }
 
+type ThemeCatalogRecord = {
+  id: string
+  name: string
+  description: string
+  author: string
+  version: string
+  published_at: string
+  release_notes: string
+  size: number
+  minimum_php: string
+  compatible_from: string
+  installed: boolean
+  installed_version: string | null
+  active: boolean
+  installation_status: "not_installed" | "installed" | "active"
+}
+
 type Bootstrap = {
-  page: "dashboard" | "updates" | "profile" | "users" | "users-create" | "users-edit" | "pages" | "pages-create" | "pages-edit" | "pages-settings" | "themes" | "plugins" | "plugin-catalog" | "plugin-detail" | "plugin-catalog-detail"
+  page: "dashboard" | "updates" | "profile" | "users" | "users-create" | "users-edit" | "pages" | "pages-create" | "pages-edit" | "pages-settings" | "themes" | "theme-catalog" | "plugins" | "plugin-catalog" | "plugin-detail" | "plugin-catalog-detail"
   csrfToken: string
   sidebarWidth: number
   sidebarCollapsed?: boolean
@@ -142,6 +159,7 @@ type Bootstrap = {
   updateJobs?: Array<{ id: string; type: string; status: string; created_at: string; started_at: string | null; finished_at: string | null; error: string | null; result: Record<string, unknown> }>
   plugins?: PluginRecord[]
   themes?: ThemeRecord[]
+  themeCatalog?: ThemeCatalogRecord[]
   pluginCatalog?: Array<{ id: string; name: string; description: string; author: string; icon_url: string; version: string; release_notes: string; size: number; published_at: string; compatible_from: string; minimum_php: string; minimum_platform_version: string; permissions: string[]; installation_status: "not_installed" | "installed" | "active"; installed_version: string | null; update_available: boolean }>
   pluginDetail?: PluginRecord | null
   catalogDetail?: Bootstrap["pluginCatalog"] extends Array<infer T> ? T | null : null
@@ -275,7 +293,20 @@ function pluginsPageMarkup(): string {
 }
 
 function themesPageMarkup(): string {
-  return `<template x-if="page === 'themes'"><section><div class="page-heading-row"><div><h1>Теми</h1>${breadcrumbsMarkup("'Теми'")}${collapsibleTextMarkup("Управлявайте публичния дизайн на сайта. Темите се зареждат от външната папка на инсталацията и се проверяват чрез своя theme.json манифест.")}</div><div class="page-heading-actions"><button class="button secondary" type="button" x-show="themes.some((theme) => theme.active)" @click="rollbackTheme()">Върни предходната тема</button></div></div><div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>Инсталирана версия</th><th>Налична версия</th><th>Описание</th><th>Състояние</th><th>Действия</th></tr></thead><tbody><template x-for="theme in themes" :key="theme.id"><tr><td><strong x-text="theme.name"></strong><small class="table-cell-secondary" x-text="theme.id"></small></td><td x-text="theme.version"></td><td><strong x-show="theme.available_version" x-text="theme.available_version"></strong><span class="table-cell-secondary" x-show="!theme.available_version">Няма данни</span></td><td><span x-text="theme.description || '—'"></span><small class="table-cell-secondary" x-show="theme.error" x-text="theme.error"></small></td><td><span class="status-badge" :class="theme.update_available ? 'status-badge-warning' : (theme.active ? 'status-badge-active' : (theme.valid ? 'status-badge-installed' : 'status-badge-error'))" x-text="theme.update_available ? 'Има обновяване' : (theme.active ? 'Активна' : (theme.valid ? 'Готова' : 'Невалидна'))"></span></td><td><a class="button secondary" :href="'/admin/themes/' + encodeURIComponent(theme.id) + '/preview'" target="_blank" rel="noopener">Преглед</a><button class="button secondary" type="button" x-show="theme.update_available" :disabled="themeBusy" @click="updateTheme(theme)" x-text="themeBusy === theme.id ? 'Обновяване…' : 'Обнови'"></button><button class="button secondary" type="button" x-show="!theme.active && theme.valid && !theme.update_available" :disabled="themeBusy" @click="activateTheme(theme)" x-text="themeBusy === theme.id ? 'Активиране…' : 'Активирай'"></button><span class="table-cell-secondary" x-show="theme.active && !theme.update_available">Текуща тема</span></td></tr></template><tr x-show="themes.length === 0"><td colspan="6" class="empty-state">Няма открити теми.</td></tr></tbody></table></div></section></template>`
+  const actions = actionDropdownMarkup('<a class="dropdown-option" :href="\'/admin/themes/\' + encodeURIComponent(theme.id) + \'/preview\'" target="_blank" rel="noopener">Преглед</a><button class="dropdown-option" type="button" x-show="theme.update_available" :disabled="themeBusy" @click="updateTheme(theme)" x-text="themeBusy === theme.id ? \'Обновяване…\' : \'Обнови\'"></button><button class="dropdown-option" type="button" x-show="!theme.active && theme.valid && !theme.update_available" :disabled="themeBusy" @click="activateTheme(theme)" x-text="themeBusy === theme.id ? \'Активиране…\' : \'Активирай\'"></button><button class="dropdown-option" type="button" x-show="theme.active" :disabled="themeBusy" @click="window.dispatchEvent(new CustomEvent(\'flexcms-theme-deactivate\', { detail: { id: theme.id } }))">Деактивирай</button><button class="dropdown-option dropdown-option-danger" type="button" x-show="!theme.active" :disabled="themeBusy" @click="deleteTheme(theme)">Изтрий</button>')
+  return `<template x-if="page === 'themes'"><section><div class="page-heading-row"><div><h1>Теми</h1>${breadcrumbsMarkup("'Теми'")}${collapsibleTextMarkup("Управлявайте локално инсталираните теми и избирайте коя тема да бъде активна за публичната част на сайта.")}</div><div class="page-heading-actions"><button class="button secondary" type="button" @click="navigate('/admin/themes/catalog')">Каталог с теми</button><button class="button secondary" type="button" x-show="themes.some((theme) => theme.active)" @click="rollbackTheme()">Върни предходната тема</button></div></div><div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>Инсталирана версия</th><th>Налична версия</th><th>Описание</th><th>Състояние</th><th>Действия</th></tr></thead><tbody><template x-for="theme in themes" :key="theme.id"><tr><td><strong x-text="theme.name"></strong><small class="table-cell-secondary" x-text="theme.id"></small></td><td x-text="theme.version"></td><td><strong x-show="theme.available_version" x-text="theme.available_version"></strong><span class="table-cell-secondary" x-show="!theme.available_version">Няма данни</span></td><td><span x-text="theme.description || '—'"></span><small class="table-cell-secondary" x-show="theme.error" x-text="theme.error"></small></td><td><span class="status-badge" :class="theme.update_available ? 'status-badge-warning' : (theme.active ? 'status-badge-active' : (theme.valid ? 'status-badge-installed' : 'status-badge-error'))" x-text="theme.update_available ? 'Има обновяване' : (theme.active ? 'Активна' : (theme.valid ? 'Готова' : 'Невалидна'))"></span></td><td>${actions}</td></tr></template><tr x-show="themes.length === 0"><td colspan="6" class="empty-state">Няма открити теми.</td></tr></tbody></table></div></section></template>`
+}
+
+function legacyThemesPageMarkup(): string {
+  return `<template x-if="page === 'themes'"><section><div class="page-heading-row"><div><h1>Теми</h1>${breadcrumbsMarkup("'Теми'")}${collapsibleTextMarkup("Управлявайте локално инсталираните теми и избирайте коя тема да бъде активна за публичната част на сайта.")}</div><div class="page-heading-actions"><button class="button secondary" type="button" @click="navigate('/admin/themes/catalog')">Каталог с теми</button><button class="button secondary" type="button" x-show="themes.some((theme) => theme.active)" @click="rollbackTheme()">Върни предходната тема</button></div></div><div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>Инсталирана версия</th><th>Налична версия</th><th>Описание</th><th>Състояние</th><th>Действия</th></tr></thead><tbody><template x-for="theme in themes" :key="theme.id"><tr><td><strong x-text="theme.name"></strong><small class="table-cell-secondary" x-text="theme.id"></small></td><td x-text="theme.version"></td><td><strong x-show="theme.available_version" x-text="theme.available_version"></strong><span class="table-cell-secondary" x-show="!theme.available_version">Няма данни</span></td><td><span x-text="theme.description || '—'"></span><small class="table-cell-secondary" x-show="theme.error" x-text="theme.error"></small></td><td><span class="status-badge" :class="theme.update_available ? 'status-badge-warning' : (theme.active ? 'status-badge-active' : (theme.valid ? 'status-badge-installed' : 'status-badge-error'))" x-text="theme.update_available ? 'Има обновяване' : (theme.active ? 'Активна' : (theme.valid ? 'Готова' : 'Невалидна'))"></span></td><td><a class="button secondary" :href="'/admin/themes/' + encodeURIComponent(theme.id) + '/preview'" target="_blank" rel="noopener">Преглед</a><button class="button secondary" type="button" x-show="theme.update_available" :disabled="themeBusy" @click="updateTheme(theme)" x-text="themeBusy === theme.id ? 'Обновяване…' : 'Обнови'"></button><button class="button secondary" type="button" x-show="!theme.active && theme.valid && !theme.update_available" :disabled="themeBusy" @click="activateTheme(theme)" x-text="themeBusy === theme.id ? 'Активиране…' : 'Активирай'"></button><button class="button secondary" type="button" x-show="theme.active" :disabled="themeBusy" @click="deactivateTheme(theme)">Деактивирай</button><button class="button danger" type="button" x-show="!theme.active" :disabled="themeBusy" @click="deleteTheme(theme)">Изтрий</button><span class="table-cell-secondary" x-show="theme.active && !theme.update_available">Текуща тема</span></td></tr></template><tr x-show="themes.length === 0"><td colspan="6" class="empty-state">Няма открити теми.</td></tr></tbody></table></div></section></template>`
+  // Kept below temporarily as the source of the existing local-theme markup.
+  return `<template x-if="page === 'themes'"><section><div class="page-heading-row"><div><h1>Теми</h1>${breadcrumbsMarkup("'Теми'")}${collapsibleTextMarkup("Управлявайте публичния дизайн на сайта. Локалните теми се показват отделно от всички публикувани теми в каталога.")}</div><div class="page-heading-actions"><button class="button secondary" type="button" x-show="themes.some((theme) => theme.active)" @click="rollbackTheme()">Върни предходната тема</button></div></div><div class="notice error" x-show="error" x-text="error"></div><div class="pages-table table-wrapper"><table><thead><tr><th>Име</th><th>Инсталирана версия</th><th>Налична версия</th><th>Описание</th><th>Състояние</th><th>Действия</th></tr></thead><tbody><template x-for="theme in themes" :key="theme.id"><tr><td><strong x-text="theme.name"></strong><small class="table-cell-secondary" x-text="theme.id"></small></td><td x-text="theme.version"></td><td><strong x-show="theme.available_version" x-text="theme.available_version"></strong><span class="table-cell-secondary" x-show="!theme.available_version">Няма данни</span></td><td><span x-text="theme.description || '—'"></span><small class="table-cell-secondary" x-show="theme.error" x-text="theme.error"></small></td><td><span class="status-badge" :class="theme.update_available ? 'status-badge-warning' : (theme.active ? 'status-badge-active' : (theme.valid ? 'status-badge-installed' : 'status-badge-error'))" x-text="theme.update_available ? 'Има обновяване' : (theme.active ? 'Активна' : (theme.valid ? 'Готова' : 'Невалидна'))"></span></td><td><a class="button secondary" :href="'/admin/themes/' + encodeURIComponent(theme.id) + '/preview'" target="_blank" rel="noopener">Преглед</a><button class="button secondary" type="button" x-show="theme.update_available" :disabled="themeBusy" @click="updateTheme(theme)" x-text="themeBusy === theme.id ? 'Обновяване…' : 'Обнови'"></button><button class="button secondary" type="button" x-show="!theme.active && theme.valid && !theme.update_available" :disabled="themeBusy" @click="activateTheme(theme)" x-text="themeBusy === theme.id ? 'Активиране…' : 'Активирай'"></button><span class="table-cell-secondary" x-show="theme.active && !theme.update_available">Текуща тема</span></td></tr></template><tr x-show="themes.length === 0"><td colspan="6" class="empty-state">Няма открити теми.</td></tr></tbody></table></div><section class="content-card theme-catalog-card"><header><h2>Каталог с теми</h2></header><div class="section-body"><div class="pages-table table-wrapper" x-show="themeCatalog.length"><table><thead><tr><th>Тема</th><th>Описание</th><th>Версия</th><th>Изисквания</th><th>Състояние</th></tr></thead><tbody><template x-for="item in themeCatalog" :key="item.id"><tr><td><strong x-text="item.name || item.id"></strong><small class="table-cell-secondary" x-text="item.id"></small></td><td x-text="item.description || '—'"></td><td><strong x-text="item.version"></strong><small class="table-cell-secondary" x-text="item.published_at"></small></td><td><span x-text="'PHP ' + (item.minimum_php || '—')"></span><small class="table-cell-secondary" x-text="'Flex CMS ' + (item.compatible_from || '—')"></small></td><td><span class="status-badge" :class="item.active ? 'status-badge-active' : (item.installed ? 'status-badge-installed' : 'status-badge-warning')" x-text="item.active ? 'Активна' : (item.installed ? 'Инсталирана' : 'Налична в каталога')"></span></td></tr></template></tbody></table></div><p class="empty-state" x-show="!themeCatalog.length">Каталогът не е достъпен или няма публикувани теми.</p></div></section></section></template>`
+}
+
+void legacyThemesPageMarkup
+
+function themeCatalogPageMarkup(): string {
+  return `<template x-if="page === 'theme-catalog'"><section><div class="page-heading-row"><div><h1>Каталог с теми</h1>${breadcrumbsMarkup("'Каталог с теми'", [{ label: "Теми", href: "/admin/themes" }])}${collapsibleTextMarkup("Разглеждайте публикуваните теми от конфигурирания HTTPS сървър. Тук виждате версията, автора, изискванията и състоянието на всяка тема за текущата инсталация.")}</div><div class="page-heading-actions"><button class="button secondary" type="button" @click="navigate('/admin/themes')">Назад към темите</button></div></div><div class="theme-catalog-grid" x-show="themeCatalog.length"><template x-for="item in themeCatalog" :key="item.id"><article class="theme-catalog-card"><div class="theme-card-preview"><span>Flex CMS</span><strong x-text="item.name || item.id"></strong></div><div class="theme-card-body"><div class="theme-card-heading"><div><h2 x-text="item.name || item.id"></h2><small class="table-cell-secondary" x-text="item.id"></small></div><span class="status-badge" :class="item.installation_status === 'active' ? 'status-badge-active' : (item.installation_status === 'installed' ? 'status-badge-installed' : 'status-badge-warning')" x-text="item.installation_status === 'active' ? 'Активна' : (item.installation_status === 'installed' ? 'Инсталирана' : 'Неинсталирана')"></span></div><p class="theme-card-description" x-text="item.description || 'Няма описание.'"></p><p class="theme-card-author" x-show="item.author" x-text="'От ' + item.author"></p><div class="theme-card-meta"><span>Версия <strong x-text="item.version"></strong></span><span x-text="'PHP ' + (item.minimum_php || '—')"></span><span x-text="'Flex CMS ' + (item.compatible_from || '—')"></span></div><div class="theme-card-footer"><span class="table-cell-secondary" x-text="item.installed ? ('Инсталирана: ' + item.installed_version) : 'Не е инсталирана'"></span><span class="table-cell-secondary" x-text="item.published_at ? 'Публикувана: ' + item.published_at : ''"></span><button class="button primary" type="button" x-show="item.installation_status === 'not_installed'" :disabled="themeBusy === item.id" @click="installRemoteTheme(item)" x-text="themeBusy === item.id ? 'Инсталиране…' : 'Инсталирай'"></button></div></div></article></template></div><p class="empty-state" x-show="!themeCatalog.length">Каталогът не е достъпен или няма публикувани теми.</p></section></template>`
 }
 
 function pluginCatalogPageMarkup(): string {
@@ -295,7 +326,7 @@ function adminMarkup(): string {
           <li class="sidebar-group-label">Основни</li>
           <li><a class="sidebar-link" href="/admin" :class="{ 'is-active': page === 'dashboard' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 11 8-7 8 7v8a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1v-8Z" /></svg><span class="sidebar-link-label">Табло</span></a></li>
           <li><a class="sidebar-link" href="/admin/pages" :class="{ 'is-active': page === 'pages' || page === 'pages-create' || page === 'pages-edit' || page === 'pages-settings' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3Zm9 0v4h3M9 12h6M9 16h6M9 8h2" /></svg><span class="sidebar-link-label">Страници</span></a></li>
-          <li><a class="sidebar-link" href="/admin/themes" :class="{ 'is-active': page === 'themes' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm4 0v14M4 9h4M12 9h8M12 13h8M12 17h5" /></svg><span class="sidebar-link-label">Теми</span></a></li>
+          <li><a class="sidebar-link" href="/admin/themes" :class="{ 'is-active': page === 'themes' || page === 'theme-catalog' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm4 0v14M4 9h4M12 9h8M12 13h8M12 17h5" /></svg><span class="sidebar-link-label">Теми</span></a></li>
           <li class="sidebar-group-label">Управление</li>
           <li><a class="sidebar-link" href="/admin/users" :class="{ 'is-active': page === 'users' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 19a4 4 0 0 1 7 0" /></svg><span class="sidebar-link-label">Потребители</span></a></li>
           <li><a class="sidebar-link" href="/admin/plugins" :class="{ 'is-active': page === 'plugins' || page === 'plugin-catalog' || page === 'plugin-detail' || page === 'plugin-catalog-detail' }"><svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v4M16 3v4M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8Zm3 4h8M8 16h5" /></svg><span class="sidebar-link-label">Разширения</span></a></li>
@@ -325,7 +356,7 @@ function adminMarkup(): string {
 
   const withAdminExtensions = markup
     .replace(/<template x-if="page === 'plugins'">[\s\S]*?<\/section><\/template>/, pluginsPageMarkup())
-    .replace(`<template x-if="page === 'plugin-detail'">`, `${pluginCatalogPageMarkup()}${catalogPluginDetailMarkup()}<template x-if="page === 'plugin-detail'">`)
+    .replace(`<template x-if="page === 'plugin-detail'">`, `${themeCatalogPageMarkup()}${pluginCatalogPageMarkup()}${catalogPluginDetailMarkup()}<template x-if="page === 'plugin-detail'">`)
     .replace('<h1>Обновявания</h1>', `<h1>Обновявания</h1>${remoteUpdatesMarkup()}`)
     .replace("</ul></nav>", `${adminSidebarMarkup()}</ul></nav>`)
     .replace(`<template x-if="page === 'plugins'">`, `${userFormPageMarkup()}${usersPageMarkup()}<template x-if="page === 'plugins'">`)
@@ -556,7 +587,38 @@ function createAdminState(initial: Bootstrap) {
   state.pluginFields = pageFieldValues(state.pageFields, initialPageData?.plugin_fields)
   state.pluginSettings = pageFieldValues(state.pageSettingsFields, initialPageData?.plugin_settings)
   Object.defineProperty(state, "themes", { value: initial.themes ?? [], writable: true, enumerable: true, configurable: true })
+  Object.defineProperty(state, "themeCatalog", { value: initial.themeCatalog ?? [], writable: true, enumerable: true, configurable: true })
   Object.defineProperty(state, "themeBusy", { value: "", writable: true, enumerable: true, configurable: true })
+  const dynamicState = state as typeof state & { themes: ThemeRecord[]; themeCatalog: ThemeCatalogRecord[]; themeBusy: string; installRemoteTheme: (item: ThemeCatalogRecord) => void; deactivateTheme: (item: ThemeRecord) => void; deleteTheme: (item: ThemeRecord) => void }
+  dynamicState.installRemoteTheme = (item) => {
+    if (dynamicState.themeBusy || item.installation_status !== "not_installed") return
+    if (!window.confirm(`Ще инсталирате тема „${item.name || item.id}“ версия ${item.version}. Да продължа ли?`)) return
+    dynamicState.themeBusy = item.id
+    $.ajax({ url: "/api/themes/action", method: "POST", contentType: "application/json", dataType: "json", headers: { "X-CSRF-Token": initial.csrfToken }, data: JSON.stringify({ action: "install_remote", id: item.id }) }).done((response: { themes?: ThemeRecord[] }) => {
+      dynamicState.themes = response.themes ?? dynamicState.themes
+      dynamicState.themeCatalog = dynamicState.themeCatalog.map((theme) => theme.id === item.id ? { ...theme, installed: true, active: false, installed_version: item.version, installation_status: "installed" } : theme)
+      showToast("Темата е инсталирана успешно.", "success")
+    }).fail((xhr: JQuery.jqXHR) => { const message = xhr.responseJSON?.error?.message ?? "Темата не можа да бъде инсталирана."; showToast(message, "error") }).always(() => { dynamicState.themeBusy = "" })
+  }
+  dynamicState.deactivateTheme = (item) => {
+    if (dynamicState.themeBusy || !item.active) return
+    dynamicState.themeBusy = item.id
+    $.ajax({ url: "/api/themes/action", method: "POST", contentType: "application/json", dataType: "json", headers: { "X-CSRF-Token": initial.csrfToken }, data: JSON.stringify({ action: "deactivate", id: item.id }) }).done((response: { themes?: ThemeRecord[] }) => {
+      dynamicState.themes = response.themes ?? dynamicState.themes
+      dynamicState.themeCatalog = dynamicState.themeCatalog.map((theme) => theme.id === item.id ? { ...theme, active: false, installation_status: "installed" } : theme)
+      showToast("Темата е деактивирана.", "success")
+    }).fail((xhr: JQuery.jqXHR) => { const message = xhr.responseJSON?.error?.message ?? "Темата не можа да бъде деактивирана."; dynamicState.error = message; showToast(message, "error") }).always(() => { dynamicState.themeBusy = "" })
+  }
+  dynamicState.deleteTheme = (item) => {
+    if (dynamicState.themeBusy || item.active) return
+    if (!window.confirm(`Сигурни ли сте, че искате да изтриете тема „${item.name || item.id}“? Файловете ѝ ще бъдат премахнати от инсталацията.`)) return
+    dynamicState.themeBusy = item.id
+    $.ajax({ url: "/api/themes/action", method: "POST", contentType: "application/json", dataType: "json", headers: { "X-CSRF-Token": initial.csrfToken }, data: JSON.stringify({ action: "delete", id: item.id }) }).done((response: { themes?: ThemeRecord[] }) => {
+      dynamicState.themes = response.themes ?? dynamicState.themes.filter((theme) => theme.id !== item.id)
+      dynamicState.themeCatalog = dynamicState.themeCatalog.map((theme) => theme.id === item.id ? { ...theme, installed: false, active: false, installed_version: null, installation_status: "not_installed" } : theme)
+      showToast("Темата е изтрита от инсталацията.", "success")
+    }).fail((xhr: JQuery.jqXHR) => { const message = xhr.responseJSON?.error?.message ?? "Темата не можа да бъде изтрита."; dynamicState.error = message; showToast(message, "error") }).always(() => { dynamicState.themeBusy = "" })
+  }
   state.form = initialPageData ? { title: initialPageData.title, slug: initialPageData.slug, content: initialPageData.content, blocks: initialPageData.blocks ?? [], parentId: initialPageData.parent_id ?? "", status: initialPageData.status } : state.form
   state.pageSettings = initialPageData?.settings ? { ...state.pageSettings, ...initialPageData.settings } : state.pageSettings
   state.pluginDetail = initial.pluginDetail ?? null
@@ -564,6 +626,7 @@ function createAdminState(initial: Bootstrap) {
   state.pluginPermissionDraft = initial.pluginDetail?.approved_permissions ?? []
   state.pageTitle = ({ dashboard: "Табло", updates: "Обновявания", users: "Потребители", "users-create": "Създаване на потребител", "users-edit": "Редактиране на потребител", pages: "Страници", "pages-create": "Създаване на страница", "pages-edit": "Редактиране на страница", "pages-settings": "Настройки на страница", profile: "Профил", plugins: "Разширения", "plugin-catalog": "Каталог с разширения", "plugin-detail": "Детайли на разширение", "plugin-catalog-detail": "Детайли на разширение" } as Record<string, string>)[initial.page]
   state.pageTitle = initial.page === "themes" ? "Теми" : state.pageTitle
+  state.pageTitle = initial.page === "theme-catalog" ? "Каталог с теми" : state.pageTitle
   return state
 }
 
@@ -577,6 +640,12 @@ if (root && initial) {
   Alpine.data("adminApp", () => adminState)
   root.innerHTML = adminMarkup()
   window.addEventListener("popstate", () => { adminState.navigate(window.location.href, false) })
+  window.addEventListener("flexcms-theme-deactivate", (event) => {
+    const id = (event as CustomEvent<{ id?: string }>).detail?.id
+    const themeState = adminState as typeof adminState & { themes: ThemeRecord[]; deactivateTheme: (item: ThemeRecord) => void }
+    const theme = themeState.themes.find((item) => item.id === id)
+    if (theme) themeState.deactivateTheme(theme)
+  })
   if (initial.notice) showToast(initial.notice, "success")
   if (initial.error) showToast(initial.error, "error")
 }

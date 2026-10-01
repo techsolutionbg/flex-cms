@@ -143,6 +143,30 @@ final class ThemeManager
         return $this->activate($previous);
     }
 
+    /** @return array{id: string, name: string, version: string, author: string, description: string, path: string, active: bool, valid: bool, error: string|null} */
+    public function deactivate(string $id): array
+    {
+        $theme = array_values(array_filter($this->all(), static fn(array $item): bool => $item['id'] === $id))[0] ?? null;
+        if (!is_array($theme) || !$theme['valid']) throw new \RuntimeException('Темата не е валидна и не може да бъде деактивирана.');
+        if ($this->activeTheme() !== $id) throw new \RuntimeException('Темата не е активна.');
+        $this->saveSetting('site.previous_theme', $id);
+        $this->saveSetting('site.active_theme', 'no-theme');
+        return [...$theme, 'active' => false];
+    }
+
+    /** @return array{id: string, name: string, version: string, author: string, description: string, path: string, active: bool, valid: bool, error: string|null} */
+    public function delete(string $id): array
+    {
+        $theme = array_values(array_filter($this->all(), static fn(array $item): bool => $item['id'] === $id))[0] ?? null;
+        if (!is_array($theme)) throw new \RuntimeException('Темата не е намерена.');
+        if ($theme['active'] || $this->activeTheme() === $id) throw new \RuntimeException('Активната тема не може да бъде изтрита.');
+        $root = realpath($this->paths->themes());
+        $path = realpath((string) $theme['path']);
+        if ($root === false || $path === false || dirname($path) !== rtrim($root, DIRECTORY_SEPARATOR)) throw new \RuntimeException('Пътят на темата е невалиден.');
+        $this->deleteDirectory($path);
+        return $theme;
+    }
+
     private function saveSetting(string $key, string $value): void
     {
         $setting = Setting::query()->find($key);
@@ -151,5 +175,11 @@ final class ThemeManager
         }
         $setting->fill(['value' => $value, 'type' => 'string', 'group' => 'system', 'autoload' => true]);
         $setting->saveOrFail();
+    }
+
+    private function deleteDirectory(string $path): void
+    {
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $item) $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+        if (!@rmdir($path)) throw new \RuntimeException('Файловете на темата не могат да бъдат изтрити.');
     }
 }

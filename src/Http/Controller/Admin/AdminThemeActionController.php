@@ -34,11 +34,17 @@ final readonly class AdminThemeActionController
         $input = $this->input->all($request);
         $action = $input['action'] ?? null;
         try {
-            $theme = $action === 'update_remote' && is_string($input['id'] ?? null)
-                ? $this->remoteInstaller->update($input['id'])
-                : ($action === 'activate' && is_string($input['id'] ?? null)
-                ? $this->themes->activate($input['id'])
-                : ($action === 'rollback' ? $this->themes->rollback() : throw new \InvalidArgumentException('Изберете валидно действие за тема.')));
+        $theme = $action === 'install_remote' && is_string($input['id'] ?? null)
+            ? $this->remoteInstaller->install($input['id'])
+            : ($action === 'update_remote' && is_string($input['id'] ?? null)
+            ? $this->remoteInstaller->update($input['id'])
+            : ($action === 'activate' && is_string($input['id'] ?? null)
+            ? $this->themes->activate($input['id'])
+            : ($action === 'deactivate' && is_string($input['id'] ?? null)
+            ? $this->themes->deactivate($input['id'])
+            : ($action === 'delete' && is_string($input['id'] ?? null)
+            ? $this->themes->delete($input['id'])
+            : ($action === 'rollback' ? $this->themes->rollback() : throw new \InvalidArgumentException('Изберете валидно действие за тема.'))))));
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'theme_action_failed', $exception->getMessage()), 422);
         }

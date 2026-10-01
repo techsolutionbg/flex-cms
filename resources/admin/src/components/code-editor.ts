@@ -35,7 +35,17 @@ function highlightJsonLine(line: string): string {
   return output + escapeHtml(line.slice(cursor))
 }
 
-function renderJson(value: unknown): string {
+export function formatJson(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "{}"
+
+  if (typeof value === "string") {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2) ?? "{}"
+    } catch {
+      return value
+    }
+  }
+
   let source: string
   try {
     source = JSON.stringify(value ?? {}, null, 2) ?? "{}"
@@ -43,10 +53,16 @@ function renderJson(value: unknown): string {
     source = "{}"
   }
 
+  return source
+}
+
+export function renderJson(value: unknown): string {
+  const source = formatJson(value)
+
   return source.split("\n").map((line, index) => `<span class="code-editor-line"><span class="code-editor-line-number" aria-hidden="true">${index + 1}</span><span class="code-editor-line-content">${highlightJsonLine(line) || " "}</span></span>`).join("")
 }
 
-async function copyText(value: string): Promise<void> {
+export async function copyText(value: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(value)
@@ -78,7 +94,7 @@ export function registerCodeEditor(Alpine: typeof import("alpinejs").default): v
     source: "{}",
     rendered: renderJson({}),
     setValue(this: JsonCodeViewerState, value: unknown) {
-      const source = JSON.stringify(value ?? {}, null, 2) ?? "{}"
+      const source = formatJson(value)
       if (source === this.source) return
       this.source = source
       this.rendered = renderJson(value)

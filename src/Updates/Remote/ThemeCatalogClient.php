@@ -12,20 +12,24 @@ use Flex\Updates\Exception\RemoteCatalogException;
 final class ThemeCatalogClient
 {
     private const CACHE_TTL = 300;
+    private ?RemoteThemeIndex $indexCache = null;
+    /** @var array<string, RemoteThemeCatalog> */
+    private array $manifestCache = [];
 
     public function __construct(private readonly ConfigRepositoryInterface $configuration, private readonly RemoteCatalogTransportInterface $transport, private readonly string $basePath) {}
 
     public function index(): RemoteThemeIndex
     {
-        return RemoteThemeIndex::fromArray($this->json($this->get('/themes/index.json'), 'theme catalog'));
+        return $this->indexCache ??= RemoteThemeIndex::fromArray($this->json($this->get('/themes/index.json'), 'theme catalog'));
     }
 
     public function manifest(string $id): RemoteThemeCatalog
     {
+        if (isset($this->manifestCache[$id])) return $this->manifestCache[$id];
         $url = $this->index()->manifests[$id] ?? null;
         if ($url === null) throw new RemoteCatalogException(sprintf('Theme "%s" is not listed in the update catalog.', $id));
 
-        return RemoteThemeCatalog::fromArray($this->json($this->getAbsolute($url), 'theme catalog'));
+        return $this->manifestCache[$id] = RemoteThemeCatalog::fromArray($this->json($this->getAbsolute($url), 'theme catalog'));
     }
 
     private function get(string $path): RemoteCatalogTransportResponse

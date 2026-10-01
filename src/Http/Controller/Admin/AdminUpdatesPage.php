@@ -12,6 +12,7 @@ use Flex\Settings\SettingRepository;
 use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Remote\RemoteCatalogClient;
 use Flex\Updates\Remote\RemotePlatformUpdater;
+use Flex\Updates\UpdateErrorMessage;
 use Flex\Updates\Jobs\UpdateJobStore;
 use Flex\Extensions\AdminExtensionRegistry;
 
@@ -44,7 +45,7 @@ final readonly class AdminUpdatesPage
                 $remote['available'] = ['version' => $release->version->value, 'release_notes' => $release->releaseNotes, 'size' => $release->size, 'published_at' => $release->publishedAt, 'channel' => $release->channel->value];
             }
         } catch (\Throwable $exception) {
-            $remote['error'] = $exception->getMessage();
+            $remote['error'] = UpdateErrorMessage::forAdmin($exception);
         }
         $bootstrap = ['page' => 'updates', 'csrfToken' => $csrfToken, 'sidebarWidth' => $user instanceof AuthenticatedUser ? $this->settings->sidebarWidthForUser($user->id) : 248, 'sidebarCollapsed' => $user instanceof AuthenticatedUser ? $this->settings->sidebarCollapsedForUser($user->id) : false, 'collapsedSections' => $user instanceof AuthenticatedUser ? $this->settings->collapsedSectionsForUser($user->id) : [], 'version' => $currentVersion, 'history' => array_reverse($history), 'notice' => $notice, 'error' => $error, 'inspection' => $inspection, 'remoteUpdate' => $remote, 'updateJobs' => array_map(static fn($job): array => $job->toArray(), array_reverse($this->jobs->all())), 'adminExtensions' => $this->adminExtensions->bootstrap()];
 

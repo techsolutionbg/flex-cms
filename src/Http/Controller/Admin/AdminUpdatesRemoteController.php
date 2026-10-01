@@ -8,6 +8,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Session\CsrfTokenManager;
 use Flex\Updates\Platform\PlatformHistory;
 use Flex\Updates\Remote\RemotePlatformUpdater;
+use Flex\Updates\UpdateErrorMessage;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -33,7 +34,7 @@ final readonly class AdminUpdatesRemoteController
                 sprintf('Обновяването от %s до %s завърши успешно.', $result->installation->from->value, $result->installation->to->value),
             ));
         } catch (\Throwable $exception) {
-            return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, $exception->getMessage()), 422);
+            return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, UpdateErrorMessage::forAdmin($exception)), 422);
         }
     }
 }

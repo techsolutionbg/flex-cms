@@ -1229,6 +1229,14 @@ button:focus-visible {
   text-align: right !important;
 }
 
+td:has(> .table-action-dropdown) {
+  text-align: right !important;
+}
+
+td:has(> .table-action-dropdown) .table-action-dropdown {
+  margin-left: auto;
+}
+
 .table-cell-secondary {
   display: block;
   max-width: 20rem;
@@ -2310,6 +2318,101 @@ button:focus-visible {
 
 .admin-shell .form-control {
   box-sizing: border-box;
+}
+
+.theme-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.theme-catalog-card {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.theme-catalog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.theme-card-preview {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, color-mix(in oklch, var(--primary) 78%, #111 22%), color-mix(in oklch, var(--accent) 62%, #111 38%));
+  color: #fff;
+}
+
+.theme-card-preview span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.theme-card-preview strong {
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+.theme-card-body {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.25rem;
+}
+
+.theme-card-heading,
+.theme-card-meta,
+.theme-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.theme-card-heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.theme-card-description {
+  min-height: 3.2rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.theme-card-author {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.theme-card-meta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.theme-card-footer {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
 }
 
 @media (width <= 45rem) {
