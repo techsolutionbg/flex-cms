@@ -45,14 +45,15 @@ final readonly class AdminThemePreviewController
             return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', ['title' => 'Няма публикувана начална страница']), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
-        $navigation = array_map(static fn(Page $item): array => [
+        $navigation = array_map(fn(Page $item): array => [
             'title' => (string) $item->getAttribute('title'),
-            'slug' => (string) $item->getAttribute('slug'),
+            'slug' => $this->pages->publicPath($item),
         ], $this->pages->publishedNavigation());
         $headTags = $this->extensionApi->applyFilters('public.head', '', ['page' => $page->toPublicArray(), 'request' => $request]);
 
         return $this->responses->html($this->themes->renderForTheme($theme, 'page.twig', [
             'page' => $page,
+            'page_public_path' => $this->pages->publicPath($page),
             'page_settings' => $settings,
             'head_tags' => is_string($headTags) ? $headTags : '',
             'navigation' => $navigation,

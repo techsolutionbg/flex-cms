@@ -59,6 +59,57 @@ final class PageRepository
         return $page instanceof Page ? $page : null;
     }
 
+    public function findPublishedByPath(string $path): ?Page
+    {
+        $normalizedPath = trim(rawurldecode($path), '/');
+        if ($normalizedPath === '') {
+            return null;
+        }
+
+        /** @var Collection<int, Page> $pages */
+        $pages = Page::query()->whereNull('deleted_at')->get();
+        $publishedPages = $pages->filter(static fn (Page $page): bool => $page->getAttribute('status') === 'published');
+
+        foreach ($publishedPages as $page) {
+            if ($this->publicPathFor($page, $pages) === $normalizedPath) {
+                return $page;
+            }
+        }
+
+        return null;
+    }
+
+    public function publicPath(Page $page): string
+    {
+        /** @var Collection<int, Page> $pages */
+        $pages = Page::query()->whereNull('deleted_at')->get();
+
+        return $this->publicPathFor($page, $pages);
+    }
+
+    /** @param Collection<int, Page> $pages @param array<int, bool> $trail */
+    private function publicPathFor(Page $page, Collection $pages, array $trail = [], bool $forceParentPath = false): string
+    {
+        $slug = trim((string) $page->getAttribute('slug'), '/');
+        $settings = $page->getAttribute('settings');
+        $useParentSlugs = $forceParentPath || (is_array($settings) && filter_var($settings['use_parent_slugs'] ?? false, FILTER_VALIDATE_BOOL));
+        $parentId = $page->getAttribute('parent_id');
+
+        if (!$useParentSlugs || $parentId === null || isset($trail[(int) $page->getKey()])) {
+            return $slug;
+        }
+
+        $pageId = (int) $page->getKey();
+        $parent = $pages->first(static fn (Page $candidate): bool => (int) $candidate->getKey() === (int) $parentId);
+        if (!$parent instanceof Page) {
+            return $slug;
+        }
+
+        $parentPath = $this->publicPathFor($parent, $pages, $trail + [$pageId => true], true);
+
+        return $parentPath === '' ? $slug : $parentPath . '/' . $slug;
+    }
+
     /** @return list<Page> */
     public function publishedNavigation(): array
     {

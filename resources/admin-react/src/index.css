@@ -19,29 +19,36 @@
 body { margin: 0; min-width: 320px; }
 .auth-loading-screen { display: grid; min-height: 100vh; place-items: center; background: var(--content-bg); }
 
-.admin-shell-react { min-height: 100vh; background: var(--content-bg); }
+.admin-shell-react { --sidebar-width: 15.5rem; min-height: 100vh; background: var(--content-bg); }
 .admin-sidebar-react {
   position: fixed;
   inset: 0 auto 0 0;
   z-index: 20;
   display: flex;
-  width: 15.5rem;
+  width: var(--sidebar-width);
   min-height: 100vh;
   flex-direction: column;
   overflow-y: auto;
   background: var(--sidebar-bg);
   color: white;
   box-shadow: 4px 0 18px rgb(23 33 24 / 8%);
+  transition: width 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .sidebar-brand-react {
+  position: relative;
   display: flex;
   min-height: 6.25rem;
   align-items: center;
   padding: 1rem 1.1rem;
   background: white;
   border-bottom: 1px solid var(--border);
+  transition: padding 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.sidebar-brand-react img { display: block; width: 10.75rem; max-width: 100%; height: auto; }
+.sidebar-brand-react img { display: block; width: 10.75rem; max-width: 100%; height: auto; opacity: 1; transition: width 180ms ease, opacity 120ms ease; }
+.sidebar-brand-react::after { position: absolute; left: 50%; color: #ff5a3d; content: "F"; font-size: 1.6rem; font-weight: 800; opacity: 0; transform: translateX(-50%); transition: opacity 120ms ease 80ms; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-brand-react { justify-content: center; padding-right: 0.5rem; padding-left: 0.5rem; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-brand-react img { width: 0; opacity: 0; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-brand-react::after { opacity: 1; }
 .admin-sidebar-react nav { padding: 1.1rem 0; }
 .sidebar-group-react { margin: 0; }
 .sidebar-group-label-react {
@@ -53,7 +60,13 @@ body { margin: 0; min-width: 320px; }
   letter-spacing: 0.08em;
   line-height: 1.2;
   text-transform: uppercase;
+  max-height: 2rem;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 150ms ease, margin 180ms ease, padding 180ms ease, opacity 100ms ease;
 }
+.admin-shell-react.is-sidebar-collapsed { --sidebar-width: 4.5rem; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-group-label-react { max-height: 0; margin-top: 0; margin-bottom: 0; padding: 0; opacity: 0; }
 .sidebar-group-react:first-child .sidebar-group-label-react { margin-top: 0; }
 .sidebar-group-react ul { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
 .sidebar-link-react {
@@ -68,22 +81,120 @@ body { margin: 0; min-width: 320px; }
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, gap 180ms cubic-bezier(0.2, 0.8, 0.2, 1), padding 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .sidebar-link-react:hover, .sidebar-link-react:focus-visible { background: var(--sidebar-link-hover); color: white; outline: none; }
 .sidebar-link-react.is-active { background: var(--sidebar-active); color: var(--sidebar-active-text); }
 .sidebar-link-react.is-active:hover, .sidebar-link-react.is-active:focus-visible { background: var(--sidebar-active); color: var(--sidebar-active-text); }
+.admin-shell-react.is-sidebar-collapsed .sidebar-link-react { justify-content: center; padding-right: 0.5rem; padding-left: 0.5rem; }
+.sidebar-label-react { display: inline-block; max-width: 9rem; overflow: hidden; opacity: 1; white-space: nowrap; transition: max-width 150ms ease, opacity 100ms ease; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-label-react { max-width: 0; opacity: 0; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-active-dot { position: absolute; top: 0.7rem; right: 0.45rem; margin-left: 0; }
 .sidebar-icon-react { width: 1.55rem; height: 1.55rem; flex: 0 0 1.55rem; stroke-width: 1.8; }
 .sidebar-active-dot { width: 0.4rem; height: 0.4rem; margin-left: auto; border-radius: 999px; background: var(--sidebar-accent); box-shadow: 0 0 0 0.25rem rgb(255 128 98 / 25%); }
 .sidebar-logout-react { display: none; }
-.admin-main-react { min-height: 100vh; margin-left: 15.5rem; }
-.admin-topbar-react { display: flex; min-height: 4.125rem; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0 1.5rem; background: white; border-bottom: 1px solid var(--border); }
-.admin-topbar-title-react { position: absolute; left: calc(50% + 7.75rem); transform: translateX(-50%); font-size: 1rem; font-weight: 700; }
-.admin-logout-react { border: 0; background: transparent; color: #687268; cursor: pointer; font: inherit; text-decoration: underline; }
+.admin-main-react { min-height: 100vh; margin-left: var(--sidebar-width); transition: margin-left 180ms ease; }
+.admin-topbar-react { position: relative; display: flex; min-height: 4.125rem; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0 1.5rem; background: white; border-bottom: 1px solid var(--border); }
+.admin-topbar-title-react { position: absolute; left: 50%; transform: translateX(-50%); font-size: 1rem; font-weight: 700; }
+.react-sidebar-collapse-toggle { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; margin-right: auto; border: 1px solid #536254; border-radius: 0.625rem; background: #203224; color: white; cursor: pointer; }
+.react-sidebar-collapse-toggle:hover, .react-sidebar-collapse-toggle:focus-visible { background: #2d4231; outline: 2px solid rgb(255 128 98 / 45%); outline-offset: 2px; }
+.admin-logout-react { display: inline-flex; align-items: center; border: 0; background: transparent; color: #687268; cursor: pointer; font: inherit; text-decoration: underline; }
 .admin-logout-react:disabled { cursor: wait; opacity: 0.65; }
 .admin-content-react { padding: 1.5rem; }
 .admin-content-react h1 { margin: 0; font-size: 1.75rem; }
 .admin-lead-react { color: #687268; }
+.react-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.75rem; }
+.react-page-heading h1 { margin: 0; }
+.react-page-heading p { margin: 0.55rem 0 0; color: #687268; }
+.react-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.8rem; color: #687268; font-size: 0.9rem; }
+.react-breadcrumbs a { color: inherit; text-decoration: none; }
+.react-breadcrumbs a:hover { color: #172118; text-decoration: underline; }
+.react-breadcrumb-item { display: inline-flex; align-items: center; gap: 0.5rem; }
+.react-breadcrumb-separator { color: #a0aaa1; }
+.react-breadcrumbs strong { color: #172118; font-weight: 700; }
+.react-page-heading button, .react-table-action { border: 1px solid #d4d9d0; border-radius: 0.5rem; background: white; color: #172118; cursor: pointer; font: inherit; font-weight: 650; padding: 0.7rem 0.9rem; }
+.react-page-heading button:hover, .react-table-action:hover { background: #f2f2ec; }
+.react-table-card { overflow: visible; border: 1px solid #d4d9d0; border-radius: 0.7rem; background: white; }
+.react-table-toolbar { display: flex; align-items: flex-end; gap: 1rem; padding: 1rem 1.1rem; border-bottom: 1px solid #e3e6df; }
+.react-bulk-toolbar { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.1rem; border-bottom: 1px solid #e3e6df; background: #fafbf8; color: #687268; font-size: 0.85rem; }
+.react-bulk-toolbar strong { color: #172118; margin-right: 0.35rem; }
+.react-bulk-toolbar button { padding: 0.5rem 0.7rem; border: 1px solid #d4d9d0; border-radius: 0.4rem; background: white; color: #172118; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 650; }
+.react-bulk-toolbar button:hover:not(:disabled) { background: #f0f1eb; }
+.react-bulk-toolbar button:disabled { cursor: not-allowed; opacity: 0.5; }
+.react-loading-button { display: inline-flex; align-items: center; justify-content: center; }
+.react-button-spinner { display: inline-block; width: 0.95rem; height: 0.95rem; flex: 0 0 auto; margin-right: 0.35rem; animation: react-button-spin 700ms linear infinite; vertical-align: middle; }
+@keyframes react-button-spin { to { transform: rotate(360deg); } }
+.react-filter-field { display: grid; gap: 0.35rem; color: #687268; font-size: 0.8rem; font-weight: 650; }
+.react-filter-field input { min-width: 12rem; padding: 0.65rem 0.75rem; border: 1px solid #d4d9d0; border-radius: 0.45rem; background: white; color: #172118; font: inherit; }
+.react-filter-count { margin-left: auto; padding-bottom: 0.65rem; color: #687268; font-size: 0.85rem; }
+.react-filter-clear { align-self: end; min-height: 2.5rem; padding: 0.65rem 0.8rem; border: 1px solid #d4d9d0; border-radius: 0.45rem; background: white; color: #687268; cursor: pointer; font: inherit; font-size: 0.85rem; }
+.react-filter-clear:hover:not(:disabled) { background: #f2f2ec; color: #172118; }
+.react-filter-clear:disabled { cursor: not-allowed; opacity: 0.5; }
+.react-form-error { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 1.25rem; padding: 0.9rem 1rem; border: 1px solid #ffb4a8; border-radius: 0.55rem; background: #fff0ed; color: #b93624; font-weight: 650; }
+.react-form-error svg { width: 1.15rem; flex: 0 0 auto; }
+.react-page-form { display: grid; width: 100%; max-width: none; gap: 1.15rem; padding: 1.5rem; border: 1px solid #d4d9d0; border-radius: 0.7rem; background: white; }
+.react-page-form label { display: grid; gap: 0.45rem; color: #172118; font-weight: 650; }
+.react-page-form input, .react-page-form textarea { width: 100%; padding: 0.75rem 0.85rem; border: 1px solid #cbd2c8; border-radius: 0.45rem; background: white; color: #172118; font: inherit; }
+.react-page-form textarea { min-height: 15rem; resize: vertical; line-height: 1.55; }
+.react-checkbox-grid { display: grid; gap: 0.75rem; }
+.react-checkbox-grid label { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; }
+.react-checkbox-grid input { width: 1.1rem; height: 1.1rem; accent-color: #1f3023; }
+.react-page-form input:focus, .react-page-form textarea:focus { border-color: #ff8062; outline: 3px solid rgb(255 128 98 / 20%); }
+.react-form-dropdown { width: 100%; justify-content: space-between; padding: 0.75rem 0.85rem; }
+.react-form-actions { display: flex; gap: 0.75rem; padding-top: 0.35rem; }
+.react-form-actions button { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; border: 1px solid #d4d9d0; border-radius: 0.45rem; background: white; color: #172118; cursor: pointer; font: inherit; font-weight: 650; }
+.react-form-actions .react-primary-button { border-color: #1f3023; background: #1f3023; color: white; }
+.react-form-actions button:disabled { cursor: wait; opacity: 0.65; }
+.rich-text-editor-react { overflow: visible; border: 1px solid #cbd2c8; border-radius: 0.45rem; background: white; }
+.rich-text-editor-react .ql-toolbar.ql-snow { position: sticky; top: 0; z-index: 5; border: 0; border-bottom: 1px solid #d4d9d0; background: #f0f1eb; }
+.rich-text-editor-react .ql-container.ql-snow { min-height: 16rem; border: 0; font: inherit; }
+.rich-text-editor-react .ql-editor { min-height: 16rem; padding: 0.85rem 1rem; color: #172118; font-size: 1rem; line-height: 1.7; }
+.rich-text-editor-react .ql-editor.ql-blank::before { color: #687268; font-style: normal; }
+.rich-text-editor-react .ql-toolbar button:hover, .rich-text-editor-react .ql-toolbar button.ql-active, .rich-text-editor-react .ql-toolbar .ql-picker-label:hover { border-radius: 0.25rem; background: #dfe5db; }
+.rich-text-editor-react .ql-snow .ql-stroke { stroke: #172118; }
+.rich-text-editor-react .ql-snow .ql-fill { fill: #172118; }
+.react-table-scroll { overflow-x: auto; }
+.react-data-table { width: 100%; border-collapse: collapse; min-width: 680px; }
+.react-data-table th, .react-data-table td { padding: 1rem 1.1rem; border-bottom: 1px solid #e3e6df; text-align: left; white-space: nowrap; }
+.react-selection-column { width: 1%; padding-right: 0 !important; text-align: center !important; }
+.react-selection-column input { width: 1.05rem; height: 1.05rem; accent-color: #1f3023; cursor: pointer; }
+.react-data-table th { background: #f0f1eb; font-size: 0.86rem; }
+.react-sort-button { display: inline-flex; align-items: center; gap: 0.35rem; border: 0; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
+.react-sort-button.is-sortable { cursor: pointer; }
+.react-sort-button.is-sortable:hover { color: #ff8062; }
+.react-sort-button svg { width: 0.95rem; height: 0.95rem; color: #687268; }
+.react-data-table td small { display: block; margin-top: 0.25rem; color: #687268; }
+.react-data-table tbody tr:last-child td { border-bottom: 0; }
+.react-data-table tbody tr:hover td { background: #f7f8f3; }
+.react-table-empty { padding: 2.5rem !important; color: #687268; text-align: center !important; }
+.react-page-link { color: #172118; font-weight: 700; text-decoration: none; }
+.react-page-link:hover { color: #ff8062; text-decoration: underline; }
+.react-pagination { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 1.1rem; color: #687268; font-size: 0.85rem; }
+.react-pagination > div { display: flex; align-items: center; gap: 0.4rem; }
+.react-pagination button, .react-pagination strong { display: grid; min-width: 2.25rem; height: 2.25rem; place-items: center; border: 1px solid #d4d9d0; border-radius: 0.45rem; background: white; color: #172118; font: inherit; }
+.react-pagination button { cursor: pointer; font-size: 1.25rem; line-height: 1; }
+.react-pagination button:hover:not(:disabled) { background: #f2f2ec; }
+.react-pagination button:disabled { cursor: not-allowed; opacity: 0.4; }
+.react-pagination strong { border-color: #1f3023; background: #1f3023; color: white; font-weight: 700; }
+.react-actions-column { width: 1%; text-align: right !important; }
+.universal-dropdown { position: relative; display: inline-flex; }
+.universal-dropdown-trigger { display: inline-flex; min-height: 2.5rem; align-items: center; justify-content: space-between; gap: 0.5rem; border: 1px solid #d4d9d0; border-radius: 0.5rem; background: white; color: #172118; cursor: pointer; font: inherit; }
+.universal-dropdown-trigger:hover, .universal-dropdown-trigger[aria-expanded="true"] { background: #f2f2ec; }
+.table-actions-trigger-react { width: 2.5rem; height: 2.5rem; justify-content: center; padding: 0; }
+.table-actions-trigger-react:hover, .table-actions-trigger-react[aria-expanded="true"] { background: #f2f2ec; }
+.table-actions-trigger-react svg { width: 1.2rem; }
+.react-filter-trigger { width: 12rem; padding: 0.65rem 0.75rem; }
+.universal-dropdown-chevron { width: 1rem; height: 1rem; transition: transform 120ms ease; }
+.universal-dropdown-trigger[aria-expanded="true"] .universal-dropdown-chevron { transform: rotate(180deg); }
+.universal-dropdown-menu { position: fixed; z-index: 100; overflow: hidden; border: 1px solid #d4d9d0; border-radius: 0.55rem; background: white; box-shadow: 0 10px 28px rgb(23 33 24 / 16%); }
+.universal-dropdown-option, .universal-dropdown-menu > button { display: block; width: 100%; padding: 0.75rem 0.9rem; border: 0; border-bottom: 1px solid #e3e6df; background: white; color: #172118; cursor: pointer; font: inherit; text-align: left; }
+.universal-dropdown-menu > button { display: flex; align-items: center; gap: 0.35rem; }
+.universal-dropdown-option:last-child, .universal-dropdown-menu > button:last-child { border-bottom: 0; }
+.universal-dropdown-option:hover, .universal-dropdown-option.is-selected, .universal-dropdown-menu > button:hover { background: #f2f2ec; }
+.universal-dropdown-option.is-danger { color: #b93624; }
+.react-status-badge { display: inline-flex; border-radius: 999px; padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 700; }
+.status-published { background: #e5f4e9; color: #246b39; }
+.status-draft { background: #f0f1eb; color: #687268; }
 .dashboard-grid-react { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
 .collapsible-section { align-self: start; overflow: hidden; border: 1px solid #d4d9d0; border-radius: 0.7rem; background: white; box-shadow: 0 3px 10px rgb(23 33 24 / 4%); }
 .collapsible-section-header { display: flex; width: 100%; min-height: 4.25rem; align-items: center; gap: 0.65rem; padding: 1rem 1.25rem; border: 0; border-bottom: 1px solid #d4d9d0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 1.1rem; font-weight: 500; text-align: left; }
@@ -108,12 +219,26 @@ body { margin: 0; min-width: 320px; }
 .sidebar-mobile-toggle, .sidebar-backdrop { display: none; }
 
 @media (max-width: 48rem) {
-  .admin-sidebar-react { transform: translateX(-101%); transition: transform 180ms ease; }
+  .admin-shell-react.is-sidebar-collapsed { --sidebar-width: 15.5rem; }
+  .admin-sidebar-react { width: 15.5rem; transform: translateX(-101%); transition: transform 180ms ease; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-brand-react { justify-content: flex-start; padding: 1rem 1.1rem; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-brand-react img { display: block; width: 10.75rem; opacity: 1; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-brand-react::after { display: none; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-group-label-react { visibility: visible; height: auto; max-height: 2rem; margin: 0.9rem 0 0.2rem; padding: 0 1.25rem; opacity: 1; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-label-react { display: inline; max-width: 9rem; opacity: 1; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-link-react { justify-content: flex-start; padding: 0.75rem 1.25rem; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-active-dot { position: static; margin-left: auto; }
   .admin-sidebar-react.is-open { transform: translateX(0); box-shadow: 14px 0 40px rgb(23 33 24 / 20%); }
   .admin-main-react { margin-left: 0; }
+  .react-sidebar-collapse-toggle { display: none; }
   .admin-topbar-title-react { position: static; margin: 0 auto; transform: none; }
   .sidebar-mobile-toggle { position: fixed; top: 0.95rem; left: 1rem; z-index: 30; display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border: 1px solid #536254; border-radius: 0.625rem; background: #203224; color: white; cursor: pointer; }
   .sidebar-backdrop { position: fixed; inset: 0; z-index: 10; display: block; border: 0; background: rgb(16 24 17 / 54%); }
   .admin-content-react { padding: 1.25rem 1rem; }
+  .react-page-heading { flex-direction: column; }
+  .react-table-toolbar { align-items: stretch; flex-direction: column; }
+  .react-filter-field input, .react-filter-trigger { width: 100%; }
+  .react-filter-count { margin-left: 0; padding-bottom: 0; }
+  .react-filter-clear { align-self: stretch; }
   .dashboard-grid-react { grid-template-columns: 1fr; margin-top: 1.5rem; }
 }

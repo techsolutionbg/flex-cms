@@ -21,7 +21,7 @@ final readonly class PublicPageController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         $slug = trim((string) ($arguments['slug'] ?? ''), '/');
-        $page = $slug === '' ? $this->homePage() : $this->pages->findPublishedBySlug($slug);
+        $page = $slug === '' ? $this->homePage() : $this->pages->findPublishedByPath($slug);
         if (!$page instanceof Page) {
             if (str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json')) {
                 return $this->responses->json(['error' => ['status' => 404, 'message' => 'Страницата не е намерена.']], 404);
@@ -30,9 +30,9 @@ final readonly class PublicPageController
             return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена']), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
-        $navigation = array_map(static fn(Page $item): array => [
+        $navigation = array_map(fn(Page $item): array => [
             'title' => (string) $item->getAttribute('title'),
-            'slug' => (string) $item->getAttribute('slug'),
+            'slug' => $this->pages->publicPath($item),
         ], $this->pages->publishedNavigation());
         $headTags = $this->extensionApi->applyFilters('public.head', '', [
             'page' => $page->toPublicArray(),
@@ -40,7 +40,7 @@ final readonly class PublicPageController
         ]);
         $headTags = is_string($headTags) ? $headTags : '';
 
-        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation]));
+        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $this->pages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation]));
     }
 
     private function homePage(): ?Page

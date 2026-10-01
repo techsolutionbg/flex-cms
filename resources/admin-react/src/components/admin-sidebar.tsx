@@ -1,6 +1,7 @@
 import {
   FileText,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   Menu,
   Puzzle,
@@ -47,8 +48,18 @@ const groups: SidebarGroup[] = [
   },
 ]
 
-export function AdminSidebar({ onLogout, loggingOut = false }: { onLogout: () => void; loggingOut?: boolean }) {
+export function AdminSidebar({ onLogout, onNavigate, activeItem = "Табло", loggingOut = false, collapsed = false }: { onLogout: () => void; onNavigate: (label: string) => void; activeItem?: string; loggingOut?: boolean; collapsed?: boolean }) {
   const [open, setOpen] = useState(false)
+
+  function navigateFromSidebar(label: string) {
+    if (!open) {
+      onNavigate(label)
+      return
+    }
+
+    setOpen(false)
+    window.setTimeout(() => onNavigate(label), 180)
+  }
 
   return (
     <>
@@ -64,7 +75,7 @@ export function AdminSidebar({ onLogout, loggingOut = false }: { onLogout: () =>
 
       {open && <button className="sidebar-backdrop" type="button" aria-label="Затвори страничната лента" onClick={() => setOpen(false)} />}
 
-      <aside className={`admin-sidebar-react${open ? " is-open" : ""}`}>
+      <aside className={`admin-sidebar-react${open ? " is-open" : ""}${collapsed ? " is-collapsed" : ""}`}>
         <div className="sidebar-brand-react">
           <img src="/assets/brand/logo.png" alt="Flex CMS" />
         </div>
@@ -74,12 +85,12 @@ export function AdminSidebar({ onLogout, loggingOut = false }: { onLogout: () =>
             <div className="sidebar-group-react" key={group.label}>
               <p className="sidebar-group-label-react">{group.label}</p>
               <ul>
-                {group.items.map(({ label, icon: Icon, active }) => (
+      {group.items.map(({ label, icon: Icon }) => (
                   <li key={label}>
-                    <a className={`sidebar-link-react${active ? " is-active" : ""}`} href="#" onClick={(event) => event.preventDefault()}>
+                    <a className={`sidebar-link-react${activeItem === label ? " is-active" : ""}`} href={`#${label.toLowerCase()}`} title={collapsed ? label : undefined} onClick={(event) => { event.preventDefault(); navigateFromSidebar(label); }}>
                       <Icon className="sidebar-icon-react" aria-hidden="true" />
-                      <span>{label}</span>
-                      {active && <span className="sidebar-active-dot" aria-hidden="true" />}
+                      <span className="sidebar-label-react">{label}</span>
+                      {activeItem === label && <span className="sidebar-active-dot" aria-hidden="true" />}
                     </a>
                   </li>
                 ))}
@@ -90,7 +101,7 @@ export function AdminSidebar({ onLogout, loggingOut = false }: { onLogout: () =>
 
         <button className="sidebar-logout-react" type="button" onClick={onLogout} disabled={loggingOut}>
           <LogOut className="sidebar-icon-react" aria-hidden="true" />
-          <span>{loggingOut ? "Излизане…" : "Изход"}</span>
+          {loggingOut && <LoaderCircle className="react-button-spinner" />}<span>{loggingOut ? "Излизане…" : "Изход"}</span>
         </button>
       </aside>
     </>
