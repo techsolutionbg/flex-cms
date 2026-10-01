@@ -39,6 +39,18 @@ services:
     environment:
       VITE_DEV_SERVER_URL: "http://localhost:${VITE_FORWARD_PORT:-5173}"
 
+  frontend-react:
+    image: node:22-alpine
+    working_dir: /workspace/resources/admin-react
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 8090"
+    ports:
+      - "${VITE_REACT_FORWARD_PORT:-8090}:8090"
+    volumes:
+      - .:/workspace
+      - frontend_react_node_modules:/workspace/resources/admin-react/node_modules
+    environment:
+      VITE_DEV_SERVER_URL: "http://localhost:${VITE_REACT_FORWARD_PORT:-8090}"
+
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=caching_sha2_password
@@ -87,3 +99,4 @@ volumes:
   mysql_data:
   vendor:
   frontend_node_modules:
+  frontend_react_node_modules:
