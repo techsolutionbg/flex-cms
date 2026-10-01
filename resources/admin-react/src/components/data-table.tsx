@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 
 export type DataTableColumn<T> = { key: string; label: string; sortable?: boolean; render?: (row: T) => ReactNode; sortValue?: (row: T) => string | number }
 type DataTableProps<T> = { data: T[]; columns: DataTableColumn<T>[]; rowKey: (row: T) => string | number; loading?: boolean; emptyMessage?: string; toolbar?: ReactNode; bulkActions?: ReactNode; pageSize?: number; selectable?: boolean; selectedKeys?: ReadonlySet<string | number>; onSelectionChange?: (keys: Set<string | number>) => void }
@@ -8,6 +8,8 @@ export function DataTable<T>({ data, columns, rowKey, loading = false, emptyMess
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [descending, setDescending] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [toolbarOpen, setToolbarOpen] = useState(true)
+  const filterContentId = useId()
   const sortedData = useMemo(() => {
     if (!sortKey) return data
     const column = columns.find((item) => item.key === sortKey)
@@ -42,5 +44,18 @@ export function DataTable<T>({ data, columns, rowKey, loading = false, emptyMess
     onSelectionChange?.(next)
   }
   const columnCount = columns.length + (selectable ? 1 : 0)
-  return <div className="react-table-card">{toolbar && <div className="react-table-toolbar">{toolbar}</div>}{bulkActions && <div className="react-bulk-toolbar">{bulkActions}</div>}<div className="react-table-scroll"><table className="react-data-table"><thead><tr>{selectable && <th className="react-selection-column"><input type="checkbox" aria-label="Избери всички видими записи" checked={allVisibleSelected} onChange={(event) => toggleVisibleSelection(event.target.checked)} /></th>}{columns.map((column) => <th key={column.key}><button className={`react-sort-button${column.sortable ? " is-sortable" : ""}`} type="button" onClick={() => sort(column)} disabled={!column.sortable}>{column.label}{column.sortable && (sortKey === column.key ? descending ? <ArrowDown /> : <ArrowUp /> : <ChevronsUpDown />)}</button></th>)}</tr></thead><tbody>{loading ? <tr><td className="react-table-empty" colSpan={columnCount}>Зареждане…</td></tr> : sortedData.length === 0 ? <tr><td className="react-table-empty" colSpan={columnCount}>{emptyMessage}</td></tr> : visibleData.map((row) => <tr key={rowKey(row)}>{selectable && <td className="react-selection-column"><input type="checkbox" aria-label="Избери запис" checked={selectedKeys.has(rowKey(row))} onChange={(event) => toggleSelection(rowKey(row), event.target.checked)} /></td>}{columns.map((column) => <td key={column.key} className={column.key === "actions" ? "react-actions-column" : undefined}>{column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? "—")}</td>)}</tr>)}</tbody></table></div><div className="react-pagination"><span>Показани {sortedData.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, sortedData.length)} от {sortedData.length}</span><div><button type="button" aria-label="Предишна страница" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</button><strong>{currentPage}</strong><button type="button" aria-label="Следваща страница" disabled={currentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</button></div></div></div>
+  return <div className="react-table-card">
+    {toolbar && <div className={`react-table-filter-panel${toolbarOpen ? " is-open" : " is-closed"}`}>
+      <div className="react-table-filter-header">
+        <span>Филтри и търсене</span>
+        <button type="button" aria-expanded={toolbarOpen} aria-controls={filterContentId} onClick={() => setToolbarOpen((current) => !current)}>
+          {toolbarOpen ? "Скрий" : "Покажи"}
+          <ChevronDown aria-hidden="true" />
+        </button>
+      </div>
+      <div className="react-table-filter-body" id={filterContentId}><div className="react-table-filter-body-inner"><div className="react-table-toolbar">{toolbar}</div></div></div>
+    </div>}
+    {bulkActions && <div className="react-bulk-toolbar">{bulkActions}</div>}
+    <div className="react-table-scroll"><table className="react-data-table"><thead><tr>{selectable && <th className="react-selection-column"><input type="checkbox" aria-label="Избери всички видими записи" checked={allVisibleSelected} onChange={(event) => toggleVisibleSelection(event.target.checked)} /></th>}{columns.map((column) => <th key={column.key}><button className={`react-sort-button${column.sortable ? " is-sortable" : ""}`} type="button" onClick={() => sort(column)} disabled={!column.sortable}>{column.label}{column.sortable && (sortKey === column.key ? descending ? <ArrowDown /> : <ArrowUp /> : <ChevronsUpDown />)}</button></th>)}</tr></thead><tbody>{loading ? <tr><td className="react-table-empty" colSpan={columnCount}>Зареждане…</td></tr> : sortedData.length === 0 ? <tr><td className="react-table-empty" colSpan={columnCount}>{emptyMessage}</td></tr> : visibleData.map((row) => <tr key={rowKey(row)}>{selectable && <td className="react-selection-column"><input type="checkbox" aria-label="Избери запис" checked={selectedKeys.has(rowKey(row))} onChange={(event) => toggleSelection(rowKey(row), event.target.checked)} /></td>}{columns.map((column) => <td key={column.key} className={column.key === "actions" ? "react-actions-column" : undefined}>{column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? "—")}</td>)}</tr>)}</tbody></table></div><div className="react-pagination"><span>Показани {sortedData.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, sortedData.length)} от {sortedData.length}</span><div><button type="button" aria-label="Предишна страница" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</button><strong>{currentPage}</strong><button type="button" aria-label="Следваща страница" disabled={currentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</button></div></div>
+  </div>
 }
