@@ -1,17 +1,30 @@
 import type { LucideIcon } from "lucide-react"
 import { ChevronDown } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
 type CollapsibleSectionProps = {
   title: string
   icon?: LucideIcon
   children: ReactNode
   defaultOpen?: boolean
+  storageKey?: string
   className?: string
 }
 
-export function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, className = "" }: CollapsibleSectionProps) {
-  const [open, setOpen] = useState(defaultOpen)
+export function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, storageKey, className = "" }: CollapsibleSectionProps) {
+  const persistenceKey = `flex-admin-collapsible:${storageKey ?? title}`
+  const [open, setOpen] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(persistenceKey)
+      return saved === null ? defaultOpen : saved === "open"
+    } catch {
+      return defaultOpen
+    }
+  })
+
+  useEffect(() => {
+    try { window.localStorage.setItem(persistenceKey, open ? "open" : "closed") } catch {}
+  }, [open, persistenceKey])
 
   return <section className={`collapsible-section${open ? " is-open" : " is-closed"}${className ? ` ${className}` : ""}`}>
     <button className="collapsible-section-header" type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>

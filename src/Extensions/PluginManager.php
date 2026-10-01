@@ -176,7 +176,10 @@ final readonly class PluginManager
     {
         $plugin = $this->installed($id);
         if ($plugin->getAttribute('status') === self::STATUS_ACTIVE) {
-            throw new \RuntimeException(sprintf('Plugin "%s" must be deactivated before it can be uninstalled.', $id));
+            // Removing an active plugin is a single lifecycle operation for the
+            // caller: deactivate it first, then continue with the uninstall.
+            $this->deactivate($id);
+            $plugin = $this->installed($id);
         }
 
         [$manifest, $pluginPath] = $this->manifestAndPath($plugin);

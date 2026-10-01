@@ -14,7 +14,8 @@ mkdir -p \
     storage/cache \
     storage/logs \
     storage/sessions \
-    storage/tmp
+    storage/tmp \
+    plugins
 
 chmod a+rwX storage
 
@@ -25,6 +26,7 @@ chmod -R a+rwX \
     storage/cache \
     storage/logs \
     storage/sessions \
-    storage/tmp
+    storage/tmp \
+    plugins
 
 exec "$@"

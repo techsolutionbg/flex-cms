@@ -55,7 +55,7 @@ class PageFieldRegistry
         };
     }
 
-    /** @return list<array{plugin: string, id: string, type: string, label: string, default: string|bool, hint: string}> */
+    /** @return list<array{plugin: string, id: string, type: string, label: string, default: string|bool, hint: string, max_length: int}> */
     public function bootstrap(): array
     {
         $fields = array_values($this->fields);
@@ -63,7 +63,7 @@ class PageFieldRegistry
 
         return array_map(static fn(array $field): array => [
             'plugin' => $field['plugin'], 'id' => $field['id'], 'type' => $field['type'],
-            'label' => $field['label'], 'default' => $field['default'], 'hint' => $field['hint'],
+            'label' => $field['label'], 'default' => $field['default'], 'hint' => $field['hint'], 'max_length' => $field['max_length'],
         ], $fields);
     }
 

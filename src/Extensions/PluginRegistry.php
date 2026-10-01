@@ -45,6 +45,12 @@ final readonly class PluginRegistry
                 if (!$file->isFile() || $file->getFilename() !== 'plugin.json') {
                     continue;
                 }
+                // Replacement backups are kept outside the active plugin tree
+                // conceptually, but live beside it during an interrupted install.
+                // They must never be registered as a second plugin.
+                if (str_contains($file->getPath(), '.backup-')) {
+                    continue;
+                }
 
                 $manifest = PluginManifest::fromFile($file->getPathname());
                 $discovered[] = ['manifest' => $manifest, 'path' => $file->getPath()];

@@ -7,6 +7,7 @@ namespace Flex\Http\Controller\Admin;
 use Flex\Auth\AuthenticatedUser;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Extensions\PluginManager;
+use Flex\Extensions\PluginRegistry;
 use Flex\Http\ApiError;
 use Flex\Http\RequestInput;
 use Flex\Contracts\Http\ResponseFactoryInterface;
@@ -21,6 +22,7 @@ final readonly class AdminPluginActionController
     public function __construct(
         private AuthenticationInterface $authentication,
         private PluginManager $plugins,
+        private PluginRegistry $registry,
         private RemotePluginInstaller $remoteInstaller,
         private RemotePluginUpdater $remoteUpdater,
         private PluginRollback $pluginRollback,
@@ -55,13 +57,13 @@ final readonly class AdminPluginActionController
                 $plugin = $this->plugins->install($id);
             } elseif ($action === 'install_remote') {
                 $this->remoteInstaller->install($id);
-                $plugin = $this->plugins->find($id);
+                $plugin = $this->registry->find($id);
                 if ($plugin === null) {
                     throw new \RuntimeException('The plugin was installed but could not be registered.');
                 }
             } elseif ($action === 'update_remote') {
                 $this->remoteUpdater->update($id);
-                $plugin = $this->plugins->find($id);
+                $plugin = $this->registry->find($id);
                 if ($plugin === null) {
                     throw new \RuntimeException('The plugin was updated but could not be loaded.');
                 }
@@ -71,7 +73,7 @@ final readonly class AdminPluginActionController
                     return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Необходимо е валидно ID от историята на обновяванията.'), 422);
                 }
                 $this->pluginRollback->rollback($historyId);
-                $plugin = $this->plugins->find($id);
+                $plugin = $this->registry->find($id);
                 if ($plugin === null) {
                     throw new \RuntimeException('The plugin rollback completed but the plugin could not be loaded.');
                 }

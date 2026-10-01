@@ -28,4 +28,4 @@ FROM base AS production
 COPY . /var/www/html
 COPY --from=composer /app/vendor /var/www/html/vendor
 COPY --from=frontend /app/public/build /var/www/html/public/build
-RUN rm -rf resources/admin node_modules tests .git .github docker compose.yaml && mkdir -p public/media storage/cache storage/logs storage/sessions storage/tmp && chown -R www-data:www-data public/media storage
+RUN rm -rf resources/admin node_modules tests .git .github docker compose.yaml && mkdir -p public/media storage/cache storage/logs storage/sessions storage/tmp plugins && chown -R www-data:www-data public/media storage plugins

@@ -4,7 +4,8 @@ import { createRoot } from "react-dom/client"
 import { Toaster, toast } from "sonner"
 import { UserForm, UsersPage as UsersPageComponent } from "@/pages/users"
 import { PageForm, PageSettingsForm, PagesPage } from "@/pages/pages"
-import type { PageRecord, UserRecord } from "@/lib/admin-types"
+import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
+import type { PageRecord, PluginRecord, UserRecord } from "@/lib/admin-types"
 import { LoginPage } from "@/pages/login-page"
 import { DashboardPage } from "@/pages/dashboard-page"
 import "./index.css"
@@ -18,9 +19,10 @@ import "./index.css"
 function App() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "user-form" | "form" | "settings">("dashboard")
+  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "plugins" | "plugin-catalog" | "plugin-detail" | "user-form" | "form" | "settings">("dashboard")
   const [editingPage, setEditingPage] = useState<PageRecord | null>(null)
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
+  const [pluginDetail, setPluginDetail] = useState<PluginRecord | null>(null)
 
   function pushRoute(path: string) {
     window.history.pushState(null, "", path)
@@ -29,11 +31,26 @@ function App() {
   function goToDashboard() { pushRoute("/"); setPageView("dashboard") }
   function goToPages() { pushRoute("/pages"); setPageView("pages") }
   function goToUsers() { pushRoute("/users"); setPageView("users") }
+  function goToPlugins() { pushRoute("/plugins"); setPageView("plugins") }
+  function goToPluginCatalog() { pushRoute("/plugins/catalog"); setPageView("plugin-catalog") }
+  function goToPluginDetail(plugin: PluginRecord) { setPluginDetail(plugin); pushRoute(`/plugins/${encodeURIComponent(plugin.id)}`); setPageView("plugin-detail") }
+  async function viewPluginFromCatalog(id: string) {
+    try {
+      const response = await fetch("/api/admin/plugins", { credentials: "include", headers: { Accept: "application/json" } })
+      const body = await response.json() as { plugins?: PluginRecord[] }
+      const plugin = (body.plugins ?? []).find((item) => item.id === id)
+      if (!response.ok || !plugin) throw new Error("Разширението не е инсталирано.")
+      goToPluginDetail(plugin)
+    } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Разширението не можа да бъде заредено.") }
+  }
 
   useEffect(() => {
     function syncRoute() {
       if (window.location.pathname === "/pages") setPageView("pages")
       else if (window.location.pathname === "/users") setPageView("users")
+      else if (window.location.pathname === "/plugins") setPageView("plugins")
+      else if (window.location.pathname === "/plugins/catalog") setPageView("plugin-catalog")
+      else if (window.location.pathname.startsWith("/plugins/") && window.location.pathname !== "/plugins/catalog") setPageView("plugin-detail")
       else if (window.location.pathname === "/users/create") { setEditingUser(null); setPageView("user-form") }
       else if (/^\/users\/\d+\/edit$/.test(window.location.pathname)) setPageView("user-form")
       else if (window.location.pathname === "/" || window.location.pathname === "") setPageView("dashboard")
@@ -47,6 +64,19 @@ function App() {
     const path = window.location.pathname
     if (path === "/pages") { setPageView("pages"); return }
     if (path === "/users") { setPageView("users"); return }
+    if (path === "/plugins") { setPageView("plugins"); return }
+    if (path === "/plugins/catalog") { setPageView("plugin-catalog"); return }
+    const pluginMatch = path.match(/^\/plugins\/(.+)$/)
+    if (pluginMatch) {
+      setPageView("plugin-detail")
+      fetch("/api/admin/plugins", { credentials: "include", headers: { Accept: "application/json" } }).then(async (response) => {
+        const body = await response.json() as { plugins?: PluginRecord[] }
+        const selected = (body.plugins ?? []).find((item) => item.id === decodeURIComponent(pluginMatch[1]))
+        if (response.ok && selected) setPluginDetail(selected)
+        else if (response.ok) toast.error("Разширението не е намерено.")
+      }).catch(() => toast.error("Разширението не можа да бъде заредено."))
+      return
+    }
     if (path === "/users/create") { setEditingUser(null); setPageView("user-form"); return }
     const userMatch = path.match(/^\/users\/(\d+)\/edit$/)
     if (userMatch) {
@@ -123,7 +153,7 @@ function App() {
 
   return <>
     <Toaster position="top-center" closeButton richColors theme="light" />
-    {authenticated ? pageView === "user-form" ? <UserForm user={editingUser} onBack={goToUsers} onSaved={(savedUser) => { setEditingUser(savedUser); pushRoute(`/users/${savedUser.id}/edit`); setPageView("user-form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "form" ? <PageForm page={editingPage} onBack={goToPages} onSaved={(savedPage) => { setEditingPage(savedPage); pushRoute(`/pages/${savedPage.id}/edit`); setPageView("form") }} onSettings={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/settings`); setPageView("settings") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "settings" && editingPage ? <PageSettingsForm page={editingPage} onBack={goToPages} onSaved={(savedPage) => { setEditingPage(savedPage); pushRoute(`/pages/${savedPage.id}/settings`); setPageView("settings") }} onEdit={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/edit`); setPageView("form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "pages" ? <PagesPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} onCreate={() => { setEditingPage(null); pushRoute("/pages/create"); setPageView("form") }} onEdit={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/edit`); setPageView("form") }} onSettings={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/settings`); setPageView("settings") }} loggingOut={loggingOut} /> : pageView === "users" ? <UsersPageComponent onCreate={() => { setEditingUser(null); pushRoute("/users/create"); setPageView("user-form") }} onEdit={(selected) => { setEditingUser(selected); pushRoute(`/users/${selected.id}/edit`); setPageView("user-form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : goToDashboard()} loggingOut={loggingOut} /> : <DashboardPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} loggingOut={loggingOut} /> : <LoginPage onAuthenticated={() => { setAuthenticated(true); pushRoute("/"); setPageView("dashboard") }} />}
+    {authenticated ? pageView === "user-form" ? <UserForm user={editingUser} onBack={goToUsers} onSaved={(savedUser) => { setEditingUser(savedUser); pushRoute(`/users/${savedUser.id}/edit`); setPageView("user-form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "plugin-detail" && pluginDetail ? <PluginDetailPage plugin={pluginDetail} onBack={goToPlugins} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "form" ? <PageForm page={editingPage} onBack={goToPages} onSaved={(savedPage) => { setEditingPage(savedPage); pushRoute(`/pages/${savedPage.id}/edit`); setPageView("form") }} onSettings={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/settings`); setPageView("settings") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "settings" && editingPage ? <PageSettingsForm page={editingPage} onBack={goToPages} onSaved={(savedPage) => { setEditingPage(savedPage); pushRoute(`/pages/${savedPage.id}/settings`); setPageView("settings") }} onEdit={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/edit`); setPageView("form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "pages" ? <PagesPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} onCreate={() => { setEditingPage(null); pushRoute("/pages/create"); setPageView("form") }} onEdit={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/edit`); setPageView("form") }} onSettings={(selected) => { setEditingPage(selected); pushRoute(`/pages/${selected.id}/settings`); setPageView("settings") }} loggingOut={loggingOut} /> : pageView === "users" ? <UsersPageComponent onCreate={() => { setEditingUser(null); pushRoute("/users/create"); setPageView("user-form") }} onEdit={(selected) => { setEditingUser(selected); pushRoute(`/users/${selected.id}/edit`); setPageView("user-form") }} onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : pageView === "plugin-catalog" ? <PluginCatalogPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} onBack={goToPlugins} onView={viewPluginFromCatalog} loggingOut={loggingOut} /> : pageView === "plugins" ? <PluginsPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} onCatalog={goToPluginCatalog} onView={goToPluginDetail} loggingOut={loggingOut} /> : <DashboardPage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : goToDashboard()} loggingOut={loggingOut} /> : <LoginPage onAuthenticated={() => { setAuthenticated(true); pushRoute("/"); setPageView("dashboard") }} />}
   </>
 }
 
