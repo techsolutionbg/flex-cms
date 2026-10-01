@@ -31,7 +31,8 @@ trap 'docker exec "$CID" rm -f /tmp/flex-update-private.key /tmp/flex-release-en
 docker compose exec -T frontend npm run build
 docker compose exec -T app php bin/flex platform:build \
   --target-version="$VERSION" --private-key-file=/tmp/flex-update-private.key \
-  --key-id="$KEY_ID" ${RUN_MIGRATIONS:+--run-migrations} --output="$ARTIFACT"
+  --key-id="$KEY_ID" --compatible-from="$COMPATIBLE_FROM" \
+  ${RUN_MIGRATIONS:+--run-migrations} --output="$ARTIFACT"
 
 docker cp "$CID:$ARTIFACT" "$LOCAL_ARTIFACT"
 curl --fail --silent --show-error "$BASE_URL/platform/manifest.json" > "$LOCAL_CATALOG"

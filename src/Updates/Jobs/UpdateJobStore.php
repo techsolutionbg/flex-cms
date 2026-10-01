@@ -129,12 +129,14 @@ final class UpdateJobStore
         if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
             throw new PlatformUpdateException('The update job directory cannot be created.');
         }
+        $this->prepareSharedPath($directory, 0770);
         $temporary = $this->path() . '.tmp-' . bin2hex(random_bytes(4));
         $data = array_map(static fn(UpdateJob $job): array => $job->toArray(), $jobs);
         if (file_put_contents($temporary, json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . PHP_EOL, LOCK_EX) === false || !rename($temporary, $this->path())) {
             @unlink($temporary);
             throw new PlatformUpdateException('The update job store cannot be written.');
         }
+        $this->prepareSharedPath($this->path(), 0660);
     }
 
     /** @param list<UpdateJob> $jobs */
@@ -162,15 +164,27 @@ final class UpdateJobStore
         if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
             throw new PlatformUpdateException('The update job lock directory cannot be created.');
         }
-        $handle = fopen($directory . '/jobs.lock', 'c');
+        $this->prepareSharedPath($directory, 0770);
+        $lockPath = $directory . '/jobs.lock';
+        $handle = fopen($lockPath, 'c');
         if ($handle === false || !flock($handle, LOCK_EX)) {
             throw new PlatformUpdateException('The update job store is locked.');
         }
+        $this->prepareSharedPath($lockPath, 0660);
         try {
             return $callback();
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
         }
+    }
+
+    private function prepareSharedPath(string $path, int $mode): void
+    {
+        // The web container and the privileged updater share this directory.
+        // Keep the queue owned by www-data so both processes can update it.
+        @chown($path, 'www-data');
+        @chgrp($path, 'www-data');
+        @chmod($path, $mode);
     }
 }

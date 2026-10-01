@@ -15,6 +15,7 @@ services:
       - "${APP_PORT:-8080}:80"
     environment:
       APP_ENV: local
+      TRUSTED_HOSTS: "localhost,127.0.0.1,app,192.168.1.225"
       VITE_DEV_SERVER_URL: "${VITE_DEV_SERVER_URL:-http://192.168.1.225:5173}"
     volumes:
       - .:/var/www/html
@@ -26,6 +27,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  updater:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: development
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    command: sh -c 'while :; do php bin/flex updates:process || true; sleep 5; done'
+    environment:
+      APP_ENV: local
+      UPDATE_HEALTHCHECK_URL: http://app/health
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    restart: unless-stopped
 
   frontend:
     image: node:22-alpine

@@ -10,7 +10,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\ApiError;
 use Flex\Http\RequestInput;
 use Flex\Updates\Platform\PlatformRollback;
-use Flex\Updates\Remote\RemotePlatformUpdater;
+use Flex\Updates\Jobs\UpdateJobStore;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -19,7 +19,7 @@ final readonly class AdminUpdatesActionController
     public function __construct(
         private AuthenticationInterface $authentication,
         private RequestInput $input,
-        private RemotePlatformUpdater $updater,
+        private UpdateJobStore $jobs,
         private PlatformRollback $rollback,
         private ResponseFactoryInterface $responses,
     ) {}
@@ -40,8 +40,12 @@ final readonly class AdminUpdatesActionController
             }
 
             if ($action === 'update_remote') {
-                $result = $this->updater->update();
-                return $this->responses->json(['message' => sprintf('Обновяването от %s до %s завърши успешно.', $result->installation->from->value, $result->installation->to->value)]);
+                $job = $this->jobs->queuePlatformUpdate();
+                return $this->responses->json([
+                    'message' => sprintf('Обновяването е поставено в опашката (%s) и ще бъде обработено от updater процеса.', $job->id),
+                    'job_id' => $job->id,
+                    'queued' => true,
+                ], 202);
             }
 
             $id = $input['id'] ?? null;

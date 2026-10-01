@@ -118,7 +118,11 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
                     $this->states->write($this->transition($state, 'recovery_required'));
                     throw new PlatformUpdateException('Platform installation failed and automatic recovery also failed. Run platform:recover.', 0, $recoveryException);
                 }
-                throw new PlatformUpdateException('Platform installation failed and the file backup was restored.', 0, $exception);
+                throw new PlatformUpdateException(
+                    sprintf('Platform installation failed and the file backup was restored: %s', $exception->getMessage()),
+                    0,
+                    $exception,
+                );
             }
         } finally {
             if (!$recoveryRequired) {

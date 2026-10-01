@@ -7,7 +7,7 @@ namespace Flex\Http\Controller\Admin;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Session\CsrfTokenManager;
 use Flex\Updates\Platform\PlatformHistory;
-use Flex\Updates\Remote\RemotePlatformUpdater;
+use Flex\Updates\Jobs\UpdateJobStore;
 use Flex\Updates\UpdateErrorMessage;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -15,7 +15,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final readonly class AdminUpdatesRemoteController
 {
     public function __construct(
-        private RemotePlatformUpdater $updater,
+        private UpdateJobStore $jobs,
         private PlatformHistory $history,
         private AdminUpdatesPage $page,
         private CsrfTokenManager $csrf,
@@ -26,12 +26,12 @@ final readonly class AdminUpdatesRemoteController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         try {
-            $result = $this->updater->update();
+            $job = $this->jobs->queuePlatformUpdate();
 
             return $this->responses->html($this->page->render(
                 $this->csrf->token(),
                 $this->history->all(),
-                sprintf('Обновяването от %s до %s завърши успешно.', $result->installation->from->value, $result->installation->to->value),
+                sprintf('Обновяването е поставено в опашката (%s) и ще бъде обработено от updater процеса.', $job->id),
             ));
         } catch (\Throwable $exception) {
             return $this->responses->html($this->page->render($this->csrf->token(), $this->history->all(), null, UpdateErrorMessage::forAdmin($exception)), 422);

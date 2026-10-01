@@ -28,6 +28,10 @@ export function DashboardPage({ onLogout, onNavigate, loggingOut }: { onLogout: 
   return (
     <AdminShell onLogout={onLogout} onNavigate={onNavigate} activeItem="Табло" loggingOut={loggingOut}>
       <h1>Административен панел</h1>
+      <section className="dashboard-release-notice" aria-label="Последна промяна">
+        <div className="dashboard-release-notice-mark">NEW</div>
+        <div><strong>Подобрено управление на обновяванията</strong><p>Тази визуална промяна служи като маркер за успешно инсталиране на следващия релийз.</p></div>
+      </section>
       <section className="dashboard-grid-react" aria-label="Обобщение на системата">
         {cards.map(({ title, icon: Icon, value, description, action }) => <CollapsibleSection title={title} icon={Icon} className="dashboard-card-react" key={title}>
           <strong className="dashboard-stat-react">{value ?? "—"}</strong><p>{description}</p><a href="#" onClick={(event) => event.preventDefault()}>{action}</a>
