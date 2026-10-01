@@ -7,6 +7,18 @@ export type PlatformUpdateRemote = {
   error?: string | null
 }
 
+export type PlatformRelease = {
+  version: string
+  release_notes?: string
+  size: number
+  published_at?: string
+  channel?: string
+  current?: boolean
+  downgrade?: boolean
+  installable?: boolean
+  blocked_reason?: string | null
+}
+
 export type PlatformUpdateHistory = {
   id?: string
   type?: string

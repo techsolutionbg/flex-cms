@@ -207,6 +207,18 @@ body { margin: 0; min-width: 320px; }
 .updates-history-row strong, .updates-history-row small { display: block; }
 .updates-history-row small { margin-top: .25rem; color: #69766d; }
 .updates-history-row > button { flex: 0 0 auto; }
+.updates-releases-list { display: grid; gap: .7rem; }
+.updates-release-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #e3e6df; }
+.updates-release-row:last-child { border-bottom: 0; }
+.updates-release-info { min-width: 0; }
+.updates-release-info strong { color: #1d2a20; }
+.updates-release-info small { display: block; margin-top: .25rem; color: #69766d; }
+.updates-release-info p { margin: .45rem 0 0; color: #69766d; }
+.updates-release-current, .updates-release-downgrade { display: inline-block; margin-left: .55rem; padding: .2rem .4rem; border-radius: .3rem; font-size: .72rem; font-weight: 700; }
+.updates-release-current { background: #e8f3eb; color: #287a48; }
+.updates-release-downgrade { background: #f6eee0; color: #956b24; }
+.updates-release-blocked { display: block; margin-top: .45rem; color: #b54732; font-size: .9rem; }
+.updates-release-row > button { flex: 0 0 auto; min-height: 2.35rem; }
 .rich-text-editor-react { overflow: visible; border: 1px solid #cbd2c8; border-radius: 0.45rem; background: white; }
 .rich-text-editor-react .ql-toolbar.ql-snow { position: sticky; top: 0; z-index: 5; border: 0; border-bottom: 1px solid #d4d9d0; background: #f0f1eb; }
 .rich-text-editor-react .ql-container.ql-snow { min-height: 16rem; border: 0; font: inherit; }

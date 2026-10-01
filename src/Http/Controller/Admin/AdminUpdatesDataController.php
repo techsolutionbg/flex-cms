@@ -25,6 +25,7 @@ final readonly class AdminUpdatesDataController
         private PlatformVersionRegistry $versions,
         private RemoteCatalogClient $catalog,
         private PlatformHistory $history,
+        private RemotePlatformUpdater $updater,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -38,11 +39,20 @@ final readonly class AdminUpdatesDataController
 
         $currentVersion = $this->versions->current()->value;
         $remote = ['current_version' => $currentVersion, 'channel' => $this->configuration->string('extensions.updates.channel'), 'available' => null, 'error' => null];
+        $releases = [];
         try {
-            $release = RemotePlatformUpdater::selectLatest($this->catalog->platformCatalog(), $this->versions->current(), $this->configuration->string('extensions.updates.channel'));
+            $catalog = $this->catalog->platformCatalog();
+            $release = RemotePlatformUpdater::selectLatest($catalog, $this->versions->current(), $this->configuration->string('extensions.updates.channel'));
             if ($release !== null) {
                 $remote['available'] = ['version' => $release->version->value, 'release_notes' => $release->releaseNotes, 'size' => $release->size, 'published_at' => $release->publishedAt, 'channel' => $release->channel->value];
             }
+            foreach ($catalog->releases as $candidate) {
+                if ($candidate->package !== 'flex-cms' || $candidate->channel->value !== $remote['channel']) continue;
+                $issues = $this->updater->pluginCompatibilityIssues($candidate->version);
+                $platformCompatible = \Composer\Semver\Semver::satisfies(PHP_VERSION, $candidate->minimumPhp) && \Composer\Semver\Semver::satisfies($currentVersion, $candidate->compatibleFrom);
+                $releases[] = ['version' => $candidate->version->value, 'release_notes' => $candidate->releaseNotes, 'size' => $candidate->size, 'published_at' => $candidate->publishedAt, 'channel' => $candidate->channel->value, 'current' => $candidate->version->value === $currentVersion, 'downgrade' => version_compare($candidate->version->value, $currentVersion, '<'), 'installable' => $platformCompatible && $issues === [], 'blocked_reason' => !$platformCompatible ? 'Релийзът не е съвместим с текущата платформа.' : ($issues !== [] ? implode(' ', array_map(static fn(array $issue): string => sprintf('%s изисква %s или по-нова платформа.', $issue['name'], $issue['required']), $issues)) : null)];
+            }
+            usort($releases, static fn(array $left, array $right): int => version_compare($right['version'], $left['version']));
         } catch (\Throwable $exception) {
             $remote['error'] = UpdateErrorMessage::forAdmin($exception);
         }
@@ -50,6 +60,7 @@ final readonly class AdminUpdatesDataController
         return $this->responses->json([
             'version' => $currentVersion,
             'remote_update' => $remote,
+            'releases' => $releases,
             'history' => array_reverse($this->history->all()),
         ]);
     }

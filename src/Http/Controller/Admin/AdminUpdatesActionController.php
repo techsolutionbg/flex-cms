@@ -10,6 +10,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\ApiError;
 use Flex\Http\RequestInput;
 use Flex\Updates\Jobs\UpdateJobStore;
+use Flex\Updates\Remote\RemotePlatformUpdater;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -19,6 +20,7 @@ final readonly class AdminUpdatesActionController
         private AuthenticationInterface $authentication,
         private RequestInput $input,
         private UpdateJobStore $jobs,
+        private RemotePlatformUpdater $updater,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -38,9 +40,22 @@ final readonly class AdminUpdatesActionController
             }
 
             if ($action === 'update_remote') {
-                $job = $this->jobs->queuePlatformUpdate();
+                $targetVersion = $input['version'] ?? null;
+                if ($targetVersion !== null && !is_string($targetVersion)) {
+                    return $this->responses->json(ApiError::payload(422, 'validation_failed', 'Версията на релийза е невалидна.'), 422);
+                }
+                $release = $this->updater->resolveRelease($targetVersion);
+                if ($release === null) {
+                    throw new \RuntimeException('Няма наличен съвместим релийз за инсталиране.');
+                }
+                $issues = $this->updater->pluginCompatibilityIssues($release->version);
+                if ($issues !== []) {
+                    $details = implode(', ', array_map(static fn(array $issue): string => sprintf('%s (изисква %s+)', $issue['name'], $issue['required']), $issues));
+                    throw new \RuntimeException(sprintf('Релийзът %s не може да бъде инсталиран: %s.', $release->version->value, $details));
+                }
+                $job = $this->jobs->queuePlatformUpdate(false, $release->version->value);
                 return $this->responses->json([
-                    'message' => sprintf('Обновяването е поставено в опашката (%s) и ще бъде обработено от updater процеса.', $job->id),
+                    'message' => sprintf('Релийз %s е поставен в опашката (%s) и ще бъде обработен от updater процеса.', $release->version->value, $job->id),
                     'job_id' => $job->id,
                     'queued' => true,
                 ], 202);

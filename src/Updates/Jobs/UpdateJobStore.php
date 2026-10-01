@@ -16,16 +16,16 @@ final class UpdateJobStore
 
     public function __construct(private readonly string $basePath) {}
 
-    public function queuePlatformUpdate(bool $dryRun = false): UpdateJob
+    public function queuePlatformUpdate(bool $dryRun = false, ?string $targetVersion = null): UpdateJob
     {
-        return $this->withLock(function () use ($dryRun): UpdateJob {
+        return $this->withLock(function () use ($dryRun, $targetVersion): UpdateJob {
             $jobs = $this->read();
             foreach ($jobs as $job) {
-                if ($job->type === 'platform' && in_array($job->status, [self::STATUS_PENDING, self::STATUS_RUNNING], true) && $job->dryRun === $dryRun) {
+                if ($job->type === 'platform' && in_array($job->status, [self::STATUS_PENDING, self::STATUS_RUNNING], true) && $job->dryRun === $dryRun && $job->packageId === $targetVersion) {
                     return $job;
                 }
             }
-            $job = new UpdateJob('update-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(5)), 'platform', self::STATUS_PENDING, $dryRun, gmdate(DATE_ATOM));
+            $job = new UpdateJob('update-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(5)), 'platform', self::STATUS_PENDING, $dryRun, gmdate(DATE_ATOM), packageId: $targetVersion);
             $jobs[] = $job;
             $this->write($jobs);
 
