@@ -1,5 +1,21 @@
 export type DashboardSummary = { pages: number; active_plugins: number; users: number; version: string }
 
+export type PlatformUpdateRemote = {
+  current_version: string
+  channel: string
+  available?: { version: string; release_notes?: string; size: number; published_at?: string; channel?: string } | null
+  error?: string | null
+}
+
+export type PlatformUpdateHistory = {
+  id?: string
+  type?: string
+  from?: string | null
+  to?: string | null
+  updated_at?: string | null
+  rolled_back_at?: string | null
+}
+
 export type PageSettings = {
   template?: string
   menu_order?: number

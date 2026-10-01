@@ -132,6 +132,9 @@ body { margin: 0; min-width: 320px; }
 .react-bulk-toolbar button:hover:not(:disabled) { background: #f0f1eb; }
 .react-bulk-toolbar button:disabled { cursor: not-allowed; opacity: 0.5; }
 .react-loading-button { display: inline-flex; align-items: center; justify-content: center; }
+.react-secondary-button { min-height: 2.5rem; padding: 0.7rem 0.9rem; border: 1px solid #d4d9d0; border-radius: 0.5rem; background: white; color: #172118; cursor: pointer; font: inherit; font-weight: 650; }
+.react-secondary-button:hover:not(:disabled) { background: #f2f2ec; }
+.react-secondary-button:disabled { cursor: wait; opacity: 0.65; }
 .react-button-spinner { display: inline-block; width: 0.95rem; height: 0.95rem; flex: 0 0 auto; margin-right: 0.35rem; animation: react-button-spin 700ms linear infinite; vertical-align: middle; }
 @keyframes react-button-spin { to { transform: rotate(360deg); } }
 .react-filter-field { display: grid; gap: 0.35rem; color: #687268; font-size: 0.8rem; font-weight: 650; }
@@ -169,6 +172,25 @@ body { margin: 0; min-width: 320px; }
 .react-form-actions button { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1rem; border: 1px solid #d4d9d0; border-radius: 0.45rem; background: white; color: #172118; cursor: pointer; font: inherit; font-weight: 650; }
 .react-form-actions .react-primary-button { border-color: #1f3023; background: #1f3023; color: white; }
 .react-form-actions button:disabled { cursor: wait; opacity: 0.65; }
+.updates-page-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.updates-summary-card, .updates-available-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; border: 1px solid #d4d9d0; border-radius: .7rem; background: white; }
+.updates-summary-icon { display: grid; width: 3rem; height: 3rem; flex: 0 0 auto; place-items: center; border-radius: .65rem; background: #eef1eb; color: #536257; }
+.updates-summary-card strong { display: block; margin-top: .15rem; color: #1d2a20; font-size: 1.5rem; }
+.updates-summary-card span { display: block; color: #69766d; }
+.updates-available-card > svg { width: 1.5rem; flex: 0 0 auto; margin-top: .2rem; color: #66736a; }
+.updates-available-card.is-available > svg { color: #287a48; }
+.updates-available-card h2 { margin: .15rem 0 .45rem; }
+.updates-available-card p { margin: 0 0 .55rem; color: #69766d; }
+.updates-available-card small { color: #69766d; }
+.updates-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
+.updates-actions > button { min-height: 2.5rem; }
+.updates-section { margin: 0; }
+.updates-history-list { display: grid; gap: .65rem; }
+.updates-history-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #e3e6df; }
+.updates-history-row:last-child { border-bottom: 0; }
+.updates-history-row strong, .updates-history-row small { display: block; }
+.updates-history-row small { margin-top: .25rem; color: #69766d; }
+.updates-history-row > button { flex: 0 0 auto; }
 .rich-text-editor-react { overflow: visible; border: 1px solid #cbd2c8; border-radius: 0.45rem; background: white; }
 .rich-text-editor-react .ql-toolbar.ql-snow { position: sticky; top: 0; z-index: 5; border: 0; border-bottom: 1px solid #d4d9d0; background: #f0f1eb; }
 .rich-text-editor-react .ql-container.ql-snow { min-height: 16rem; border: 0; font: inherit; }

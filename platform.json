@@ -1,6 +1,6 @@
 {
-  "schema": 1,
-  "name": "flex-cms",
-  "version": "0.1.7",
-  "api_version": "1.0"
+    "schema": 1,
+    "name": "flex-cms",
+    "version": "0.1.8",
+    "api_version": "1.0"
 }

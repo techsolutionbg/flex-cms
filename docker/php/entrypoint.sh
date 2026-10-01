@@ -15,6 +15,8 @@ mkdir -p \
     storage/logs \
     storage/sessions \
     storage/tmp \
+    storage/backups \
+    storage/updates \
     plugins
 
 chmod a+rwX storage
@@ -27,6 +29,19 @@ chmod -R a+rwX \
     storage/logs \
     storage/sessions \
     storage/tmp \
+    storage/backups \
+    storage/updates \
     plugins
+
+# The local bind mount can be owned by the host user while the updater runs
+# as www-data. Keep the first source-code permission adjustment narrow and
+# limited to the executable directory required by the updater preflight.
+if [ "${APP_ENV:-}" = "local" ]; then
+    chmod -R a+rwX bin
+    chmod -R a+rwX resources/admin-react/dist/assets
+fi
+
+chown -R www-data:www-data storage/backups storage/updates
+chmod -R u+rwX,g+rwX,o-rwx storage/backups storage/updates
 
 exec "$@"
