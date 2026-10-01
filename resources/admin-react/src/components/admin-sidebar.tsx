@@ -47,7 +47,7 @@ const groups: SidebarGroup[] = [
   },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ onLogout, loggingOut = false }: { onLogout: () => void; loggingOut?: boolean }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -88,9 +88,9 @@ export function AdminSidebar() {
           ))}
         </nav>
 
-        <button className="sidebar-logout-react" type="button">
+        <button className="sidebar-logout-react" type="button" onClick={onLogout} disabled={loggingOut}>
           <LogOut className="sidebar-icon-react" aria-hidden="true" />
-          <span>Изход</span>
+          <span>{loggingOut ? "Излизане…" : "Изход"}</span>
         </button>
       </aside>
     </>

@@ -7,7 +7,7 @@ namespace Flex\Providers;
 use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMiddleware};
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
-use Flex\Http\Controller\Admin\{AdminDashboardController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginUploadController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminThemeActionController, AdminThemeCatalogController, AdminThemePreviewController, AdminThemesController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
+use Flex\Http\Controller\Admin\{AdminDashboardController, AdminDashboardSummaryController, AdminPagesController, AdminPagesFormController, AdminPluginActionController, AdminPluginUploadController, AdminPluginsController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminThemeActionController, AdminThemeCatalogController, AdminThemePreviewController, AdminThemesController, AdminUpdatesController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController, UpdatePageStatusController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
@@ -23,6 +23,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $auth = [RequireAuthenticationMiddleware::class,RequireSuperAdminMiddleware::class];
         $write = [CsrfMiddleware::class,...$auth];
         $r->add('GET', '/admin', AdminDashboardController::class, 'admin.dashboard', $auth);
+        $r->add('GET', '/api/admin/dashboard', AdminDashboardSummaryController::class, 'api.admin.dashboard', $auth);
         $r->add('GET', '/admin/profile', AdminProfileController::class, 'admin.profile', $auth);
         $r->add('GET', '/admin/themes', AdminThemesController::class, 'admin.themes', $auth);
         $r->add('GET', '/admin/themes/catalog', AdminThemeCatalogController::class, 'admin.themes.catalog', $auth);
