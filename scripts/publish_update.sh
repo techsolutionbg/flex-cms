@@ -39,7 +39,7 @@ curl --fail --silent --show-error "$BASE_URL/platform/manifest.json" > "$LOCAL_C
 python3 scripts/release_catalog.py create --type platform --package flex-cms \
   --version "$VERSION" --artifact "$LOCAL_ARTIFACT" --base-url "$BASE_URL" \
   --minimum-php '>=8.3' --compatible-from "$COMPATIBLE_FROM" \
-  --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --published-at "$(date -u +%Y-%m-%dT%H:%M:%S+00:00)" \
   --release-notes "$RELEASE_NOTES" --output "$LOCAL_ENTRY"
 
 cat "$LOCAL_ENTRY" | docker compose exec -T app sh -c 'cat > /tmp/flex-release-entry.json'
