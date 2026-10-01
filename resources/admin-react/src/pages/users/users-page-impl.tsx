@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { TableActionsMenu } from "@/components/table-actions-menu"
+import { LoadingButton } from "@/components/loading-button"
 import { AdminShell } from "@/components/admin-shell"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
@@ -21,6 +22,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
   const [roleFilter, setRoleFilter] = useState(query.get("role") ?? "all")
   const [statusFilter, setStatusFilter] = useState(query.get("status") ?? "all")
   const [busyId, setBusyId] = useState<number | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkAction, setBulkAction] = useState<"active" | "disabled" | "trash" | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -35,8 +38,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
   useEffect(() => { const params = new URLSearchParams(); if (view === "trash") params.set("view", "trash"); if (search) params.set("search", search); if (roleFilter !== "all") params.set("role", roleFilter); if (statusFilter !== "all") params.set("status", statusFilter); window.history.replaceState(null, "", params.toString() ? `/users?${params}` : "/users") }, [roleFilter, search, statusFilter, view])
 
   const filteredUsers = users.filter((user) => (roleFilter === "all" || user.role === roleFilter) && (statusFilter === "all" || user.status === statusFilter) && `${user.name} ${user.email}`.toLocaleLowerCase("bg").includes(search.toLocaleLowerCase("bg")))
-  const activeFilterCount = (search ? 1 : 0) + (roleFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0)
-  function clearFilters() { setSearch(""); setRoleFilter("all"); setStatusFilter("all") }
+  const activeFilterCount = (view !== "active" ? 1 : 0) + (search ? 1 : 0) + (roleFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0)
+  function clearFilters() { setView("active"); setSearch(""); setRoleFilter("all"); setStatusFilter("all") }
 
   async function request(user: UserRecord, method: "POST" | "DELETE", path: string, success: string) {
     if (busyId !== null) return
@@ -51,6 +54,22 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
     try { const token = await getCsrfToken(); const nextStatus = user.status === "active" ? "disabled" : "active"; const response = await fetch(`/api/users/${user.id}`, { method: "PATCH", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": token }, body: JSON.stringify({ name: user.name, email: user.email, role: user.role, status: nextStatus }) }); const body = await response.json().catch(() => ({})) as { user?: UserRecord; error?: { message?: string } }; if (!response.ok || !body.user) throw new Error(body.error?.message ?? "Статусът не можа да бъде променен."); setUsers((current) => current.map((item) => item.id === user.id ? body.user as UserRecord : item)); toast.success(nextStatus === "active" ? "Потребителят е активиран." : "Потребителят е деактивиран.") } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Статусът не можа да бъде променен.") } finally { setBusyId(null) }
   }
 
+  async function applyBulkAction(action: "active" | "disabled" | "trash") {
+    if (selectedIds.size === 0 || bulkAction !== null) return
+    setBulkAction(action)
+    try {
+      const token = await getCsrfToken()
+      const selected = users.filter((user) => selectedIds.has(user.id) && user.role !== "super_admin" && (action !== "trash" || !["admin", "super_admin"].includes(user.role)))
+      const responses = await Promise.all(selected.map((user) => fetch(action === "trash" ? `/api/users/${user.id}/trash` : `/api/users/${user.id}`, { method: action === "trash" ? "POST" : "PATCH", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": token }, body: action === "trash" ? undefined : JSON.stringify({ name: user.name, email: user.email, role: user.role, status: action }) })))
+      if (responses.some((response) => !response.ok)) throw new Error("Част от масовото действие не можа да бъде изпълнена.")
+      if (action === "trash") setUsers((current) => current.filter((user) => !selected.some((item) => item.id === user.id)))
+      else setUsers((current) => current.map((user) => selected.some((item) => item.id === user.id) ? { ...user, status: action } : user))
+      setSelectedIds(new Set())
+      toast.success(action === "trash" ? "Избраните потребители са преместени в кошчето." : action === "active" ? "Избраните потребители са активирани." : "Избраните потребители са деактивирани.")
+    } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Масовото действие не можа да бъде изпълнено.") }
+    finally { setBulkAction(null) }
+  }
+
   const columns: DataTableColumn<UserRecord>[] = [
     { key: "name", label: "Име", sortable: true, render: (user) => <><a className="react-page-link" href={`/users/${user.id}/edit`} onClick={(event) => { event.preventDefault(); onEdit(user) }}>{user.name}</a><small>{user.email}</small></> },
     { key: "role", label: "Роля", sortable: true, render: (user) => roleLabels[user.role] ?? user.role },
@@ -60,6 +79,6 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
 
   return <AdminShell title={view === "trash" ? "Кошче за потребители" : "Потребители"} onLogout={onLogout} onNavigate={onNavigate} activeItem="Потребители" loggingOut={loggingOut}>
     <div className="react-page-heading"><div><h1>{view === "trash" ? "Кошче за потребители" : "Потребители"}</h1><Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: view === "trash" ? "Кошче за потребители" : "Потребители" }]} /></div><button type="button" onClick={onCreate} disabled={view === "trash"}>Нов потребител</button></div>
-    <DataTable filterStorageKey="users" data={filteredUsers} columns={columns} rowKey={(user) => user.id} loading={loading} toolbar={<><label className="react-filter-field"><span>Търсене</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Име или имейл" /></label><label className="react-filter-field"><span>Роля</span><DropdownMenu ariaLabel="Избор на роля" triggerClassName="react-filter-trigger" trigger={<><span>{roleFilter === "all" ? "Всички роли" : roleLabels[roleFilter]}</span><DropdownChevron /></>}><DropdownOption selected={roleFilter === "all"} onClick={() => setRoleFilter("all")}>Всички роли</DropdownOption>{Object.entries(roleLabels).map(([value, label]) => <DropdownOption key={value} selected={roleFilter === value} onClick={() => setRoleFilter(value)}>{label}</DropdownOption>)}</DropdownMenu></label><label className="react-filter-field"><span>Статус</span><DropdownMenu ariaLabel="Избор на статус" triggerClassName="react-filter-trigger" trigger={<><span>{statusFilter === "all" ? "Всички статуси" : userStatusLabels[statusFilter]}</span><DropdownChevron /></>}><DropdownOption selected={statusFilter === "all"} onClick={() => setStatusFilter("all")}>Всички статуси</DropdownOption><DropdownOption selected={statusFilter === "active"} onClick={() => setStatusFilter("active")}>Активни</DropdownOption><DropdownOption selected={statusFilter === "disabled"} onClick={() => setStatusFilter("disabled")}>Деактивирани</DropdownOption></DropdownMenu></label><label className="react-filter-field"><span>Изглед</span><DropdownMenu ariaLabel="Избор на изглед" triggerClassName="react-filter-trigger" trigger={<><span>{view === "trash" ? "Кошче" : "Активни потребители"}</span><DropdownChevron /></>}><DropdownOption selected={view === "active"} onClick={() => setView("active")}>Активни потребители</DropdownOption><DropdownOption selected={view === "trash"} onClick={() => setView("trash")}>Кошче</DropdownOption></DropdownMenu></label><button className="react-filter-clear" type="button" onClick={clearFilters} disabled={activeFilterCount === 0}>Изчисти филтрите</button><span className="react-filter-count">{activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}</span></>} />
+    <DataTable filterStorageKey="users" data={filteredUsers} columns={columns} rowKey={(user) => user.id} loading={loading} selectable={view === "active"} selectedKeys={selectedIds} onSelectionChange={(keys) => setSelectedIds(new Set([...keys].map(Number)))} bulkActions={view === "active" && <><strong>{selectedIds.size} избрани</strong><LoadingButton type="button" loading={bulkAction === "active"} disabled={selectedIds.size === 0 || bulkAction !== null} onClick={() => void applyBulkAction("active")}>Активирай</LoadingButton><LoadingButton type="button" loading={bulkAction === "disabled"} disabled={selectedIds.size === 0 || bulkAction !== null} onClick={() => void applyBulkAction("disabled")}>Деактивирай</LoadingButton><LoadingButton type="button" loading={bulkAction === "trash"} disabled={selectedIds.size === 0 || bulkAction !== null} onClick={() => void applyBulkAction("trash")}>Премести в кошчето</LoadingButton></>} toolbar={<><label className="react-filter-field"><span>Търсене</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Име или имейл" /></label><label className="react-filter-field"><span>Роля</span><DropdownMenu ariaLabel="Избор на роля" triggerClassName="react-filter-trigger" trigger={<><span>{roleFilter === "all" ? "Всички роли" : roleLabels[roleFilter]}</span><DropdownChevron /></>}><DropdownOption selected={roleFilter === "all"} onClick={() => setRoleFilter("all")}>Всички роли</DropdownOption>{Object.entries(roleLabels).map(([value, label]) => <DropdownOption key={value} selected={roleFilter === value} onClick={() => setRoleFilter(value)}>{label}</DropdownOption>)}</DropdownMenu></label><label className="react-filter-field"><span>Статус</span><DropdownMenu ariaLabel="Избор на статус" triggerClassName="react-filter-trigger" trigger={<><span>{statusFilter === "all" ? "Всички статуси" : userStatusLabels[statusFilter]}</span><DropdownChevron /></>}><DropdownOption selected={statusFilter === "all"} onClick={() => setStatusFilter("all")}>Всички статуси</DropdownOption><DropdownOption selected={statusFilter === "active"} onClick={() => setStatusFilter("active")}>Активни</DropdownOption><DropdownOption selected={statusFilter === "disabled"} onClick={() => setStatusFilter("disabled")}>Деактивирани</DropdownOption></DropdownMenu></label><label className="react-filter-field"><span>Изглед</span><DropdownMenu ariaLabel="Избор на изглед" triggerClassName="react-filter-trigger" trigger={<><span>{view === "trash" ? "Кошче" : "Активни потребители"}</span><DropdownChevron /></>}><DropdownOption selected={view === "active"} onClick={() => setView("active")}>Активни потребители</DropdownOption><DropdownOption selected={view === "trash"} onClick={() => setView("trash")}>Кошче</DropdownOption></DropdownMenu></label><button className="react-filter-clear" type="button" onClick={clearFilters} disabled={activeFilterCount === 0}>Изчисти филтрите</button><span className="react-filter-count">{activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}</span></>} />
   </AdminShell>
 }
