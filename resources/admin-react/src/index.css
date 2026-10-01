@@ -215,7 +215,8 @@ body { margin: 0; min-width: 320px; }
 .universal-dropdown-menu > button { display: flex; align-items: center; gap: 0.35rem; }
 .universal-dropdown-option:last-child, .universal-dropdown-menu > button:last-child { border-bottom: 0; }
 .universal-dropdown-option:hover, .universal-dropdown-option.is-selected, .universal-dropdown-menu > button:hover { background: #f2f2ec; }
-.universal-dropdown-option:disabled { cursor: not-allowed; opacity: 0.55; }
+.universal-dropdown-option:disabled, .universal-dropdown-menu > button:disabled { cursor: not-allowed; color: #9aa29a; background: #f5f6f3; opacity: 0.72; }
+.universal-dropdown-option:disabled:hover, .universal-dropdown-menu > button:disabled:hover { color: #9aa29a; background: #f5f6f3; }
 .universal-dropdown-option.is-danger { color: #b93624; }
 .react-status-badge { display: inline-flex; border-radius: 999px; padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 700; }
 .status-dot { width: 0.4rem; height: 0.4rem; margin: 0.25rem 0.35rem 0 0; border-radius: 999px; background: currentColor; }
