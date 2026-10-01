@@ -15,6 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "tsBuildInfoFile": "/tmp/flex-cms-admin-react-app.tsbuildinfo",
     "types": ["vite/client"],
     "paths": { "@/*": ["./src/*"] }
   },

@@ -50,6 +50,11 @@ final readonly class UserService
             throw new UserValidationFailed(['Разрешен е само един супер администратор.']);
         }
 
+        if ($user->getAttribute('role') === 'super_admin'
+            && ($data['role'] !== 'super_admin' || $data['status'] !== 'active')) {
+            throw new UserValidationFailed(['Супер администраторът не може да бъде деактивиран или да му бъде променена ролята.']);
+        }
+
         if ($data['password'] !== '') {
             $actingUser = $this->requireUser($actingUserId);
             $currentPassword = is_string($attributes['current_password'] ?? null) ? $attributes['current_password'] : '';
@@ -84,27 +89,59 @@ final readonly class UserService
 
     public function delete(int $id, int $actingUserId): void
     {
+        $this->forceDelete($id, $actingUserId);
+    }
+
+    public function trash(int $id, int $actingUserId): void
+    {
+        if ($id === $actingUserId) {
+            throw new UserValidationFailed(['Не можете да преместите собствения си профил в кошчето.']);
+        }
+
+        $user = $this->requireUserWithTrashed($id);
+        if (in_array($user->getAttribute('role'), ['admin', 'super_admin'], true)) {
+            throw new UserValidationFailed(['Администраторите и супер администраторите не могат да бъдат премествани в кошчето.']);
+        }
+        $user->setAttribute('status', 'disabled');
+        $user->saveOrFail();
+        $user->delete();
+    }
+
+    public function restore(int $id): User
+    {
+        $user = $this->requireUserWithTrashed($id);
+        $user->restore();
+        $user->setAttribute('status', 'disabled');
+        $user->saveOrFail();
+
+        return $user;
+    }
+
+    public function forceDelete(int $id, int $actingUserId): void
+    {
         if ($id === $actingUserId) {
             throw new UserValidationFailed(['Не можете да изтриете собствения си профил.']);
         }
-
-        $user = $this->requireUser($id);
+        $user = $this->requireUserWithTrashed($id);
         if (in_array($user->getAttribute('role'), ['admin', 'super_admin'], true)) {
             throw new UserValidationFailed(['Администраторите и супер администраторите не могат да бъдат изтривани.']);
         }
-
-        if ($user->getAttribute('role') === 'super_admin'
-            && $user->getAttribute('status') === 'active'
-            && $this->users->countActiveSuperAdmins() <= 1) {
-            throw new UserValidationFailed(['Последният активен супер администратор не може да бъде изтрит.']);
-        }
-
-        $user->delete();
+        $user->forceDelete();
     }
 
     private function requireUser(int $id): User
     {
         $user = $this->users->find($id);
+        if ($user === null) {
+            throw new UserNotFound(sprintf('User %d was not found.', $id));
+        }
+
+        return $user;
+    }
+
+    private function requireUserWithTrashed(int $id): User
+    {
+        $user = $this->users->findWithTrashed($id);
         if ($user === null) {
             throw new UserNotFound(sprintf('User %d was not found.', $id));
         }
@@ -135,6 +172,9 @@ final readonly class UserService
         }
         if (($creating || $password !== '') && strlen($password) < 12) {
             $errors[] = 'Паролата трябва да съдържа поне 12 символа.';
+        }
+        if (($creating || $password !== '') && array_key_exists('password_confirmation', $attributes) && $password !== (string) $attributes['password_confirmation']) {
+            $errors[] = 'Паролата и потвърждението не съвпадат.';
         }
         if (!in_array($role, self::ROLES, true)) {
             $errors[] = 'Ролята е невалидна.';

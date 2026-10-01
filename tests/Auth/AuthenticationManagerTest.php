@@ -39,6 +39,7 @@ final class AuthenticationManagerTest extends TestCase
             $table->string('role');
             $table->string('status');
             $table->dateTime('last_login_at')->nullable();
+            $table->dateTime('deleted_at')->nullable();
             $table->timestamps();
         });
         $this->users = new UserRepository();

@@ -48,8 +48,8 @@ export function DropdownMenu({ trigger, children, ariaLabel, triggerClassName = 
   </div>
 }
 
-export function DropdownOption({ children, selected = false, danger = false, onClick }: { children: ReactNode; selected?: boolean; danger?: boolean; onClick: () => void }) {
-  return <button className={`universal-dropdown-option${selected ? " is-selected" : ""}${danger ? " is-danger" : ""}`} type="button" role="menuitem" onClick={onClick}>{children}</button>
+export function DropdownOption({ children, selected = false, danger = false, disabled = false, onClick }: { children: ReactNode; selected?: boolean; danger?: boolean; disabled?: boolean; onClick: () => void }) {
+  return <button className={`universal-dropdown-option${selected ? " is-selected" : ""}${danger ? " is-danger" : ""}`} type="button" role="menuitem" disabled={disabled} onClick={onClick}>{children}</button>
 }
 
 export function DropdownChevron() {

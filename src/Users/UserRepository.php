@@ -15,6 +15,13 @@ final class UserRepository
         return $user instanceof User ? $user : null;
     }
 
+    public function findWithTrashed(int $id): ?User
+    {
+        $user = User::withTrashed()->find($id);
+
+        return $user instanceof User ? $user : null;
+    }
+
     public function findByEmail(string $email): ?User
     {
         $user = User::query()->where('email', strtolower($email))->first();
@@ -27,6 +34,15 @@ final class UserRepository
     {
         /** @var Collection<int, User> $users */
         $users = User::query()->orderBy('id')->get();
+
+        return $users;
+    }
+
+    /** @return Collection<int, User> */
+    public function trashed(): Collection
+    {
+        /** @var Collection<int, User> $users */
+        $users = User::onlyTrashed()->orderByDesc('deleted_at')->get();
 
         return $users;
     }

@@ -36,6 +36,7 @@ final class UserServiceTest extends TestCase
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('email_verification_required')->default(false);
             $table->dateTime('email_verified_at')->nullable();
+            $table->dateTime('deleted_at')->nullable();
             $table->timestamps();
         });
         $this->repository = new UserRepository();

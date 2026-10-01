@@ -6,9 +6,12 @@ namespace Flex\Users;
 
 use Flex\Auth\AuthenticatedUser;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class User extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'users';
 
     protected $fillable = [
@@ -35,6 +38,7 @@ final class User extends Model
             'email_verified_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
+            'deleted_at' => 'immutable_datetime',
         ];
     }
 

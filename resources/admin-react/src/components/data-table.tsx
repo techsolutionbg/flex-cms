@@ -2,13 +2,16 @@ import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 
 export type DataTableColumn<T> = { key: string; label: string; sortable?: boolean; render?: (row: T) => ReactNode; sortValue?: (row: T) => string | number }
-type DataTableProps<T> = { data: T[]; columns: DataTableColumn<T>[]; rowKey: (row: T) => string | number; loading?: boolean; emptyMessage?: string; toolbar?: ReactNode; bulkActions?: ReactNode; pageSize?: number; selectable?: boolean; selectedKeys?: ReadonlySet<string | number>; onSelectionChange?: (keys: Set<string | number>) => void }
+type DataTableProps<T> = { data: T[]; columns: DataTableColumn<T>[]; rowKey: (row: T) => string | number; loading?: boolean; emptyMessage?: string; toolbar?: ReactNode; bulkActions?: ReactNode; pageSize?: number; selectable?: boolean; selectedKeys?: ReadonlySet<string | number>; onSelectionChange?: (keys: Set<string | number>) => void; filterStorageKey?: string }
 
-export function DataTable<T>({ data, columns, rowKey, loading = false, emptyMessage = "Няма записи.", toolbar, bulkActions, pageSize = 10, selectable = false, selectedKeys = new Set(), onSelectionChange }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, rowKey, loading = false, emptyMessage = "Няма записи.", toolbar, bulkActions, pageSize = 10, selectable = false, selectedKeys = new Set(), onSelectionChange, filterStorageKey }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [descending, setDescending] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [toolbarOpen, setToolbarOpen] = useState(true)
+  const [toolbarOpen, setToolbarOpen] = useState(() => {
+    if (!filterStorageKey || typeof window === "undefined") return true
+    try { return window.localStorage.getItem(`flex-admin:table-filters:${filterStorageKey}`) !== "closed" } catch { return true }
+  })
   const filterContentId = useId()
   const sortedData = useMemo(() => {
     if (!sortKey) return data
@@ -27,6 +30,10 @@ export function DataTable<T>({ data, columns, rowKey, loading = false, emptyMess
   const allVisibleSelected = visibleKeys.length > 0 && visibleKeys.every((key) => selectedKeys.has(key))
   useEffect(() => setCurrentPage(1), [data, sortKey, descending])
   useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages) }, [currentPage, totalPages])
+  useEffect(() => {
+    if (!filterStorageKey || typeof window === "undefined") return
+    try { window.localStorage.setItem(`flex-admin:table-filters:${filterStorageKey}`, toolbarOpen ? "open" : "closed") } catch { /* localStorage may be unavailable */ }
+  }, [filterStorageKey, toolbarOpen])
   function sort(column: DataTableColumn<T>) {
     if (!column.sortable) return
     if (sortKey === column.key) setDescending((current) => !current)

@@ -7,6 +7,7 @@
 /composer.phar
 /node_modules/
 /resources/admin/node_modules/
+/resources/admin-react/node_modules/
 /resources/admin/dist/
 /resources/admin/.vite/
 /resources/admin/playwright-report/

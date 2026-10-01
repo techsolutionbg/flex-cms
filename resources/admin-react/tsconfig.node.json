@@ -4,6 +4,8 @@
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "tsBuildInfoFile": "/tmp/flex-cms-admin-react-node.tsbuildinfo",
+    "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node"]
   },
