@@ -109,15 +109,41 @@ function App() {
     let cancelled = false
 
     async function restoreSession() {
-      try {
-        const response = await fetch("/api/auth/me", {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        })
-        const body = await response.json().catch(() => ({})) as { user?: { role?: string } }
-        if (!cancelled) setAuthenticated(response.ok && body.user?.role === "super_admin")
-      } catch {
-        if (!cancelled) setAuthenticated(false)
+      const maxAttempts = 8
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        try {
+          const response = await fetch("/api/auth/me", {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          })
+          const body = await response.json().catch(() => ({})) as { user?: { role?: string } }
+
+          if (response.ok) {
+            if (!cancelled) setAuthenticated(body.user?.role === "super_admin")
+            return
+          }
+
+          // During a platform update the application can briefly return 503
+          // while the existing session remains valid. Keep the auth screen
+          // loading and retry instead of treating that as a logout.
+          if (![502, 503, 504].includes(response.status)) {
+            if (!cancelled) setAuthenticated(false)
+            return
+          }
+        } catch {
+          // A short connection reset is also expected while the platform
+          // switches files. Retry before showing the login screen.
+        }
+
+        if (attempt < maxAttempts - 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, Math.min(500 + attempt * 500, 2500)))
+        }
+      }
+
+      if (!cancelled) {
+        setAuthenticated(false)
       }
     }
 
