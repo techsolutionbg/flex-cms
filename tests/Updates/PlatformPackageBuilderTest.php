@@ -24,6 +24,7 @@ final class PlatformPackageBuilderTest extends TestCase
         mkdir($this->basePath . '/resources/admin/node_modules/package', 0770, true);
         mkdir($this->basePath . '/resources/admin/.git', 0770, true);
         mkdir($this->basePath . '/resources/admin-react', 0770, true);
+        mkdir($this->basePath . '/themes/flex-default/templates', 0770, true);
         mkdir($this->basePath . '/resources/views', 0770, true);
         mkdir($this->basePath . '/src/Feature/.git', 0770, true);
         mkdir($this->basePath . '/tests', 0770, true);
@@ -45,6 +46,7 @@ final class PlatformPackageBuilderTest extends TestCase
         file_put_contents($this->basePath . '/resources/admin/node_modules/package/index.js', 'must not ship');
         file_put_contents($this->basePath . '/resources/admin/.git/config', 'must not ship');
         file_put_contents($this->basePath . '/resources/admin-react/vite.config.js', 'local development config');
+        file_put_contents($this->basePath . '/themes/flex-default/templates/404.twig', 'must not ship');
         file_put_contents($this->basePath . '/resources/views/runtime.php', '<?php return true;');
         file_put_contents($this->basePath . '/composer.json', '{}');
     }
@@ -81,6 +83,7 @@ final class PlatformPackageBuilderTest extends TestCase
         self::assertFalse($archive->statName('payload/resources/admin/node_modules/package/index.js'));
         self::assertFalse($archive->statName('payload/resources/admin/.git/config'));
         self::assertNotFalse($archive->statName('payload/resources/admin-react/vite.config.js'));
+        self::assertFalse($archive->statName('payload/themes/flex-default/templates/404.twig'));
         self::assertFalse($archive->statName('payload/src/Feature/.git/config'));
         self::assertFalse($archive->statName('payload/tests/example.php'));
         $manifest = json_decode((string) $archive->getFromName('manifest.json'), true, 512, JSON_THROW_ON_ERROR);

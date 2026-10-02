@@ -18,6 +18,8 @@ final readonly class PlatformPackageBuilder
         'node_modules',
         'public/media',
         'resources/admin',
+        // Themes are managed separately and are protected by older updaters.
+        'themes',
     ];
 
     /** @var list<string> */
