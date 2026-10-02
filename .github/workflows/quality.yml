@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p storage
           cat > storage/.env <<'EOF'
-          APP_NAME=Flex CMS
+          APP_NAME="Flex CMS"
           APP_ENV=local
           APP_DEBUG=true
           APP_KEY=0000000000000000000000000000000000000000000000000000000000000000
