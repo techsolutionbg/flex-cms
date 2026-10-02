@@ -61,7 +61,7 @@ jobs:
           DB_STRICT=true
           DB_TIMEOUT=5
           DB_PERSISTENT=false
-          SESSION_DRIVER=array
+          SESSION_DRIVER=file
           CACHE_DRIVER=array
           PLUGINS_PATH=plugins
           THEMES_PATH=themes-external
