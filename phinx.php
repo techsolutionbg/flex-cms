@@ -9,6 +9,12 @@ if (is_file($environmentFile . '/.env')) {
     Dotenv::createImmutable($environmentFile)->safeLoad();
 }
 
+$environmentValue = static function (string $name, mixed $default = null): mixed {
+    $value = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
+
+    return $value === false || $value === null ? $default : $value;
+};
+
 return [
     'paths' => [
         'migrations' => '%%PHINX_CONFIG_DIR%%/database/migrations',
@@ -19,11 +25,11 @@ return [
         'default_environment' => 'default',
         'default' => [
             'adapter' => 'mysql',
-            'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
-            'name' => $_ENV['DB_DATABASE'] ?? 'flex_cms',
-            'user' => $_ENV['DB_USERNAME'] ?? 'flex_cms',
-            'pass' => $_ENV['DB_PASSWORD'] ?? '',
-            'port' => (int) ($_ENV['DB_PORT'] ?? 3306),
+            'host' => $environmentValue('DB_HOST', '127.0.0.1'),
+            'name' => $environmentValue('DB_DATABASE', 'flex_cms'),
+            'user' => $environmentValue('DB_USERNAME', 'flex_cms'),
+            'pass' => $environmentValue('DB_PASSWORD', ''),
+            'port' => (int) $environmentValue('DB_PORT', 3306),
             'charset' => 'utf8mb4',
         ],
     ],
