@@ -99,7 +99,7 @@ final class FlexConsoleApplication extends Application
             new UpdateProcessCommand($updateJobProcessor),
             new UpdateStatusCommand($updateJobStore),
             new PluginRollbackCommand($pluginRollback),
-            new PlatformBuildCommand($platformPackageBuilder),
+            new PlatformBuildCommand($platformPackageBuilder, $registry),
             new PluginListCommand($pluginRegistry),
             new PluginInstallCommand($pluginManager),
             new PluginActivateCommand($pluginManager),

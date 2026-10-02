@@ -35,7 +35,7 @@ export type PageSettings = {
   menu_order?: number
   use_parent_slugs?: boolean
   show_in_navigation?: boolean
-  show_in_sitemap?: boolean
+  no_index?: boolean
 }
 
 export type PagePluginField = { plugin: string; plugin_name: string; plugin_version: string; id: string; type: "text" | "textarea" | "checkbox"; label: string; default: string | boolean; hint: string; max_length?: number }
@@ -52,6 +52,7 @@ export type PageRecord = {
   updated_at?: string | null
   deleted_at?: string | null
   plugin_fields?: Record<string, Record<string, string | boolean>>
+  plugin_settings?: Record<string, Record<string, string | boolean>>
 }
 
 export type UserRecord = { id: number; name: string; email: string; role: string; status: string; deleted_at?: string | null }

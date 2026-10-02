@@ -35,7 +35,7 @@ final readonly class InstallerInput
             filter_var($values['database_port'] ?? null, FILTER_VALIDATE_INT) ?: 0,
             self::text($values, 'database_name'),
             self::text($values, 'database_username'),
-            (string) ($values['database_password'] ?? ''),
+            self::databasePassword($values),
             self::text($values, 'admin_name'),
             strtolower(self::text($values, 'admin_email')),
             (string) ($values['admin_password'] ?? ''),
@@ -93,6 +93,21 @@ final readonly class InstallerInput
         $value = $values[$key] ?? '';
 
         return is_string($value) ? trim($value) : '';
+    }
+
+    /** @param array<string, mixed> $values */
+    private static function databasePassword(array $values): string
+    {
+        $submitted = self::text($values, 'database_password');
+        if ($submitted !== '') {
+            return $submitted;
+        }
+
+        // Keep deployment-provided credentials server-side. The password is
+        // never rendered into the installer form or returned through JSON.
+        $configured = getenv('DB_PASSWORD');
+
+        return is_string($configured) ? $configured : '';
     }
 
     private function isAllowedSiteUrl(): bool

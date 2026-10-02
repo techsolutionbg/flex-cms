@@ -40,6 +40,23 @@ final class InstallerInputTest extends TestCase
         self::assertSame('http://192.168.1.225:8082', $input->siteUrl);
     }
 
+    public function testItUsesTheDeploymentDatabasePasswordWhenTheFormFieldIsBlank(): void
+    {
+        $previous = getenv('DB_PASSWORD');
+        putenv('DB_PASSWORD=deployment-secret');
+
+        try {
+            $values = $this->validValues();
+            $values['database_password'] = '';
+
+            $input = InstallerInput::fromArray($values);
+
+            self::assertSame('deployment-secret', $input->databasePassword);
+        } finally {
+            putenv($previous === false ? 'DB_PASSWORD' : 'DB_PASSWORD=' . $previous);
+        }
+    }
+
     public function testItRejectsInvalidAndWeakValues(): void
     {
         $values = $this->validValues();

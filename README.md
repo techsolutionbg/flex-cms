@@ -64,6 +64,20 @@ themes/              инсталирани theme пакети
 - Зависимости: [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)
 - Подробна структура: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
+### Създаване на релийз
+
+Версиите използват Semantic Versioning: `MAJOR.MINOR.PATCH`.
+От корена на проекта създайте пакет с:
+
+```bash
+php flex platform:release --bump=patch   # 0.1.38 → 0.1.39
+php flex platform:release --bump=minor   # 0.1.38 → 0.2.0
+php flex platform:release --bump=major   # 0.1.38 → 1.0.0
+```
+
+Може да се използват и цифрите `--bump=1` (major), `--bump=2` (minor) и `--bump=3` (patch). Ако `--bump` и `--target-version` не са зададени, се увеличава patch версията. Не използвайте двете опции едновременно.
+Командата създава ZIP пакет и SHA-256 checksum; публикуването към update сървъра е отделна стъпка.
+
 ## Архитектурни граници
 
 - Core не зависи от конкретна тема или плъгин.

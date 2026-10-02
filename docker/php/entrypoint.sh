@@ -46,7 +46,10 @@ if [ "$(id -u)" = "0" ]; then
         chgrp "$runtime_gid" storage/.env
         chmod 640 storage/.env
     fi
-    chgrp -R "$runtime_gid" storage/backups storage/updates
+    # Apache runs as www-data while the updater runs as the host runtime user.
+    # Keep www-data as owner and the updater group as the shared group so both
+    # processes can create and lock queue/backup files after a clean install.
+    chown -R "www-data:$runtime_gid" storage/backups storage/updates
     chmod -R u+rwX,g+rwX,o-rwx storage/backups storage/updates
 fi
 

@@ -38,7 +38,7 @@ final readonly class RemoteThemeInstaller
         if (!is_array($current) || !$current['valid']) throw new RemoteCatalogException(sprintf('Темата „%s“ не е инсталирана или е невалидна.', $themeId));
         $catalog = $this->catalog->manifest($themeId);
         $channel = $this->configuration->string('extensions.updates.channel');
-        $candidates = array_values(array_filter($catalog->releases, static fn(\Flex\Themes\ThemeReleaseManifest $release): bool => $release->package === $themeId && $release->channel->value === $channel && version_compare($release->version, (string) $current['version'], '>') && Semver::satisfies(PHP_VERSION, $release->minimumPhp) && Semver::satisfies((string) $current['version'], $release->compatibleFrom)));
+        $candidates = array_values(array_filter($catalog->releases, fn(\Flex\Themes\ThemeReleaseManifest $release): bool => $release->package === $themeId && $release->channel->value === $channel && version_compare($release->version, (string) $current['version'], '>') && Semver::satisfies(PHP_VERSION, $release->minimumPhp) && Semver::satisfies((string) $current['version'], $release->compatibleFrom)));
         usort($candidates, static fn($a, $b): int => version_compare($b->version, $a->version));
         $release = $candidates[0] ?? null;
         if ($release === null) throw new RemoteCatalogException(sprintf('Няма съвместимо обновяване за тема „%s“.', $themeId));

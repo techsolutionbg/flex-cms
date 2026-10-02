@@ -25,7 +25,11 @@ final readonly class InstallerApplication
         $this->startSession();
 
         if (!$this->state->requiresInstallation()) {
-            $this->respond($this->renderer->unavailable(), 404);
+            if ($this->wantsJson()) {
+                $this->respondJson(['redirect_url' => $this->adminUrl()], 404);
+            }
+
+            $this->redirectToAdmin();
         }
 
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -47,9 +51,9 @@ final readonly class InstallerApplication
             $this->installer->install($input);
             unset($_SESSION['flex_installer_csrf']);
             if ($this->wantsJson()) {
-                $this->respondJson(['success' => true, 'site_url' => $input->siteUrl]);
+                $this->respondJson(['success' => true, 'admin_url' => $this->adminUrl()]);
             }
-            $this->respond($this->renderer->success($input->siteUrl));
+            $this->respond($this->renderer->success($this->adminUrl()));
         } catch (InstallerException $exception) {
             $safeValues = array_map(
                 static fn(mixed $value): string => is_string($value) ? $value : '',
@@ -135,5 +139,30 @@ final readonly class InstallerApplication
     private function respondJson(array $payload, int $status = 200): never
     {
         $this->respond(json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $status, 'application/json; charset=utf-8');
+    }
+
+    private function redirectToAdmin(): never
+    {
+        header('Location: ' . $this->adminUrl(), true, 302);
+        exit;
+    }
+
+    private function adminUrl(): string
+    {
+        $configured = $_ENV['ADMIN_URL'] ?? getenv('ADMIN_URL');
+        if (!is_string($configured) || $configured === '') {
+            return '/';
+        }
+
+        if (str_starts_with($configured, '/') && !str_starts_with($configured, '//')) {
+            return $configured;
+        }
+
+        $parts = parse_url($configured);
+        if (is_array($parts) && in_array($parts['scheme'] ?? '', ['http', 'https'], true) && is_string($parts['host'] ?? null)) {
+            return $configured;
+        }
+
+        return '/';
     }
 }

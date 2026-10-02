@@ -25,7 +25,7 @@ final readonly class RemotePluginInstaller
         $channel = $this->configuration->string('extensions.updates.channel');
         $candidates = array_values(array_filter(
             $catalog->releases,
-            static fn(RemoteReleaseManifest $release): bool => $release->package === $pluginId
+            fn(RemoteReleaseManifest $release): bool => $release->package === $pluginId
                 && $release->type === 'plugin'
                 && $release->channel->value === $channel
                 && Semver::satisfies(PHP_VERSION, $release->minimumPhp)

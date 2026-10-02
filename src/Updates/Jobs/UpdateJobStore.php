@@ -204,8 +204,9 @@ final class UpdateJobStore
     {
         // The web container and the privileged updater share this directory.
         // Keep the queue owned by www-data so both processes can update it.
+        // Preserve the shared group configured by the container entrypoint.
+        // Apache and the updater use different users but must share this path.
         @chown($path, 'www-data');
-        @chgrp($path, 'www-data');
         @chmod($path, $mode);
     }
 }

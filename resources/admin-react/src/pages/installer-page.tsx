@@ -24,11 +24,11 @@ export function InstallerPage() {
     let cancelled = false
     fetch("/installer-api", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
       .then(async (response) => {
+        const body = await response.json().catch(() => ({})) as Partial<InstallerPayload> & { redirect_url?: string; error?: { message?: string } }
         if (response.status === 404) {
-          window.location.replace("/")
+          window.location.replace(body.redirect_url || "/")
           return
         }
-        const body = await response.json().catch(() => ({})) as Partial<InstallerPayload> & { error?: { message?: string } }
         if (!response.ok || !body.csrf_token || !body.sections) throw new Error(body.error?.message ?? "Инсталационната форма не можа да бъде заредена.")
         if (cancelled) return
         const nextPayload = body as InstallerPayload
@@ -50,11 +50,11 @@ export function InstallerPage() {
     try {
       const form = new URLSearchParams({ csrf_token: payload.csrf_token, ...values })
       const response = await fetch("/installer-api", { method: "POST", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" }, body: form })
-      const body = await response.json().catch(() => ({})) as { success?: boolean; site_url?: string; error?: { message?: string } }
+      const body = await response.json().catch(() => ({})) as { success?: boolean; admin_url?: string; error?: { message?: string } }
       if (!response.ok || !body.success) throw new Error(body.error?.message ?? "Инсталацията не беше успешна.")
       setCompleted(true)
       toast.success("Flex CMS беше инсталиран успешно.")
-      window.setTimeout(() => { window.location.href = body.site_url || "/" }, 900)
+      window.setTimeout(() => { window.location.href = body.admin_url || "/" }, 900)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Инсталацията не беше успешна."
       setError(message)
@@ -66,7 +66,7 @@ export function InstallerPage() {
   if (loading) return <main className="installer-react-loading"><LoaderCircle className="size-7 animate-spin text-[#ff563d]" /></main>
 
   return <main className="installer-react-page"><div className="installer-react-shell">
-    <header className="installer-react-header"><img src="/assets/brand/logo.png" alt="Flex CMS" /><span>Инсталация на платформа</span></header>
+    <header className="installer-react-header"><img src="/assets/brand/logo.png" alt="Flex CMS" /></header>
     <div className="installer-react-intro"><span className="installer-react-kicker">Flex CMS</span><h1>Настройте своя сайт</h1><p>Конфигурирайте основните настройки, свържете базата данни и създайте първия администратор.</p></div>
     {error && <div className="react-form-error" role="alert"><CircleAlert className="mt-0.5 size-4 shrink-0" />{error}</div>}
     {completed && <div className="installer-react-success" role="status"><LoaderCircle className="size-5 animate-spin" />Инсталацията приключи. Подготвям административния панел…</div>}
