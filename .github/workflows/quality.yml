@@ -82,7 +82,7 @@ jobs:
         run: npm ci && npm run build
       - run: composer install --no-interaction --prefer-dist
       - run: composer validate --strict
-      - run: vendor/bin/phinx migrate --configuration phinx.php --environment default --no-interaction
+      - run: php vendor/bin/phinx migrate --configuration phinx.php --environment default --no-interaction
       - run: vendor/bin/phpunit
       - run: vendor/bin/phpstan analyse
       - run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
