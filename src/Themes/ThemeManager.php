@@ -69,7 +69,7 @@ final class ThemeManager
         return 'flex-default';
     }
 
-    /** @return list<array{id: string, name: string, version: string, author: string, description: string, path: string, active: bool, valid: bool, error: string|null}> */
+    /** @return list<array{id: string, name: string, version: string, author: string, description: string, tags: list<string>, screenshot_url: string|null, supports: list<string>, path: string, active: bool, valid: bool, error: string|null}> */
     public function all(): array
     {
         $root = rtrim($this->paths->themes(), '/');
@@ -93,6 +93,9 @@ final class ThemeManager
                 'version' => '—',
                 'author' => '—',
                 'description' => '',
+                'tags' => [],
+                'screenshot_url' => null,
+                'supports' => [],
                 'path' => $path,
                 'active' => $directory === $this->activeTheme(),
                 'valid' => false,
@@ -121,6 +124,19 @@ final class ThemeManager
                     if (isset($manifest[$field]) && is_string($manifest[$field])) {
                         $record[$field] = trim($manifest[$field]);
                     }
+                }
+                if (is_array($manifest['tags'] ?? null)) {
+                    $record['tags'] = array_values(array_filter(array_map(static fn(mixed $tag): string => is_string($tag) ? trim($tag) : '', $manifest['tags']), static fn(string $tag): bool => $tag !== ''));
+                }
+                if (is_array($manifest['supports'] ?? null)) {
+                    $supports = $manifest['supports'];
+                    $record['supports'] = array_is_list($supports)
+                        ? array_values(array_filter(array_map(static fn(mixed $support): string => is_string($support) ? trim($support) : '', $supports), static fn(string $support): bool => $support !== ''))
+                        : array_values(array_filter(array_map(static fn(mixed $support, mixed $enabled): string => $enabled && is_string($support) ? trim($support) : '', array_keys($supports), $supports), static fn(string $support): bool => $support !== ''));
+                }
+                $screenshot = is_string($manifest['screenshot'] ?? null) ? trim($manifest['screenshot']) : '';
+                if ($screenshot !== '' && preg_match('/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._\/-]*$/', $screenshot) === 1 && is_file($path . '/assets/' . $screenshot)) {
+                    $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $screenshot)));
                 }
             $record['valid'] = is_file($path . '/index.php') || is_dir($path . '/templates');
             if (!$record['valid']) {

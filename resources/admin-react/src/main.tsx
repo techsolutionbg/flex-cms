@@ -11,6 +11,7 @@ import { DashboardPage } from "@/pages/dashboard-page"
 import { UpdatesPage } from "@/pages/updates-page"
 import { InstallerPage } from "@/pages/installer-page"
 import { ThemesPage } from "@/pages/themes-page"
+import { ThemeStorePage } from "@/pages/theme-store-page"
 import "./index.css"
 
 
@@ -23,7 +24,7 @@ function App() {
   const installerRoute = window.location.pathname === "/install"
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "themes" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "user-form" | "form" | "settings">("dashboard")
+  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "themes" | "theme-store" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "user-form" | "form" | "settings">("dashboard")
   const [editingPage, setEditingPage] = useState<PageRecord | null>(null)
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
   const [pluginDetail, setPluginDetail] = useState<PluginRecord | null>(null)
@@ -36,6 +37,7 @@ function App() {
   function goToPages() { pushRoute("/pages"); setPageView("pages") }
   function goToUsers() { pushRoute("/users"); setPageView("users") }
   function goToThemes() { pushRoute("/themes"); setPageView("themes") }
+  function goToThemeStore() { pushRoute("/theme-store"); setPageView("theme-store") }
   function goToPlugins() { pushRoute("/plugins"); setPageView("plugins") }
   function goToUpdates() { pushRoute("/updates"); setPageView("updates") }
   function goToPluginCatalog() { pushRoute("/plugins/catalog"); setPageView("plugin-catalog") }
@@ -56,6 +58,7 @@ function App() {
       if (window.location.pathname === "/pages") setPageView("pages")
       else if (window.location.pathname === "/users") setPageView("users")
       else if (window.location.pathname === "/themes") setPageView("themes")
+      else if (window.location.pathname === "/theme-store") setPageView("theme-store")
       else if (window.location.pathname === "/plugins") setPageView("plugins")
       else if (window.location.pathname === "/plugins/catalog") setPageView("plugin-catalog")
       else if (window.location.pathname === "/updates") setPageView("updates")
@@ -74,6 +77,7 @@ function App() {
     if (path === "/pages") { setPageView("pages"); return }
     if (path === "/users") { setPageView("users"); return }
     if (path === "/themes") { setPageView("themes"); return }
+    if (path === "/theme-store") { setPageView("theme-store"); return }
     if (path === "/plugins") { setPageView("plugins"); return }
     if (path === "/plugins/catalog") { setPageView("plugin-catalog"); return }
     if (path === "/updates") { setPageView("updates"); return }
@@ -188,6 +192,10 @@ function App() {
 
   if (authenticated === null) {
     return <main className="auth-loading-screen" aria-label="Проверка на сесия"><LoaderCircle className="size-6 animate-spin text-[#ff8062]" /></main>
+  }
+
+  if (authenticated && pageView === "theme-store") {
+    return <><Toaster position="top-center" closeButton richColors theme="light" /><ThemeStorePage onLogout={() => void logout()} onNavigate={(label) => label === "Теми" ? goToThemes() : label === "Разширения" ? goToPlugins() : label === "Обновявания" ? goToUpdates() : label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} onBack={goToThemes} loggingOut={loggingOut} /></>
   }
 
   return <>

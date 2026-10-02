@@ -14,6 +14,8 @@ export default defineConfig({
         // internal service name (`app`).
         proxy: {
             "/api": { target: "http://app", changeOrigin: false },
+            "/theme-assets": { target: "http://app", changeOrigin: false },
+            "/admin": { target: "http://app", changeOrigin: false },
             "/installer-api": {
                 target: "http://app",
                 changeOrigin: false,

@@ -51,7 +51,13 @@ final class ThemeCatalogClient
         }
         $response = $this->transport->get($url, $headers);
         if ($response->status === 304 && is_array($cached)) return new RemoteCatalogTransportResponse(200, (string) ($cached['body'] ?? ''), (array) ($cached['headers'] ?? []));
-        if ($response->status !== 200) return $response;
+        if ($response->status !== 200) {
+            // Keep the last valid catalog available when the hosting endpoint is temporarily unavailable.
+            if (is_array($cached) && is_string($cached['body'] ?? null) && $cached['body'] !== '') {
+                return new RemoteCatalogTransportResponse(200, $cached['body'], (array) ($cached['headers'] ?? []));
+            }
+            return $response;
+        }
         if (!is_dir(dirname($path))) mkdir(dirname($path), 0775, true);
         file_put_contents($path, json_encode(['body' => $response->body, 'headers' => $response->headers, 'stored_at' => time(), ...isset($response->headers['etag']) ? ['etag' => $response->headers['etag']] : [], ...isset($response->headers['last-modified']) ? ['last_modified' => $response->headers['last-modified']] : []], JSON_THROW_ON_ERROR), LOCK_EX);
 

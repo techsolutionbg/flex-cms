@@ -21,5 +21,6 @@ final class CoreRouteServiceProvider implements ServiceProviderInterface
         $routes->get('/extensions/{id}/assets/{asset:.+}', ExtensionFrontendAssetController::class, 'extension.frontend.asset');
         $routes->get('/themes/{theme}/style.css', ThemeAssetController::class, 'theme.style');
         $routes->get('/themes/{theme}/assets/{asset:.+}', ThemeAssetController::class, 'theme.asset');
+        $routes->get('/theme-assets/{theme}/{asset:.+}', ThemeAssetController::class, 'theme.admin.asset');
     }
 }

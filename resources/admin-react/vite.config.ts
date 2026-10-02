@@ -13,6 +13,10 @@ export default defineConfig({
     // Keep the browser host when forwarding requests. The backend validates
     // trusted hosts and must see localhost (or the LAN host), not Docker's
     // internal service name (`app`).
-    proxy: { "/api": { target: "http://app", changeOrigin: false } },
+    proxy: {
+      "/api": { target: "http://app", changeOrigin: false },
+      "/theme-assets": { target: "http://app", changeOrigin: false },
+      "/admin": { target: "http://app", changeOrigin: false },
+    },
   },
 })

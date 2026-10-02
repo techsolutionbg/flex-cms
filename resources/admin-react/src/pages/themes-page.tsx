@@ -5,11 +5,12 @@ import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeRecord } from "@/lib/admin-types"
 import { toast } from "sonner"
+import { Eye, Power, Trash2, Upload } from "lucide-react"
 
-type ThemeAction = "activate" | "deactivate" | "delete"
-type ThemesPageProps = { onLogout: () => void; onNavigate: (label: string) => void; loggingOut: boolean }
+type ThemeAction = "activate" | "update_remote" | "delete"
+type ThemesPageProps = { onLogout: () => void; onNavigate: (label: string) => void; onCatalog?: () => void; loggingOut: boolean }
 
-export function ThemesPage({ onLogout, onNavigate, loggingOut }: ThemesPageProps) {
+export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: ThemesPageProps) {
   const [themes, setThemes] = useState<ThemeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -36,16 +37,50 @@ export function ThemesPage({ onLogout, onNavigate, loggingOut }: ThemesPageProps
       if (!response.ok) throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
       if (body.themes) setThemes(body.themes)
       else await loadThemes()
-      toast.success(action === "activate" ? "Темата е активирана." : action === "deactivate" ? "Темата е деактивирана." : "Темата е изтрита.")
+      toast.success(action === "activate" ? "Темата е активирана." : action === "update_remote" ? "Темата е обновена." : "Темата е изтрита.")
     } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.") }
     finally { setBusyId(null) }
   }
 
   return <AdminShell title="Теми" onLogout={onLogout} onNavigate={onNavigate} activeItem="Теми" loggingOut={loggingOut}>
-    <div className="react-page-heading"><div><h1>Теми</h1><Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} /></div></div>
-    <section className="react-card">
-      <div className="react-card-header"><h2>Инсталирани теми</h2><span>{themes.length} теми</span></div>
-      {loading ? <p>Зареждане…</p> : themes.length === 0 ? <p>Няма открити теми.</p> : <div className="react-stack-list">{themes.map((theme) => { const busy = busyId === theme.id; return <article className="react-list-item" key={theme.id}><div><h3>{theme.name}</h3><p>{theme.description || "Без описание."}</p><small>{theme.id} · версия {theme.version}{theme.update_available ? ` · нова версия ${theme.available_version}` : ""}</small>{theme.error && <small className="react-error-text">{theme.error}</small>}</div><div className="react-button-row"><span className={`react-status-badge status-${theme.active ? "active" : "inactive"}`}><span className="status-dot" />{theme.active ? "Активна" : "Неактивна"}</span>{theme.valid && !theme.active && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "activate")}>{busy && <span className="react-button-spinner" />}Активирай</LoadingButton>}{theme.active && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "deactivate")}>{busy && <span className="react-button-spinner" />}Деактивирай</LoadingButton>}</div></article>})}</div>}
+    <div className="react-page-heading"><div><h1>Теми ({themes.length})</h1><Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} /></div><button type="button" onClick={() => onCatalog ? onCatalog() : window.location.assign("/theme-store")}>Каталог с теми</button></div>
+    <section className="themes-section">
+      {loading ? <p>Зареждане…</p> : themes.length === 0 ? <p>Няма открити теми.</p> : <div className="theme-grid">{themes.map((theme) => {
+        const busy = busyId === theme.id
+
+        return <article className="theme-card" key={theme.id}>
+          <div className="theme-card-preview">
+            <img src={theme.screenshot_url || "/theme-placeholder.png"} alt={`Преглед на ${theme.name}`} onError={(event) => {
+              if (event.currentTarget.src.endsWith("/theme-placeholder.png")) return
+              event.currentTarget.src = "/theme-placeholder.png"
+            }} />
+            {theme.active && <span className="theme-card-active">Активна тема</span>}
+          </div>
+          <div className="theme-card-body">
+            <div className="theme-card-title"><div><h3>{theme.name}</h3><small>{theme.id}</small></div><span className={`react-status-badge status-${theme.active ? "active" : "inactive"}`}><span className="status-dot" />{theme.active ? "Активна" : "Неактивна"}</span></div>
+            <p>{theme.description || "Без описание."}</p>
+            <div className="theme-card-meta"><span>Версия <strong>{theme.version}</strong></span><span>Автор <strong>{theme.author}</strong></span></div>
+            {theme.tags && theme.tags.length > 0 && <div className="theme-card-tags">{theme.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
+            {theme.update_available && <div className="theme-card-update">Налична версия {theme.available_version}</div>}
+            {theme.release_notes && <div className="theme-card-notes"><strong>Какво ново</strong><span>{theme.release_notes}</span></div>}
+            {theme.error && <small className="react-error-text">{theme.error}</small>}
+          </div>
+          <div className="theme-card-actions">
+            <a className="theme-card-button" href={`/admin/themes/${encodeURIComponent(theme.id)}/preview`} target="_blank" rel="noopener"><Eye aria-hidden="true" />Преглед</a>
+            {theme.valid && !theme.active && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "activate")}>
+              {busy && <span className="react-button-spinner" />}<Power aria-hidden="true" />Активирай
+            </LoadingButton>}
+            {theme.update_available && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "update_remote")}>
+              {busy && <span className="react-button-spinner" />}<Upload aria-hidden="true" />Обнови
+            </LoadingButton>}
+            {!theme.active && <LoadingButton type="button" disabled={busy} onClick={() => {
+              if (window.confirm(`Да бъде ли изтрита темата „${theme.name}“?`)) void runAction(theme, "delete")
+            }}>
+              {busy && <span className="react-button-spinner" />}<Trash2 aria-hidden="true" />Изтрий
+            </LoadingButton>}
+          </div>
+        </article>
+      })}</div>}
     </section>
   </AdminShell>
 }

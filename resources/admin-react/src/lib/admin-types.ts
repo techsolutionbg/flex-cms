@@ -97,10 +97,30 @@ export type ThemeRecord = {
   version: string
   author: string
   description: string
+  tags?: string[]
+  screenshot_url?: string | null
+  supports?: string[]
   active: boolean
   valid: boolean
   error?: string | null
   available_version?: string | null
   release_notes?: string | null
+  update_available?: boolean
+}
+
+export type ThemeCatalogRecord = {
+  id: string
+  name: string
+  description: string
+  author: string
+  screenshot_url?: string | null
+  tags?: string[]
+  version: string
+  release_notes?: string | null
+  published_at?: string
+  size?: number
+  installed: boolean
+  active: boolean
+  installed_version?: string | null
   update_available?: boolean
 }
