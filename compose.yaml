@@ -13,10 +13,13 @@ services:
         condition: service_started
     ports:
       - "${APP_PORT:-8080}:80"
+      - "${PUBLIC_PORT:-8088}:80"
     group_add:
       - "${FLEX_CMS_GID:-1000}"
     environment:
       APP_ENV: local
+      APP_KEY: "${APP_KEY:-}"
+      THEMES_PATH: "${THEMES_PATH:-themes-external}"
       TRUSTED_HOSTS: "${TRUSTED_HOSTS:-localhost,127.0.0.1,app,192.168.1.225}"
       VITE_DEV_SERVER_URL: "${VITE_DEV_SERVER_URL:-http://192.168.1.225:5173}"
       DB_HOST: "${DB_HOST:-mysql}"

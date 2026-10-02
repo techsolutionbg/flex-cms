@@ -29,6 +29,21 @@ final class ThemeManager
         if (preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) !== 1) {
             throw new \RuntimeException('Невалиден идентификатор на тема.');
         }
+        $phpTemplate = $this->phpTemplate($theme, $template);
+        if ($phpTemplate !== null) {
+        $themeAsset = fn(string $asset): string => ltrim($asset, '/') === 'style.css'
+            ? '/themes/' . rawurlencode($theme) . '/style.css'
+            : '/themes/' . rawurlencode($theme) . '/assets/' . ltrim($asset, '/');
+            ob_start();
+            try {
+                extract($data + ['theme' => $theme, 'theme_asset' => $themeAsset], EXTR_SKIP);
+                include $phpTemplate;
+                return (string) ob_get_clean();
+            } catch (\Throwable $exception) {
+                ob_end_clean();
+                throw $exception;
+            }
+        }
         $templatesPath = $this->paths->themes($theme . '/templates');
         if (!is_dir($templatesPath)) throw new \RuntimeException(sprintf('Активната тема „%s“ не е намерена.', $theme));
         if ($this->twig === null || $this->loadedTheme !== $theme) {
@@ -44,7 +59,14 @@ final class ThemeManager
         $stored = Setting::query()->find('site.active_theme');
         $theme = trim((string) ($stored instanceof Setting ? $stored->getAttribute('value') : $this->configuration->string('app.active_theme', 'flex-default')));
 
-        return $theme !== '' && preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) === 1 ? $theme : 'flex-default';
+        if ($theme !== '' && preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) === 1 && is_dir($this->paths->themes($theme))) {
+            return $theme;
+        }
+        if (is_dir($this->paths->themes('flex-starter'))) {
+            return 'flex-starter';
+        }
+
+        return 'flex-default';
     }
 
     /** @return list<array{id: string, name: string, version: string, author: string, description: string, path: string, active: bool, valid: bool, error: string|null}> */
@@ -100,9 +122,9 @@ final class ThemeManager
                         $record[$field] = trim($manifest[$field]);
                     }
                 }
-                $record['valid'] = is_dir($path . '/templates');
-                if (!$record['valid']) {
-                    $record['error'] = 'Липсва папка templates.';
+            $record['valid'] = is_file($path . '/index.php') || is_dir($path . '/templates');
+            if (!$record['valid']) {
+                $record['error'] = 'Липсва index.php или папка templates.';
                 }
             } catch (\Throwable $exception) {
                 $record['error'] = $exception->getMessage();
@@ -175,6 +197,17 @@ final class ThemeManager
         }
         $setting->fill(['value' => $value, 'type' => 'string', 'group' => 'system', 'autoload' => true]);
         $setting->saveOrFail();
+    }
+
+    private function phpTemplate(string $theme, string $template): ?string
+    {
+        $root = $this->paths->themes($theme);
+        if (!is_dir($root)) return null;
+        foreach ([pathinfo($template, PATHINFO_FILENAME) . '.php', 'index.php'] as $candidate) {
+            $path = $root . '/' . $candidate;
+            if (is_file($path) && is_readable($path)) return $path;
+        }
+        return null;
     }
 
     private function deleteDirectory(string $path): void

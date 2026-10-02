@@ -6,6 +6,7 @@ import {
   Menu,
   Puzzle,
   RefreshCw,
+  Palette,
   UserRound,
   UsersRound,
   X,
@@ -29,6 +30,7 @@ const groups: SidebarGroup[] = [
     items: [
       { label: "Табло", icon: LayoutDashboard, active: true },
       { label: "Страници", icon: FileText },
+      { label: "Теми", icon: Palette },
     ],
   },
   {

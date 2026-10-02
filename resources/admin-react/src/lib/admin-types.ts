@@ -90,3 +90,17 @@ export type PluginCatalogRecord = {
   installed_version?: string | null
   update_available?: boolean
 }
+
+export type ThemeRecord = {
+  id: string
+  name: string
+  version: string
+  author: string
+  description: string
+  active: boolean
+  valid: boolean
+  error?: string | null
+  available_version?: string | null
+  release_notes?: string | null
+  update_available?: boolean
+}

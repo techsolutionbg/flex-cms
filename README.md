@@ -50,7 +50,7 @@ resources/views/     Twig и server-rendered templates
 src/                 platform modules и shared infrastructure
 storage/             environment, cache, logs и update runtime data
 tests/               backend, architecture и integration tests
-themes/              инсталирани theme пакети
+themes-external/     външни theme пакети (отделни Git репозитори)
 ```
 
 Кодът на frontend-а не се обслужва директно. Development режимът използва Vite, а production използва единствено hashed файловете и manifest-а в `public/build/admin/`.
@@ -97,7 +97,7 @@ php flex platform:publish --bump=patch --release-notes="Описание на п
 - MySQL 8.0+;
 - Apache, Nginx или LiteSpeed с document root към `public/`;
 - HTTPS и outbound HTTPS за автоматични обновявания;
-- write права за `storage/`, `public/media/`, `plugins/` и `themes/`;
+- write права за `storage/`, `public/media/`, `plugins/` и външната папка за теми;
 - препоръчителен `memory_limit` поне 256 MB.
 
 Никога не насочвайте document root към project root и не качвайте development `.env`, `node_modules`, тестове или frontend source в production.

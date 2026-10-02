@@ -7,7 +7,7 @@ namespace Flex\Providers;
 use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMiddleware};
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
-use Flex\Http\Controller\Admin\{AdminDashboardController, AdminDashboardSummaryController, AdminPagesController, AdminPagesDataController, AdminPagesFormController, AdminPluginActionController, AdminPluginCatalogDataController, AdminPluginUploadController, AdminPluginsController, AdminPluginsDataController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminThemeActionController, AdminThemeCatalogController, AdminThemePreviewController, AdminThemesController, AdminUpdatesActionController, AdminUpdatesController, AdminUpdatesDataController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
+use Flex\Http\Controller\Admin\{AdminDashboardController, AdminDashboardSummaryController, AdminPagesController, AdminPagesDataController, AdminPagesFormController, AdminPluginActionController, AdminPluginCatalogDataController, AdminPluginUploadController, AdminPluginsController, AdminPluginsDataController, AdminProfileController, AdminSectionStateController, AdminSidebarWidthController, AdminThemeActionController, AdminThemeCatalogController, AdminThemePreviewController, AdminThemesController, AdminThemesDataController, AdminUpdatesActionController, AdminUpdatesController, AdminUpdatesDataController, AdminUpdatesInspectController, AdminUpdatesInstallController, AdminUpdatesQueueController, AdminUpdatesRemoteController, AdminUpdatesRollbackController, AdminUsersController, AdminUsersFormController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController, UpdatePageStatusController};
 use Flex\Session\CsrfMiddleware;
 use Psr\Container\ContainerInterface;
@@ -27,6 +27,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/pages', AdminPagesDataController::class, 'api.admin.pages', $auth);
         $r->add('GET', '/api/admin/plugins', AdminPluginsDataController::class, 'api.admin.plugins', $auth);
         $r->add('GET', '/api/admin/plugins/catalog', AdminPluginCatalogDataController::class, 'api.admin.plugins.catalog', $auth);
+        $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
         $r->add('GET', '/api/admin/updates', AdminUpdatesDataController::class, 'api.admin.updates', $auth);
         $r->add('GET', '/admin/profile', AdminProfileController::class, 'admin.profile', $auth);
         $r->add('GET', '/admin/themes', AdminThemesController::class, 'admin.themes', $auth);
