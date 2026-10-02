@@ -6,5 +6,8 @@ export default {
     "import-notation": "string",
     "custom-property-pattern": null,
     "selector-class-pattern": null,
+    // The shared stylesheet intentionally groups broad selectors after scoped rules.
+    // Keep lint focused on correctness without requiring a risky global reorder.
+    "no-descending-specificity": null,
   },
 }
