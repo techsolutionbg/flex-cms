@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 use Dotenv\Dotenv;
 
-if (is_file(__DIR__ . '/.env')) {
-    Dotenv::createImmutable(__DIR__)->safeLoad();
+$environmentFile = is_file(__DIR__ . '/.env') ? __DIR__ : __DIR__ . '/storage';
+if (is_file($environmentFile . '/.env')) {
+    Dotenv::createImmutable($environmentFile)->safeLoad();
 }
 
 return [
