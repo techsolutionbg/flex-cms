@@ -28,7 +28,7 @@ jobs:
     env:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      APP_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       FORCE_HTTPS: "false"
       VITE_DEV_SERVER_URL: http://localhost:5173
       DB_CONNECTION: mysql
@@ -46,7 +46,7 @@ jobs:
           APP_NAME="Flex CMS"
           APP_ENV=local
           APP_DEBUG=true
-          APP_KEY=0000000000000000000000000000000000000000000000000000000000000000
+          APP_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           APP_URL=http://localhost
           FORCE_HTTPS=false
           VITE_DEV_SERVER_URL=http://localhost:5173
@@ -73,6 +73,7 @@ jobs:
           php-version: "8.3"
           extensions: curl, dom, fileinfo, mbstring, openssl, pdo, pdo_mysql, zip
           tools: composer
+          ini-values: variables_order=EGPCS
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
