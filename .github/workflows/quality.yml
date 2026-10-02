@@ -17,6 +17,14 @@ jobs:
           php-version: "8.3"
           extensions: curl, dom, fileinfo, mbstring, openssl, pdo, pdo_mysql, zip
           tools: composer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: resources/admin/package-lock.json
+      - name: Build admin assets for PHP tests
+        working-directory: resources/admin
+        run: npm ci && npm run build
       - run: composer install --no-interaction --prefer-dist
       - run: composer validate --strict
       - run: vendor/bin/phpunit

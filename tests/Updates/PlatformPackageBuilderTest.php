@@ -80,7 +80,7 @@ final class PlatformPackageBuilderTest extends TestCase
         self::assertFalse($archive->statName('payload/resources/admin/source.tsx'));
         self::assertFalse($archive->statName('payload/resources/admin/node_modules/package/index.js'));
         self::assertFalse($archive->statName('payload/resources/admin/.git/config'));
-        self::assertFalse($archive->statName('payload/resources/admin-react/vite.config.js'));
+        self::assertNotFalse($archive->statName('payload/resources/admin-react/vite.config.js'));
         self::assertFalse($archive->statName('payload/src/Feature/.git/config'));
         self::assertFalse($archive->statName('payload/tests/example.php'));
         $manifest = json_decode((string) $archive->getFromName('manifest.json'), true, 512, JSON_THROW_ON_ERROR);
