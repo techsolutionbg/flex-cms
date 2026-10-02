@@ -199,7 +199,7 @@ body { margin: 0; min-width: 320px; }
 .updates-page-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .updates-summary-card, .updates-available-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; border: 1px solid #d4d9d0; border-radius: .7rem; background: white; }
 .updates-platform-status { display: grid; gap: 1rem; }
-.updates-platform-status .collapsible-section-body-inner { padding-top: .5rem; }
+.updates-platform-status .collapsible-section-body-inner { padding-top: .5rem; padding-bottom: 1rem; }
 .updates-platform-status .updates-summary-card, .updates-platform-status .updates-available-card { border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
 .updates-platform-status .updates-summary-card { padding-bottom: .75rem; }
 .updates-platform-status .updates-summary-card > div:last-child { padding-top: .1rem; }

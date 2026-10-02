@@ -33,6 +33,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
   const [busyReleaseVersion, setBusyReleaseVersion] = useState<string | null>(null)
   const [updateQueued, setUpdateQueued] = useState(false)
   const [updateJobId, setUpdateJobId] = useState<string | null>(null)
+  const [updateReconnecting, setUpdateReconnecting] = useState(false)
   const [pendingRollback, setPendingRollback] = useState<PlatformUpdateHistory | null>(null)
   const [pendingRelease, setPendingRelease] = useState<PlatformRelease | null>(null)
 
@@ -52,25 +53,73 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
 
   useEffect(() => {
     if (!updateQueued || !updateJobId) return
-    const timer = window.setInterval(async () => {
+    let cancelled = false
+    let timer: number | null = null
+
+    const wait = (milliseconds: number) => new Promise<void>((resolve) => {
+      timer = window.setTimeout(resolve, milliseconds)
+    })
+
+    const poll = async () => {
+      let delay = 1500
+
+      while (!cancelled) {
       try {
         const response = await fetch("/api/admin/updates", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
         const body = await response.json().catch(() => ({})) as { update_jobs?: PlatformUpdateJob[] }
         const job = (body.update_jobs ?? []).find((item) => item.id === updateJobId)
-        if (!job || job.status === "pending" || job.status === "running") return
-        setUpdateQueued(false)
-        setUpdateJobId(null)
+        if (!response.ok || !job || job.status === "pending" || job.status === "running") {
+          setUpdateReconnecting(false)
+          await wait(delay)
+          continue
+        }
         if (job.status === "failed") {
+          setUpdateQueued(false)
+          setUpdateJobId(null)
+          setUpdateReconnecting(false)
           toast.error(job.error ?? "Обновяването не беше успешно.")
           await load()
         } else if (job.status === "completed") {
-          window.location.reload()
+          // The updater replaces the application while the browser is still
+          // open. Wait for a successful response from the new process before
+          // reloading, otherwise Chromium briefly shows ERR_EMPTY_RESPONSE.
+          for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
+            try {
+              const ready = await fetch("/api/admin/updates", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
+              if (ready.ok) {
+                await wait(300)
+                if (!cancelled) {
+                  setUpdateQueued(false)
+                  setUpdateJobId(null)
+                  setUpdateReconnecting(false)
+                  window.location.reload()
+                }
+                return
+              }
+            } catch {}
+            setUpdateReconnecting(true)
+            await wait(Math.min(1000 + attempt * 500, 4000))
+          }
+          setUpdateQueued(false)
+          setUpdateJobId(null)
+          setUpdateReconnecting(false)
         }
       } catch {
         // The updater may briefly restart the application while replacing files.
+        // Keep the current document alive and retry instead of navigating into
+        // the short window where the server has no response.
+        setUpdateReconnecting(true)
+        await wait(delay)
+        delay = Math.min(Math.round(delay * 1.5), 5000)
       }
-    }, 3000)
-    return () => window.clearInterval(timer)
+      }
+    }
+
+    void poll()
+    return () => {
+      cancelled = true
+      if (timer !== null) window.clearTimeout(timer)
+    }
   }, [updateQueued, updateJobId])
 
   async function runAction(action: UpdateAction, payload: Record<string, unknown> = {}) {
@@ -101,7 +150,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
     {loading ? <div className="react-empty-state">Зареждане на обновяванията…</div> : <div className="updates-page-grid">
       <CollapsibleSection title="Състояние на платформата" icon={Server} storageKey="updates-platform-status" className="updates-platform-status">
         <div className="updates-summary-card"><div className="updates-summary-icon"><Server aria-hidden="true" /></div><div><span className="react-eyebrow">Текуща версия</span><strong>{version ?? "—"}</strong><span>Канал: {remote?.channel ?? "stable"}</span></div></div>
-        {updateQueued && <div className="updates-progress-card" role="status" aria-live="polite"><LoaderCircle className="updates-progress-spinner" aria-hidden="true" /><div><strong>Обновяването се изпълнява…</strong><p>Версията е поставена в опашката и се обработва от updater процеса.</p></div></div>}
+        {updateQueued && <div className="updates-progress-card" role="status" aria-live="polite"><LoaderCircle className="updates-progress-spinner" aria-hidden="true" /><div><strong>{updateReconnecting ? "Свързване с платформата…" : "Обновяването се изпълнява…"}</strong><p>{updateReconnecting ? "Платформата се рестартира след обновяването. Изчакваме връзката да бъде възстановена." : "Версията е поставена в опашката и се обработва от updater процеса."}</p></div></div>}
         <div className={"updates-available-card" + (remote?.available ? " is-available" : "")}>
           {remote?.error ? <><TriangleAlert aria-hidden="true" /><div><h2>Проверката не бе успешна</h2><p>{remote.error}</p></div></> : remote?.available ? <><div className="updates-available-mark">NEW</div><div className="updates-available-content"><div className="updates-available-heading"><span className="react-eyebrow">Налична актуализация</span><h2>Версия {remote.available.version}</h2></div><p>{remote.available.release_notes || "Няма допълнителни бележки за релийза."}</p><small>Публикувана: {formatDate(remote.available.published_at)} · {formatBytes(remote.available.size)}</small><div className="updates-actions"><LoadingButton className="react-secondary-button" type="button" loading={busyAction === "update_remote" || updateQueued} disabled={busyAction !== null || updateQueued} onClick={() => void runAction("update_remote")}>{updateQueued ? "Обновяването се изпълнява…" : "Обнови сега"}</LoadingButton></div></div></> : <><CheckCircle2 aria-hidden="true" /><div><h2>Платформата е актуална</h2><p>Няма налична съвместима актуализация за текущия канал.</p></div></>}
         </div>
