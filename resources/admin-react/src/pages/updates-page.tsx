@@ -7,7 +7,7 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
-import type { PlatformRelease, PlatformUpdateHistory, PlatformUpdateRemote } from "@/lib/admin-types"
+import type { PlatformRelease, PlatformUpdateHistory, PlatformUpdateJob, PlatformUpdateRemote } from "@/lib/admin-types"
 
 type UpdatesPageProps = { onLogout: () => void; onNavigate: (label: string) => void; loggingOut: boolean }
 type UpdateAction = "update_remote" | "rollback"
@@ -32,6 +32,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
   const [busyAction, setBusyAction] = useState<UpdateAction | null>(null)
   const [busyReleaseVersion, setBusyReleaseVersion] = useState<string | null>(null)
   const [updateQueued, setUpdateQueued] = useState(false)
+  const [updateJobId, setUpdateJobId] = useState<string | null>(null)
   const [pendingRollback, setPendingRollback] = useState<PlatformUpdateHistory | null>(null)
   const [pendingRelease, setPendingRelease] = useState<PlatformRelease | null>(null)
 
@@ -49,6 +50,29 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
     load().catch((reason) => toast.error(reason instanceof Error ? reason.message : "Данните за обновяванията не можаха да бъдат заредени.")).finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (!updateQueued || !updateJobId) return
+    const timer = window.setInterval(async () => {
+      try {
+        const response = await fetch("/api/admin/updates", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
+        const body = await response.json().catch(() => ({})) as { update_jobs?: PlatformUpdateJob[] }
+        const job = (body.update_jobs ?? []).find((item) => item.id === updateJobId)
+        if (!job || job.status === "pending" || job.status === "running") return
+        setUpdateQueued(false)
+        setUpdateJobId(null)
+        if (job.status === "failed") {
+          toast.error(job.error ?? "Обновяването не беше успешно.")
+          await load()
+        } else if (job.status === "completed") {
+          window.location.reload()
+        }
+      } catch {
+        // The updater may briefly restart the application while replacing files.
+      }
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [updateQueued, updateJobId])
+
   async function runAction(action: UpdateAction, payload: Record<string, unknown> = {}) {
     if (busyAction !== null) return
     setBusyAction(action)
@@ -57,9 +81,9 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
     try {
       const token = await getCsrfToken()
       const response = await fetch("/api/admin/updates/action", { method: "POST", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": token }, body: JSON.stringify({ action, ...payload }) })
-      const body = await response.json().catch(() => ({})) as { message?: string; error?: { message?: string } }
+      const body = await response.json().catch(() => ({})) as { message?: string; job_id?: string; error?: { message?: string } }
       if (!response.ok) throw new Error(body.error?.message ?? "Операцията по обновяване не можа да бъде изпълнена.")
-      if (action === "update_remote") setUpdateQueued(true)
+      if (action === "update_remote") { setUpdateQueued(true); setUpdateJobId(body.job_id ?? null) }
       toast.success(body.message ?? "Операцията завърши успешно.")
       // The updater replaces the running platform asynchronously. Avoid an
       // immediate follow-up request while maintenance mode may be starting.

@@ -110,6 +110,11 @@ final readonly class InstallerInput
         }
 
         $host = strtolower((string) parse_url($this->siteUrl, PHP_URL_HOST));
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            // Allow private/loopback addresses used by local Docker and LAN development.
+            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        }
+
         return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
             || str_ends_with($host, '.test')
             || str_ends_with($host, '.local');

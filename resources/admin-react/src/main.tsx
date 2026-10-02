@@ -9,6 +9,7 @@ import type { PageRecord, PluginRecord, UserRecord } from "@/lib/admin-types"
 import { LoginPage } from "@/pages/login-page"
 import { DashboardPage } from "@/pages/dashboard-page"
 import { UpdatesPage } from "@/pages/updates-page"
+import { InstallerPage } from "@/pages/installer-page"
 import "./index.css"
 
 
@@ -18,6 +19,7 @@ import "./index.css"
 
 
 function App() {
+  const installerRoute = window.location.pathname === "/install"
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
   const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "user-form" | "form" | "settings">("dashboard")
@@ -47,6 +49,7 @@ function App() {
   }
 
   useEffect(() => {
+    if (installerRoute) return
     function syncRoute() {
       if (window.location.pathname === "/pages") setPageView("pages")
       else if (window.location.pathname === "/users") setPageView("users")
@@ -60,7 +63,7 @@ function App() {
     }
     window.addEventListener("popstate", syncRoute)
     return () => window.removeEventListener("popstate", syncRoute)
-  }, [])
+  }, [installerRoute])
 
   useEffect(() => {
     if (authenticated !== true) return
@@ -176,6 +179,8 @@ function App() {
       setLoggingOut(false)
     }
   }
+
+  if (installerRoute) return <><Toaster position="top-center" closeButton richColors theme="light" /><InstallerPage /></>
 
   if (authenticated === null) {
     return <main className="auth-loading-screen" aria-label="Проверка на сесия"><LoaderCircle className="size-6 animate-spin text-[#ff8062]" /></main>

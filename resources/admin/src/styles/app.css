@@ -1891,9 +1891,10 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
 
 .installer-page {
   min-height: 100vh;
-  padding-bottom: 5rem;
+  padding: 2rem 0 5rem;
   background:
-    radial-gradient(circle at 10% 0, var(--card), transparent 35%),
+    radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--accent) 12%, transparent), transparent 38%),
+    radial-gradient(circle at 0 40%, color-mix(in oklch, var(--primary) 5%, transparent), transparent 30%),
     var(--background);
 }
 
@@ -1905,7 +1906,58 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
 }
 
 .installer-page > header {
-  padding: 4.5rem 0 2.375rem;
+  padding: 1rem 0 2.25rem;
+}
+
+.installer-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.installer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--foreground);
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.installer-brand img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+}
+
+.installer-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--card) 82%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.installer-progress-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0.25rem color-mix(in oklch, var(--accent) 16%, transparent);
+}
+
+.installer-page > header .lead {
+  max-width: 38rem;
+  margin-top: 1rem;
+  font-size: 1.05rem;
 }
 
 .installer-page h1 {
@@ -1916,12 +1968,18 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
 }
 
 .installer-section {
-  margin: 1.125rem 0;
-  padding: 1.75rem;
+  margin: 1rem 0;
+  padding: 1.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
   background: var(--card);
   box-shadow: var(--shadow-md);
+  transition: border-color var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard), transform var(--motion-normal) var(--ease-standard);
+}
+
+.installer-section:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 55%, var(--border));
+  box-shadow: var(--shadow-lg);
 }
 
 .section-heading {
@@ -1937,7 +1995,9 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
   height: 2.5rem;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: 50%;
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--accent) 10%, var(--card));
+  color: var(--accent);
   font-size: 0.75rem;
   font-weight: 800;
 }
@@ -1973,6 +2033,8 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
 
 .installer-page form > button {
   width: 100%;
+  min-height: 3.25rem;
+  margin-top: 1.5rem;
   padding: 1rem 1.5rem;
   border: 0;
   border-radius: var(--radius);
@@ -1980,6 +2042,45 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
   color: var(--primary-foreground);
   font: 700 1rem var(--font-family-sans);
   cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: filter var(--motion-fast) ease, box-shadow var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+
+.installer-page form > button:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.installer-form-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: color-mix(in oklch, var(--card) 82%, var(--secondary));
+}
+
+.installer-form-intro h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+}
+
+.installer-form-intro p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.installer-form-kicker {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .field-note {
@@ -2416,6 +2517,16 @@ td:has(> .table-action-dropdown) .table-action-dropdown {
 }
 
 @media (width <= 45rem) {
+  .installer-page {
+    padding-top: 1rem;
+  }
+
+  .installer-header-top,
+  .installer-form-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .admin-content {
     margin: 1rem 0;
     padding: 0 0.75rem;

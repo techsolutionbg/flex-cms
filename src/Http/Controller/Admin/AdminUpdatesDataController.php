@@ -13,6 +13,7 @@ use Flex\Updates\Platform\PlatformVersionRegistry;
 use Flex\Updates\Remote\RemoteCatalogClient;
 use Flex\Updates\Remote\RemotePlatformUpdater;
 use Flex\Updates\UpdateErrorMessage;
+use Flex\Updates\Jobs\UpdateJobStore;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -26,6 +27,7 @@ final readonly class AdminUpdatesDataController
         private RemoteCatalogClient $catalog,
         private PlatformHistory $history,
         private RemotePlatformUpdater $updater,
+        private UpdateJobStore $jobs,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -62,6 +64,7 @@ final readonly class AdminUpdatesDataController
             'remote_update' => $remote,
             'releases' => $releases,
             'history' => array_reverse($this->history->all()),
+            'update_jobs' => array_map(static fn($job): array => $job->toArray(), array_reverse($this->jobs->all())),
         ]);
     }
 }

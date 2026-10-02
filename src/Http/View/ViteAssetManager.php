@@ -48,6 +48,24 @@ final readonly class ViteAssetManager
         return implode("\n", $tags) . "\n" . ($this->extensions?->tags() ?? '');
     }
 
+    /** Return compiled styles for server-rendered pages such as the installer. */
+    public function styles(): string
+    {
+        $manifestPath = $this->basePath . '/public/build/admin/.vite/manifest.json';
+        $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
+        $entry = is_array($manifest) ? ($manifest[self::ENTRY] ?? null) : null;
+        if (!is_array($entry)) {
+            return '';
+        }
+
+        $tags = [];
+        foreach (($entry['css'] ?? []) as $css) {
+            $tags[] = sprintf('<link rel="stylesheet" href="/build/admin/%s">', $this->asset((string) $css));
+        }
+
+        return implode("\n", $tags);
+    }
+
     private function asset(string $file): string
     {
         return htmlspecialchars(ltrim($file, '/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

@@ -70,6 +70,7 @@ services:
       - frontend_react_node_modules:/workspace/resources/admin-react/node_modules
     environment:
       VITE_DEV_SERVER_URL: "http://localhost:${VITE_REACT_FORWARD_PORT:-8090}"
+      VITE_INSTALLER_SITE_URL: "http://localhost:8080"
 
   mysql:
     image: mysql:8.0

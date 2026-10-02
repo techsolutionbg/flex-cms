@@ -30,6 +30,9 @@ final readonly class InstallerApplication
 
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
         if ($method === 'GET') {
+            if ($this->wantsJson()) {
+                $this->respondJson($this->renderer->data($this->csrfToken()));
+            }
             $this->respond($this->renderer->form($this->requirements->check(), $this->csrfToken()));
         }
         if ($method !== 'POST') {
@@ -43,6 +46,9 @@ final readonly class InstallerApplication
             $input = InstallerInput::fromArray($values);
             $this->installer->install($input);
             unset($_SESSION['flex_installer_csrf']);
+            if ($this->wantsJson()) {
+                $this->respondJson(['success' => true, 'site_url' => $input->siteUrl]);
+            }
             $this->respond($this->renderer->success($input->siteUrl));
         } catch (InstallerException $exception) {
             $safeValues = array_map(
@@ -50,6 +56,9 @@ final readonly class InstallerApplication
                 $values,
             );
             unset($safeValues['database_password'], $safeValues['admin_password'], $safeValues['csrf_token']);
+            if ($this->wantsJson()) {
+                $this->respondJson(['error' => ['message' => $exception->getMessage()]], 422);
+            }
             $this->respond($this->renderer->form(
                 $this->requirements->check(),
                 $this->csrfToken(),
@@ -104,7 +113,7 @@ final readonly class InstallerApplication
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('Referrer-Policy: no-referrer');
-        header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+        header("Content-Security-Policy: default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
         header('Cache-Control: no-store, private');
     }
 
@@ -115,5 +124,16 @@ final readonly class InstallerApplication
         echo $body;
 
         exit;
+    }
+
+    private function wantsJson(): bool
+    {
+        return str_contains(strtolower($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function respondJson(array $payload, int $status = 200): never
+    {
+        $this->respond(json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $status, 'application/json; charset=utf-8');
     }
 }

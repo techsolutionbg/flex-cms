@@ -12,6 +12,17 @@ export default defineConfig({
         // Keep the browser host when forwarding requests. The backend validates
         // trusted hosts and must see localhost (or the LAN host), not Docker's
         // internal service name (`app`).
-        proxy: { "/api": { target: "http://app", changeOrigin: false } },
+        proxy: {
+            "/api": { target: "http://app", changeOrigin: false },
+            "/installer-api": {
+                target: "http://app",
+                changeOrigin: false,
+                rewrite: (path) => path.replace(/^\/installer-api/, "/install"),
+                configure: (proxy) => {
+                    const siteUrl = process.env.VITE_INSTALLER_SITE_URL;
+                    if (siteUrl) proxy.on("proxyReq", (request) => request.setHeader("X-Flex-Installer-Site-Url", siteUrl));
+                },
+            },
+        },
     },
 });

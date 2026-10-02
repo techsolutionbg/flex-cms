@@ -10,7 +10,7 @@ use ZipArchive;
 final readonly class PlatformPackageBuilder
 {
     /** @var list<string> */
-    private const DIRECTORIES = ['bin', 'config', 'contracts', 'database', 'public', 'resources', 'src', 'vendor'];
+    private const DIRECTORIES = ['bin', 'config', 'contracts', 'database', 'public', 'resources', 'src', 'themes', 'vendor'];
 
     /** @var list<string> */
     private const EXCLUDED_PATHS = [
@@ -18,10 +18,6 @@ final readonly class PlatformPackageBuilder
         'node_modules',
         'public/media',
         'resources/admin',
-        // The Vite config belongs to the local development container. Replacing
-        // it during a platform update makes Vite restart its HTTP server and
-        // briefly exposes ERR_EMPTY_RESPONSE to the browser.
-        'resources/admin-react/vite.config.js',
     ];
 
     /** @var list<string> */
@@ -175,6 +171,9 @@ final readonly class PlatformPackageBuilder
 
     private function isExcluded(string $relative): bool
     {
+        if ($relative === 'themes/.gitkeep') {
+            return true;
+        }
         $segments = explode('/', $relative);
         if (in_array('.git', $segments, true) || in_array('node_modules', $segments, true)) {
             return true;

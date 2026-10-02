@@ -18,6 +18,30 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 .auth-loading-screen { display: grid; min-height: 100vh; place-items: center; background: var(--content-bg); }
+.installer-react-loading { display: grid; min-height: 100vh; place-items: center; background: radial-gradient(circle at top, #fffaf7 0, #f4f5ef 48%, #eef1eb 100%); }
+.installer-react-page { min-height: 100vh; padding: 2rem 1rem 4rem; background: radial-gradient(circle at top, #fffaf7 0, #f4f5ef 48%, #eef1eb 100%); }
+.installer-react-shell { width: min(100%, 48rem); margin: 0 auto; }
+.installer-react-header { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: .25rem 0 2.25rem; color: #687268; font-size: .9rem; font-weight: 650; }
+.installer-react-header img { display: block; width: 11rem; height: auto; }
+.installer-react-intro { margin-bottom: 1.5rem; text-align: center; }
+.installer-react-kicker { color: #ff563d; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.installer-react-intro h1 { margin: .55rem 0 .65rem; color: #172118; font-size: clamp(1.85rem, 5vw, 2.6rem); line-height: 1.08; }
+.installer-react-intro p { max-width: 38rem; margin: 0 auto; color: #687268; line-height: 1.6; }
+.installer-react-form { display: grid; gap: 1rem; }
+.installer-react-form .collapsible-section { box-shadow: 0 3px 10px rgb(23 33 24 / 4%); }
+.installer-react-section-description { margin-bottom: 1rem; color: #687268; line-height: 1.5; }
+.installer-react-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.installer-react-field { display: grid; gap: .45rem; }
+.installer-react-field label { color: #172118; font-weight: 650; }
+.installer-react-generated-password { color: #687268; font-size: .78rem; font-weight: 400; line-height: 1.45; }
+.installer-react-generated-password code { color: #172118; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+.installer-react-actions { display: flex; justify-content: flex-end; padding-top: .25rem; }
+.installer-react-submit { min-height: 2.75rem; gap: .45rem; padding: .7rem 1.05rem; border: 1px solid #d4d9d0; border-radius: .5rem; background: white; color: #172118; cursor: pointer; font: inherit; font-weight: 700; box-shadow: 0 2px 5px rgb(23 33 24 / 6%); }
+.installer-react-submit:hover:not(:disabled) { background: #f2f2ec; }
+.installer-react-submit:focus-visible { outline: 3px solid rgb(255 128 98 / 25%); outline-offset: 2px; }
+.installer-react-submit:disabled { cursor: wait; opacity: .65; }
+.installer-react-success { display: flex; align-items: center; gap: .65rem; margin-bottom: 1rem; padding: .85rem 1rem; border: 1px solid #b9d8bf; border-radius: .55rem; background: #eff8f0; color: #287a48; font-weight: 650; }
+.installer-react-empty { padding: 1rem; border: 1px solid #ffb4a8; border-radius: .55rem; background: #fff0ed; color: #b93624; }
 
 .admin-shell-react { --sidebar-width: 15.5rem; min-height: 100vh; background: var(--content-bg); }
 .admin-sidebar-react {
@@ -388,6 +412,12 @@ body { margin: 0; min-width: 320px; }
 .sidebar-mobile-toggle, .sidebar-backdrop { display: none; }
 
 @media (max-width: 48rem) {
+  .installer-react-page { padding-right: .75rem; padding-left: .75rem; }
+  .installer-react-header { flex-direction: column; gap: .45rem; margin-bottom: 1.75rem; }
+  .installer-react-header img { width: 10rem; }
+  .installer-react-fields { grid-template-columns: 1fr; }
+  .installer-react-actions { justify-content: stretch; }
+  .installer-react-submit { width: 100%; }
   .admin-shell-react.is-sidebar-collapsed { --sidebar-width: 15.5rem; }
   .admin-sidebar-react { width: 15.5rem; transform: translateX(-101%); transition: transform 180ms ease; }
   .admin-shell-react.is-sidebar-collapsed .sidebar-brand-react { justify-content: flex-start; padding: 1rem 1.1rem; }

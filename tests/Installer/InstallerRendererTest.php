@@ -30,4 +30,15 @@ final class InstallerRendererTest extends TestCase
         self::assertStringNotContainsString('Server readiness', $html);
         self::assertStringContainsString('name="database_name"', $html);
     }
+
+    public function testItUsesCompiledStylesForTheServerRenderedInstaller(): void
+    {
+        $html = (new InstallerRenderer())->form(
+            new RequirementsReport([new Requirement('PHP', true, '8.3')]),
+            'csrf-token',
+        );
+
+        self::assertMatchesRegularExpression('#<link rel="stylesheet" href="/build/admin/[^" ]+\\.css">#', $html);
+        self::assertStringNotContainsString('/@vite/client', $html);
+    }
 }

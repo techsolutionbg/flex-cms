@@ -28,6 +28,8 @@ export type PlatformUpdateHistory = {
   rolled_back_at?: string | null
 }
 
+export type PlatformUpdateJob = { id: string; status: 'pending' | 'running' | 'completed' | 'failed' | string; error?: string | null }
+
 export type PageSettings = {
   template?: string
   menu_order?: number

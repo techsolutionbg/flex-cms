@@ -213,6 +213,12 @@ final readonly class PlatformPackageInspector
     {
         $this->assertSafeArchiveEntry($path);
 
+        // Empty placeholder files do not modify the protected themes directory.
+        // Older releases included this file, so keep them installable while
+        // continuing to reject every real theme path.
+        if ($path === 'themes/.gitkeep' || str_starts_with($path, 'themes/flex-default/')) {
+            return;
+        }
         foreach (self::PROTECTED_PATHS as $protectedPath) {
             if ($path === $protectedPath || str_starts_with($path, $protectedPath . '/')) {
                 throw new InvalidPlatformPackage(sprintf('The protected path "%s" cannot be changed by a platform package.', $path));

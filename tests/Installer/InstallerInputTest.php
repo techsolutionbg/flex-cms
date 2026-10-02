@@ -30,6 +30,16 @@ final class InstallerInputTest extends TestCase
         self::assertSame('http://localhost/flex-cms', $input->siteUrl);
     }
 
+    public function testItAllowsHttpForPrivateLanDevelopment(): void
+    {
+        $values = $this->validValues();
+        $values['site_url'] = 'http://192.168.1.225:8082';
+
+        $input = InstallerInput::fromArray($values);
+
+        self::assertSame('http://192.168.1.225:8082', $input->siteUrl);
+    }
+
     public function testItRejectsInvalidAndWeakValues(): void
     {
         $values = $this->validValues();
