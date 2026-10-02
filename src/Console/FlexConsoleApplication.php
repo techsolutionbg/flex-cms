@@ -14,6 +14,7 @@ use Flex\Console\Command\ConfigValidateCommand;
 use Flex\Console\Command\CreateFirstSuperAdminCommand;
 use Flex\Console\Command\DatabaseStatusCommand;
 use Flex\Console\Command\PlatformBuildCommand;
+use Flex\Console\Command\PlatformPublishCommand;
 use Flex\Console\Command\PlatformHistoryCommand;
 use Flex\Console\Command\PlatformInspectCommand;
 use Flex\Console\Command\PlatformInstallCommand;
@@ -100,6 +101,7 @@ final class FlexConsoleApplication extends Application
             new UpdateStatusCommand($updateJobStore),
             new PluginRollbackCommand($pluginRollback),
             new PlatformBuildCommand($platformPackageBuilder, $registry),
+            new PlatformPublishCommand($registry),
             new PluginListCommand($pluginRegistry),
             new PluginInstallCommand($pluginManager),
             new PluginActivateCommand($pluginManager),

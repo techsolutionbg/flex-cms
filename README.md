@@ -73,10 +73,14 @@ themes/              инсталирани theme пакети
 php flex platform:release --bump=patch   # 0.1.38 → 0.1.39
 php flex platform:release --bump=minor   # 0.1.38 → 0.2.0
 php flex platform:release --bump=major   # 0.1.38 → 1.0.0
+
+# Build and publish directly to the configured update host
+php flex platform:publish --bump=patch --release-notes="Описание на промените"
 ```
 
-Може да се използват и цифрите `--bump=1` (major), `--bump=2` (minor) и `--bump=3` (patch). Ако `--bump` и `--target-version` не са зададени, се увеличава patch версията. Не използвайте двете опции едновременно.
-Командата създава ZIP пакет и SHA-256 checksum; публикуването към update сървъра е отделна стъпка.
+`platform:release` записва ZIP пакета и checksum файла в `releases/<version>/` спрямо корена на проекта (например `/home/kristian/tech-solution/Flex CMS/releases/`). `platform:publish` използва същия локален build, след което подписва и качва пакета и update manifest-а чрез SSH/SCP. Настройте `UPDATE_SSH_TARGET`, `UPDATE_REMOTE_ROOT`, `UPDATE_SERVER_BASE_URL` и `UPDATE_SIGNING_PRIVATE_KEY_FILE` преди публикуване. Командата се изпълнява от хост машината в корена на проекта, не от `app` контейнера, защото използва Docker Compose, npm, SSH и SCP.
+
+Може да се използват и цифрите `--bump=1` (major), `--bump=2` (minor) и `--bump=3` (patch). Ако `--bump` и `--target-version` не са зададени, се увеличава patch версията. Не използвайте двете опции едновременно. `platform:release` само създава пакета; `platform:publish` създава и публикува релийза.
 
 ## Архитектурни граници
 
