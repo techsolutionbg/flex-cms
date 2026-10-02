@@ -36,7 +36,7 @@ final class UpdateServiceProvider implements ServiceProviderInterface
             ThemePackageInstaller::class => create()->constructor(get(\Flex\Configuration\ProjectPaths::class), get(\Flex\Themes\ThemeManager::class), get('base_path')),
             RemoteThemeInstaller::class => create()->constructor(get(ThemeCatalogClient::class), get(RemoteThemePackageDownloader::class), get(ThemePackageInstaller::class), get(ConfigRepositoryInterface::class), get(\Flex\Themes\ThemeManager::class), get(PlatformVersionRegistry::class)),
             PluginPackageInstaller::class => create()->constructor(get(\Flex\Extensions\PluginRegistry::class), get(\Flex\Extensions\PluginManager::class), get('base_path')),
-            RemotePluginInstaller::class => create()->constructor(get(RemoteCatalogClient::class), get(RemotePackageDownloader::class), get(PluginPackageInstaller::class), get(ConfigRepositoryInterface::class)),
+            RemotePluginInstaller::class => create()->constructor(get(RemoteCatalogClient::class), get(RemotePackageDownloader::class), get(PluginPackageInstaller::class), get(ConfigRepositoryInterface::class), get(PlatformVersionRegistry::class)),
             RemotePlatformUpdater::class => autowire(),
             RemotePluginUpdater::class => create()->constructor(
                 get(RemoteCatalogClient::class),
@@ -45,6 +45,7 @@ final class UpdateServiceProvider implements ServiceProviderInterface
                 get(\Flex\Extensions\PluginManager::class),
                 get(ConfigRepositoryInterface::class),
                 get(PluginUpdateHistory::class),
+                get(PlatformVersionRegistry::class),
                 get('base_path'),
             ),
             PluginUpdateHistory::class => create()->constructor(get('base_path')),

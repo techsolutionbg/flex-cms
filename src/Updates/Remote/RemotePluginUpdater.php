@@ -11,6 +11,7 @@ use Flex\Extensions\PluginManifest;
 use Flex\Extensions\PluginRegistry;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 use Flex\Updates\Exception\RemoteCatalogException;
+use Flex\Updates\Platform\PlatformVersionRegistry;
 
 final class RemotePluginUpdater
 {
@@ -21,6 +22,7 @@ final class RemotePluginUpdater
         private readonly PluginManager $manager,
         private readonly ConfigRepositoryInterface $configuration,
         private readonly PluginUpdateHistory $history,
+        private readonly PlatformVersionRegistry $versions,
         private readonly string $basePath,
     ) {}
 
@@ -33,8 +35,9 @@ final class RemotePluginUpdater
         }
         $manifest = $this->catalog->pluginManifest($pluginId);
         $current = new \Flex\Updates\Platform\PlatformVersion((string) $plugin->getAttribute('version'));
+        $platformVersion = $this->versions->current();
         $channel = $this->configuration->string('extensions.updates.channel');
-        $candidates = array_filter($manifest->releases, static fn(RemoteReleaseManifest $release): bool => $release->package === $pluginId && $release->channel->value === $channel && version_compare($release->version->value, $current->value, '>') && Semver::satisfies(PHP_VERSION, $release->minimumPhp) && Semver::satisfies($current->value, $release->compatibleFrom));
+        $candidates = array_filter($manifest->releases, static fn(RemoteReleaseManifest $release): bool => $release->package === $pluginId && $release->channel->value === $channel && version_compare($release->version->value, $current->value, '>') && Semver::satisfies(PHP_VERSION, $release->minimumPhp) && Semver::satisfies($platformVersion->value, $release->compatibleFrom));
         usort($candidates, static fn(RemoteReleaseManifest $left, RemoteReleaseManifest $right): int => version_compare($right->version->value, $left->version->value));
         $release = $candidates[0] ?? null;
         if ($release === null) {

@@ -36,7 +36,12 @@ final readonly class AdminPluginsDataController
             foreach (array_keys($index->manifests) as $pluginId) {
                 $releases = $this->remoteCatalog->pluginManifest($pluginId)->releases;
                 usort($releases, static fn($left, $right): int => version_compare($right->version->value, $left->version->value));
-                if ($releases !== []) $availableVersions[$pluginId] = $releases[0]->version->value;
+                if ($releases !== []) {
+                    $availableVersions[$pluginId] = [
+                        'version' => $releases[0]->version->value,
+                        'release_notes' => $releases[0]->releaseNotes,
+                    ];
+                }
             }
         } catch (\Throwable) {
             // The update action remains disabled when the remote catalog is unavailable.
@@ -62,8 +67,10 @@ final readonly class AdminPluginsDataController
                 'activated_at' => null,
             ];
             $currentVersion = (string) ($plugin['version'] ?? '');
-            $availableVersion = $availableVersions[$entry['manifest']->id] ?? null;
+            $available = $availableVersions[$entry['manifest']->id] ?? null;
+            $availableVersion = is_array($available) ? ($available['version'] ?? null) : null;
             $plugin['available_version'] = $availableVersion;
+            $plugin['available_release_notes'] = is_array($available) ? ($available['release_notes'] ?? null) : null;
             $plugin['update_available'] = is_string($availableVersion) && $currentVersion !== '' && version_compare($availableVersion, $currentVersion, '>');
             $extensions[] = $plugin;
         }

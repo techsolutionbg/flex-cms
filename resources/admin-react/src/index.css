@@ -220,7 +220,8 @@ body { margin: 0; min-width: 320px; }
 .updates-available-card small { color: #69766d; }
 .updates-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
 .updates-actions > button { min-height: 2.5rem; }
-.updates-progress-card { display: flex; align-items: flex-start; gap: .65rem; margin: 0; padding: .75rem .85rem; border: 1px solid #b9d8bf; border-radius: .5rem; background: rgba(255, 255, 255, .7); color: #1d4e2b; }
+.updates-progress-card { display: flex; align-items: flex-start; gap: .65rem; margin: 0 0 .75rem; padding: .75rem .85rem; border: 1px solid #b9d8bf; border-radius: .5rem; background: rgba(255, 255, 255, .7); color: #1d4e2b; }
+.updates-progress-card + .updates-available-card { margin-top: .75rem; }
 .updates-progress-card strong, .updates-progress-card p { display: block; }
 .updates-progress-card p { margin: .2rem 0 0; color: #52715b; }
 .updates-progress-spinner { width: 1.2rem; height: 1.2rem; flex: 0 0 auto; margin-top: .1rem; animation: react-button-spin 1s linear infinite; }
@@ -358,6 +359,7 @@ body { margin: 0; min-width: 320px; }
 .status-error { background: #fff0ed; color: #b93624; }
 .react-table-subtext { display: block; margin-top: 0.2rem; color: #687268; font-size: 0.78rem; }
 .react-table-update { display: block; margin-top: .2rem; color: #27814c; font-size: .75rem; font-weight: 650; }
+.react-table-release-notes { display: block; margin-top: .25rem; color: #687268; font-size: .75rem; line-height: 1.35; }
 .react-table-link, .plugin-catalog-title-link { display: inline; padding: 0; border: 0; background: transparent; color: #172118; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .react-table-link:hover, .plugin-catalog-title-link:hover { color: #e95d45; text-decoration: underline; }
 .plugin-catalog-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
@@ -377,6 +379,8 @@ body { margin: 0; min-width: 320px; }
 .plugin-catalog-meta { display: flex; flex-wrap: wrap; gap: 1rem; color: #687268; font-size: 0.82rem; }
 .plugin-catalog-meta strong { color: #172118; }
 .plugin-catalog-status { display: flex; align-items: center; gap: 0.6rem; }
+.plugin-catalog-release-notes { display: flex; flex-direction: column; gap: .25rem; padding: .7rem .8rem; border-left: 3px solid #8bc49c; border-radius: .35rem; background: #f1f8f1; color: #687268; font-size: .82rem; line-height: 1.45; }
+.plugin-catalog-release-notes strong { color: #27814c; font-size: .78rem; }
 .plugin-catalog-update { color: #b05a24; font-size: 0.8rem; font-weight: 700; }
 .plugin-catalog-card > button { display: inline-flex; width: 100%; align-items: center; justify-content: center; gap: 0.35rem; margin-top: auto; padding: 0.7rem 0.9rem; border: 1px solid #1f3023; border-radius: 0.5rem; background: #1f3023; color: white; cursor: pointer; font: inherit; font-weight: 700; }
 .plugin-catalog-card > button:hover:not(:disabled) { background: #2d4231; }
@@ -385,10 +389,6 @@ body { margin: 0; min-width: 320px; }
 .react-catalog-empty { display: grid; min-height: 14rem; place-items: center; align-content: center; gap: 0.65rem; border: 1px solid #d4d9d0; border-radius: 0.7rem; background: white; color: #687268; text-align: center; }
 .react-catalog-empty svg { width: 2rem; height: 2rem; }
 .dashboard-grid-react { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
-.dashboard-release-notice { display: flex; align-items: flex-start; gap: .85rem; margin-top: 1rem; padding: 1rem 1.1rem; border: 1px solid #b9d8bf; border-left: 4px solid #287a48; border-radius: .65rem; background: #eff8f0; color: #1d4e2b; }
-.dashboard-release-notice-mark { flex: 0 0 auto; padding: .25rem .4rem; border-radius: .3rem; background: #287a48; color: white; font-size: .7rem; font-weight: 800; letter-spacing: .06em; }
-.dashboard-release-notice strong { display: block; }
-.dashboard-release-notice p { margin: .25rem 0 0; color: #4c7256; }
 .collapsible-section { align-self: start; overflow: hidden; border: 1px solid #d4d9d0; border-radius: 0.7rem; background: white; box-shadow: 0 3px 10px rgb(23 33 24 / 4%); }
 .collapsible-section-header { display: flex; width: 100%; min-height: 4.25rem; align-items: center; gap: 0.65rem; padding: 1rem 1.25rem; border: 0; border-bottom: 1px solid #d4d9d0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 1.1rem; font-weight: 500; text-align: left; }
 .collapsible-section-header:hover { background: #fafbf8; }

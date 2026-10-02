@@ -66,7 +66,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
       while (!cancelled) {
       try {
         const response = await fetch("/api/admin/updates", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
-        const body = await response.json().catch(() => ({})) as { update_jobs?: PlatformUpdateJob[] }
+        const body = await response.json().catch(() => ({})) as { version?: string; remote_update?: PlatformUpdateRemote; releases?: PlatformRelease[]; history?: PlatformUpdateHistory[]; update_jobs?: PlatformUpdateJob[] }
         const job = (body.update_jobs ?? []).find((item) => item.id === updateJobId)
         if (!response.ok || !job || job.status === "pending" || job.status === "running") {
           setUpdateReconnecting(false)
@@ -80,29 +80,17 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
           toast.error(job.error ?? "Обновяването не беше успешно.")
           await load()
         } else if (job.status === "completed") {
-          // The updater replaces the application while the browser is still
-          // open. Wait for a successful response from the new process before
-          // reloading, otherwise Chromium briefly shows ERR_EMPTY_RESPONSE.
-          for (let attempt = 0; attempt < 12 && !cancelled; attempt += 1) {
-            try {
-              const ready = await fetch("/api/admin/updates", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" })
-              if (ready.ok) {
-                await wait(300)
-                if (!cancelled) {
-                  setUpdateQueued(false)
-                  setUpdateJobId(null)
-                  setUpdateReconnecting(false)
-                  window.location.reload()
-                }
-                return
-              }
-            } catch {}
-            setUpdateReconnecting(true)
-            await wait(Math.min(1000 + attempt * 500, 4000))
-          }
+          // Do not reload the document here. The updater can briefly restart
+          // the web process, which makes a hard reload show ERR_EMPTY_RESPONSE.
+          // The completed response already contains the fresh platform state.
+          if (body.version) setVersion(body.version)
+          if (body.remote_update) setRemote(body.remote_update)
+          if (body.releases) setReleases(body.releases)
+          if (body.history) setHistory(body.history)
           setUpdateQueued(false)
           setUpdateJobId(null)
           setUpdateReconnecting(false)
+          toast.success("Платформата беше обновена успешно.")
         }
       } catch {
         // The updater may briefly restart the application while replacing files.

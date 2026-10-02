@@ -68,6 +68,7 @@ export type PluginRecord = {
   approved_permissions?: string[]
   last_error?: string | null
   available_version?: string | null
+  available_release_notes?: string | null
   update_available?: boolean
 }
 

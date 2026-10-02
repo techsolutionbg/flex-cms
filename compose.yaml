@@ -13,6 +13,8 @@ services:
         condition: service_started
     ports:
       - "${APP_PORT:-8080}:80"
+    group_add:
+      - "${FLEX_CMS_GID:-1000}"
     environment:
       APP_ENV: local
       TRUSTED_HOSTS: "localhost,127.0.0.1,app,192.168.1.225"
@@ -34,11 +36,16 @@ services:
       dockerfile: docker/php/Dockerfile
       target: development
     depends_on:
+      app:
+        condition: service_healthy
       mysql:
         condition: service_healthy
       mailpit:
         condition: service_started
     command: sh -c 'while :; do php bin/flex updates:process || true; sleep 5; done'
+    user: "${FLEX_CMS_UID:-1000}:${FLEX_CMS_GID:-1000}"
+    group_add:
+      - "${FLEX_CMS_GID:-1000}"
     environment:
       APP_ENV: local
       UPDATE_HEALTHCHECK_URL: http://app/health
