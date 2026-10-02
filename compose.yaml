@@ -19,7 +19,7 @@ services:
     environment:
       APP_ENV: local
       APP_KEY: "${APP_KEY:-}"
-      THEMES_PATH: "${THEMES_PATH:-themes-external}"
+      THEMES_PATH: "${THEMES_PATH:-themes}"
       TRUSTED_HOSTS: "${TRUSTED_HOSTS:-localhost,127.0.0.1,app,192.168.1.225}"
       VITE_DEV_SERVER_URL: "${VITE_DEV_SERVER_URL:-http://192.168.1.225:5173}"
       DB_HOST: "${DB_HOST:-mysql}"
@@ -30,7 +30,6 @@ services:
       ADMIN_URL: "${ADMIN_URL:-http://192.168.1.225:8090/}"
     volumes:
       - .:/var/www/html
-      - ../flex-cms-themes:/var/www/html/themes-external
       - vendor:/var/www/html/vendor
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/health"]

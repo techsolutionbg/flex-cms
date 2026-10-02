@@ -18,7 +18,8 @@ if [ "$(id -u)" = "0" ]; then
         storage/tmp \
         storage/backups \
         storage/updates \
-        plugins
+        plugins \
+        themes
 
     chmod a+rwX storage
 
@@ -45,6 +46,10 @@ if [ "$(id -u)" = "0" ]; then
     if [ -f storage/.env ]; then
         chgrp "$runtime_gid" storage/.env
         chmod 640 storage/.env
+    fi
+    if [ -d themes ]; then
+        chown -R "www-data:$runtime_gid" themes
+        chmod -R u+rwX,g+rwX,o-rwx themes
     fi
     # Apache runs as www-data while the updater runs as the host runtime user.
     # Keep www-data as owner and the updater group as the shared group so both

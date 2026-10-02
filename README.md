@@ -50,7 +50,7 @@ resources/views/     Twig и server-rendered templates
 src/                 platform modules и shared infrastructure
 storage/             environment, cache, logs и update runtime data
 tests/               backend, architecture и integration tests
-themes-external/     външни theme пакети (отделни Git репозитори)
+themes/              инсталирани theme пакети (всяка тема може да е отделен Git repository)
 ```
 
 Кодът на frontend-а не се обслужва директно. Development режимът използва Vite, а production използва единствено hashed файловете и manifest-а в `public/build/admin/`.
