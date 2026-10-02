@@ -95,7 +95,10 @@ jobs:
           DB_USERNAME: flex_cms
           DB_PASSWORD: flex_cms
         run: php vendor/bin/phinx migrate --configuration phinx.php --environment default --no-interaction -vvv
-      - run: vendor/bin/phpunit
+      - name: Run PHP tests
+        run: >-
+          vendor/bin/phpunit ||
+          (php -r 'require "vendor/autoload.php"; $kernel = Flex\\Bootstrap::boot(getcwd())->container()->get(Flex\\Contracts\\Http\\KernelInterface::class); foreach (["/missing", "/admin", "/admin/updates"] as $path) { $response = $kernel->handle(new Nyholm\\Psr7\\ServerRequest("GET", "http://localhost" . $path)); echo $path . " => " . $response->getStatusCode() . " " . (string) $response->getBody() . PHP_EOL; }' && exit 1)
       - run: vendor/bin/phpstan analyse
       - run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
       - run: composer audit --locked
