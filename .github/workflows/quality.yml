@@ -85,7 +85,7 @@ jobs:
       - run: composer validate --strict
       - name: Wait for MySQL
         run: >-
-          php -r ' = time() + 60; do { try { new PDO("mysql:host=" . getenv("DB_HOST") . ";port=" . getenv("DB_PORT") . ";dbname=" . getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD")); exit(0); } catch (Throwable ) { usleep(500000); } } while (time() < ); fwrite(STDERR, "MySQL did not become ready: " . () . PHP_EOL); exit(1);'
+          php -r '$deadline = time() + 60; do { try { new PDO("mysql:host=" . getenv("DB_HOST") . ";port=" . getenv("DB_PORT") . ";dbname=" . getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD")); exit(0); } catch (Throwable $e) { usleep(500000); } } while (time() < $deadline); fwrite(STDERR, "MySQL did not become ready: " . $e->getMessage() . PHP_EOL); exit(1);'
       - run: php vendor/bin/phinx migrate --configuration phinx.php --environment default --no-interaction
       - run: vendor/bin/phpunit
       - run: vendor/bin/phpstan analyse
