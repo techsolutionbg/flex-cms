@@ -10,6 +10,12 @@ permissions:
 jobs:
   php:
     runs-on: ubuntu-latest
+    env:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      FORCE_HTTPS: "false"
+      VITE_DEV_SERVER_URL: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
