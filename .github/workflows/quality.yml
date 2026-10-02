@@ -67,6 +67,7 @@ jobs:
           THEMES_PATH=themes-external
           TRUSTED_HOSTS=localhost,127.0.0.1
           EOF
+          cp storage/.env .env
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
