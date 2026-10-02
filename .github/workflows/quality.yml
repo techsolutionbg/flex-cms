@@ -39,6 +39,34 @@ jobs:
       DB_PASSWORD: flex_cms
     steps:
       - uses: actions/checkout@v4
+      - name: Configure PHP test environment
+        run: |
+          mkdir -p storage
+          cat > storage/.env <<'EOF'
+          APP_NAME=Flex CMS
+          APP_ENV=local
+          APP_DEBUG=true
+          APP_KEY=0000000000000000000000000000000000000000000000000000000000000000
+          APP_URL=http://localhost
+          FORCE_HTTPS=false
+          VITE_DEV_SERVER_URL=http://localhost:5173
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=flex_cms
+          DB_USERNAME=flex_cms
+          DB_PASSWORD=flex_cms
+          DB_CHARSET=utf8mb4
+          DB_COLLATION=utf8mb4_unicode_ci
+          DB_STRICT=true
+          DB_TIMEOUT=5
+          DB_PERSISTENT=false
+          SESSION_DRIVER=array
+          CACHE_DRIVER=array
+          PLUGINS_PATH=plugins
+          THEMES_PATH=themes-external
+          TRUSTED_HOSTS=localhost,127.0.0.1
+          EOF
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
@@ -63,6 +91,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Configure PHP test environment
+        run: |
+          mkdir -p storage
+          cat > storage/.env <<'EOF'
+          APP_NAME=Flex CMS
+          APP_ENV=local
+          APP_DEBUG=true
+          APP_KEY=0000000000000000000000000000000000000000000000000000000000000000
+          APP_URL=http://localhost
+          FORCE_HTTPS=false
+          VITE_DEV_SERVER_URL=http://localhost:5173
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=flex_cms
+          DB_USERNAME=flex_cms
+          DB_PASSWORD=flex_cms
+          DB_CHARSET=utf8mb4
+          DB_COLLATION=utf8mb4_unicode_ci
+          DB_STRICT=true
+          DB_TIMEOUT=5
+          DB_PERSISTENT=false
+          SESSION_DRIVER=array
+          CACHE_DRIVER=array
+          PLUGINS_PATH=plugins
+          THEMES_PATH=themes-external
+          TRUSTED_HOSTS=localhost,127.0.0.1
+          EOF
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
