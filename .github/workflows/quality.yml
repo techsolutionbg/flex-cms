@@ -100,7 +100,7 @@ jobs:
           set +e
           vendor/bin/phpunit
           test_status=$?
-          php -r 'require "vendor/autoload.php"; $kernel = Flex\\Bootstrap::boot(getcwd())->container()->get(Flex\\Contracts\\Http\\KernelInterface::class); foreach (["/missing", "/admin", "/admin/updates"] as $path) { $response = $kernel->handle(new Nyholm\\Psr7\\ServerRequest("GET", "http://localhost" . $path)); echo $path . " => " . $response->getStatusCode() . " " . (string) $response->getBody() . PHP_EOL; }'
+          php -r 'require "vendor/autoload.php"; $kernel = Flex\Bootstrap::boot(getcwd())->container()->get(Flex\Contracts\Http\KernelInterface::class); foreach (["/missing", "/admin", "/admin/updates"] as $path) { $response = $kernel->handle(new Nyholm\Psr7\ServerRequest("GET", "http://localhost" . $path)); echo $path . " => " . $response->getStatusCode() . " " . (string) $response->getBody() . PHP_EOL; }'
           exit $test_status
       - run: vendor/bin/phpstan analyse
       - run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
