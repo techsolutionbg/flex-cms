@@ -32,7 +32,7 @@ final class RemoteThemePackageDownloader
         if ($release->signature === null && $this->configuration->bool('extensions.updates.require_signature')) {
             throw new InvalidPlatformPackage('Цифровият подпис на release-а е задължителен.');
         }
-        if ($release->signature !== null && ($key === '' || $release->signatureAlgorithm !== PlatformPackageSignature::ALGORITHM || !RemoteReleaseManifestSigner::verify($release->signingData() + ['signature' => $release->signature], $key))) {
+        if ($release->signature !== null && ($key === '' || $release->signatureAlgorithm !== PlatformPackageSignature::ALGORITHM || !$this->verifyThemeSignature($release, $key))) {
             throw new InvalidPlatformPackage('Цифровият подпис на release-а е невалиден.');
         }
 
@@ -50,5 +50,18 @@ final class RemoteThemePackageDownloader
         } catch (\Throwable $exception) {
             @unlink($temporary); @unlink($final); throw $exception;
         }
+    }
+
+    private function verifyThemeSignature(ThemeReleaseManifest $release, string $publicKey): bool
+    {
+        if ($release->signature === null) {
+            return false;
+        }
+
+        return PlatformPackageSignature::verify(
+            $release->signingData() + ['signature' => $release->signature],
+            $release->signature,
+            $publicKey,
+        );
     }
 }

@@ -15,9 +15,10 @@ services:
       - "${APP_PORT:-8080}:80"
       - "${PUBLIC_PORT:-8088}:80"
     group_add:
-      - "${FLEX_CMS_GID:-1000}"
+      - "${FLEX_CMS_GID:-33}"
     environment:
       APP_ENV: local
+      FLEX_CMS_GID: "${FLEX_CMS_GID:-33}"
       APP_KEY: "${APP_KEY:-}"
       THEMES_PATH: "${THEMES_PATH:-themes}"
       TRUSTED_HOSTS: "${TRUSTED_HOSTS:-localhost,127.0.0.1,app,192.168.1.225}"
@@ -51,9 +52,10 @@ services:
       mailpit:
         condition: service_started
     command: sh -c 'while :; do php bin/flex updates:process || true; sleep 5; done'
-    user: "${FLEX_CMS_UID:-1000}:${FLEX_CMS_GID:-1000}"
+    # Keep atomic updater writes readable by Apache/www-data.
+    user: "${FLEX_CMS_UID:-1000}:${FLEX_CMS_GID:-33}"
     group_add:
-      - "${FLEX_CMS_GID:-1000}"
+      - "${FLEX_CMS_GID:-33}"
     environment:
       APP_ENV: local
       UPDATE_HEALTHCHECK_URL: http://app/health

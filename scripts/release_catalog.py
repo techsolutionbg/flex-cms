@@ -12,7 +12,12 @@ from pathlib import Path
 def release_entry(args: argparse.Namespace) -> dict[str, object]:
     artifact = Path(args.artifact)
     digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
-    release_path = f"platform/releases/{args.version}" if args.type == "platform" else f"plugins/{args.package}/releases/{args.version}"
+    if args.type == "platform":
+        release_path = f"platform/releases/{args.version}"
+    elif args.type == "theme":
+        release_path = f"themes/releases/{args.package}/{args.version}"
+    else:
+        release_path = f"plugins/{args.package}/releases/{args.version}"
     return {
         "schema": 1,
         "package": args.package,
@@ -38,7 +43,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
     create = sub.add_parser("create")
-    create.add_argument("--type", choices=("platform", "plugin"), required=True)
+    create.add_argument("--type", choices=("platform", "plugin", "theme"), required=True)
     create.add_argument("--package", required=True)
     create.add_argument("--version", required=True)
     create.add_argument("--channel", default="stable")

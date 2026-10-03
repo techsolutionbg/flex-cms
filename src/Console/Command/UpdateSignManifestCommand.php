@@ -14,7 +14,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'updates:sign-manifest', description: 'Sign a remote platform or plugin release manifest.')]
+#[AsCommand(name: 'updates:sign-manifest', description: 'Sign a remote platform, plugin, or theme release manifest.')]
 final class UpdateSignManifestCommand extends Command
 {
     protected function configure(): void

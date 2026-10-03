@@ -58,17 +58,23 @@ final readonly class RemoteReleaseManifest
         if ($schema !== 1) {
             throw new InvalidRemoteReleaseManifest('Unsupported remote release manifest schema.');
         }
-        if (!is_string($package) || !preg_match('/^(?:flex-cms|[a-z0-9]+(?:[._-][a-z0-9]+)*\/[a-z0-9]+(?:[._-][a-z0-9]+)*)$/', $package)) {
-            throw new InvalidRemoteReleaseManifest('The release package must be flex-cms or a vendor/name plugin ID.');
+        if (!is_string($package) || preg_match('/^[a-z0-9][a-z0-9._-]*$/', $package) !== 1 && preg_match('/^[a-z0-9]+(?:[._-][a-z0-9]+)*\/[a-z0-9]+(?:[._-][a-z0-9]+)*$/', $package) !== 1) {
+            throw new InvalidRemoteReleaseManifest('The release package must be flex-cms, a theme ID, or a vendor/name plugin ID.');
         }
-        if (!is_string($type) || !in_array($type, ['platform', 'plugin'], true)) {
-            throw new InvalidRemoteReleaseManifest('The release type must be platform or plugin.');
+        if (!is_string($type) || !in_array($type, ['platform', 'plugin', 'theme'], true)) {
+            throw new InvalidRemoteReleaseManifest('The release type must be platform, plugin, or theme.');
         }
         if ($type === 'platform' && $package !== 'flex-cms') {
             throw new InvalidRemoteReleaseManifest('Platform releases must use the flex-cms package ID.');
         }
         if ($type === 'plugin' && $package === 'flex-cms') {
             throw new InvalidRemoteReleaseManifest('Plugin releases must use a vendor/name package ID.');
+        }
+        if ($type === 'plugin' && preg_match('/\//', $package) !== 1) {
+            throw new InvalidRemoteReleaseManifest('Plugin releases must use a vendor/name package ID.');
+        }
+        if ($type === 'theme' && preg_match('/\//', $package) === 1) {
+            throw new InvalidRemoteReleaseManifest('Theme releases must use a plain theme ID.');
         }
         if (!is_string($version) || !preg_match('/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/', $version)) {
             throw new InvalidRemoteReleaseManifest('The release version must use semantic versioning.');

@@ -85,6 +85,8 @@ final readonly class ThemeReleaseManifest
             'compatible_from' => $this->compatibleFrom,
             'published_at' => $this->publishedAt,
             'release_notes' => $this->releaseNotes,
+            ...($this->signatureAlgorithm !== null ? ['signature_algorithm' => $this->signatureAlgorithm] : []),
+            ...($this->keyId !== null ? ['key_id' => $this->keyId] : []),
         ];
     }
 }
