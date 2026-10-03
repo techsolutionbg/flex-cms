@@ -68,6 +68,7 @@ final readonly class RequirementsChecker
             'Session directory' => $this->basePath . '/storage/sessions',
             'Temporary directory' => $this->basePath . '/storage/tmp',
             'Public media directory' => $this->basePath . '/public/media',
+            'Themes directory' => $this->basePath . '/' . trim((string) ($_ENV['THEMES_PATH'] ?? 'themes'), '/'),
         ];
     }
 

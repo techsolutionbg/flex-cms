@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeRecord } from "@/lib/admin-types"
@@ -14,6 +15,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
   const [themes, setThemes] = useState<ThemeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [pendingRemoval, setPendingRemoval] = useState<ThemeRecord | null>(null)
 
   async function loadThemes() {
     try {
@@ -73,14 +75,28 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
             {theme.update_available && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "update_remote")}>
               {busy && <span className="react-button-spinner" />}<Upload aria-hidden="true" />Обнови
             </LoadingButton>}
-            {!theme.active && <LoadingButton type="button" disabled={busy} onClick={() => {
-              if (window.confirm(`Да бъде ли изтрита темата „${theme.name}“?`)) void runAction(theme, "delete")
-            }}>
+            {!theme.active && <LoadingButton type="button" disabled={busy} onClick={() => setPendingRemoval(theme)}>
               {busy && <span className="react-button-spinner" />}<Trash2 aria-hidden="true" />Изтрий
             </LoadingButton>}
           </div>
         </article>
       })}</div>}
     </section>
+    <ConfirmDialog
+      open={pendingRemoval !== null}
+      title="Изтриване на тема"
+      message={pendingRemoval ? `Темата „${pendingRemoval.name}“ ще бъде изтрита окончателно.` : ""}
+      confirmLabel="Изтрий"
+      danger={true}
+      busy={pendingRemoval !== null && busyId === pendingRemoval.id}
+      onCancel={() => { if (busyId === null) setPendingRemoval(null) }}
+      onConfirm={() => {
+        if (pendingRemoval) {
+          const theme = pendingRemoval
+          setPendingRemoval(null)
+          void runAction(theme, "delete")
+        }
+      }}
+    />
   </AdminShell>
 }

@@ -174,7 +174,8 @@ final readonly class PlatformPackageBuilder
     private function isExcluded(string $relative): bool
     {
         if ($relative === 'themes/.gitkeep') {
-            return true;
+            // Keep the managed themes root present in fresh installations.
+            return false;
         }
         $segments = explode('/', $relative);
         if (in_array('.git', $segments, true) || in_array('node_modules', $segments, true)) {

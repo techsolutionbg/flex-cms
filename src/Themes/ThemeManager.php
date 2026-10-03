@@ -20,7 +20,12 @@ final class ThemeManager
     /** @param array<string, mixed> $data */
     public function render(string $template, array $data = []): string
     {
-        return $this->renderForTheme($this->activeTheme(), $template, $data);
+        $theme = $this->activeTheme();
+        if ($theme === '') {
+            return $this->renderNoTheme();
+        }
+
+        return $this->renderForTheme($theme, $template, $data);
     }
 
     /** @param array<string, mixed> $data */
@@ -59,6 +64,10 @@ final class ThemeManager
         $stored = Setting::query()->find('site.active_theme');
         $theme = trim((string) ($stored instanceof Setting ? $stored->getAttribute('value') : $this->configuration->string('app.active_theme', 'flex-default')));
 
+        if ($theme === 'no-theme') {
+            return '';
+        }
+
         if ($theme !== '' && preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) === 1 && is_dir($this->paths->themes($theme))) {
             return $theme;
         }
@@ -66,7 +75,16 @@ final class ThemeManager
             return 'flex-starter';
         }
 
-        return 'flex-default';
+        if (is_dir($this->paths->themes('flex-default'))) {
+            return 'flex-default';
+        }
+
+        return '';
+    }
+
+    private function renderNoTheme(): string
+    {
+        return '<!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Няма активна тема</title><style>*,*::before,*::after{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:2rem;background:#f3f5ef;color:#172118;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.notice{width:min(100%,42rem);padding:3rem;border:1px solid #d4d9d0;border-radius:1rem;background:#fff;box-shadow:0 1rem 3rem rgb(23 33 24 / 8%);text-align:center}.notice h1{margin:0 0 1rem;font-size:clamp(1.7rem,4vw,2.4rem)}.notice p{margin:0;color:#687268;font-size:1.05rem;line-height:1.6}</style></head><body><main class="notice"><h1>Няма активна тема</h1><p>Публичната част на сайта временно не може да бъде показана, защото няма активирана тема.</p></main></body></html>';
     }
 
     /** @return list<array{id: string, name: string, version: string, author: string, description: string, tags: list<string>, screenshot_url: string|null, supports: list<string>, path: string, active: bool, valid: bool, error: string|null}> */
