@@ -20,6 +20,32 @@ docker compose up --build
 
 MySQL host-ът вътре в Docker мрежата е `mysql`, а стандартната база и потребител са `flex_cms`. Локалните стойности могат да се променят в `.env`.
 
+### Docker контейнери и портове
+
+Основната локална Docker конфигурация стартира следните услуги. Портовете са стойностите по подразбиране и могат да се променят чрез `.env`.
+
+| Услуга | Docker service | Host порт | Container порт | Предназначение |
+| --- | --- | ---: | ---: | --- |
+| Приложение | `app` | `8080` и `8088` | `80` | Основно приложение, installer и публична PHP част |
+| React админ панел | `frontend-react` | `8090` | `8090` | Административен интерфейс |
+| Vite dev server | `frontend` | `5173` | `5173` | Development frontend server |
+| MySQL | `mysql` | `3306` | `3306` | База данни |
+| phpMyAdmin | `phpmyadmin` | `8081` | `80` | Управление на MySQL през браузър |
+| Mailpit SMTP | `mailpit` | `1025` | `1025` | Локално приемане на изпратени имейли |
+| Mailpit Web UI | `mailpit` | `8025` | `8025` | Преглед на локалните имейли |
+| Updater worker | `updater` | — | — | Обработка на queued platform updates; достъпен само вътре в Docker мрежата |
+
+Основните адреси са:
+
+- публична и installer част: `http://localhost:8080`
+- алтернативен app порт: `http://localhost:8088`
+- React административен панел: `http://localhost:8090`
+- Vite dev server: `http://localhost:5173`
+- phpMyAdmin: `http://localhost:8081`
+- Mailpit: `http://localhost:8025`
+
+Ако портът `8080` вече се използва, задайте например `APP_PORT=8182` в `.env`. За React панела използвайте `VITE_REACT_FORWARD_PORT`, а за MySQL — `DB_FORWARD_PORT`.
+
 ## Проверки
 
 ```bash

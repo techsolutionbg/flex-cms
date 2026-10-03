@@ -54,6 +54,13 @@ export function AdminSidebar({ onLogout, onNavigate, activeItem = "Табло", 
   const [open, setOpen] = useState(false)
 
   function navigateFromSidebar(label: string) {
+    if (label === "Профил") {
+      setOpen(false)
+      window.history.pushState(null, "", "/profile")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+      return
+    }
+
     if (!open) {
       onNavigate(label)
       return

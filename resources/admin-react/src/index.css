@@ -8,12 +8,63 @@
   --sidebar-bg: #101811;
   --sidebar-link: #aeb8ae;
   --sidebar-link-hover: #263629;
-  --sidebar-active: #f2f2ec;
-  --sidebar-active-text: #172118;
+  --sidebar-active: #203224;
+  --sidebar-active-text: #ffffff;
   --sidebar-accent: #ff8062;
   --content-bg: #f4f5ef;
   --border: #d4d9d0;
 }
+
+:root[data-admin-theme="dark"] body { background: #121813; color: #edf2eb; }
+:root[data-admin-theme="dark"] .admin-shell-react { --content-bg: #121813; --border: #3a483d; }
+:root[data-admin-theme="dark"] .admin-topbar-react,
+:root[data-admin-theme="dark"] .react-table-card,
+:root[data-admin-theme="dark"] .react-form-section,
+:root[data-admin-theme="dark"] .react-page-form,
+:root[data-admin-theme="dark"] .theme-card,
+:root[data-admin-theme="dark"] .theme-store-card,
+:root[data-admin-theme="dark"] .collapsible-section,
+:root[data-admin-theme="dark"] .universal-dropdown-menu { background: #1b251d; border-color: #3a483d; color: #edf2eb; }
+:root[data-admin-theme="dark"] .admin-content-react h1,
+:root[data-admin-theme="dark"] .react-form-section h2,
+:root[data-admin-theme="dark"] .react-page-heading h1,
+:root[data-admin-theme="dark"] .theme-card-title h3,
+:root[data-admin-theme="dark"] .theme-store-title h2,
+:root[data-admin-theme="dark"] .react-form-field,
+:root[data-admin-theme="dark"] .react-breadcrumbs strong { color: #edf2eb; }
+:root[data-admin-theme="dark"] .react-form-field input,
+:root[data-admin-theme="dark"] .react-form-field textarea,
+:root[data-admin-theme="dark"] .react-form-select,
+:root[data-admin-theme="dark"] .react-table-filter-header button,
+:root[data-admin-theme="dark"] .react-filter-field input,
+:root[data-admin-theme="dark"] .react-secondary-button,
+:root[data-admin-theme="dark"] .react-page-heading button,
+:root[data-admin-theme="dark"] .theme-card-actions > button,
+:root[data-admin-theme="dark"] .theme-store-actions > button { background: #121813; border-color: #526356; color: #edf2eb; }
+:root[data-admin-theme="dark"] .react-form-field small,
+:root[data-admin-theme="dark"] .react-breadcrumbs,
+:root[data-admin-theme="dark"] .react-page-heading p,
+:root[data-admin-theme="dark"] .theme-card-body p,
+:root[data-admin-theme="dark"] .theme-card-meta,
+:root[data-admin-theme="dark"] .theme-store-body p,
+:root[data-admin-theme="dark"] .theme-store-meta,
+:root[data-admin-theme="dark"] .dashboard-card-react p { color: #aebbae; }
+:root[data-admin-theme="dark"] .collapsible-section-header { border-color: #3a483d; }
+:root[data-admin-theme="dark"] .collapsible-section-header:hover,
+:root[data-admin-theme="dark"] .react-secondary-button:hover:not(:disabled),
+:root[data-admin-theme="dark"] .react-page-heading button:hover,
+:root[data-admin-theme="dark"] .theme-card-actions > button:hover:not(:disabled),
+:root[data-admin-theme="dark"] .theme-store-actions > button:hover:not(:disabled) { background: #263629; }
+:root[data-admin-theme="dark"] .react-data-table th,
+:root[data-admin-theme="dark"] .react-data-table td,
+:root[data-admin-theme="dark"] .react-table-filter-header,
+:root[data-admin-theme="dark"] .react-pagination { border-color: #3a483d; color: #edf2eb; }
+:root[data-admin-theme="dark"] .sidebar-link-react.is-active { background: #2f4234; color: #fff; }
+:root[data-admin-theme="dark"] .sidebar-link-react.is-active:hover,
+:root[data-admin-theme="dark"] .sidebar-link-react.is-active:focus-visible { background: #36503d; color: #fff; }
+:root[data-admin-theme="dark"] .universal-dropdown-option { color: #edf2eb; }
+:root[data-admin-theme="dark"] .universal-dropdown-option:hover,
+:root[data-admin-theme="dark"] .universal-dropdown-option.is-selected { background: #263629; }
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
@@ -109,7 +160,7 @@ body { margin: 0; min-width: 320px; }
 }
 .sidebar-link-react:hover, .sidebar-link-react:focus-visible { background: var(--sidebar-link-hover); color: white; outline: none; }
 .sidebar-link-react.is-active { background: var(--sidebar-active); color: var(--sidebar-active-text); }
-.sidebar-link-react.is-active:hover, .sidebar-link-react.is-active:focus-visible { background: var(--sidebar-active); color: var(--sidebar-active-text); }
+.sidebar-link-react.is-active:hover, .sidebar-link-react.is-active:focus-visible { background: #2d4231; color: var(--sidebar-active-text); }
 .admin-shell-react.is-sidebar-collapsed .sidebar-link-react { justify-content: center; padding-right: 0.5rem; padding-left: 0.5rem; }
 .sidebar-label-react { display: inline-block; max-width: 9rem; overflow: hidden; opacity: 1; white-space: nowrap; transition: max-width 150ms ease, opacity 100ms ease; }
 .admin-shell-react.is-sidebar-collapsed .sidebar-label-react { max-width: 0; opacity: 0; }
@@ -120,8 +171,8 @@ body { margin: 0; min-width: 320px; }
 .admin-main-react { min-height: 100vh; margin-left: var(--sidebar-width); transition: margin-left 180ms ease; }
 .admin-topbar-react { position: relative; display: flex; min-height: 4.125rem; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0 1.5rem; background: white; border-bottom: 1px solid var(--border); }
 .admin-topbar-title-react { position: absolute; left: 50%; transform: translateX(-50%); font-size: 1rem; font-weight: 700; }
-.react-sidebar-collapse-toggle { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; margin-right: auto; border: 1px solid #536254; border-radius: 0.625rem; background: #203224; color: white; cursor: pointer; }
-.react-sidebar-collapse-toggle:hover, .react-sidebar-collapse-toggle:focus-visible { background: #2d4231; outline: 2px solid rgb(255 128 98 / 45%); outline-offset: 2px; }
+.react-sidebar-collapse-toggle { display: grid; width: 2.5rem; height: 2.5rem; place-items: center; margin-right: auto; border: 1px solid #d4d9d0; border-radius: 0.625rem; background: #ffffff; color: #203224; cursor: pointer; }
+.react-sidebar-collapse-toggle:hover, .react-sidebar-collapse-toggle:focus-visible { background: #f2f2ec; outline: 2px solid rgb(255 128 98 / 45%); outline-offset: 2px; }
 .admin-logout-react { display: inline-flex; align-items: center; border: 0; background: transparent; color: #687268; cursor: pointer; font: inherit; text-decoration: underline; }
 .admin-logout-react:disabled { cursor: wait; opacity: 0.65; }
 .admin-content-react { padding: 1.5rem; }
@@ -507,7 +558,7 @@ body { margin: 0; min-width: 320px; }
   .admin-main-react { margin-left: 0; }
   .react-sidebar-collapse-toggle { display: none; }
   .admin-topbar-title-react { position: static; margin: 0 auto; transform: none; }
-  .sidebar-mobile-toggle { position: fixed; top: 0.95rem; left: 1rem; z-index: 30; display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border: 1px solid #536254; border-radius: 0.625rem; background: #203224; color: white; cursor: pointer; }
+  .sidebar-mobile-toggle { position: fixed; top: 0.95rem; left: 1rem; z-index: 30; display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border: 1px solid #d4d9d0; border-radius: 0.625rem; background: #ffffff; color: #203224; cursor: pointer; }
   .sidebar-backdrop { position: fixed; inset: 0; z-index: 10; display: block; border: 0; background: rgb(16 24 17 / 54%); }
   .admin-content-react { padding: 1.25rem 1rem; }
   .react-page-heading { flex-direction: column; }

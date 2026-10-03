@@ -12,6 +12,8 @@ import { UpdatesPage } from "@/pages/updates-page"
 import { InstallerPage } from "@/pages/installer-page"
 import { ThemesPage } from "@/pages/themes-page"
 import { ThemeStorePage } from "@/pages/theme-store-page"
+import { ProfilePage } from "@/pages/profile-page"
+import { getAdminTheme, setAdminTheme } from "@/lib/admin-theme"
 import "./index.css"
 
 
@@ -24,24 +26,43 @@ function App() {
   const installerRoute = window.location.pathname === "/install"
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "themes" | "theme-store" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "user-form" | "form" | "settings">("dashboard")
+  const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "themes" | "theme-store" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "profile" | "user-form" | "form" | "settings">("dashboard")
   const [editingPage, setEditingPage] = useState<PageRecord | null>(null)
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
   const [pluginDetail, setPluginDetail] = useState<PluginRecord | null>(null)
 
+  useEffect(() => {
+    setAdminTheme(getAdminTheme())
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)")
+    if (!media) return
+    const updateSystemTheme = () => { if (getAdminTheme() === "system") setAdminTheme("system") }
+    media.addEventListener?.("change", updateSystemTheme)
+    return () => media.removeEventListener?.("change", updateSystemTheme)
+  }, [])
+
   function pushRoute(path: string) {
+    if (path === "/" && window.location.pathname === "/login") {
+      window.location.replace(loginRedirectTarget())
+      return
+    }
     window.history.pushState(null, "", path)
   }
 
   function goToDashboard() { pushRoute("/"); setPageView("dashboard") }
   function goToPages() { pushRoute("/pages"); setPageView("pages") }
   function goToUsers() { pushRoute("/users"); setPageView("users") }
+  function goToProfile() { pushRoute("/profile"); setPageView("profile") }
   function goToThemes() { pushRoute("/themes"); setPageView("themes") }
   function goToThemeStore() { pushRoute("/theme-store"); setPageView("theme-store") }
   function goToPlugins() { pushRoute("/plugins"); setPageView("plugins") }
   function goToUpdates() { pushRoute("/updates"); setPageView("updates") }
   function goToPluginCatalog() { pushRoute("/plugins/catalog"); setPageView("plugin-catalog") }
   function goToPluginDetail(plugin: PluginRecord) { setPluginDetail(plugin); pushRoute(`/plugins/${encodeURIComponent(plugin.id)}`); setPageView("plugin-detail") }
+  function loginRedirectTarget() {
+    const target = new URLSearchParams(window.location.search).get("redirect")
+    if (target && target.startsWith("/") && !target.startsWith("//") && target !== "/login") return target
+    return "/"
+  }
   async function viewPluginFromCatalog(id: string) {
     try {
       const response = await fetch("/api/admin/plugins", { credentials: "include", headers: { Accept: "application/json" } })
@@ -54,6 +75,27 @@ function App() {
 
   useEffect(() => {
     if (installerRoute) return
+
+    const nativeFetch = window.fetch.bind(window)
+    window.fetch = async (input, init) => {
+      const response = await nativeFetch(input, init)
+      const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url
+
+      if (response.status === 401 && requestUrl.startsWith("/api/") && window.location.pathname !== "/login") {
+        const currentRoute = `${window.location.pathname}${window.location.search}${window.location.hash}`
+        window.location.replace(`/login?redirect=${encodeURIComponent(currentRoute)}`)
+      }
+
+      return response
+    }
+
+    return () => {
+      window.fetch = nativeFetch
+    }
+  }, [installerRoute])
+
+  useEffect(() => {
+    if (installerRoute) return
     function syncRoute() {
       if (window.location.pathname === "/pages") setPageView("pages")
       else if (window.location.pathname === "/users") setPageView("users")
@@ -62,6 +104,7 @@ function App() {
       else if (window.location.pathname === "/plugins") setPageView("plugins")
       else if (window.location.pathname === "/plugins/catalog") setPageView("plugin-catalog")
       else if (window.location.pathname === "/updates") setPageView("updates")
+      else if (window.location.pathname === "/profile") setPageView("profile")
       else if (window.location.pathname.startsWith("/plugins/") && window.location.pathname !== "/plugins/catalog") setPageView("plugin-detail")
       else if (window.location.pathname === "/users/create") { setEditingUser(null); setPageView("user-form") }
       else if (/^\/users\/\d+\/edit$/.test(window.location.pathname)) setPageView("user-form")
@@ -81,6 +124,7 @@ function App() {
     if (path === "/plugins") { setPageView("plugins"); return }
     if (path === "/plugins/catalog") { setPageView("plugin-catalog"); return }
     if (path === "/updates") { setPageView("updates"); return }
+    if (path === "/profile") { setPageView("profile"); return }
     const pluginMatch = path.match(/^\/plugins\/(.+)$/)
     if (pluginMatch) {
       setPageView("plugin-detail")
@@ -196,6 +240,10 @@ function App() {
 
   if (authenticated && pageView === "theme-store") {
     return <><Toaster position="top-center" closeButton richColors theme="light" /><ThemeStorePage onLogout={() => void logout()} onNavigate={(label) => label === "Теми" ? goToThemes() : label === "Разширения" ? goToPlugins() : label === "Обновявания" ? goToUpdates() : label === "Страници" ? goToPages() : label === "Потребители" ? goToUsers() : goToDashboard()} onBack={goToThemes} loggingOut={loggingOut} /></>
+  }
+
+  if (authenticated && pageView === "profile") {
+    return <><Toaster position="top-center" closeButton richColors theme="light" /><ProfilePage onLogout={() => void logout()} onNavigate={(label) => label === "Страници" ? goToPages() : label === "Теми" ? goToThemes() : label === "Потребители" ? goToUsers() : label === "Разширения" ? goToPlugins() : label === "Обновявания" ? goToUpdates() : goToDashboard()} loggingOut={loggingOut} /></>
   }
 
   return <>
