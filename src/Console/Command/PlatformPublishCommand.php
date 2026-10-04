@@ -49,45 +49,44 @@ final class PlatformPublishCommand extends Command
             return self::FAILURE;
         }
 
-        $key = $this->privateKeyPath($input);
-        if ($key === null) {
-            $io->error('A signing key is required. Set UPDATE_SIGNING_PRIVATE_KEY_FILE or pass --private-key-file.');
-            return self::FAILURE;
-        }
-
         $root = dirname(__DIR__, 3);
-        $script = $root . '/scripts/publish_update.sh';
-        if (!is_file($script) || !is_executable($script)) {
+        $script = $root . '/scripts/publish_update.ps1';
+        if (!is_file($script)) {
             $io->error(sprintf('The publish script is missing or not executable: %s', $script));
             return self::FAILURE;
         }
 
-        $command = [$script, $version, (string) $input->getOption('release-notes'), $key];
-        if ((bool) $input->getOption('run-migrations')) {
-            $command[] = '--run-migrations';
-        }
-        $environment = array_merge(getenv(), array_filter([
-            'UPDATE_SIGNING_KEY_ID' => $this->stringOption($input, 'key-id'),
-            'UPDATE_COMPATIBLE_FROM' => $this->stringOption($input, 'compatible-from'),
-        ]));
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $root, $environment);
-        if (!is_resource($process)) {
-            $io->error('The publish process could not be started.');
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $io->error('The local release publisher currently runs on Windows 11.');
             return self::FAILURE;
         }
 
-        $stdout = stream_get_contents($pipes[1]);
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        $exitCode = proc_close($process);
-        if ($stdout !== false && $stdout !== '') {
-            $output->write($stdout);
-        }
-        if ($exitCode !== 0) {
-            if ($stderr !== false && $stderr !== '') {
-                $output->write($stderr, false, OutputInterface::VERBOSITY_NORMAL);
+        $command = [
+            'powershell.exe', '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+            '-File', $script,
+            '-TargetVersion', $version,
+            '-ReleaseNotes', (string) $input->getOption('release-notes'),
+        ];
+        foreach ([
+            'PrivateKeyFile' => $this->stringOption($input, 'private-key-file') ?? $this->environment('UPDATE_SIGNING_PRIVATE_KEY_FILE'),
+            'KeyId' => $this->stringOption($input, 'key-id'),
+            'CompatibleFrom' => $this->stringOption($input, 'compatible-from'),
+        ] as $option => $value) {
+            if ($value !== null && $value !== '') {
+                $command[] = '-' . $option;
+                $command[] = $value;
             }
+        }
+        if ((bool) $input->getOption('run-migrations')) {
+            $command[] = '-RunMigrations';
+        }
+
+        $process = proc_open($command, [0 => STDIN, 1 => STDOUT, 2 => STDERR], $pipes, $root);
+        if (!is_resource($process)) {
+            $io->error('The local PowerShell publisher could not be started.');
+            return self::FAILURE;
+        }
+        if (proc_close($process) !== 0) {
             $io->error(sprintf('Publishing platform %s failed.', $version));
             return self::FAILURE;
         }
@@ -123,20 +122,9 @@ final class PlatformPublishCommand extends Command
         };
     }
 
-    private function privateKeyPath(InputInterface $input): ?string
+    private function environment(string $name): ?string
     {
-        $explicit = $this->stringOption($input, 'private-key-file');
-        if ($explicit !== null && is_file($explicit)) {
-            return $explicit;
-        }
-
-        $configured = getenv('UPDATE_SIGNING_PRIVATE_KEY_FILE');
-        if (is_string($configured) && $configured !== '' && is_file($configured)) {
-            return $configured;
-        }
-
-        $home = getenv('HOME');
-        $default = is_string($home) && $home !== '' ? $home . '/.config/flex-cms/update-signing-private.key' : '';
-        return $default !== '' && is_file($default) ? $default : null;
+        $value = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

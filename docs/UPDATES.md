@@ -154,19 +154,19 @@ Rollback използва същия lifecycle на плъгина и възст
 
 Същата страница показва последните jobs и техните статуси (`pending`, `running`, `completed`, `failed`). Ако remote каталогът е временно недостъпен, това се показва като грешка в интерфейса, без да блокира ръчния ZIP upload и rollback функционалността.
 
-## Release publishing workflow
+## Публикуване на platform release
 
-Добавен е `scripts/release_catalog.py` и GitHub Actions workflow `.github/workflows/publish-platform-release.yml`. Workflow-ът се стартира ръчно с версия, release notes и флаг за миграции. Той изгражда production assets, създава подписан platform ZIP, генерира release entry, публикува ZIP файловете и каталога чрез rsync към shared hosting и записва metadata-та в Git.
+Release-ът се изгражда и качва локално от Windows 11 чрез `php flex platform:publish`. Командата използва Docker Compose за production asset-ите и platform ZIP-а, локалния Ed25519 private key за подписване и Windows OpenSSH (`ssh`/`scp`) за качване към update хостинга. ZIP-ът и checksum-ът се качват първи; подписаният каталог се качва последен. GitHub се използва за комитнатия source code и не участва в процеса на публикуване на release.
 
-В GitHub трябва да се зададат `UPDATE_SIGNING_PRIVATE_KEY` и `UPDATE_DEPLOY_SSH_KEY` като secrets, както и `UPDATE_SIGNING_KEY_ID`, `UPDATE_DEPLOY_HOST`, `UPDATE_DEPLOY_USER` и `UPDATE_DEPLOY_PATH` като repository variables. Каталогът се публикува последен, след като ZIP artifact-ът вече е наличен на хостинга.
+Настройките за публикуване се пазят в локалния, gitignored `.publish.env`, създаден от `.publish.env.example`. Signing private key-ът и SSH достъпът не се добавят в repository.
 
 Същият catalog tool поддържа и plugin release entries чрез `--type plugin --package vendor/name`; plugin build pipeline-ът може да подаде готовия, проверен plugin ZIP към този tool, без да променя формата на remote каталога.
 
 ## Production hardening checklist
 
-Добавен е `.github/workflows/quality.yml`, който изпълнява PHPUnit, PHPStan, PHP CS Fixer, Composer audit, TypeScript проверка и production build. Преди production activation трябва да се потвърди:
+Преди production activation трябва да се потвърди:
 
-- private signing key-ът да е само GitHub secret и никога да не се качва в `updates/`;
+- private signing key-ът да е локален файл извън Git repository и никога да не се качва в `updates/`;
 - `updates/` да е read-only за приложението и да изпълнява само статични JSON/ZIP файлове;
 - `storage/updates`, `storage/backups/plugins` и `storage/tmp` да са writable само от application user;
 - cron worker-ът да е единствен активен worker за конкретната инсталация;

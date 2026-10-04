@@ -96,17 +96,20 @@ themes/              инсталирани theme пакети (всяка те�
 От корена на проекта създайте пакет с:
 
 ```bash
-php flex platform:release --bump=patch   # 0.1.38 → 0.1.39
-php flex platform:release --bump=minor   # 0.1.38 → 0.2.0
-php flex platform:release --bump=major   # 0.1.38 → 1.0.0
+php flex platform:release --bump=patch   # 0.1.43 → 0.1.44
+php flex platform:release --bump=minor   # 0.1.43 → 0.2.0
+php flex platform:release --bump=major   # 0.1.43 → 1.0.0
 
 # Build and publish directly to the configured update host
-php flex platform:publish --bump=patch --release-notes="Описание на промените"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update.ps1 `
+  -TargetVersion 0.1.43 -ReleaseNotes "Описание на промените"
 ```
 
-`platform:release` записва ZIP пакета и checksum файла в `releases/<version>/` спрямо корена на проекта (например `/home/kristian/tech-solution/Flex CMS/releases/`). `platform:publish` използва същия локален build, след което подписва и качва пакета и update manifest-а чрез SSH/SCP. Настройте `UPDATE_SSH_TARGET`, `UPDATE_REMOTE_ROOT`, `UPDATE_SERVER_BASE_URL` и `UPDATE_SIGNING_PRIVATE_KEY_FILE` преди публикуване. Командата се изпълнява от хост машината в корена на проекта, не от `app` контейнера, защото използва Docker Compose, npm, SSH и SCP.
+`platform:release` записва ZIP пакета и checksum файла в `releases/<version>/`. `platform:publish` изпълнява локалния PowerShell publisher, изгражда asset-ите през Docker, подписва пакета и каталога с локалния Ed25519 ключ и качва ZIP, checksum и каталога към update хостинга чрез SSH/SCP. GitHub Actions не участва в release процеса. Publisher-ът изисква чисти, комитнати platform промени; изходът `resources/admin-react/dist/` се изключва от пакета.
 
-Може да се използват и цифрите `--bump=1` (major), `--bump=2` (minor) и `--bump=3` (patch). Ако `--bump` и `--target-version` не са зададени, се увеличава patch версията. Не използвайте двете опции едновременно. `platform:release` само създава пакета; `platform:publish` създава и публикува релийза.
+Създайте локален `.publish.env` от [.publish.env.example](.publish.env.example), задайте SSH alias/пътя до ключа и проверете, че `UPDATE_SERVER_URL` в `.env` сочи към същия update host. Publisher-ът се стартира от Windows 11 с Docker Desktop и Windows OpenSSH (`ssh`/`scp`); PHP 8.3+ с Composer зависимостите трябва да работи в `app` контейнера. Самият deploy ключ остава в Windows OpenSSH/SSH agent, а signing private key остава локален и не се commit-ва.
+
+Може да се използват и цифрите `--bump=1` (major), `--bump=2` (minor) и `--bump=3` (patch). Ако `--bump` и `--target-version` не са зададени, се увеличава patch версията. Не използвайте двете опции едновременно. `platform:release` само създава пакета; `platform:publish` създава и публикува релийза директно към update хостинга.
 
 ## Архитектурни граници
 

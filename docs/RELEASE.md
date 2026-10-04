@@ -1,5 +1,15 @@
 # Release и production workflow
 
+GitHub съдържа комитнатия source code; Actions не се използват за release publishing. От Windows 11 изградете и публикувайте директно към update хостинга:
+
+```powershell
+Copy-Item .publish.env.example .publish.env
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update.ps1 `
+    -TargetVersion 0.1.43 -ReleaseNotes "Описание на промените"
+```
+
+Преди публикуване попълнете `.publish.env`, уверете се, че промените са комитнати, Docker контейнерите работят и SSH alias-ът може да пише в update директорията. ZIP пакетът и checksum-ът се качват преди подписания каталог.
+
 ## Build
 
 Преди platform package build изпълнете backend проверките и production frontend build:
@@ -8,7 +18,7 @@
 docker compose exec app composer check
 npm --prefix resources/admin run check
 npm --prefix resources/admin-react run build:installer
-docker compose exec app bin/flex platform:build --version=0.1.0
+docker compose exec app php bin/flex platform:build --target-version=0.1.43
 ```
 
 Release builder-ът използва allowlist за runtime корените и отделен allowlist за `public/`. Пакетът включва готовите hashed assets и Vite manifest, но изключва tests, frontend source, `node_modules`, вложени `.git`, media/runtime данни и development tooling. Липсващ production manifest прекратява build-а.

@@ -18,6 +18,7 @@ final readonly class PlatformPackageBuilder
         'node_modules',
         'public/media',
         'resources/admin',
+        'resources/admin-react/dist',
         // Themes are managed separately and are protected by older updaters.
         'themes',
     ];
