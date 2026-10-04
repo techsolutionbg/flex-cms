@@ -8,6 +8,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "@": path.resolve(import.meta.dirname, "./src") } },
   server: {
+    // Docker Desktop bind mounts do not reliably forward Windows file events.
+    watch: { usePolling: true },
     host: "0.0.0.0",
     port: 8090,
     strictPort: true,

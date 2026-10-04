@@ -7,9 +7,9 @@ import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeRecord } from "@/lib/admin-types"
 import { adminUrl } from "@/lib/admin-routes"
 import { toast } from "sonner"
-import { Eye, Power, Trash2, Upload } from "lucide-react"
+import { Power, Trash2, Upload } from "lucide-react"
 
-type ThemeAction = "activate" | "update_remote" | "delete"
+type ThemeAction = "activate" | "deactivate" | "update_remote" | "delete"
 type ThemesPageProps = { onLogout: () => void; onNavigate: (label: string) => void; onCatalog?: () => void; loggingOut: boolean }
 
 export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: ThemesPageProps) {
@@ -33,15 +33,36 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
   async function runAction(theme: ThemeRecord, action: ThemeAction) {
     if (busyId !== null) return
     setBusyId(theme.id)
+    let themesAfterDeactivation: ThemeRecord[] | null = null
     try {
       const token = await getCsrfToken()
-      const response = await fetch("/api/themes/action", { method: "POST", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": token }, body: JSON.stringify({ id: theme.id, action }) })
-      const body = await response.json().catch(() => ({})) as { themes?: ThemeRecord[]; error?: { message?: string } }
-      if (!response.ok) throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
+      const sendAction = async (requestedAction: ThemeAction) => {
+        const response = await fetch("/api/themes/action", { method: "POST", credentials: "include", headers: { Accept: "application/json", "Content-Type": "application/json", "X-CSRF-Token": token }, body: JSON.stringify({ id: theme.id, action: requestedAction }) })
+        const body = await response.json().catch(() => ({})) as { themes?: ThemeRecord[]; error?: { message?: string } }
+        if (!response.ok) throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
+        return body
+      }
+
+      if (action === "delete" && theme.active) {
+        const deactivated = await sendAction("deactivate")
+        const deactivatedTheme = deactivated.themes?.find((item) => item.id === theme.id)
+        if (!deactivatedTheme || deactivatedTheme.active) throw new Error("Темата не беше деактивирана и не е изтрита.")
+        themesAfterDeactivation = deactivated.themes ?? null
+      }
+
+      const body = await sendAction(action)
       if (body.themes) setThemes(body.themes)
       else await loadThemes()
-      toast.success(action === "activate" ? "Темата е активирана." : action === "update_remote" ? "Темата е обновена." : "Темата е изтрита.")
-    } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.") }
+      toast.success(action === "activate" ? "Темата е активирана." : action === "deactivate" ? "Темата е деактивирана." : action === "update_remote" ? "Темата е обновена." : "Темата е изтрита.")
+    } catch (reason) {
+      if (themesAfterDeactivation) {
+        setThemes(themesAfterDeactivation)
+        const message = reason instanceof Error ? reason.message : "неизвестна грешка"
+        toast.error(`Темата е деактивирана, но не беше изтрита: ${message}`)
+      } else {
+        toast.error(reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.")
+      }
+    }
     finally { setBusyId(null) }
   }
 
@@ -69,16 +90,15 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
             {theme.error && <small className="react-error-text">{theme.error}</small>}
           </div>
           <div className="theme-card-actions">
-            <a className="theme-card-button" href={`/admin/themes/${encodeURIComponent(theme.id)}/preview`} target="_blank" rel="noopener"><Eye aria-hidden="true" />Преглед</a>
-            {theme.valid && !theme.active && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "activate")}>
-              {busy && <span className="react-button-spinner" />}<Power aria-hidden="true" />Активирай
+            {theme.valid && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, theme.active ? "deactivate" : "activate")}>
+              {busy && <span className="react-button-spinner" />}<Power aria-hidden="true" />{theme.active ? "Деактивирай" : "Активирай"}
             </LoadingButton>}
             {theme.update_available && <LoadingButton type="button" disabled={busy} onClick={() => void runAction(theme, "update_remote")}>
               {busy && <span className="react-button-spinner" />}<Upload aria-hidden="true" />Обнови
             </LoadingButton>}
-            {!theme.active && <LoadingButton type="button" disabled={busy} onClick={() => setPendingRemoval(theme)}>
+            <LoadingButton type="button" disabled={busy} onClick={() => setPendingRemoval(theme)}>
               {busy && <span className="react-button-spinner" />}<Trash2 aria-hidden="true" />Изтрий
-            </LoadingButton>}
+            </LoadingButton>
           </div>
         </article>
       })}</div>}
@@ -86,7 +106,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
     <ConfirmDialog
       open={pendingRemoval !== null}
       title="Изтриване на тема"
-      message={pendingRemoval ? `Темата „${pendingRemoval.name}“ ще бъде изтрита окончателно.` : ""}
+      message={pendingRemoval ? `Темата „${pendingRemoval.name}“ ще бъде изтрита окончателно.${pendingRemoval.active ? " Първо ще бъде деактивирана." : ""}` : ""}
       confirmLabel="Изтрий"
       danger={true}
       busy={pendingRemoval !== null && busyId === pendingRemoval.id}
