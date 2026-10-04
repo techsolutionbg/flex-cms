@@ -51,7 +51,7 @@ jobs:
         run: printf '%s' "$UPDATE_SIGNING_PRIVATE_KEY" > "$RUNNER_TEMP/flex-update-private.key"
       - name: Build platform artifact
         run: >-
-          bin/flex platform:build
+          php bin/flex platform:build
           --target-version "${{ inputs.version }}"
           --private-key-file "$RUNNER_TEMP/flex-update-private.key"
           --key-id "${{ vars.UPDATE_SIGNING_KEY_ID }}"
@@ -67,7 +67,7 @@ jobs:
             --base-url https://updates-flex-cms.kriskata.com --minimum-php '>=8.3' \
             --compatible-from '>=0.1.0 <1.0.0' --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --release-notes "$RELEASE_NOTES" --output "$RUNNER_TEMP/release.json"
-          bin/flex updates:sign-manifest "$RUNNER_TEMP/release.json" "$RUNNER_TEMP/signed-release.json" \
+          php bin/flex updates:sign-manifest "$RUNNER_TEMP/release.json" "$RUNNER_TEMP/signed-release.json" \
             --private-key-file "$RUNNER_TEMP/flex-update-private.key" --key-id "${{ vars.UPDATE_SIGNING_KEY_ID }}"
       - name: Publish catalog last
         run: |
