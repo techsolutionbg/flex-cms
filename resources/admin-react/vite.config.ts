@@ -26,7 +26,10 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/installer-api/, "/install"),
         configure: (proxy) => {
           const siteUrl = process.env.VITE_INSTALLER_SITE_URL
-          if (siteUrl) proxy.on("proxyReq", (request) => request.setHeader("X-Flex-Installer-Site-Url", siteUrl))
+          if (siteUrl)
+            proxy.on("proxyReq", (request) =>
+              request.setHeader("X-Flex-Installer-Site-Url", siteUrl),
+            )
         },
       },
     },

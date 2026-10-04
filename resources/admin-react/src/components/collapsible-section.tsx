@@ -11,7 +11,14 @@ type CollapsibleSectionProps = {
   className?: string
 }
 
-export function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true, storageKey, className = "" }: CollapsibleSectionProps) {
+export function CollapsibleSection({
+  title,
+  icon: Icon,
+  children,
+  defaultOpen = true,
+  storageKey,
+  className = "",
+}: CollapsibleSectionProps) {
   const persistenceKey = `flex-admin-collapsible:${storageKey ?? title}`
   const [open, setOpen] = useState(() => {
     try {
@@ -23,15 +30,28 @@ export function CollapsibleSection({ title, icon: Icon, children, defaultOpen = 
   })
 
   useEffect(() => {
-    try { window.localStorage.setItem(persistenceKey, open ? "open" : "closed") } catch {}
+    try {
+      window.localStorage.setItem(persistenceKey, open ? "open" : "closed")
+    } catch {}
   }, [open, persistenceKey])
 
-  return <section className={`collapsible-section${open ? " is-open" : " is-closed"}${className ? ` ${className}` : ""}`}>
-    <button className="collapsible-section-header" type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
-      {Icon && <Icon aria-hidden="true" />}
-      <span>{title}</span>
-      <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
-    </button>
-    <div className="collapsible-section-body"><div className="collapsible-section-body-inner">{children}</div></div>
-  </section>
+  return (
+    <section
+      className={`collapsible-section${open ? " is-open" : " is-closed"}${className ? ` ${className}` : ""}`}
+    >
+      <button
+        className="collapsible-section-header"
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {Icon && <Icon aria-hidden="true" />}
+        <span>{title}</span>
+        <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
+      </button>
+      <div className="collapsible-section-body">
+        <div className="collapsible-section-body-inner">{children}</div>
+      </div>
+    </section>
+  )
 }

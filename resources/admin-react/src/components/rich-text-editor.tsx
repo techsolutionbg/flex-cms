@@ -8,7 +8,17 @@ type RichTextEditorProps = {
 }
 
 const Font = Quill.import("formats/font") as { whitelist?: string[] }
-Font.whitelist = ["sans-serif", "serif", "monospace", "arial", "georgia", "roboto", "inter", "times-new-roman", "verdana"]
+Font.whitelist = [
+  "sans-serif",
+  "serif",
+  "monospace",
+  "arial",
+  "georgia",
+  "roboto",
+  "inter",
+  "times-new-roman",
+  "verdana",
+]
 Quill.register("formats/font", Font, true)
 
 const toolbar = [
@@ -61,5 +71,9 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     editor.clipboard.dangerouslyPasteHTML(value || "", "api")
   }, [value])
 
-  return <div className="rich-text-editor-react"><div ref={hostRef} /></div>
+  return (
+    <div className="rich-text-editor-react">
+      <div ref={hostRef} />
+    </div>
+  )
 }

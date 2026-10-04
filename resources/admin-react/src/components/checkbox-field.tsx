@@ -8,5 +8,11 @@ type CheckboxFieldProps = {
 }
 
 export function CheckboxField({ checked, label, description, onChange }: CheckboxFieldProps) {
-  return <label className="react-checkbox-field"><input type="checkbox" checked={checked} onChange={onChange} /><span className="react-checkbox-label">{label}</span>{description && <small>{description}</small>}</label>
+  return (
+    <label className="react-checkbox-field">
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span className="react-checkbox-label">{label}</span>
+      {description && <small>{description}</small>}
+    </label>
+  )
 }

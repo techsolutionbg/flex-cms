@@ -1,6 +1,7 @@
 declare const __FLEX_ADMIN_BASE__: string
 
-export const adminBasePath = typeof __FLEX_ADMIN_BASE__ === "string" ? __FLEX_ADMIN_BASE__.replace(/\/$/, "") : ""
+export const adminBasePath =
+  typeof __FLEX_ADMIN_BASE__ === "string" ? __FLEX_ADMIN_BASE__.replace(/\/$/, "") : ""
 
 export function adminUrl(path = "/") {
   const route = path.startsWith("/") ? path : `/${path}`

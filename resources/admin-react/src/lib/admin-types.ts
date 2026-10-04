@@ -1,9 +1,20 @@
-export type DashboardSummary = { pages: number; active_plugins: number; users: number; version: string }
+export type DashboardSummary = {
+  pages: number
+  active_plugins: number
+  users: number
+  version: string
+}
 
 export type PlatformUpdateRemote = {
   current_version: string
   channel: string
-  available?: { version: string; release_notes?: string; size: number; published_at?: string; channel?: string } | null
+  available?: {
+    version: string
+    release_notes?: string
+    size: number
+    published_at?: string
+    channel?: string
+  } | null
   error?: string | null
 }
 
@@ -28,7 +39,11 @@ export type PlatformUpdateHistory = {
   rolled_back_at?: string | null
 }
 
-export type PlatformUpdateJob = { id: string; status: 'pending' | 'running' | 'completed' | 'failed' | string; error?: string | null }
+export type PlatformUpdateJob = {
+  id: string
+  status: "pending" | "running" | "completed" | "failed" | string
+  error?: string | null
+}
 
 export type PageSettings = {
   template?: string
@@ -38,7 +53,17 @@ export type PageSettings = {
   no_index?: boolean
 }
 
-export type PagePluginField = { plugin: string; plugin_name: string; plugin_version: string; id: string; type: "text" | "textarea" | "checkbox"; label: string; default: string | boolean; hint: string; max_length?: number }
+export type PagePluginField = {
+  plugin: string
+  plugin_name: string
+  plugin_version: string
+  id: string
+  type: "text" | "textarea" | "checkbox"
+  label: string
+  default: string | boolean
+  hint: string
+  max_length?: number
+}
 
 export type PageRecord = {
   id: number
@@ -55,7 +80,14 @@ export type PageRecord = {
   plugin_settings?: Record<string, Record<string, string | boolean>>
 }
 
-export type UserRecord = { id: number; name: string; email: string; role: string; status: string; deleted_at?: string | null }
+export type UserRecord = {
+  id: number
+  name: string
+  email: string
+  role: string
+  status: string
+  deleted_at?: string | null
+}
 
 export type PluginRecord = {
   id: string

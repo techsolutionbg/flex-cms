@@ -14,4 +14,3 @@ export function publicPagePath(page: PageRecord, pages: PageRecord[]): string {
   }
   return parts.join("/")
 }
-

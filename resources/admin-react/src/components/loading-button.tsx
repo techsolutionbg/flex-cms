@@ -6,6 +6,21 @@ type LoadingButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode
 }
 
-export function LoadingButton({ loading = false, disabled = false, children, className = "", ...props }: LoadingButtonProps) {
-  return <button {...props} className={`react-loading-button ${className}`} disabled={loading || disabled}>{loading && <LoaderCircle className="react-button-spinner" />}{children}</button>
+export function LoadingButton({
+  loading = false,
+  disabled = false,
+  children,
+  className = "",
+  ...props
+}: LoadingButtonProps) {
+  return (
+    <button
+      {...props}
+      className={`react-loading-button ${className}`}
+      disabled={loading || disabled}
+    >
+      {loading && <LoaderCircle className="react-button-spinner" />}
+      {children}
+    </button>
+  )
 }

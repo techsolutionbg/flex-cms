@@ -15,7 +15,8 @@ export function getAdminTheme(): AdminThemeMode {
 export function setAdminTheme(theme: AdminThemeMode): void {
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches === true
   document.documentElement.dataset.adminThemeMode = theme
-  document.documentElement.dataset.adminTheme = theme === "system" ? (prefersDark ? "dark" : "light") : theme
+  document.documentElement.dataset.adminTheme =
+    theme === "system" ? (prefersDark ? "dark" : "light") : theme
   try {
     window.localStorage.setItem(storageKey, theme)
   } catch {
