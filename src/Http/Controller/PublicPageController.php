@@ -9,6 +9,7 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
+use Flex\Pages\PublicPageSet;
 use Flex\Themes\ThemeManager;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -21,7 +22,8 @@ final readonly class PublicPageController
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
         $slug = trim((string) ($arguments['slug'] ?? ''), '/');
-        $page = $slug === '' ? $this->homePage() : $this->pages->findPublishedByPath($slug);
+        $publicPages = $this->pages->publicPageSet();
+        $page = $slug === '' ? $this->homePage($publicPages) : $publicPages->findPublishedByPath($slug);
         if (!$page instanceof Page) {
             if (str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json')) {
                 return $this->responses->json(['error' => ['status' => 404, 'message' => 'Страницата не е намерена.']], 404);
@@ -32,21 +34,21 @@ final readonly class PublicPageController
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
         $navigation = array_map(fn(Page $item): array => [
             'title' => (string) $item->getAttribute('title'),
-            'slug' => $this->pages->publicPath($item),
-        ], $this->pages->publishedNavigation());
+            'slug' => $publicPages->publicPath($item),
+        ], $publicPages->publishedNavigation());
         $headTags = $this->extensionApi->applyFilters('public.head', '', [
             'page' => $page->toPublicArray(),
             'request' => $request,
         ]);
         $headTags = is_string($headTags) ? $headTags : '';
 
-        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $this->pages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation]));
+        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation]));
     }
 
-    private function homePage(): ?Page
+    private function homePage(PublicPageSet $publicPages): ?Page
     {
         $slug = trim($this->configuration->string('app.public_home_slug', 'home'));
 
-        return $slug === '' ? null : $this->pages->findPublishedBySlug($slug);
+        return $slug === '' ? null : $publicPages->findPublishedBySlug($slug);
     }
 }

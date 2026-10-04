@@ -6,7 +6,6 @@ use Flex\Application;
 use Flex\Bootstrap;
 use Flex\Installer\InstallationState;
 use Flex\Installer\InstallerFactory;
-use Flex\Extensions\PluginRuntime;
 use Flex\Http\SitePath;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -53,7 +52,6 @@ if (!$isThemePreview && in_array($method, ['GET', 'HEAD'], true)
 }
 
 $container = Bootstrap::boot($basePath)->container();
-$container->get(PluginRuntime::class)->bootActive();
 $application = $container->get(Application::class);
 if (!$application instanceof Application) {
     throw new RuntimeException('The application service is invalid.');
