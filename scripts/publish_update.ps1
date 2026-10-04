@@ -7,7 +7,8 @@ param(
     [string] $PrivateKeyFile,
     [string] $KeyId,
     [string] $CompatibleFrom,
-    [switch] $RunMigrations
+    [switch] $RunMigrations,
+    [switch] $ResetCatalog
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,7 +50,7 @@ if ($TargetVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.
 $baseUrl = (Get-Setting 'UPDATE_SERVER_BASE_URL' (Get-Setting 'UPDATE_SERVER_URL' 'https://updates-flex-cms.kriskata.com')).TrimEnd('/')
 $sshTarget = Get-Setting 'UPDATE_SSH_TARGET' 'kriskata-hosting'
 $remoteRoot = (Get-Setting 'UPDATE_REMOTE_ROOT' 'updates-flex-cms.kriskata.com').TrimEnd('/')
-$keyId = if ([string]::IsNullOrWhiteSpace($KeyId)) { Get-Setting 'UPDATE_SIGNING_KEY_ID' 'release-2026-v2' } else { $KeyId }
+$keyId = if ([string]::IsNullOrWhiteSpace($KeyId)) { Get-Setting 'UPDATE_SIGNING_KEY_ID' 'release-2026-v3' } else { $KeyId }
 $compatibleFrom = if ([string]::IsNullOrWhiteSpace($CompatibleFrom)) { Get-Setting 'UPDATE_COMPATIBLE_FROM' '>=0.1.0 <1.0.0' } else { $CompatibleFrom }
 if ([string]::IsNullOrWhiteSpace($PrivateKeyFile)) { $PrivateKeyFile = Get-Setting 'UPDATE_SIGNING_PRIVATE_KEY_FILE' }
 if ([string]::IsNullOrWhiteSpace($PrivateKeyFile)) { throw 'Set UPDATE_SIGNING_PRIVATE_KEY_FILE in .publish.env or pass --private-key-file.' }
@@ -75,6 +76,7 @@ $artifactRelative = "releases/$TargetVersion/flex-cms-$TargetVersion.zip"
 $artifactPath = Join-Path $root ("releases/{0}/flex-cms-{0}.zip" -f $TargetVersion)
 $checksumPath = "$artifactPath.sha256"
 $remoteReleaseDirectory = "$remoteRoot/platform/releases/$TargetVersion"
+$remoteReleasesRoot = "$remoteRoot/platform/releases"
 $catalogTemporary = "$remoteRoot/platform/manifest.json.tmp-$([guid]::NewGuid().ToString('N'))"
 $keyWasCopied = $false
 
@@ -110,18 +112,28 @@ try {
         Invoke-Native 'docker' @('cp', "${appContainer}:/var/www/html/$artifactRelative", $artifactPath)
         Invoke-Native 'docker' @('cp', "${appContainer}:/var/www/html/$artifactRelative.sha256", $checksumPath)
 
-        Write-Host 'Reading the existing update catalog...'
-        try {
-            $catalog = Invoke-RestMethod -Uri "$baseUrl/platform/manifest.json" -TimeoutSec 30
-        } catch {
-            $statusCode = 0
-            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
-            if ($statusCode -ne 404) { throw }
+        if ($ResetCatalog) {
+            Write-Host 'Starting a clean platform catalog for signing-key rotation...'
             $catalog = [ordered]@{
                 schema = 1
                 repository = 'flex-cms'
                 type = 'platform'
                 releases = @()
+            }
+        } else {
+            Write-Host 'Reading the existing update catalog...'
+            try {
+                $catalog = Invoke-RestMethod -Uri "$baseUrl/platform/manifest.json" -TimeoutSec 30
+            } catch {
+                $statusCode = 0
+                if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
+                if ($statusCode -ne 404) { throw }
+                $catalog = [ordered]@{
+                    schema = 1
+                    repository = 'flex-cms'
+                    type = 'platform'
+                    releases = @()
+                }
             }
         }
         if (-not $catalog.releases) { $catalog.releases = @() }
@@ -160,6 +172,29 @@ try {
         Write-Host 'Publishing the update catalog last...'
         Invoke-Native 'scp' @($catalogPath, "$sshTarget`:$catalogTemporary")
         Invoke-Native 'ssh' @($sshTarget, "mv -f '$catalogTemporary' '$remoteRoot/platform/manifest.json'")
+
+        Write-Host 'Verifying the published catalog and release package...'
+        $publishedCatalog = Invoke-RestMethod -Uri "$baseUrl/platform/manifest.json" -TimeoutSec 30
+        $publishedEntry = @($publishedCatalog.releases | Where-Object { $_.package -eq 'flex-cms' -and $_.version -eq $TargetVersion -and $_.channel -eq 'stable' }) | Select-Object -First 1
+        if ($null -eq $publishedEntry -or $publishedEntry.checksum -ne $releaseEntry.checksum -or $publishedEntry.size -ne $releaseEntry.size -or [string]::IsNullOrWhiteSpace([string] $publishedEntry.signature)) {
+            throw 'The published catalog entry is missing or does not match the release package.'
+        }
+        $verificationPath = Join-Path $env:TEMP "flex-release-$TargetVersion-verify.zip"
+        try {
+            Invoke-WebRequest -Uri $publishedEntry.download_url -OutFile $verificationPath -TimeoutSec 120
+            $downloadedChecksum = (Get-FileHash -LiteralPath $verificationPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $downloadedSize = (Get-Item -LiteralPath $verificationPath).Length
+            if ($downloadedChecksum -ne $publishedEntry.checksum -or $downloadedSize -ne [long] $publishedEntry.size) {
+                throw 'The downloaded release package does not match the published catalog checksum or size.'
+            }
+        } finally {
+            if (Test-Path -LiteralPath $verificationPath) { Remove-Item -LiteralPath $verificationPath -Force }
+        }
+
+        if ($ResetCatalog) {
+            Write-Host 'Removing superseded release files after successful publication...'
+            Invoke-Native 'ssh' @($sshTarget, "find '$remoteReleasesRoot' -mindepth 1 -maxdepth 1 ! -name '$TargetVersion' -exec rm -rf -- {} +")
+        }
         Write-Host "Published platform $TargetVersion to $baseUrl"
         Write-Host "Local package: $artifactPath"
     } finally {

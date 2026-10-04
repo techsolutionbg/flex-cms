@@ -34,7 +34,7 @@ final class PlatformBuildCommand extends Command
             ->addOption('minimum-php', null, InputOption::VALUE_REQUIRED, 'Minimum PHP version constraint.', '>=8.3')
             ->addOption('run-migrations', null, InputOption::VALUE_NONE, 'Mark the package as requiring migrations.')
             ->addOption('private-key-file', null, InputOption::VALUE_REQUIRED, 'Base64 Ed25519 release private key file. Defaults to UPDATE_SIGNING_PRIVATE_KEY_FILE or ~/.config/flex-cms/update-signing-private.key.')
-            ->addOption('key-id', null, InputOption::VALUE_REQUIRED, 'Optional release public key identifier.', getenv('UPDATE_SIGNING_KEY_ID') ?: 'release-2026-v2')
+            ->addOption('key-id', null, InputOption::VALUE_REQUIRED, 'Optional release public key identifier.', getenv('UPDATE_SIGNING_KEY_ID') ?: 'release-2026-v3')
             ->addOption('output', null, InputOption::VALUE_REQUIRED, 'Output ZIP path.');
     }
 

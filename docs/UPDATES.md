@@ -160,6 +160,8 @@ Release-ът се изгражда и качва локално от Windows 11 
 
 Настройките за публикуване се пазят в локалния, gitignored `.publish.env`, създаден от `.publish.env.example`. Signing private key-ът и SSH достъпът не се добавят в repository.
 
+При signing-key rotation без активни съвместими инсталации може еднократно да се използва `-ResetCatalog`. Publisher-ът тогава публикува каталог само с новия релийз, проверява сваления ZIP по размер и SHA-256 и чак след това премахва останалите директории в `platform/releases/`. Не използвайте този флаг за обичайни релийзи.
+
 Същият catalog tool поддържа и plugin release entries чрез `--type plugin --package vendor/name`; plugin build pipeline-ът може да подаде готовия, проверен plugin ZIP към този tool, без да променя формата на remote каталога.
 
 ## Production hardening checklist
