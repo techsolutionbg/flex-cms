@@ -149,7 +149,7 @@ try {
             size = (Get-Item -LiteralPath $artifactPath).Length
             minimum_php = '>=8.3'
             compatible_from = $compatibleFrom
-            published_at = [DateTimeOffset]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            published_at = [DateTimeOffset]::UtcNow.ToString("yyyy-MM-dd'T'HH:mm:sszzz")
             release_notes = $ReleaseNotes
         }
         $utf8 = [System.Text.UTF8Encoding]::new($false)
