@@ -117,7 +117,12 @@ try {
             $statusCode = 0
             if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
             if ($statusCode -ne 404) { throw }
-            $catalog = @{ schema = 1; releases = @() }
+            $catalog = [ordered]@{
+                schema = 1
+                repository = 'flex-cms'
+                type = 'platform'
+                releases = @()
+            }
         }
         if (-not $catalog.releases) { $catalog.releases = @() }
 

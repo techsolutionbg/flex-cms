@@ -156,7 +156,7 @@ Rollback използва същия lifecycle на плъгина и възст
 
 ## Публикуване на platform release
 
-Release-ът се изгражда и качва локално от Windows 11 чрез `php flex platform:publish`. Командата използва Docker Compose за production asset-ите и platform ZIP-а, локалния Ed25519 private key за подписване и Windows OpenSSH (`ssh`/`scp`) за качване към update хостинга. ZIP-ът и checksum-ът се качват първи; подписаният каталог се качва последен. GitHub се използва за комитнатия source code и не участва в процеса на публикуване на release.
+Release-ът се изгражда и качва локално от Windows 11 чрез `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update.ps1 -TargetVersion <версия>`. Скриптът използва Docker Compose за production asset-ите и platform ZIP-а, локалния Ed25519 private key за подписване и Windows OpenSSH (`ssh`/`scp`) за качване към update хостинга. ZIP-ът и checksum-ът се качват първи; подписаният каталог се качва последен. GitHub се използва за комитнатия source code и не участва в процеса на публикуване на release. `php bin/flex platform:publish` работи само при native Windows PHP; той не може да се стартира от Linux `app` контейнера.
 
 Настройките за публикуване се пазят в локалния, gitignored `.publish.env`, създаден от `.publish.env.example`. Signing private key-ът и SSH достъпът не се добавят в repository.
 
