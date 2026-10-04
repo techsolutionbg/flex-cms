@@ -102,7 +102,7 @@ try {
         Invoke-Native 'docker' @('cp', $PrivateKeyFile, "${appContainer}:$remoteKeyPath")
         $keyWasCopied = $true
 
-        $buildArgs = @('exec', '-T', $appContainer, 'php', 'bin/flex', 'platform:build', "--target-version=$TargetVersion", "--private-key-file=$remoteKeyPath", "--key-id=$keyId", "--compatible-from=$compatibleFrom", "--output=/var/www/html/$artifactRelative")
+        $buildArgs = @('exec', $appContainer, 'php', 'bin/flex', 'platform:build', "--target-version=$TargetVersion", "--private-key-file=$remoteKeyPath", "--key-id=$keyId", "--compatible-from=$compatibleFrom", "--output=/var/www/html/$artifactRelative")
         if ($RunMigrations) { $buildArgs += '--run-migrations' }
         Write-Host "Building signed platform package $TargetVersion..."
         Invoke-Native 'docker' $buildArgs
@@ -155,7 +155,7 @@ try {
         $utf8 = [System.Text.UTF8Encoding]::new($false)
         [System.IO.File]::WriteAllText($releaseEntryPath, ($releaseEntry | ConvertTo-Json -Depth 8), $utf8)
         Invoke-Native 'docker' @('cp', $releaseEntryPath, "${appContainer}:/tmp/flex-release-entry.json")
-        Invoke-Native 'docker' @('exec', '-T', $appContainer, 'php', 'bin/flex', 'updates:sign-manifest', '/tmp/flex-release-entry.json', '/tmp/flex-release-entry-signed.json', "--private-key-file=$remoteKeyPath", "--key-id=$keyId")
+        Invoke-Native 'docker' @('exec', $appContainer, 'php', 'bin/flex', 'updates:sign-manifest', '/tmp/flex-release-entry.json', '/tmp/flex-release-entry-signed.json', "--private-key-file=$remoteKeyPath", "--key-id=$keyId")
         Invoke-Native 'docker' @('cp', "${appContainer}:/tmp/flex-release-entry-signed.json", $signedEntryPath)
         $signedEntry = Get-Content -LiteralPath $signedEntryPath -Raw | ConvertFrom-Json
 
