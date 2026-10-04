@@ -42,7 +42,6 @@ final readonly class PlatformPackageBuilder
         if (!is_file($this->basePath . '/public/build/admin/.vite/manifest.json')) {
             throw new RuntimeException('Production admin assets are missing. Run the frontend production build first.');
         }
-
         $current = $this->registry->current();
         $version = new PlatformVersion($options->version ?? $current->value);
         $compatibleFrom = $options->compatibleFrom ?? sprintf('>=%s <%d.0.0', $current->value, $this->major($current->value) + 1);

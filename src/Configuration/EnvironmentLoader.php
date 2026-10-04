@@ -10,6 +10,8 @@ final class EnvironmentLoader
 {
     public function load(string $basePath): void
     {
-        Dotenv::createImmutable($basePath . '/storage')->safeLoad();
+        // The installer writes the authoritative runtime configuration here.
+        // Use mutable loading so deployment defaults cannot override it later.
+        Dotenv::createMutable($basePath . '/storage')->safeLoad();
     }
 }

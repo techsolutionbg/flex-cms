@@ -23,7 +23,7 @@ import "./index.css"
 
 
 function App() {
-  const installerRoute = window.location.pathname === "/install"
+  const installerRoute = window.location.pathname.replace(/\/$/, "").endsWith("/install")
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
   const [pageView, setPageView] = useState<"dashboard" | "pages" | "users" | "themes" | "theme-store" | "plugins" | "plugin-catalog" | "plugin-detail" | "updates" | "profile" | "user-form" | "form" | "settings">("dashboard")

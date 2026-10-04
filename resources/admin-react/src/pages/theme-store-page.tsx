@@ -38,11 +38,12 @@ export function ThemeStorePage({ onLogout, onNavigate, onBack, loggingOut }: The
       const body = await response.json().catch(() => ({})) as { error?: { message?: string }; themes?: Array<{ id: string; version: string; active: boolean }> }
       if (!response.ok) throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
       const updated = body.themes?.find((item) => item.id === theme.id)
+      if (action !== "delete" && !updated) throw new Error("Сървърът не потвърди, че темата присъства сред инсталираните файлове. Презаредете каталога и проверете папката за теми.")
       setCatalog((current) => current.map((item) => item.id === theme.id ? {
         ...item,
-        installed: action !== "delete",
-        active: updated?.active ?? action === "activate",
-        installed_version: action === "delete" ? null : (updated?.version ?? item.version),
+        installed: action !== "delete" && Boolean(updated),
+        active: action !== "delete" && (updated?.active ?? false),
+        installed_version: action === "delete" ? null : updated?.version ?? null,
         update_available: false,
       } : item))
       toast.success(remoteAction === "install_remote" ? "Темата е инсталирана." : remoteAction === "update_remote" ? "Темата е обновена." : remoteAction === "delete" ? "Темата е деинсталирана." : "Темата е активирана.")

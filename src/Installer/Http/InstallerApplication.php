@@ -9,6 +9,7 @@ use Flex\Installer\InstallationState;
 use Flex\Installer\InstallerInput;
 use Flex\Installer\RequirementsChecker;
 use Flex\Installer\WebInstaller;
+use Flex\Http\SitePath;
 
 final readonly class InstallerApplication
 {
@@ -37,7 +38,7 @@ final readonly class InstallerApplication
             if ($this->wantsJson()) {
                 $this->respondJson($this->renderer->data($this->csrfToken()));
             }
-            $this->respond($this->renderer->form($this->requirements->check(), $this->csrfToken()));
+            $this->respond($this->renderer->reactApplication($this->requirements->check(), $this->csrfToken()));
         }
         if ($method !== 'POST') {
             header('Allow: GET, POST');
@@ -117,7 +118,7 @@ final readonly class InstallerApplication
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('Referrer-Policy: no-referrer');
-        header("Content-Security-Policy: default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+        header("Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
         header('Cache-Control: no-store, private');
     }
 
@@ -151,7 +152,7 @@ final readonly class InstallerApplication
     {
         $configured = $_ENV['ADMIN_URL'] ?? getenv('ADMIN_URL');
         if (!is_string($configured) || $configured === '') {
-            return '/';
+            return SitePath::prefix() . '/';
         }
 
         if (str_starts_with($configured, '/') && !str_starts_with($configured, '//')) {
@@ -163,6 +164,6 @@ final readonly class InstallerApplication
             return $configured;
         }
 
-        return '/';
+        return SitePath::prefix() . '/';
     }
 }

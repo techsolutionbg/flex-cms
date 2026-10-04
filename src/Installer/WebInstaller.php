@@ -82,6 +82,7 @@ final readonly class WebInstaller
             'APP_DEBUG' => 'false',
             'APP_URL' => $input->siteUrl,
             'APP_KEY' => bin2hex(random_bytes(32)),
+            'VITE_DEV_SERVER_URL' => '',
             'APP_TIMEZONE' => $input->timezone,
             'APP_LOCALE' => $input->locale,
             'APP_FALLBACK_LOCALE' => 'en',

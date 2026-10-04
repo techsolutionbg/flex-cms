@@ -16,9 +16,12 @@ final readonly class ThemePackageInstaller
     /** @return array{theme_id: string, from: string, to: string, active: bool, backup_path: string} */
     public function installArchive(string $archive, string $expectedId, string $expectedVersion): array
     {
-        $stage = $this->basePath . '/storage/tmp/theme-install-' . bin2hex(random_bytes(8));
+        // Keep extraction and the final theme on the same filesystem. Production
+        // deployments may mount storage and themes as separate Docker volumes,
+        // where rename() across the two mounts fails with EXDEV.
+        $stage = $this->paths->themes('.staging/theme-install-' . bin2hex(random_bytes(8)));
         $target = $this->paths->themes($expectedId);
-        $backup = $this->basePath . '/storage/backups/themes/' . $expectedId . '/' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(4));
+        $backup = $this->paths->themes('.backups/' . $expectedId . '/' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(4)));
         $active = $this->themes->activeTheme() === $expectedId;
         $oldVersion = '—';
         try {

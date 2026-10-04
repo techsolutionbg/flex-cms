@@ -1,4 +1,5 @@
 /.env
+/docker/website-1/.env
 /.idea/
 /.php-cs-fixer.cache
 /.phpunit.cache/

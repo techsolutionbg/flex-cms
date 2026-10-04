@@ -17,6 +17,15 @@ export default defineConfig({
       "/api": { target: "http://app", changeOrigin: false },
       "/theme-assets": { target: "http://app", changeOrigin: false },
       "/admin": { target: "http://app", changeOrigin: false },
+      "/installer-api": {
+        target: "http://app",
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/installer-api/, "/install"),
+        configure: (proxy) => {
+          const siteUrl = process.env.VITE_INSTALLER_SITE_URL
+          if (siteUrl) proxy.on("proxyReq", (request) => request.setHeader("X-Flex-Installer-Site-Url", siteUrl))
+        },
+      },
     },
   },
 })

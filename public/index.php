@@ -7,19 +7,23 @@ use Flex\Bootstrap;
 use Flex\Installer\InstallationState;
 use Flex\Installer\InstallerFactory;
 use Flex\Extensions\PluginRuntime;
+use Flex\Http\SitePath;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $basePath = dirname(__DIR__);
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$path = SitePath::requestPath();
 $installation = new InstallationState($basePath);
 
 if ($path === '/install' || str_starts_with($path, '/install/')) {
     (new InstallerFactory())->create($basePath)->run();
 }
+if ($path === '/installer-api') {
+    (new InstallerFactory())->create($basePath)->run();
+}
 
 if ($installation->requiresInstallation()) {
-    header('Location: /install', true, 302);
+    header('Location: ' . SitePath::prefix() . '/install', true, 302);
     exit;
 }
 

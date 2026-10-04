@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Flex\Http\View;
 
 use Flex\Extensions\FrontendExtensionAssets;
+use Flex\Http\SitePath;
 
 final readonly class ViteAssetManager
 {
@@ -18,12 +19,9 @@ final readonly class ViteAssetManager
     public function tags(): string
     {
         $environment = (string) ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
-        $devServer = rtrim((string) ($_ENV['VITE_DEV_SERVER_URL'] ?? $_SERVER['VITE_DEV_SERVER_URL'] ?? getenv('VITE_DEV_SERVER_URL') ?: 'http://localhost:5173'), '/');
-        if ($environment === 'local') {
-            if ($devServer === '') {
-                throw new \RuntimeException('Vite development server URL is required in local environment.');
-            }
-
+        $configuredDevServer = $_ENV['VITE_DEV_SERVER_URL'] ?? $_SERVER['VITE_DEV_SERVER_URL'] ?? getenv('VITE_DEV_SERVER_URL');
+        $devServer = is_string($configuredDevServer) ? rtrim($configuredDevServer, '/') : 'http://localhost:5173';
+        if ($environment === 'local' && $devServer !== '') {
             $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             return sprintf(
@@ -62,6 +60,25 @@ final readonly class ViteAssetManager
         foreach (($entry['css'] ?? []) as $css) {
             $tags[] = sprintf('<link rel="stylesheet" href="/build/admin/%s">', $this->asset((string) $css));
         }
+
+        return implode("\n", $tags);
+    }
+
+    public function installerTags(): string
+    {
+        $manifestPath = $this->basePath . '/public/build/installer/.vite/manifest.json';
+        $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
+        $entry = is_array($manifest) ? ($manifest['installer.html'] ?? null) : null;
+        if (!is_array($entry) || !isset($entry['file'])) {
+            return '';
+        }
+
+        $assetBase = SitePath::prefix() . '/build/installer/';
+        $tags = [];
+        foreach (($entry['css'] ?? []) as $css) {
+            $tags[] = sprintf('<link rel="stylesheet" href="%s%s">', $assetBase, $this->asset((string) $css));
+        }
+        $tags[] = sprintf('<script type="module" src="%s%s"></script>', $assetBase, $this->asset((string) $entry['file']));
 
         return implode("\n", $tags);
     }

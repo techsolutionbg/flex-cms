@@ -5,6 +5,13 @@ RUN npm ci
 COPY resources/admin/ ./
 RUN npm run build
 
+FROM node:22-alpine AS installer-frontend
+WORKDIR /app/resources/admin-react
+COPY resources/admin-react/package.json resources/admin-react/package-lock.json ./
+RUN npm ci
+COPY resources/admin-react/ ./
+RUN npm run build:installer
+
 FROM composer:2 AS composer
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -28,4 +35,5 @@ FROM base AS production
 COPY . /var/www/html
 COPY --from=composer /app/vendor /var/www/html/vendor
 COPY --from=frontend /app/public/build /var/www/html/public/build
+COPY --from=installer-frontend /app/public/build/installer /var/www/html/public/build/installer
 RUN rm -rf resources/admin node_modules tests .git .github docker compose.yaml && mkdir -p public/media storage/cache storage/logs storage/sessions storage/tmp plugins && chown -R www-data:www-data public/media storage plugins

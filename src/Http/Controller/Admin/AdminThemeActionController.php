@@ -45,6 +45,16 @@ final readonly class AdminThemeActionController
             : ($action === 'delete' && is_string($input['id'] ?? null)
             ? $this->themes->delete($input['id'])
             : ($action === 'rollback' ? $this->themes->rollback() : throw new \InvalidArgumentException('Изберете валидно действие за тема.'))))));
+
+        if (in_array($action, ['install_remote', 'update_remote'], true) && is_string($input['id'] ?? null)) {
+            $installedTheme = array_values(array_filter(
+                $this->themes->all(),
+                static fn(array $item): bool => $item['id'] === $input['id'] && $item['valid'],
+            ))[0] ?? null;
+            if (!is_array($installedTheme)) {
+                throw new \RuntimeException('Темата не беше открита във файловата система след инсталирането.');
+            }
+        }
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'theme_action_failed', $exception->getMessage()), 422);
         }

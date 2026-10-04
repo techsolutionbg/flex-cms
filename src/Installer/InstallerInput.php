@@ -98,7 +98,8 @@ final readonly class InstallerInput
     /** @param array<string, mixed> $values */
     private static function databasePassword(array $values): string
     {
-        $submitted = self::text($values, 'database_password');
+        $value = $values['database_password'] ?? '';
+        $submitted = is_string($value) ? $value : '';
         if ($submitted !== '') {
             return $submitted;
         }

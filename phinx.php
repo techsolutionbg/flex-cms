@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use Dotenv\Dotenv;
 
-$environmentFile = is_file(__DIR__ . '/.env') ? __DIR__ : __DIR__ . '/storage';
+$environmentFile = is_file(__DIR__ . '/storage/.env')
+    ? __DIR__ . '/storage'
+    : __DIR__;
 if (is_file($environmentFile . '/.env')) {
-    Dotenv::createImmutable($environmentFile)->safeLoad();
+    Dotenv::createMutable($environmentFile)->safeLoad();
 }
 
 $environmentValue = static function (string $name, mixed $default = null): mixed {

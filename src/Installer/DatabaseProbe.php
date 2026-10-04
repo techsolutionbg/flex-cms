@@ -13,16 +13,21 @@ final class DatabaseProbe implements DatabaseProbeInterface
         try {
             $pdo = $this->connect($input);
             $version = (string) $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
-            $majorVersion = (int) explode('.', $version)[0];
-            if ($majorVersion < 8) {
-                return new DatabaseProbeResult(false, $version, 'Flex CMS requires MySQL 8.0 or newer.');
+            $isMariaDb = stripos($version, 'mariadb') !== false;
+            $versionPattern = $isMariaDb ? '/(\d+\.\d+\.\d+)-MariaDB/i' : '/^(\d+\.\d+\.\d+)/';
+            $versionNumber = preg_match($versionPattern, $version, $matches) === 1 ? $matches[1] : '0.0.0';
+            $supported = $isMariaDb
+                ? version_compare($versionNumber, '10.4.0', '>=')
+                : version_compare($versionNumber, '8.0.0', '>=');
+            if (!$supported) {
+                return new DatabaseProbeResult(false, $version, 'Flex CMS requires MySQL 8.0+ or MariaDB 10.4+.');
             }
 
             $pdo->query('SELECT 1');
 
             return new DatabaseProbeResult(true, $version);
         } catch (\Throwable) {
-            return new DatabaseProbeResult(false, null, 'The MySQL connection failed. Check the host, port, database and credentials.');
+            return new DatabaseProbeResult(false, null, 'The MySQL/MariaDB connection failed. Check the host, port, database and credentials.');
         }
     }
 

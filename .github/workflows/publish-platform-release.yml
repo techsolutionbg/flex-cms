@@ -34,10 +34,15 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: resources/admin/package-lock.json
+          cache-dependency-path: |
+            resources/admin/package-lock.json
+            resources/admin-react/package-lock.json
       - name: Install and build admin assets
         working-directory: resources/admin
         run: npm ci && npm run build
+      - name: Build React installer assets
+        working-directory: resources/admin-react
+        run: npm ci && npm run build:installer
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
       - name: Prepare signing key
@@ -60,12 +65,16 @@ jobs:
             --type platform --package flex-cms --version "${{ inputs.version }}" \
             --artifact "updates/platform/releases/${{ inputs.version }}/flex-cms-${{ inputs.version }}.zip" \
             --base-url https://updates-flex-cms.kriskata.com --minimum-php '>=8.3' \
-            --compatible-from '>=1.0.0 <2.0.0' --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --compatible-from '>=0.1.0 <1.0.0' --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --release-notes "$RELEASE_NOTES" --output "$RUNNER_TEMP/release.json"
           bin/flex updates:sign-manifest "$RUNNER_TEMP/release.json" "$RUNNER_TEMP/signed-release.json" \
             --private-key-file "$RUNNER_TEMP/flex-update-private.key" --key-id "${{ vars.UPDATE_SIGNING_KEY_ID }}"
       - name: Publish catalog last
         run: |
+          mkdir -p updates/platform
+          if [ ! -f updates/platform/manifest.json ]; then
+            printf '{"schema":1,"releases":[]}\n' > updates/platform/manifest.json
+          fi
           python3 scripts/release_catalog.py merge --catalog updates/platform/manifest.json --release "$RUNNER_TEMP/signed-release.json"
       - name: Deploy platform artifacts to shared hosting
         uses: burnett01/rsync-deployments@7.0.2
@@ -89,6 +98,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add updates/platform scripts/release_catalog.py
+          git add -f updates/platform/manifest.json
+          git add scripts/release_catalog.py
           git commit -m "Publish platform ${{ inputs.version }} update"
           git push

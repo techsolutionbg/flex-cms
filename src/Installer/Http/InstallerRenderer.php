@@ -30,6 +30,18 @@ final readonly class InstallerRenderer
         return $this->views->render('installer/form.twig', ['csrf_token' => $csrfToken, 'error' => $error, 'sections' => $data['sections'], 'generated_password' => $data['generated_password'], 'vite_tags' => $this->assets->tags(), 'vite_styles' => $this->assets->styles()]);
     }
 
+    public function reactApplication(RequirementsReport $report, string $csrfToken): string
+    {
+        $tags = $this->assets->installerTags();
+        if ($tags === '') {
+            return $this->form($report, $csrfToken);
+        }
+
+        return '<!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Инсталация на Flex CMS</title>'
+            . $tags
+            . '</head><body><div id="root"></div><noscript>За инсталирането трябва да е включен JavaScript.</noscript></body></html>';
+    }
+
     /** @param array<string, string> $values @return array{csrf_token: string, generated_password: string, sections: list<array{title: string, description: string, fields: list<array{name: string, label: string, value: string, type: string, placeholder: string}>}>} */
     public function data(string $csrfToken, array $values = [], ?string $error = null): array
     {
@@ -38,23 +50,23 @@ final readonly class InstallerRenderer
         $adminPassword = array_key_exists('admin_password', $values) ? '' : bin2hex(random_bytes(12));
         $field = static fn(string $name, string $label, string $value, string $type, string $placeholder): array => compact('name', 'label', 'value', 'type', 'placeholder');
         $sections = [
-            ['title' => 'Website', 'description' => 'The public identity and regional defaults.', 'fields' => [
-                $field('site_name', 'Site name', $values['site_name'] ?? 'Flex CMS', 'text', 'My new website'),
-                $field('site_url', 'Site URL', $values['site_url'] ?? $this->suggestedUrl(), 'url', 'https://example.com'),
-                $field('timezone', 'Timezone', $values['timezone'] ?? 'Europe/Sofia', 'text', 'Europe/Sofia'),
-                $field('locale', 'Locale', $values['locale'] ?? 'bg', 'text', 'bg'),
+            ['title' => 'Уебсайт', 'description' => 'За домейн настройте HTTPS преди инсталацията. За локален XAMPP може да използвате HTTP.', 'fields' => [
+                $field('site_name', 'Име на сайта', $values['site_name'] ?? 'Flex CMS', 'text', 'Моят нов сайт'),
+                $field('site_url', 'Адрес на сайта', $values['site_url'] ?? $this->suggestedUrl(), 'url', 'https://example.com'),
+                $field('timezone', 'Часова зона', $values['timezone'] ?? 'Europe/Sofia', 'text', 'Europe/Sofia'),
+                $field('locale', 'Език', $values['locale'] ?? 'bg', 'text', 'bg'),
             ]],
-            ['title' => 'MySQL database', 'description' => 'Use an empty MySQL 8 database and a user with schema permissions.', 'fields' => [
-                $field('database_host', 'Host', $values['database_host'] ?? $this->configuredValue('DB_HOST', 'localhost'), 'text', 'mysql'),
-                $field('database_port', 'Port', $values['database_port'] ?? $this->configuredValue('DB_PORT', '3306'), 'number', '3306'),
-                $field('database_name', 'Database', $values['database_name'] ?? $this->configuredValue('DB_DATABASE', 'flex_cms'), 'text', 'flex_cms'),
-                $field('database_username', 'Username', $values['database_username'] ?? $this->configuredValue('DB_USERNAME', 'flex_cms'), 'text', 'flex_cms'),
-                $field('database_password', 'Password', $databasePassword, 'password', 'Database password'),
+            ['title' => 'MySQL база данни', 'description' => 'Създайте празна база и потребител с пълни права върху нея от контролния панел на хостинга. Поддържа се MySQL 8.0+ и MariaDB 10.4+. За XAMPP хостът обикновено е 127.0.0.1. Паролата може да е празна само ако MySQL потребителят няма парола.', 'fields' => [
+                $field('database_host', 'Хост', $values['database_host'] ?? $this->configuredValue('DB_HOST', '127.0.0.1'), 'text', 'localhost или 127.0.0.1'),
+                $field('database_port', 'Порт', $values['database_port'] ?? $this->configuredValue('DB_PORT', '3306'), 'number', '3306'),
+                $field('database_name', 'База данни', $values['database_name'] ?? $this->configuredValue('DB_DATABASE', 'flex_cms'), 'text', 'flex_cms'),
+                $field('database_username', 'Потребител', $values['database_username'] ?? $this->configuredValue('DB_USERNAME', 'flex_cms'), 'text', 'flex_cms'),
+                $field('database_password', 'Парола', $databasePassword, 'password', 'Парола за MySQL'),
             ]],
-            ['title' => 'Administrator', 'description' => 'This account receives full platform access.', 'fields' => [
-                $field('admin_name', 'Full name', $values['admin_name'] ?? 'Administrator', 'text', 'Administrator'),
-                $field('admin_email', 'Email', $values['admin_email'] ?? 'admin@example.com', 'email', 'admin@example.com'),
-                $field('admin_password', 'Password', $adminPassword, 'password', 'Generated automatically'),
+            ['title' => 'Администратор', 'description' => 'Този профил ще има пълен достъп до платформата.', 'fields' => [
+                $field('admin_name', 'Име и фамилия', $values['admin_name'] ?? 'Администратор', 'text', 'Администратор'),
+                $field('admin_email', 'Имейл', $values['admin_email'] ?? 'admin@example.com', 'email', 'admin@example.com'),
+                $field('admin_password', 'Парола', $adminPassword, 'password', 'Генерира се автоматично'),
             ]],
         ];
 
