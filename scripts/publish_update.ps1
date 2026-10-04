@@ -87,8 +87,7 @@ try {
             if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Required command is not available: $tool" }
         }
 
-        Write-Host 'Building production admin assets...'
-        Invoke-Native 'docker' @('compose', 'run', '--rm', '--no-deps', '-T', 'frontend', 'sh', '-c', 'npm ci && npm run build')
+        Write-Host 'Building production admin and installer assets...'
         Invoke-Native 'docker' @('compose', 'run', '--rm', '--no-deps', '-T', 'frontend-react', 'sh', '-c', 'npm ci && npm run build:admin && npm run build:installer')
 
         Write-Host 'Building the PHP app image with signing support...'
