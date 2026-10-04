@@ -11,7 +11,10 @@ return [
         'server_url' => $_ENV['UPDATE_SERVER_URL'] ?? 'https://updates-flex-cms.kriskata.com',
         'require_checksum' => filter_var($_ENV['UPDATE_REQUIRE_CHECKSUM'] ?? true, FILTER_VALIDATE_BOOL),
         'require_signature' => filter_var($_ENV['UPDATE_REQUIRE_SIGNATURE'] ?? true, FILTER_VALIDATE_BOOL),
-        'signing_public_key' => $_ENV['UPDATE_SIGNING_PUBLIC_KEY'] ?? '',
+        // Keep the canonical release trust key as a safe default so a fresh
+        // installation can verify platform, theme, and plugin manifests even
+        // when its runtime environment file omits this optional override.
+        'signing_public_key' => $_ENV['UPDATE_SIGNING_PUBLIC_KEY'] ?? 'f8jqe8uwSmPX8JKDKAxlTzAMYSnVcAuUHHRsUMd+5dQ=',
         'healthcheck_url' => $_ENV['UPDATE_HEALTHCHECK_URL'] ?? 'http://127.0.0.1/health',
         'max_uncompressed_mb' => (int) ($_ENV['UPDATE_MAX_UNCOMPRESSED_MB'] ?? 256),
         'max_download_mb' => (int) ($_ENV['UPDATE_MAX_DOWNLOAD_MB'] ?? 256),
