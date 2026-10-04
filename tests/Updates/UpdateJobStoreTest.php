@@ -62,4 +62,20 @@ final class UpdateJobStoreTest extends TestCase
         self::assertSame('plugin', $first->type);
         self::assertSame('flex/seo', $first->packageId);
     }
+
+    public function testItPersistsProgressWithoutLosingTheTargetOrStartTime(): void
+    {
+        $store = new UpdateJobStore($this->basePath);
+        $store->queuePlatformUpdate(false, '0.1.46');
+        $running = $store->claimNext();
+        self::assertNotNull($running);
+        $store->progress($running, 'downloading');
+        $progress = $store->all()[0];
+        self::assertSame('running', $progress->status);
+        self::assertSame('downloading', $progress->result['phase']);
+        self::assertSame('0.1.46', $progress->packageId);
+        self::assertSame($running->startedAt, $progress->startedAt);
+        $store->complete($running, ['version' => '0.1.46']);
+        self::assertSame('completed', $store->all()[0]->status);
+    }
 }

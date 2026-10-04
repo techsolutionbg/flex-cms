@@ -20,7 +20,7 @@ final class UpdateJobProcessor
         }
         try {
             if ($job->type === 'platform') {
-                $result = $this->platformUpdater->update($job->dryRun, $job->packageId);
+                $result = $this->platformUpdater->update($job->dryRun, $job->packageId, fn(string $phase) => $this->jobs->progress($job, $phase));
                 return $this->jobs->complete($job, ['version' => $result->release->version->value, 'from' => $result->installation->from->value, 'to' => $result->installation->to->value, 'dry_run' => $result->installation->dryRun]);
             }
             if ($job->type === 'platform_rollback' && $job->packageId !== null) {

@@ -62,5 +62,10 @@ final class MaintenanceModeMiddlewareTest extends TestCase
         self::assertSame('60', $maintenance->getHeaderLine('Retry-After'));
         self::assertSame(200, $health->getStatusCode());
         self::assertSame('available', (string) $health->getBody());
+        $monitor = (new ServerRequest('GET', 'https://example.test/api/admin/updates'))
+            ->withQueryParams(['job_id' => 'update-1']);
+        self::assertSame(200, $middleware->process($monitor, $handler)->getStatusCode());
+        self::assertSame(503, $middleware->process($monitor->withMethod('POST'), $handler)->getStatusCode());
+        self::assertSame(503, $middleware->process($monitor->withQueryParams([]), $handler)->getStatusCode());
     }
 }

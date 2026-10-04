@@ -24,8 +24,10 @@ final class RemotePlatformUpdater
         private readonly PluginRegistry $plugins,
     ) {}
 
-    public function update(bool $dryRun = false, ?string $targetVersion = null): RemotePlatformUpdateResult
+    /** @param null|callable(string): void $onProgress */
+    public function update(bool $dryRun = false, ?string $targetVersion = null, ?callable $onProgress = null): RemotePlatformUpdateResult
     {
+        if ($onProgress !== null) $onProgress('resolving');
         $current = $this->versions->current();
         $release = $this->resolveRelease($targetVersion, $current);
         if ($release === null) {
@@ -33,8 +35,10 @@ final class RemotePlatformUpdater
         }
         $this->assertPluginCompatibility($release->version);
 
+        if ($onProgress !== null) $onProgress('downloading');
         $path = $this->downloader->download($release);
         try {
+            if ($onProgress !== null) $onProgress('verifying');
             $result = $this->installer->install($path, new PlatformInstallOptions(
                 expectedChecksum: $release->checksum,
                 allowDowngrade: version_compare($release->version->value, $current->value, '<'),

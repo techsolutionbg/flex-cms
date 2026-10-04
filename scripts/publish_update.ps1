@@ -4,11 +4,13 @@ param(
     [string] $TargetVersion,
 
     [string] $ReleaseNotes = '',
+    [string] $ReleaseNotesFile,
     [string] $PrivateKeyFile,
     [string] $KeyId,
     [string] $CompatibleFrom,
     [switch] $RunMigrations,
-    [switch] $ResetCatalog
+    [switch] $ResetCatalog,
+    [switch] $AllowWorkingTree
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,8 +19,12 @@ $root = Split-Path -Parent $PSScriptRoot
 $settings = @{}
 $settingsPath = Join-Path $root '.publish.env'
 
+if (-not [string]::IsNullOrWhiteSpace($ReleaseNotesFile)) {
+    $ReleaseNotes = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $ReleaseNotesFile).Path, [System.Text.Encoding]::UTF8)
+}
+
 if (Test-Path -LiteralPath $settingsPath) {
-    foreach ($line in Get-Content -LiteralPath $settingsPath) {
+    foreach ($line in Get-Content -LiteralPath $settingsPath -Encoding UTF8) {
         if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$') {
             $value = $Matches[2].Trim()
             if ($value.Length -ge 2 -and (($value[0] -eq '"' -and $value[-1] -eq '"') -or ($value[0] -eq "'" -and $value[-1] -eq "'"))) {
@@ -63,7 +69,7 @@ if ($remoteRoot -notmatch '^[A-Za-z0-9_./-]+$' -or $remoteRoot.StartsWith('/')) 
 $gitStatus = @(& git -C $root status --porcelain --untracked-files=normal)
 if ($LASTEXITCODE -ne 0) { throw 'Git status could not be read.' }
 $publishRelevantChanges = @($gitStatus | Where-Object { $_ -notmatch 'resources/admin-react/dist/' })
-if ($publishRelevantChanges.Count -gt 0) {
+if ($publishRelevantChanges.Count -gt 0 -and -not $AllowWorkingTree) {
     throw 'Commit or stash platform source changes before publishing. Releases are built from committed code.'
 }
 
@@ -122,7 +128,10 @@ try {
         } else {
             Write-Host 'Reading the existing update catalog...'
             try {
-                $catalog = Invoke-RestMethod -Uri "$baseUrl/platform/manifest.json" -TimeoutSec 30
+                # Preserve signed strings exactly: REST parsing can turn dates into DateTime values.
+                Invoke-WebRequest -Uri "$baseUrl/platform/manifest.json" -UseBasicParsing -OutFile $catalogPath -TimeoutSec 30
+                $catalogWasDownloaded = $true
+                $catalog = [ordered]@{ releases = @() }
             } catch {
                 $statusCode = 0
                 if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
@@ -156,12 +165,14 @@ try {
         Invoke-Native 'docker' @('cp', $releaseEntryPath, "${appContainer}:/tmp/flex-release-entry.json")
         Invoke-Native 'docker' @('exec', $appContainer, 'php', 'bin/flex', 'updates:sign-manifest', '/tmp/flex-release-entry.json', '/tmp/flex-release-entry-signed.json', "--private-key-file=$remoteKeyPath", "--key-id=$keyId")
         Invoke-Native 'docker' @('cp', "${appContainer}:/tmp/flex-release-entry-signed.json", $signedEntryPath)
-        $signedEntry = Get-Content -LiteralPath $signedEntryPath -Raw | ConvertFrom-Json
+        $signedEntry = Get-Content -LiteralPath $signedEntryPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
-        $releases = @($catalog.releases | Where-Object { $_.package -ne 'flex-cms' -or $_.version -ne $TargetVersion -or $_.channel -ne 'stable' })
-        $releases += $signedEntry
-        $catalog.releases = @($releases | Sort-Object package, version, channel)
-        [System.IO.File]::WriteAllText($catalogPath, ($catalog | ConvertTo-Json -Depth 16), $utf8)
+        if (-not $catalogWasDownloaded) {
+            [System.IO.File]::WriteAllText($catalogPath, ($catalog | ConvertTo-Json -Depth 16), $utf8)
+        }
+        Invoke-Native 'docker' @('cp', $catalogPath, "${appContainer}:/tmp/flex-existing-catalog.json")
+        Invoke-Native 'docker' @('exec', $appContainer, 'php', 'scripts/merge_update_catalog.php', '/tmp/flex-existing-catalog.json', '/tmp/flex-release-entry-signed.json', '/tmp/flex-merged-catalog.json', $remoteKeyPath)
+        Invoke-Native 'docker' @('cp', "${appContainer}:/tmp/flex-merged-catalog.json", $catalogPath)
 
         Write-Host 'Uploading package and checksum...'
         Invoke-Native 'ssh' @($sshTarget, "mkdir -p '$remoteReleaseDirectory' '$remoteRoot/platform'")
@@ -205,5 +216,14 @@ try {
     }
     foreach ($temporaryPath in @($releaseEntryPath, $signedEntryPath, $catalogPath)) {
         if (Test-Path -LiteralPath $temporaryPath) { Remove-Item -LiteralPath $temporaryPath -Force }
+    }
+    # npm ci replaces the dependencies used by the running Vite server.
+    # Restart it even after a failed publication so its module cache stays valid.
+    Push-Location $root
+    try {
+        & docker compose restart frontend-react
+        if ($LASTEXITCODE -ne 0) { Write-Warning 'Vite could not be restarted automatically.' }
+    } finally {
+        Pop-Location
     }
 }

@@ -103,6 +103,11 @@ final class UpdateJobStore
         return $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_FAILED, $job->dryRun, $job->createdAt, $job->startedAt, gmdate(DATE_ATOM), $error, [], $job->packageId));
     }
 
+    public function progress(UpdateJob $job, string $phase): void
+    {
+        $this->replace($job, new UpdateJob($job->id, $job->type, self::STATUS_RUNNING, $job->dryRun, $job->createdAt, $job->startedAt, result: ['phase' => $phase], packageId: $job->packageId));
+    }
+
     /** @return list<UpdateJob> */
     public function all(): array
     {

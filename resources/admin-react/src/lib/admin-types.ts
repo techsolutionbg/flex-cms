@@ -41,6 +41,12 @@ export type PlatformUpdateHistory = {
 
 export type PlatformUpdateJob = {
   id: string
+  type?: string
+  created_at?: string
+  started_at?: string | null
+  phase?: string
+  files_processed?: number
+  files_total?: number
   status: "pending" | "running" | "completed" | "failed" | string
   error?: string | null
 }

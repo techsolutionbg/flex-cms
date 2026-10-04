@@ -20,6 +20,8 @@ final readonly class PlatformUpdateState
         public ?string $databaseBackupPath,
         public array $affectedPaths,
         public string $startedAt,
+        public int $filesProcessed = 0,
+        public int $filesTotal = 0,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -58,6 +60,8 @@ final readonly class PlatformUpdateState
             databaseBackupPath: $data['database_backup_path'],
             affectedPaths: $paths,
             startedAt: $data['started_at'],
+            filesProcessed: max(0, (int) ($data['files_processed'] ?? 0)),
+            filesTotal: max(0, (int) ($data['files_total'] ?? 0)),
         );
     }
 
@@ -75,6 +79,8 @@ final readonly class PlatformUpdateState
             'database_backup_path' => $this->databaseBackupPath,
             'affected_paths' => $this->affectedPaths,
             'started_at' => $this->startedAt,
+            'files_processed' => $this->filesProcessed,
+            'files_total' => $this->filesTotal,
         ];
     }
 }

@@ -1,7 +1,8 @@
-export async function getCsrfToken(): Promise<string> {
+export async function getCsrfToken(signal?: AbortSignal): Promise<string> {
   const response = await fetch("/api/auth/csrf", {
     credentials: "include",
     headers: { Accept: "application/json" },
+    signal,
   })
   const body = (await response.json().catch(() => ({}))) as { csrf_token?: string }
   if (!response.ok || !body.csrf_token)

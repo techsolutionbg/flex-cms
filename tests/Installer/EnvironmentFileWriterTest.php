@@ -52,4 +52,21 @@ final class EnvironmentFileWriterTest extends TestCase
 
         (new EnvironmentFileWriter($this->directory))->write(['APP_NAME' => 'New']);
     }
+
+    public function testItKeepsTheConfiguredWorkerGroupAbleToReadTheEnvironment(): void
+    {
+        if (!function_exists('posix_getegid')) self::markTestSkipped('Requires POSIX permissions.');
+        $previous = $_ENV['FLEX_CMS_GID'] ?? null;
+        $_ENV['FLEX_CMS_GID'] = (string) posix_getegid();
+        try {
+            (new EnvironmentFileWriter($this->directory))->write(['APP_NAME' => 'Worker readable']);
+            $path = $this->directory . '/storage/.env';
+            clearstatcache(true, $path);
+            self::assertSame(0640, fileperms($path) & 0777);
+            self::assertSame(posix_getegid(), filegroup($path));
+        } finally {
+            if ($previous === null) unset($_ENV['FLEX_CMS_GID']);
+            else $_ENV['FLEX_CMS_GID'] = $previous;
+        }
+    }
 }

@@ -24,7 +24,12 @@ final readonly class MaintenanceModeMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getUri()->getPath() === '/health' || !is_file($this->paths->storage('maintenance.json'))) {
+        // Only the authenticated read-only job monitor remains available during replacement.
+        $monitor = $request->getMethod() === 'GET'
+            && $request->getUri()->getPath() === '/api/admin/updates'
+            && is_string($request->getQueryParams()['job_id'] ?? null)
+            && ($request->getQueryParams()['job_id'] ?? '') !== '';
+        if ($monitor || $request->getUri()->getPath() === '/health' || !is_file($this->paths->storage('maintenance.json'))) {
             return $handler->handle($request);
         }
 

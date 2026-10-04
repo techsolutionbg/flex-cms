@@ -65,6 +65,8 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         $state = null;
 
         try {
+            $changedPaths = $this->changedPaths($package->manifest);
+            $payloadPaths = array_values(array_filter($changedPaths, static fn(string $path): bool => isset($package->manifest->files[$path])));
             $workPath = $this->createWorkDirectory($package->manifest->version);
             $backupPath = $this->createBackupDirectory($currentVersion, $package->manifest->version);
             $state = new PlatformUpdateState(
@@ -76,13 +78,13 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
                 backupPath: $backupPath,
                 workPath: $workPath,
                 databaseBackupPath: $package->manifest->runMigrations ? $backupPath . '/database.json' : null,
-                affectedPaths: $this->affectedPaths($package->manifest),
+                affectedPaths: $changedPaths,
                 startedAt: gmdate(DATE_ATOM),
             );
             $this->states->write($state);
-            $this->extractPayload($package, $workPath);
+            $this->extractPayload($package, $workPath, $payloadPaths, fn(int $done, int $total) => $this->fileProgress($state, $done, $total));
             $state = $this->transition($state, 'staged');
-            $this->backupAffectedFiles($package->manifest, $backupPath);
+            $this->backupAffectedFiles($changedPaths, $backupPath, fn(int $done, int $total) => $this->fileProgress($state, $done, $total));
             $state = $this->transition($state, 'backed_up');
             if ($package->manifest->runMigrations) {
                 if ($this->databaseBackup === null) {
@@ -94,7 +96,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
             $state = $this->transition($state, 'maintenance_enabled');
 
             try {
-                $this->applyPayload($package->manifest, $workPath);
+                $this->applyPayload($package->manifest, $workPath, $payloadPaths, fn(int $done, int $total) => $this->fileProgress($state, $done, $total));
                 $state = $this->transition($state, 'files_activated');
                 if ($package->manifest->runMigrations) {
                     $state = $this->transition($state, 'migrations_running');
@@ -104,11 +106,12 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
                     $state = $this->transition($state, 'health_checking');
                     $this->healthChecker->check();
                 }
-                $this->appendHistory($package, $currentVersion, $backupPath);
+                $this->appendHistory($package, $currentVersion, $backupPath, $changedPaths);
                 $state = $this->transition($state, 'completed');
             } catch (\Throwable $exception) {
                 try {
-                    $this->restoreBackup($package->manifest, $backupPath);
+                    $state = $this->transition($state, 'restoring_backup');
+                    $this->restoreBackup($changedPaths, $backupPath);
                     if ($package->manifest->runMigrations && $this->databaseBackup !== null && $state->databaseBackupPath !== null) {
                         $this->databaseBackup->restore($state->databaseBackupPath);
                     }
@@ -210,7 +213,20 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         return $path;
     }
 
-    private function extractPayload(InspectedPlatformPackage $package, string $workPath): void
+    private function fileProgress(PlatformUpdateState $state, int $done, int $total): void
+    {
+        // Batch writes so monitoring does not slow down thousands of file operations.
+        if ($done % 100 !== 0 && $done !== $total) return;
+        $data = $state->toArray();
+        $data['files_processed'] = $done;
+        $data['files_total'] = $total;
+        $this->states->write(PlatformUpdateState::fromArray($data));
+    }
+
+    /** @param list<string> $paths
+     * @param callable(int, int): void $progress
+     */
+    private function extractPayload(InspectedPlatformPackage $package, string $workPath, array $paths, callable $progress): void
     {
         $checksum = hash_file('sha256', $package->path);
         if ($checksum === false || !hash_equals($package->checksum, $checksum)) {
@@ -223,7 +239,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         }
 
         try {
-            foreach (array_keys($package->manifest->files) as $path) {
+            foreach ($paths as $index => $path) {
                 $contents = $archive->getFromName('payload/' . $path);
                 if ($contents === false) {
                     throw new InvalidPlatformPackage(sprintf('Package file "%s" cannot be extracted.', $path));
@@ -234,18 +250,22 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
                 if (file_put_contents($destination, $contents, LOCK_EX) === false) {
                     throw new PlatformUpdateException(sprintf('Cannot stage package file "%s".', $path));
                 }
+                $progress($index + 1, count($paths));
             }
         } finally {
             $archive->close();
         }
     }
 
-    private function backupAffectedFiles(PlatformPackageManifest $manifest, string $backupPath): void
+    /** @param list<string> $paths
+     * @param callable(int, int): void $progress
+     */
+    private function backupAffectedFiles(array $paths, string $backupPath, callable $progress): void
     {
         $existing = [];
         $missing = [];
 
-        foreach ($this->affectedPaths($manifest) as $path) {
+        foreach ($paths as $index => $path) {
             $source = $this->destination($path);
             if (is_dir($source)) {
                 throw new PlatformUpdateException(sprintf('Platform packages cannot replace or remove the directory "%s".', $path));
@@ -261,6 +281,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
             } else {
                 $missing[] = $path;
             }
+            $progress($index + 1, count($paths));
         }
 
         $metadata = json_encode([
@@ -273,9 +294,12 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         }
     }
 
-    private function applyPayload(PlatformPackageManifest $manifest, string $workPath): void
+    /** @param list<string> $paths
+     * @param callable(int, int): void $progress
+     */
+    private function applyPayload(PlatformPackageManifest $manifest, string $workPath, array $paths, callable $progress): void
     {
-        foreach (array_keys($manifest->files) as $path) {
+        foreach ($paths as $index => $path) {
             $source = $workPath . '/' . $path;
             $destination = $this->destination($path);
             $this->ensureDirectory(dirname($destination));
@@ -289,6 +313,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
                 @unlink($temporary);
                 throw new PlatformUpdateException(sprintf('Cannot activate replacement for "%s".', $path));
             }
+            $progress($index + 1, count($paths));
         }
 
         foreach ($manifest->remove as $path) {
@@ -299,9 +324,10 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         }
     }
 
-    private function restoreBackup(PlatformPackageManifest $manifest, string $backupPath): void
+    /** @param list<string> $paths */
+    private function restoreBackup(array $paths, string $backupPath): void
     {
-        foreach (array_reverse($this->affectedPaths($manifest)) as $path) {
+        foreach (array_reverse($paths) as $path) {
             $backup = $backupPath . '/files/' . $path;
             $destination = $this->destination($path);
 
@@ -327,7 +353,8 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
         }
     }
 
-    private function appendHistory(InspectedPlatformPackage $package, PlatformVersion $from, string $backupPath): void
+    /** @param list<string> $paths */
+    private function appendHistory(InspectedPlatformPackage $package, PlatformVersion $from, string $backupPath, array $paths): void
     {
         $directory = $this->basePath . '/storage/updates';
         $this->ensureDirectory($directory);
@@ -339,7 +366,7 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
             'checksum' => $package->checksum,
             'backup' => $backupPath,
             'database_backup' => $package->manifest->runMigrations ? $backupPath . '/database.json' : null,
-            'affected_paths' => $this->affectedPaths($package->manifest),
+            'affected_paths' => $paths,
             'migrations_ran' => $package->manifest->runMigrations,
             'migration_files' => array_values(array_filter(
                 array_keys($package->manifest->files),
@@ -357,6 +384,16 @@ final readonly class PlatformVersionInstaller implements PlatformVersionInstalle
     private function affectedPaths(PlatformPackageManifest $manifest): array
     {
         return array_values(array_unique([...array_keys($manifest->files), ...$manifest->remove]));
+    }
+
+    /** @return list<string> */
+    private function changedPaths(PlatformPackageManifest $manifest): array
+    {
+        return array_values(array_filter($this->affectedPaths($manifest), function (string $path) use ($manifest): bool {
+            $destination = $this->destination($path);
+            if (!isset($manifest->files[$path])) return file_exists($destination);
+            return !is_file($destination) || !hash_equals($manifest->files[$path], (string) hash_file('sha256', $destination));
+        }));
     }
 
     private function destination(string $path): string

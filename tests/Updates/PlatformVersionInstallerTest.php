@@ -72,6 +72,52 @@ final class PlatformVersionInstallerTest extends TestCase
         self::assertDirectoryDoesNotExist($this->workspace . '/storage/backups');
     }
 
+    public function testItLeavesUnchangedFilesOutOfTheBackupAndRollbackPaths(): void
+    {
+        file_put_contents($this->workspace . '/src/stable.php', 'unchanged');
+        $package = $this->createPackage('1.1.0', [
+            'platform.json' => $this->platformManifest('1.1.0'),
+            'src/example.php' => 'new',
+            'src/stable.php' => 'unchanged',
+        ]);
+        $result = $this->installer()->install($package, new PlatformInstallOptions(expectedChecksum: $this->checksum($package)));
+        self::assertNotNull($result->backupPath);
+        self::assertFileDoesNotExist($result->backupPath . '/files/src/stable.php');
+        $metadata = json_decode((string) file_get_contents($result->backupPath . '/metadata.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertNotContains('src/stable.php', $metadata['existing']);
+        self::assertSame('unchanged', file_get_contents($this->workspace . '/src/stable.php'));
+        $rollback = new \Flex\Updates\Platform\PlatformRollback($this->workspace, new \Flex\Updates\Platform\PlatformHistory($this->workspace), new PlatformVersionRegistry($this->workspace));
+        $rollback->rollback(basename($result->backupPath));
+        self::assertSame('old', file_get_contents($this->workspace . '/src/example.php'));
+        self::assertSame('unchanged', file_get_contents($this->workspace . '/src/stable.php'));
+        self::assertSame('1.0.0', (new PlatformVersionRegistry($this->workspace))->current()->value);
+    }
+
+    public function testFailedHealthCheckRestoresChangedFilesAndPreservesUnchangedOnes(): void
+    {
+        file_put_contents($this->workspace . '/src/stable.php', 'unchanged');
+        $package = $this->createPackage('1.1.0', [
+            'platform.json' => $this->platformManifest('1.1.0'),
+            'src/example.php' => 'new',
+            'src/stable.php' => 'unchanged',
+            'src/added.php' => 'new file',
+        ]);
+        $health = new class implements PlatformHealthCheckerInterface {
+            public function check(): void { throw new PlatformUpdateException('Health failed'); }
+        };
+        try {
+            $this->installer(healthChecker: $health)->install($package, new PlatformInstallOptions(expectedChecksum: $this->checksum($package)));
+            self::fail('Health failure must restore the backup.');
+        } catch (PlatformUpdateException $exception) {
+            self::assertStringContainsString('Health failed', $exception->getMessage());
+        }
+        self::assertSame('old', file_get_contents($this->workspace . '/src/example.php'));
+        self::assertSame('unchanged', file_get_contents($this->workspace . '/src/stable.php'));
+        self::assertFileDoesNotExist($this->workspace . '/src/added.php');
+        self::assertSame('1.0.0', (new PlatformVersionRegistry($this->workspace))->current()->value);
+        self::assertFileDoesNotExist($this->workspace . '/storage/maintenance.json');
+    }
+
     public function testItRejectsProtectedPaths(): void
     {
         $package = $this->createPackage('1.1.0', [

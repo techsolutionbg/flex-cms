@@ -41,7 +41,15 @@ final readonly class EnvironmentFileWriter implements EnvironmentWriterInterface
             throw new InstallerException('The .env file could not be written.');
         }
 
-        @chmod($target, 0600);
+        // A configured shared runtime group also needs to read the worker configuration.
+        $runtimeGroup = $_ENV['FLEX_CMS_GID'] ?? getenv('FLEX_CMS_GID');
+        if (is_string($runtimeGroup) && ctype_digit($runtimeGroup)) {
+            if (!@chgrp($target, (int) $runtimeGroup) || !@chmod($target, 0640)) {
+                throw new InstallerException('The shared runtime configuration permissions could not be set.');
+            }
+        } else {
+            @chmod($target, 0600);
+        }
     }
 
     public function remove(): void

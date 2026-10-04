@@ -14,6 +14,7 @@ use Flex\Updates\Remote\RemoteCatalogClient;
 use Flex\Updates\Remote\RemotePlatformUpdater;
 use Flex\Updates\UpdateErrorMessage;
 use Flex\Updates\Jobs\UpdateJobStore;
+use Flex\Updates\Platform\PlatformUpdateStateStore;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,6 +30,7 @@ final readonly class AdminUpdatesDataController
         private RemotePlatformUpdater $updater,
         private UpdateJobStore $jobs,
         private ResponseFactoryInterface $responses,
+        private PlatformUpdateStateStore $states,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -37,6 +39,19 @@ final readonly class AdminUpdatesDataController
         $user = $this->authentication->user();
         if (!$user instanceof AuthenticatedUser || !$user->isSuperAdmin()) {
             return $this->responses->json(['error' => ['status' => 403, 'message' => 'Достъпът е забранен.']], 403);
+        }
+
+        $jobId = $request->getQueryParams()['job_id'] ?? null;
+        if (is_string($jobId) && $jobId !== '') {
+            foreach ($this->jobs->all() as $job) {
+                if ($job->id !== $jobId) continue;
+                $phase = $job->result['phase'] ?? $job->status;
+                $state = $job->status === UpdateJobStore::STATUS_RUNNING && $job->type === 'platform' ? $this->states->read() : null;
+                if ($state !== null && $job->packageId !== null && $state->to !== $job->packageId) $state = null;
+                if ($state !== null) $phase = $state->phase;
+                return $this->responses->json(['job' => $job->toArray() + ['phase' => $phase, 'files_processed' => $state?->filesProcessed ?? 0, 'files_total' => $state?->filesTotal ?? 0]], 200, ['Cache-Control' => 'no-store']);
+            }
+            return $this->responses->json(['error' => ['message' => 'Задачата за обновяване не е намерена.']], 404);
         }
 
         $currentVersion = $this->versions->current()->value;
