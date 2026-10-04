@@ -5,40 +5,37 @@ declare(strict_types=1);
 namespace Flex\Tests\Installer;
 
 use Flex\Installer\Http\InstallerRenderer;
-use Flex\Installer\Requirement;
-use Flex\Installer\RequirementsReport;
 use PHPUnit\Framework\TestCase;
 
 final class InstallerRendererTest extends TestCase
 {
-    public function testItEscapesValuesAndNeverRendersSubmittedPasswords(): void
-    {
-        $html = (new InstallerRenderer())->form(
-            new RequirementsReport([new Requirement('PHP', true, '8.3')]),
-            'csrf-token',
-            [
-                'site_name' => '<script>alert(1)</script>',
-                'database_password' => 'database-secret',
-                'admin_password' => 'admin-secret',
-            ],
-        );
+    private string $basePath;
 
-        self::assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
-        self::assertStringNotContainsString('database-secret', $html);
-        self::assertStringNotContainsString('admin-secret', $html);
-        self::assertStringContainsString('name="csrf_token"', $html);
-        self::assertStringNotContainsString('Server readiness', $html);
-        self::assertStringContainsString('name="database_name"', $html);
+    protected function setUp(): void
+    {
+        $this->basePath = sys_get_temp_dir() . '/flex-installer-renderer-' . bin2hex(random_bytes(6));
+        mkdir($this->basePath . '/public/build/installer/.vite', 0770, true);
+        file_put_contents($this->basePath . '/public/build/installer/.vite/manifest.json', json_encode([
+            'installer.html' => ['file' => 'assets/installer-hash.js', 'css' => ['assets/installer-hash.css']],
+        ], JSON_THROW_ON_ERROR));
     }
 
-    public function testItUsesCompiledStylesForTheServerRenderedInstaller(): void
+    protected function tearDown(): void
     {
-        $html = (new InstallerRenderer())->form(
-            new RequirementsReport([new Requirement('PHP', true, '8.3')]),
-            'csrf-token',
-        );
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->basePath, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($iterator as $file) {
+            $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
+        }
+        rmdir($this->basePath);
+    }
 
-        self::assertMatchesRegularExpression('#<link rel="stylesheet" href="/build/admin/[^" ]+\\.css">#', $html);
-        self::assertStringNotContainsString('/@vite/client', $html);
+    public function testItRendersTheCompiledReactInstallerShell(): void
+    {
+        $html = (new InstallerRenderer($this->basePath))->reactApplication('csrf-token');
+
+        self::assertStringContainsString('id="root"', $html);
+        self::assertStringContainsString('/build/installer/assets/installer-hash.css', $html);
+        self::assertStringContainsString('/build/installer/assets/installer-hash.js', $html);
+        self::assertStringNotContainsString('name="database_name"', $html);
     }
 }

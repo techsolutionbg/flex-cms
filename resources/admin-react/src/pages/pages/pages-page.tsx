@@ -8,6 +8,7 @@ import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/drop
 import { LoadingButton } from "@/components/loading-button"
 import { TableActionsMenu } from "@/components/table-actions-menu"
 import type { PageRecord } from "@/lib/admin-types"
+import { adminUrl } from "@/lib/admin-routes"
 import { publicPagePath } from "./page-utils"
 export function PagesPage({ onLogout, onNavigate, onCreate, onEdit, onSettings, loggingOut }: { onLogout: () => void; onNavigate: (label: string) => void; onCreate: () => void; onEdit: (page: PageRecord) => void; onSettings: (page: PageRecord) => void; loggingOut: boolean }) {
   const [pages, setPages] = useState<PageRecord[]>([])
@@ -43,7 +44,7 @@ export function PagesPage({ onLogout, onNavigate, onCreate, onEdit, onSettings, 
     const values: Array<[string, string, string]> = [["search", search, ""], ["status", statusFilter, "all"], ["structure", structureFilter, "all"], ["view", viewFilter, "active"]]
     values.forEach(([key, value, defaultValue]) => value && value !== defaultValue ? params.set(key, value) : params.delete(key))
     const queryString = params.toString()
-    window.history.replaceState(null, "", `${window.location.pathname}${queryString ? `?${queryString}` : ""}`)
+    window.history.replaceState(null, "", `${adminUrl("/pages")}${queryString ? `?${queryString}` : ""}`)
   }, [search, statusFilter, structureFilter, viewFilter])
 
   const depthCache = new Map<number, number>()
@@ -118,7 +119,7 @@ export function PagesPage({ onLogout, onNavigate, onCreate, onEdit, onSettings, 
     }
   }
   const columns = [
-    { key: "title", label: "Заглавие", sortable: true, render: (page: PageRecord) => <><a className="react-page-link" href={`/pages/${page.id}/edit`} onClick={(event) => { event.preventDefault(); onEdit(page) }}>{"— ".repeat(page.depth ?? 0)}{page.title}</a><small>#{page.id}</small></>, sortValue: (page: PageRecord) => page.title },
+    { key: "title", label: "Заглавие", sortable: true, render: (page: PageRecord) => <><a className="react-page-link" href={adminUrl(`/pages/${page.id}/edit`)} onClick={(event) => { event.preventDefault(); onEdit(page) }}>{"— ".repeat(page.depth ?? 0)}{page.title}</a><small>#{page.id}</small></>, sortValue: (page: PageRecord) => page.title },
     { key: "slug", label: "URL адрес", sortable: true, render: (page: PageRecord) => `/${publicPagePath(page, pages)}`, sortValue: (page: PageRecord) => publicPagePath(page, pages) },
     { key: "status", label: "Статус", sortable: true, render: (page: PageRecord) => <span className={`react-status-badge status-${page.status}`}>{page.status === "published" ? "Публикувана" : "Чернова"}</span> },
     { key: "updated_at", label: "Последна промяна", sortable: true, render: (page: PageRecord) => page.updated_at ? new Date(page.updated_at).toLocaleDateString("bg-BG") : "—", sortValue: (page: PageRecord) => page.updated_at ?? "" },

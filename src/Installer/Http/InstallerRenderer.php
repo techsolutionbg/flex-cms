@@ -4,37 +4,25 @@ declare(strict_types=1);
 
 namespace Flex\Installer\Http;
 
-use Flex\Http\View\TwigViewRenderer;
 use Flex\Http\View\ViteAssetManager;
-use Flex\Installer\RequirementsReport;
 
 final readonly class InstallerRenderer
 {
     private string $basePath;
-    private TwigViewRenderer $views;
     private ViteAssetManager $assets;
 
     public function __construct(?string $basePath = null)
     {
         $basePath ??= dirname(__DIR__, 3);
         $this->basePath = $basePath;
-        $this->views = new TwigViewRenderer($basePath);
         $this->assets = new ViteAssetManager($basePath);
     }
 
-    /** @param array<string, string> $values */
-    public function form(RequirementsReport $report, string $csrfToken, array $values = [], ?string $error = null): string
-    {
-        $data = $this->data($csrfToken, $values, $error);
-
-        return $this->views->render('installer/form.twig', ['csrf_token' => $csrfToken, 'error' => $error, 'sections' => $data['sections'], 'generated_password' => $data['generated_password'], 'vite_tags' => $this->assets->tags(), 'vite_styles' => $this->assets->styles()]);
-    }
-
-    public function reactApplication(RequirementsReport $report, string $csrfToken): string
+    public function reactApplication(string $csrfToken): string
     {
         $tags = $this->assets->installerTags();
         if ($tags === '') {
-            return $this->form($report, $csrfToken);
+            throw new \RuntimeException('The React installer build is missing. Build resources/admin-react before installation.');
         }
 
         return '<!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Инсталация на Flex CMS</title>'
@@ -71,20 +59,6 @@ final readonly class InstallerRenderer
         ];
 
         return ['csrf_token' => $csrfToken, 'generated_password' => $adminPassword, 'sections' => $sections];
-    }
-
-    public function success(string $siteUrl): string
-    {
-        return $this->status('Flex CMS is ready', 'Your foundation is ready.', 'Flex CMS, the database schema and your administrator account were created successfully.', $siteUrl, 'Open the website');
-    }
-    public function unavailable(): string
-    {
-        return $this->status('Installer unavailable', 'The installer is locked.', 'This installation is already configured.', '/', 'Return to the website');
-    }
-
-    private function status(string $title, string $heading, string $message, string $url, string $action): string
-    {
-        return $this->views->render('installer/status.twig', compact('title', 'heading', 'message', 'url', 'action') + ['vite_tags' => $this->assets->tags()]);
     }
 
     private function suggestedUrl(): string

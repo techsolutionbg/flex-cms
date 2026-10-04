@@ -5,6 +5,7 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/loading-button"
+import { adminUrl } from "@/lib/admin-routes"
 
 type InstallerField = { name: string; label: string; value: string; type: string; placeholder: string }
 type InstallerSection = { title: string; description: string; fields: InstallerField[] }
@@ -26,7 +27,7 @@ export function InstallerPage() {
       .then(async (response) => {
         const body = await response.json().catch(() => ({})) as Partial<InstallerPayload> & { redirect_url?: string; error?: { message?: string } }
         if (response.status === 404) {
-          window.location.replace(body.redirect_url || "/")
+          window.location.replace(body.redirect_url || adminUrl("/login"))
           return
         }
         if (!response.ok || !body.csrf_token || !body.sections) throw new Error(body.error?.message ?? "Инсталационната форма не можа да бъде заредена.")
@@ -54,7 +55,7 @@ export function InstallerPage() {
       if (!response.ok || !body.success) throw new Error(body.error?.message ?? "Инсталацията не беше успешна.")
       setCompleted(true)
       toast.success("Flex CMS беше инсталиран успешно.")
-      window.setTimeout(() => { window.location.href = body.admin_url || "/" }, 900)
+      window.setTimeout(() => { window.location.href = body.admin_url || adminUrl("/login") }, 900)
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Инсталацията не беше успешна."
       setError(message)
@@ -66,7 +67,7 @@ export function InstallerPage() {
   if (loading) return <main className="installer-react-loading"><LoaderCircle className="size-7 animate-spin text-[#ff563d]" /></main>
 
   return <main className="installer-react-page"><div className="installer-react-shell">
-    <header className="installer-react-header"><img src="assets/brand/logo.png" alt="Flex CMS" /></header>
+    <header className="installer-react-header"><img src="/assets/brand/logo.png" alt="Flex CMS" /></header>
     <div className="installer-react-intro"><span className="installer-react-kicker">Flex CMS</span><h1>Настройте своя сайт</h1><p>Конфигурирайте основните настройки, свържете базата данни и създайте първия администратор.</p></div>
     {error && <div className="react-form-error" role="alert"><CircleAlert className="mt-0.5 size-4 shrink-0" />{error}</div>}
     {completed && <div className="installer-react-success" role="status"><LoaderCircle className="size-5 animate-spin" />Инсталацията приключи. Подготвям административния панел…</div>}

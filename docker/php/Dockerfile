@@ -1,9 +1,9 @@
-FROM node:22-alpine AS frontend
-WORKDIR /app/resources/admin
-COPY resources/admin/package.json resources/admin/package-lock.json ./
+FROM node:22-alpine AS react-admin-frontend
+WORKDIR /app/resources/admin-react
+COPY resources/admin-react/package.json resources/admin-react/package-lock.json ./
 RUN npm ci
-COPY resources/admin/ ./
-RUN npm run build
+COPY resources/admin-react/ ./
+RUN npm run build:admin
 
 FROM node:22-alpine AS installer-frontend
 WORKDIR /app/resources/admin-react
@@ -34,6 +34,6 @@ FROM base AS development
 FROM base AS production
 COPY . /var/www/html
 COPY --from=composer /app/vendor /var/www/html/vendor
-COPY --from=frontend /app/public/build /var/www/html/public/build
+COPY --from=react-admin-frontend /app/public/build/react-admin /var/www/html/public/build/react-admin
 COPY --from=installer-frontend /app/public/build/installer /var/www/html/public/build/installer
-RUN rm -rf resources/admin node_modules tests .git .github docker compose.yaml && mkdir -p public/media storage/cache storage/logs storage/sessions storage/tmp plugins && chown -R www-data:www-data public/media storage plugins
+RUN rm -rf resources/admin resources/admin-react node_modules tests .git .github docker compose.yaml && mkdir -p public/media storage/cache storage/logs storage/sessions storage/tmp plugins && chown -R www-data:www-data public/media storage plugins

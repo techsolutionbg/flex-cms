@@ -18,23 +18,17 @@ docker compose exec app composer check
 
 ## Frontend
 
-Source of truth е `resources/admin/src`. Използват се React, TypeScript, Vite, Tailwind CSS и shadcn/ui. Компонентите от `src/components/ui` са primitives; layout и feature компонентите не трябва да дублират техните tokens и поведение.
+Source of truth за единствения административен панел и инсталатора е `resources/admin-react/src`. Използват се React, TypeScript, Vite и Tailwind CSS.
 
 ```bash
-npm --prefix resources/admin ci
-npm --prefix resources/admin run dev
-npm --prefix resources/admin run typecheck
-npm --prefix resources/admin run lint
-npm --prefix resources/admin run test:unit
-npm --prefix resources/admin run test:component
-npm --prefix resources/admin run check:css
-npm --prefix resources/admin run check:dead-code
-npm --prefix resources/admin run build
+npm --prefix resources/admin-react ci
+npm --prefix resources/admin-react run dev
+npm --prefix resources/admin-react run typecheck
+npm --prefix resources/admin-react run build:admin
+npm --prefix resources/admin-react run build:installer
 ```
 
-Production build-ът е minified и без source maps. Development build-ът остава четим. Генерираният `public/build/admin` не е source code и се създава само чрез Vite.
-
-Browser тестовете са в `resources/admin/tests/browser`. Те изпълняват desktop и mobile проекти срещу URL от `PLAYWRIGHT_BASE_URL`; приложението трябва да е стартирано предварително.
+Production build-овете са minified и без source maps. Admin SPA се публикува в `/admin`, а инсталаторът — на `/install`. Генерираните файлове са в `public/build/react-admin/` и `public/build/installer/`.
 
 ## Dependency policy
 

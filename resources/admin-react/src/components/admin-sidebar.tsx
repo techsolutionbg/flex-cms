@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react"
 import { useState } from "react"
+import { adminUrl } from "@/lib/admin-routes"
 
 type SidebarItem = {
   label: string
@@ -56,7 +57,7 @@ export function AdminSidebar({ onLogout, onNavigate, activeItem = "Табло", 
   function navigateFromSidebar(label: string) {
     if (label === "Профил") {
       setOpen(false)
-      window.history.pushState(null, "", "/profile")
+      window.history.pushState(null, "", adminUrl("/profile"))
       window.dispatchEvent(new PopStateEvent("popstate"))
       return
     }

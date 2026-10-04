@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeRecord } from "@/lib/admin-types"
+import { adminUrl } from "@/lib/admin-routes"
 import { toast } from "sonner"
 import { Eye, Power, Trash2, Upload } from "lucide-react"
 
@@ -45,7 +46,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
   }
 
   return <AdminShell title="Теми" onLogout={onLogout} onNavigate={onNavigate} activeItem="Теми" loggingOut={loggingOut}>
-    <div className="react-page-heading"><div><h1>Теми ({themes.length})</h1><Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} /></div><button type="button" onClick={() => onCatalog ? onCatalog() : window.location.assign("/theme-store")}>Каталог с теми</button></div>
+    <div className="react-page-heading"><div><h1>Теми ({themes.length})</h1><Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} /></div><button type="button" onClick={() => onCatalog ? onCatalog() : window.location.assign(adminUrl("/theme-store"))}>Каталог с теми</button></div>
     <section className="themes-section">
       {loading ? <p>Зареждане…</p> : themes.length === 0 ? <p>Няма открити теми.</p> : <div className="theme-grid">{themes.map((theme) => {
         const busy = busyId === theme.id

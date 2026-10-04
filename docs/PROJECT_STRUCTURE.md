@@ -7,10 +7,10 @@ release.
 ## Source of truth
 
 - PHP application source: `src/`, `contracts/`, `config/`, `database/`, `bin/`.
-- Admin frontend source: `resources/admin/`.
-- Server-rendered templates: `resources/views/`.
+- React Admin and installer source: `resources/admin-react/`.
+- Server-rendered templates: `resources/views/` (public/system pages only; the admin UI and installer are React apps).
 - Public brand assets: `public/assets/brand/`.
-- Automated verification: `tests/` and frontend test files under `resources/admin/`.
+- Automated verification: `tests/` and the React Admin TypeScript/build scripts.
 - Project metadata: `composer.json`, `composer.lock`, `platform.json`, `phinx.php`.
 
 Generated files under `public/build/`, frontend `dist/`, `node_modules/`,
@@ -19,8 +19,9 @@ authoritative source.
 
 ## Development-only files
 
-- `resources/admin/node_modules/`
-- `resources/admin/dist/`
+- `resources/admin-react/node_modules/`
+- `public/build/react-admin/`
+- `public/build/installer/`
 - frontend TypeScript, ESLint, Prettier and Vite configuration
 - PHPUnit, PHPStan and PHP CS Fixer configuration
 - Docker and Compose configuration

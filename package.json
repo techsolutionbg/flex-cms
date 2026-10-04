@@ -2,11 +2,10 @@
   "name": "flex-cms",
   "private": true,
   "scripts": {
-    "frontend:dev": "npm --prefix resources/admin run dev",
-    "build:dev": "npm --prefix resources/admin run build:dev",
-    "build": "npm --prefix resources/admin run build",
-    "test:all": "composer test && npm --prefix resources/admin run test:unit",
-    "check:frontend": "npm --prefix resources/admin run check",
+    "frontend:dev": "npm --prefix resources/admin-react run dev",
+    "build": "npm --prefix resources/admin-react run build:admin && npm --prefix resources/admin-react run build:installer",
+    "test:all": "composer test",
+    "check:frontend": "npm --prefix resources/admin-react run typecheck && npm run build",
     "check": "npm run check:frontend && composer check"
   }
 }

@@ -27,6 +27,31 @@ if ($installation->requiresInstallation()) {
     exit;
 }
 
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+$isThemePreview = preg_match('#^/admin/themes/[^/]+/preview$#', $path) === 1;
+if (!$isThemePreview && in_array($method, ['GET', 'HEAD'], true)
+    && ($path === '/admin' || str_starts_with($path, '/admin/') || $path === '/login')) {
+    $adminEntry = $basePath . '/public/build/react-admin/index.html';
+    if (!is_file($adminEntry)) {
+        http_response_code(503);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'The React Admin application has not been built.';
+        exit;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: no-store, private');
+    $html = (string) file_get_contents($adminEntry);
+    $sitePrefix = SitePath::prefix();
+    if ($sitePrefix !== '') {
+        $html = str_replace('/build/react-admin/', $sitePrefix . '/build/react-admin/', $html);
+    }
+    if ($method !== 'HEAD') {
+        echo $html;
+    }
+    exit;
+}
+
 $container = Bootstrap::boot($basePath)->container();
 $container->get(PluginRuntime::class)->bootActive();
 $application = $container->get(Application::class);

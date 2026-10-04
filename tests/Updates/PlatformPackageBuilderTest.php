@@ -20,7 +20,8 @@ final class PlatformPackageBuilderTest extends TestCase
         $this->basePath = sys_get_temp_dir() . '/flex-builder-test-' . bin2hex(random_bytes(6));
         mkdir($this->basePath . '/src', 0770, true);
         mkdir($this->basePath . '/public/media', 0770, true);
-        mkdir($this->basePath . '/public/build/admin/.vite', 0770, true);
+        mkdir($this->basePath . '/public/build/react-admin', 0770, true);
+        mkdir($this->basePath . '/public/build/installer', 0770, true);
         mkdir($this->basePath . '/resources/admin/node_modules/package', 0770, true);
         mkdir($this->basePath . '/resources/admin/.git', 0770, true);
         mkdir($this->basePath . '/resources/admin-react', 0770, true);
@@ -40,13 +41,14 @@ final class PlatformPackageBuilderTest extends TestCase
         file_put_contents($this->basePath . '/tests/example.php', 'must not ship');
         file_put_contents($this->basePath . '/public/media/user.txt', 'must not ship');
         mkdir($this->basePath . '/public/private-dev', 0770, true);
-        file_put_contents($this->basePath . '/public/build/admin/.vite/manifest.json', '{}');
-        file_put_contents($this->basePath . '/public/build/admin/admin-hash.js', 'production asset');
+        file_put_contents($this->basePath . '/public/build/react-admin/index.html', 'admin production entry');
+        file_put_contents($this->basePath . '/public/build/react-admin/admin-hash.js', 'production asset');
+        file_put_contents($this->basePath . '/public/build/installer/installer.html', 'installer production entry');
         file_put_contents($this->basePath . '/public/private-dev/debug.txt', 'must not ship');
         file_put_contents($this->basePath . '/resources/admin/source.tsx', 'must not ship');
         file_put_contents($this->basePath . '/resources/admin/node_modules/package/index.js', 'must not ship');
         file_put_contents($this->basePath . '/resources/admin/.git/config', 'must not ship');
-        file_put_contents($this->basePath . '/resources/admin-react/vite.config.js', 'local development config');
+        file_put_contents($this->basePath . '/resources/admin-react/vite.config.js', 'source must not ship');
         file_put_contents($this->basePath . '/themes/flex-default/templates/404.twig', 'must not ship');
         file_put_contents($this->basePath . '/resources/views/runtime.php', '<?php return true;');
         file_put_contents($this->basePath . '/composer.json', '{}');
@@ -77,13 +79,13 @@ final class PlatformPackageBuilderTest extends TestCase
         self::assertTrue($archive->open($output));
         self::assertNotFalse($archive->getFromName('payload/src/example.php'));
         self::assertNotFalse($archive->getFromName('payload/resources/views/runtime.php'));
-        self::assertNotFalse($archive->getFromName('payload/public/build/admin/admin-hash.js'));
+        self::assertNotFalse($archive->getFromName('payload/public/build/react-admin/admin-hash.js'));
         self::assertFalse($archive->statName('payload/public/private-dev/debug.txt'));
         self::assertFalse($archive->statName('payload/public/media/user.txt'));
         self::assertFalse($archive->statName('payload/resources/admin/source.tsx'));
         self::assertFalse($archive->statName('payload/resources/admin/node_modules/package/index.js'));
         self::assertFalse($archive->statName('payload/resources/admin/.git/config'));
-        self::assertNotFalse($archive->statName('payload/resources/admin-react/vite.config.js'));
+        self::assertFalse($archive->statName('payload/resources/admin-react/vite.config.js'));
         self::assertFalse($archive->statName('payload/themes/flex-default/templates/404.twig'));
         self::assertNotFalse($archive->statName('payload/themes/.gitkeep'));
         self::assertFalse($archive->statName('payload/src/Feature/.git/config'));
@@ -99,10 +101,10 @@ final class PlatformPackageBuilderTest extends TestCase
 
     public function testItRefusesToBuildWithoutProductionAssets(): void
     {
-        unlink($this->basePath . '/public/build/admin/.vite/manifest.json');
+        unlink($this->basePath . '/public/build/react-admin/index.html');
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Production admin assets are missing');
+        $this->expectExceptionMessage('The production React Admin build is missing');
 
         $this->builder()->build(new PlatformPackageBuildOptions(version: '0.1.1'));
     }

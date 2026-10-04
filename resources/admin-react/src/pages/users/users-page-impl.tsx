@@ -7,6 +7,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { AdminShell } from "@/components/admin-shell"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
+import { adminUrl } from "@/lib/admin-routes"
 import { toast } from "sonner"
 
 const roleLabels: Record<string, string> = { user: "Потребител", editor: "Редактор", admin: "Администратор", super_admin: "Супер администратор" }
@@ -35,7 +36,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
     return () => { cancelled = true }
   }, [view])
 
-  useEffect(() => { const params = new URLSearchParams(); if (view === "trash") params.set("view", "trash"); if (search) params.set("search", search); if (roleFilter !== "all") params.set("role", roleFilter); if (statusFilter !== "all") params.set("status", statusFilter); window.history.replaceState(null, "", params.toString() ? `/users?${params}` : "/users") }, [roleFilter, search, statusFilter, view])
+  useEffect(() => { const params = new URLSearchParams(); if (view === "trash") params.set("view", "trash"); if (search) params.set("search", search); if (roleFilter !== "all") params.set("role", roleFilter); if (statusFilter !== "all") params.set("status", statusFilter); window.history.replaceState(null, "", `${adminUrl("/users")}${params.toString() ? `?${params}` : ""}`) }, [roleFilter, search, statusFilter, view])
 
   const filteredUsers = users.filter((user) => (roleFilter === "all" || user.role === roleFilter) && (statusFilter === "all" || user.status === statusFilter) && `${user.name} ${user.email}`.toLocaleLowerCase("bg").includes(search.toLocaleLowerCase("bg")))
   const activeFilterCount = (view !== "active" ? 1 : 0) + (search ? 1 : 0) + (roleFilter !== "all" ? 1 : 0) + (statusFilter !== "all" ? 1 : 0)
@@ -71,7 +72,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
   }
 
   const columns: DataTableColumn<UserRecord>[] = [
-    { key: "name", label: "Име", sortable: true, render: (user) => <><a className="react-page-link" href={`/users/${user.id}/edit`} onClick={(event) => { event.preventDefault(); onEdit(user) }}>{user.name}</a><small>{user.email}</small></> },
+    { key: "name", label: "Име", sortable: true, render: (user) => <><a className="react-page-link" href={adminUrl(`/users/${user.id}/edit`)} onClick={(event) => { event.preventDefault(); onEdit(user) }}>{user.name}</a><small>{user.email}</small></> },
     { key: "role", label: "Роля", sortable: true, render: (user) => roleLabels[user.role] ?? user.role },
     { key: "status", label: "Статус", sortable: true, render: (user) => <span className={`react-status-badge ${user.status === "active" ? "status-published" : "status-draft"}`}><span className="status-dot" />{userStatusLabels[user.status] ?? user.status}</span> },
     { key: "actions", label: "Действия", render: (user) => <TableActionsMenu><DropdownOption onClick={() => onEdit(user)}>Редактирай</DropdownOption>{view === "active" ? <>{!["admin", "super_admin"].includes(user.role) && <DropdownOption onClick={() => void request(user, "POST", "/trash", "Потребителят е преместен в кошчето.")}>Премести в кошчето</DropdownOption>}{user.role !== "super_admin" && <DropdownOption onClick={() => void updateStatus(user)}>{busyId === user.id ? "Изчакване…" : user.status === "active" ? "Деактивирай" : "Активирай"}</DropdownOption>}</> : <><DropdownOption onClick={() => void request(user, "POST", "/restore", "Потребителят е възстановен.")}>Възстанови</DropdownOption><DropdownOption danger onClick={() => void request(user, "DELETE", "/force", "Потребителят е изтрит завинаги.")}>Изтрий завинаги</DropdownOption></>}</TableActionsMenu> },

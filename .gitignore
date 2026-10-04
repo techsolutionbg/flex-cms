@@ -8,12 +8,9 @@
 /.vscode/
 /composer.phar
 /node_modules/
-/resources/admin/node_modules/
 /resources/admin-react/node_modules/
-/resources/admin/dist/
-/resources/admin/.vite/
-/resources/admin/playwright-report/
-/resources/admin/test-results/
+/resources/admin-react/dist/
+/resources/admin-react/.vite/
 /public/build/
 /public/media/*
 !/public/media/.gitkeep

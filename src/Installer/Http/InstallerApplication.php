@@ -38,7 +38,8 @@ final readonly class InstallerApplication
             if ($this->wantsJson()) {
                 $this->respondJson($this->renderer->data($this->csrfToken()));
             }
-            $this->respond($this->renderer->reactApplication($this->requirements->check(), $this->csrfToken()));
+            $this->requirements->check();
+            $this->respond($this->renderer->reactApplication($this->csrfToken()));
         }
         if ($method !== 'POST') {
             header('Allow: GET, POST');
@@ -51,25 +52,9 @@ final readonly class InstallerApplication
             $input = InstallerInput::fromArray($values);
             $this->installer->install($input);
             unset($_SESSION['flex_installer_csrf']);
-            if ($this->wantsJson()) {
-                $this->respondJson(['success' => true, 'admin_url' => $this->adminUrl()]);
-            }
-            $this->respond($this->renderer->success($this->adminUrl()));
+            $this->respondJson(['success' => true, 'admin_url' => $this->adminUrl()]);
         } catch (InstallerException $exception) {
-            $safeValues = array_map(
-                static fn(mixed $value): string => is_string($value) ? $value : '',
-                $values,
-            );
-            unset($safeValues['database_password'], $safeValues['admin_password'], $safeValues['csrf_token']);
-            if ($this->wantsJson()) {
-                $this->respondJson(['error' => ['message' => $exception->getMessage()]], 422);
-            }
-            $this->respond($this->renderer->form(
-                $this->requirements->check(),
-                $this->csrfToken(),
-                $safeValues,
-                $exception->getMessage(),
-            ), 422);
+            $this->respondJson(['error' => ['message' => $exception->getMessage()]], 422);
         }
     }
 
@@ -152,18 +137,19 @@ final readonly class InstallerApplication
     {
         $configured = $_ENV['ADMIN_URL'] ?? getenv('ADMIN_URL');
         if (!is_string($configured) || $configured === '') {
-            return SitePath::prefix() . '/';
+            return SitePath::prefix() . '/admin/login';
         }
 
         if (str_starts_with($configured, '/') && !str_starts_with($configured, '//')) {
-            return $configured;
+            return str_ends_with(rtrim($configured, '/'), '/login') ? $configured : rtrim($configured, '/') . '/login';
         }
 
         $parts = parse_url($configured);
         if (is_array($parts) && in_array($parts['scheme'] ?? '', ['http', 'https'], true) && is_string($parts['host'] ?? null)) {
-            return $configured;
+            $base = rtrim($configured, '/');
+            return str_ends_with($base, '/login') ? $base : $base . '/login';
         }
 
-        return SitePath::prefix() . '/';
+        return SitePath::prefix() . '/admin/login';
     }
 }

@@ -46,19 +46,17 @@ MySQL host-ът вътре в Docker мрежата е `mysql`, а станда�
 
 Ако портът `8080` вече се използва, задайте например `APP_PORT=8182` в `.env`. За React панела използвайте `VITE_REACT_FORWARD_PORT`, а за MySQL — `DB_FORWARD_PORT`.
 
-## Проверки
+## Административен панел и проверки
 
 ```bash
 docker compose exec app composer check
-npm --prefix resources/admin ci
-npm --prefix resources/admin run check
+npm --prefix resources/admin-react ci
+npm --prefix resources/admin-react run typecheck
+npm --prefix resources/admin-react run build:admin
+npm --prefix resources/admin-react run build:installer
 ```
 
-Browser тестовете очакват работещо приложение и инсталирани Playwright браузъри:
-
-```bash
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm --prefix resources/admin run test:browser
-```
+React приложението в `resources/admin-react/` е единственият административен панел и се отваря на `/admin`. Инсталацията също използва React интерфейса на `/install`; след нея се отваря `/admin/login`.
 
 ## Структура
 
@@ -71,7 +69,7 @@ docker/              development и production images
 docs/                architecture и workflow документация
 plugins/             инсталирани plugin пакети
 public/              единственият web root и production assets
-resources/admin/     React, TypeScript, Vite и shadcn/ui source
+resources/admin-react/ React административен панел и инсталатор
 resources/views/     Twig и server-rendered templates
 src/                 platform modules и shared infrastructure
 storage/             environment, cache, logs и update runtime data
@@ -79,7 +77,7 @@ tests/               backend, architecture и integration tests
 themes/              инсталирани theme пакети (всяка тема може да е отделен Git repository)
 ```
 
-Кодът на frontend-а не се обслужва директно. Development режимът използва Vite, а production използва единствено hashed файловете и manifest-а в `public/build/admin/`.
+Кодът на frontend-а не се обслужва директно. Development режимът използва Vite, а production използва React bundles в `public/build/react-admin/` и `public/build/installer/`.
 
 ## Основни workflows
 
@@ -105,7 +103,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update
   -TargetVersion 0.1.43 -ReleaseNotes "Описание на промените"
 ```
 
-`platform:release` записва ZIP пакета и checksum файла в `releases/<version>/`. `platform:publish` изпълнява локалния PowerShell publisher, изгражда asset-ите през Docker, подписва пакета и каталога с локалния Ed25519 ключ и качва ZIP, checksum и каталога към update хостинга чрез SSH/SCP. GitHub Actions не участва в release процеса. Publisher-ът изисква чисти, комитнати platform промени; изходът `resources/admin-react/dist/` се изключва от пакета.
+`platform:release` записва ZIP пакета и checksum файла в `releases/<version>/`. `platform:publish` изпълнява локалния PowerShell publisher, изгражда asset-ите през Docker, подписва пакета и каталога с локалния Ed25519 ключ и качва ZIP, checksum и каталога към update хостинга чрез SSH/SCP. GitHub Actions не участва в release процеса. Publisher-ът изисква чисти, комитнати platform промени; frontend източниците се изключват, а готовите React bundles се включват.
 
 Създайте локален `.publish.env` от [.publish.env.example](.publish.env.example), задайте SSH alias/пътя до ключа и проверете, че `UPDATE_SERVER_URL` в `.env` сочи към същия update host. Publisher-ът се стартира от Windows 11 с Docker Desktop и Windows OpenSSH (`ssh`/`scp`); PHP 8.3+ с Composer зависимостите трябва да работи в `app` контейнера. Самият deploy ключ остава в Windows OpenSSH/SSH agent, а signing private key остава локален и не се commit-ва.
 

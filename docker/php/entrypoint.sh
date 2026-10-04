@@ -39,7 +39,6 @@ if [ "$(id -u)" = "0" ]; then
     # as the host UID/GID. Keep the source-code permission adjustment narrow.
     if [ "${APP_ENV:-}" = "local" ]; then
         chmod -R a+rwX bin
-        chmod -R a+rwX resources/admin-react/dist/assets
     fi
 
     runtime_gid="${FLEX_CMS_GID:-1000}"

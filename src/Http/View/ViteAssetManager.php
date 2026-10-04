@@ -9,7 +9,7 @@ use Flex\Http\SitePath;
 
 final readonly class ViteAssetManager
 {
-    private const ENTRY = 'src/admin.ts';
+    private const ENTRY = 'index.html';
 
     public function __construct(
         private string $basePath,
@@ -18,38 +18,24 @@ final readonly class ViteAssetManager
 
     public function tags(): string
     {
-        $environment = (string) ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? getenv('APP_ENV') ?: 'production');
-        $configuredDevServer = $_ENV['VITE_DEV_SERVER_URL'] ?? $_SERVER['VITE_DEV_SERVER_URL'] ?? getenv('VITE_DEV_SERVER_URL');
-        $devServer = is_string($configuredDevServer) ? rtrim($configuredDevServer, '/') : 'http://localhost:5173';
-        if ($environment === 'local' && $devServer !== '') {
-            $url = htmlspecialchars($devServer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-            return sprintf(
-                "<script type=\"module\" src=\"%1\$s/@vite/client\"></script>\n<script type=\"module\" src=\"%1\$s/src/admin.ts\"></script>",
-                $url,
-            ) . "\n" . ($this->extensions?->tags() ?? '');
-        }
-
-        $manifestPath = $this->basePath . '/public/build/admin/.vite/manifest.json';
+        $manifestPath = $this->basePath . '/public/build/react-admin/.vite/manifest.json';
         $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
         $entry = is_array($manifest) ? ($manifest[self::ENTRY] ?? null) : null;
-        if (!is_array($entry) || !isset($entry['file'])) {
-            throw new \RuntimeException('Admin Vite manifest entry is missing. Run the frontend build.');
+        if (!is_array($entry)) {
+            return $this->extensions?->tags() ?? '';
         }
 
         $tags = [];
         foreach (($entry['css'] ?? []) as $css) {
-            $tags[] = sprintf('<link rel="stylesheet" href="/build/admin/%s">', $this->asset((string) $css));
+            $tags[] = sprintf('<link rel="stylesheet" href="%s/build/react-admin/%s">', htmlspecialchars(SitePath::prefix(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), $this->asset((string) $css));
         }
-        $tags[] = sprintf('<script type="module" src="/build/admin/%s"></script>', $this->asset((string) $entry['file']));
-
         return implode("\n", $tags) . "\n" . ($this->extensions?->tags() ?? '');
     }
 
     /** Return compiled styles for server-rendered pages such as the installer. */
     public function styles(): string
     {
-        $manifestPath = $this->basePath . '/public/build/admin/.vite/manifest.json';
+        $manifestPath = $this->basePath . '/public/build/react-admin/.vite/manifest.json';
         $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
         $entry = is_array($manifest) ? ($manifest[self::ENTRY] ?? null) : null;
         if (!is_array($entry)) {
@@ -58,7 +44,7 @@ final readonly class ViteAssetManager
 
         $tags = [];
         foreach (($entry['css'] ?? []) as $css) {
-            $tags[] = sprintf('<link rel="stylesheet" href="/build/admin/%s">', $this->asset((string) $css));
+            $tags[] = sprintf('<link rel="stylesheet" href="%s/build/react-admin/%s">', htmlspecialchars(SitePath::prefix(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), $this->asset((string) $css));
         }
 
         return implode("\n", $tags);

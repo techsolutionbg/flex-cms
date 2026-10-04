@@ -8,10 +8,8 @@ use Flex\Auth\Exception\TooManyLoginAttempts;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\ApiError;
-use Flex\Http\RequestFormat;
 use Flex\Http\RequestInput;
 use Flex\Session\CsrfTokenManager;
-use Flex\Contracts\Session\SessionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -21,9 +19,7 @@ final readonly class LoginController
         private AuthenticationInterface $authentication,
         private RequestInput $input,
         private CsrfTokenManager $csrf,
-        private LoginPage $page,
         private ResponseFactoryInterface $responses,
-        private SessionInterface $session,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -45,36 +41,14 @@ final readonly class LoginController
         }
 
         $this->csrf->rotate();
-        if (RequestFormat::expectsJson($request)) {
-            return $this->responses->json(['user' => $this->authentication->user()?->toArray()]);
-        }
-
-        $location = $this->authentication->user()?->isSuperAdmin() === true ? $this->intendedLocation() ?? '/admin' : '/';
-
-        return $this->responses->text('', 302, ['Location' => $location]);
-    }
-
-    private function intendedLocation(): ?string
-    {
-        $location = $this->session->get('auth.intended_url');
-        $this->session->remove('auth.intended_url');
-
-        if (!is_string($location) || $location === '' || !str_starts_with($location, '/') || str_starts_with($location, '//') || $location === '/login') {
-            return null;
-        }
-
-        return $location;
+        return $this->responses->json(['user' => $this->authentication->user()?->toArray()]);
     }
 
     /** @param array<string, string|list<string>> $headers */
     private function failure(ServerRequestInterface $request, string $message, int $status, array $headers = []): ResponseInterface
     {
-        if (RequestFormat::expectsJson($request)) {
-            $code = $status === 429 ? 'too_many_login_attempts' : 'invalid_credentials';
-            return $this->responses->json(ApiError::payload($status, $code, $message), $status, $headers);
-        }
-
-        return $this->responses->html($this->page->render($this->csrf->token(), $message), $status, $headers);
+        $code = $status === 429 ? 'too_many_login_attempts' : 'invalid_credentials';
+        return $this->responses->json(ApiError::payload($status, $code, $message), $status, $headers);
     }
 
 }

@@ -16,4 +16,4 @@ React, React DOM, Base UI, class-variance-authority, `cn`, and Lucide are shippe
 
 Vite, TypeScript, Tailwind, shadcn CLI, font source files, animation CSS, ESLint, Prettier, type packages, and their plugins are build/development tooling. They never ship as `node_modules`; only Vite output under `public/build` is deployed.
 
-Dependency versions are locked by `composer.lock` and `resources/admin/package-lock.json`. Both lock files must change in the same commit as dependency classification or version changes.
+Dependency versions are locked by `composer.lock` and `resources/admin-react/package-lock.json`. Both lock files must change in the same commit as dependency classification or version changes.

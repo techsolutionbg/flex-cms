@@ -1,5 +1,0 @@
-{
-  "project": ["src/**/*.ts", "tests/browser/**/*.ts", "*.config.ts"],
-  "ignore": ["src/**/*.d.ts"],
-  "ignoreDependencies": ["tailwindcss", "tw-animate-css"]
-}

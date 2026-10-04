@@ -18,7 +18,7 @@ final readonly class PlatformPackageBuilder
         'node_modules',
         'public/media',
         'resources/admin',
-        'resources/admin-react/dist',
+        'resources/admin-react',
         // Themes are managed separately and are protected by older updaters.
         'themes',
     ];
@@ -40,8 +40,11 @@ final readonly class PlatformPackageBuilder
 
     public function build(PlatformPackageBuildOptions $options): PlatformPackageBuildResult
     {
-        if (!is_file($this->basePath . '/public/build/admin/.vite/manifest.json')) {
-            throw new RuntimeException('Production admin assets are missing. Run the frontend production build first.');
+        if (!is_file($this->basePath . '/public/build/react-admin/index.html')) {
+            throw new RuntimeException('The production React Admin build is missing. Run the React Admin production build first.');
+        }
+        if (!is_file($this->basePath . '/public/build/installer/installer.html')) {
+            throw new RuntimeException('The React installer build is missing. Run the React installer production build first.');
         }
         $current = $this->registry->current();
         $version = new PlatformVersion($options->version ?? $current->value);

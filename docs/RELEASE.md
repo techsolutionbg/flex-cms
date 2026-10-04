@@ -16,7 +16,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update
 
 ```bash
 docker compose exec app composer check
-npm --prefix resources/admin run check
+npm --prefix resources/admin-react run typecheck
+npm --prefix resources/admin-react run build:admin
 npm --prefix resources/admin-react run build:installer
 docker compose exec app php bin/flex platform:build --target-version=0.1.43
 ```

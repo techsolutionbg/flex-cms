@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeCatalogRecord } from "@/lib/admin-types"
+import { adminUrl } from "@/lib/admin-routes"
 import { toast } from "sonner"
 
 type ThemeStorePageProps = { onLogout: () => void; onNavigate: (label: string) => void; onBack: () => void; loggingOut: boolean }

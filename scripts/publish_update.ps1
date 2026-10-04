@@ -89,7 +89,7 @@ try {
 
         Write-Host 'Building production admin assets...'
         Invoke-Native 'docker' @('compose', 'run', '--rm', '--no-deps', '-T', 'frontend', 'sh', '-c', 'npm ci && npm run build')
-        Invoke-Native 'docker' @('compose', 'run', '--rm', '--no-deps', '-T', 'frontend-react', 'sh', '-c', 'npm ci && npm run build:installer')
+        Invoke-Native 'docker' @('compose', 'run', '--rm', '--no-deps', '-T', 'frontend-react', 'sh', '-c', 'npm ci && npm run build:admin && npm run build:installer')
 
         Write-Host 'Building the PHP app image with signing support...'
         Invoke-Native 'docker' @('compose', 'up', '-d', '--no-deps', '--build', 'app')
