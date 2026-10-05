@@ -2,6 +2,7 @@ import { useEffect, useState, type SyntheticEvent } from "react"
 import { LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
+import { useWorkspaceSaved } from "@/components/admin-workspace-context"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
@@ -18,6 +19,7 @@ export function ProfilePage({
   onNavigate: (label: string) => void
   loggingOut: boolean
 }) {
+  const markSaved = useWorkspaceSaved()
   const [user, setUser] = useState<UserRecord | null>(null)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -104,6 +106,7 @@ export function ProfilePage({
       setPasswordConfirmation("")
       setCurrentPassword("")
       toast.success("Профилът е запазен.")
+      markSaved?.()
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Профилът не можа да бъде запазен.")
     } finally {

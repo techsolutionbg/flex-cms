@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import { useWorkspaceChanged } from "./admin-workspace-context"
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
 
@@ -33,6 +34,7 @@ const toolbar = [
 ]
 
 export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+  const markChanged = useWorkspaceChanged()
   const hostRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<Quill | null>(null)
   const valueRef = useRef(value)
@@ -53,7 +55,8 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     editorRef.current = editor
     if (valueRef.current) editor.clipboard.dangerouslyPasteHTML(valueRef.current, "api")
 
-    const handleChange = () => {
+    const handleChange = (_delta: unknown, _previous: unknown, source: string) => {
+      if (source === "user") markChanged?.()
       const html = editor.getText().trim().length > 0 ? editor.root.innerHTML : ""
       onChangeRef.current(html)
     }

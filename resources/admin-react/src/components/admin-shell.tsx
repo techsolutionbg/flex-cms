@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { LoaderCircle, Menu } from "lucide-react"
 import { useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
+import { AdminWorkspaceTabs } from "./admin-workspace-context"
 
 type AdminShellProps = {
   children: ReactNode
@@ -71,6 +72,7 @@ export function AdminShell({
             {loggingOut ? "Излизане…" : "Изход"}
           </button>
         </header>
+        <AdminWorkspaceTabs />
         <main className="admin-content-react">{children}</main>
       </div>
     </div>
