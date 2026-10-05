@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
-import { LoaderCircle, Menu } from "lucide-react"
-import { useState } from "react"
+import { LoaderCircle, Menu, RefreshCw } from "lucide-react"
+import { useContext, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
-import { AdminWorkspaceTabs } from "./admin-workspace-context"
+import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-context"
 
 type AdminShellProps = {
   children: ReactNode
@@ -21,6 +21,7 @@ export function AdminShell({
   activeItem,
   loggingOut,
 }: AdminShellProps) {
+  const workspace = useContext(AdminWorkspaceContext)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem("flex-admin-sidebar-collapsed") === "true"
@@ -62,6 +63,23 @@ export function AdminShell({
             <Menu size={21} aria-hidden="true" />
           </button>
           <span className="admin-topbar-title-react">{title}</span>
+          {workspace && (
+            <button
+              className="admin-page-refresh"
+              type="button"
+              aria-label="Презареди данните в страницата"
+              title="Презареди данните в страницата"
+              disabled={workspace.refreshing}
+              onClick={workspace.refresh}
+            >
+              <RefreshCw
+                size={18}
+                className={workspace.refreshing ? "animate-spin" : undefined}
+                aria-hidden="true"
+              />
+              <span>Презареди</span>
+            </button>
+          )}
           <button
             className="admin-logout-react"
             type="button"

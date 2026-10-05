@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+.admin-page-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--control-border);
+  border-radius: 7px;
+  background: var(--control-bg);
+  color: var(--control-text);
+  cursor: pointer;
+  font-size: 13px;
+}
+.admin-page-refresh:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.admin-page-refresh:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+.admin-page-refresh:focus-visible {
+  outline: 2px solid var(--control-accent);
+  outline-offset: 2px;
+}
+@media (max-width: 560px) {
+  .admin-page-refresh span {
+    display: none;
+  }
+}
+
 .admin-workspace-tabs {
   display: flex;
   flex-shrink: 0;
@@ -1429,10 +1458,12 @@ body {
   color: #687268;
   font-size: 0.85rem;
 }
-.react-pagination > div {
+.react-pagination > div,
+.react-pagination-controls {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 .react-pagination button,
 .react-pagination strong {
@@ -1463,6 +1494,29 @@ body {
   background: #1f3023;
   color: white;
   font-weight: 700;
+}
+.react-pagination {
+  flex-wrap: wrap;
+}
+.react-pagination-controls button {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.react-pagination-ellipsis {
+  min-width: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+.react-pagination-controls button:focus-visible {
+  outline: 2px solid var(--control-accent);
+  outline-offset: 2px;
+}
+.react-pagination button[aria-current="page"]:disabled {
+  border-color: var(--primary-bg);
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  opacity: 1;
+  cursor: default;
 }
 .react-actions-column {
   width: 1%;
@@ -3541,6 +3595,13 @@ select:focus-visible,
   border-color: var(--border);
   background: var(--surface);
   color: var(--text-primary);
+}
+.collapsible-section-body-inner > .react-form-grid {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .react-form-grid > label,
 .react-form-grid > .react-form-field,

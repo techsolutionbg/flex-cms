@@ -10,6 +10,8 @@ export const AdminWorkspaceContext = createContext<{
   close: (id: string) => void
   saved: () => void
   changed: () => void
+  refresh: () => void
+  refreshing: boolean
 } | null>(null)
 
 export function useWorkspaceSaved() {

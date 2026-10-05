@@ -12,6 +12,7 @@ import "./index.css"
 function App() {
   const installerRoute = window.location.pathname.replace(/\/$/, "").endsWith("/install")
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [accountId, setAccountId] = useState(0)
   const [loggingOut, setLoggingOut] = useState(false)
 
   useEffect(() => {
@@ -62,10 +63,15 @@ function App() {
             headers: { Accept: "application/json" },
             cache: "no-store",
           })
-          const body = (await response.json().catch(() => ({}))) as { user?: { role?: string } }
+          const body = (await response.json().catch(() => ({}))) as {
+            user?: { id?: number; role?: string }
+          }
 
           if (response.ok) {
-            if (!cancelled) setAuthenticated(body.user?.role === "super_admin")
+            if (!cancelled) {
+              setAccountId(body.user?.id ?? 0)
+              setAuthenticated(body.user?.role === "super_admin")
+            }
             return
           }
 
@@ -152,7 +158,11 @@ function App() {
     <>
       <Toaster position="top-center" closeButton richColors theme="light" />
       {authenticated ? (
-        <AdminWorkspace onLogout={() => void logout()} loggingOut={loggingOut} />
+        <AdminWorkspace
+          onLogout={() => void logout()}
+          loggingOut={loggingOut}
+          accountId={accountId}
+        />
       ) : (
         <LoginPage onAuthenticated={() => window.location.replace(adminRedirectTarget())} />
       )}

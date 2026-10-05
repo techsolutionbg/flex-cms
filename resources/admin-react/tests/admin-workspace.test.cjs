@@ -5,7 +5,13 @@ const filePath = require("node:path")
 const vm = require("node:vm")
 const ts = require("typescript")
 
-function harness(initial = "/") {
+function harness(initial = "/", restored = null) {
+  const storageKey = "flex-admin-workspace:v1:/:0"
+  const storage = new Map(restored ? [[storageKey, JSON.stringify(restored)]] : [])
+  const localStorage = {
+    getItem: (key) => storage.get(key) ?? null,
+    setItem: (key, value) => storage.set(key, value),
+  }
   const hooks = [],
     effects = [],
     listeners = {},
@@ -41,6 +47,17 @@ function harness(initial = "/") {
     "./admin-shell": { AdminShell: "AdminShell" },
     "./admin-workspace-context": { AdminWorkspaceContext: { Provider: "Provider" } },
   }
+  const storageExports = {}
+  vm.runInNewContext(
+    ts.transpileModule(
+      fs.readFileSync(filePath.join(__dirname, "../src/lib/workspace-storage.ts"), "utf8"),
+      {
+        compilerOptions: { module: ts.ModuleKind.CommonJS },
+      },
+    ).outputText,
+    { exports: storageExports, window: { localStorage } },
+  )
+  modules["@/lib/workspace-storage"] = storageExports
   for (const [name, exports] of Object.entries({
     "dashboard-page": ["DashboardPage"],
     pages: ["PageForm", "PageSettingsForm", "PagesPage"],
@@ -69,6 +86,7 @@ function harness(initial = "/") {
       AbortSignal,
       requestAnimationFrame: (fn) => fn(),
       window: {
+        localStorage,
         scrollY: 100,
         scrollTo() {},
         confirm: () => confirm,
@@ -106,6 +124,11 @@ function harness(initial = "/") {
   const active = () => panels().find((node) => !node.props.children.props.hidden)
   const page = () => active().props.children.props.children.props.children
   return {
+    stored: () => {
+      render()
+      effects.at(-1)()
+      return JSON.parse(storage.get(storageKey))
+    },
     panels,
     active,
     page,
@@ -183,4 +206,51 @@ test("hydrates an editor on browser back and does not duplicate it", async () =>
   h.back("/profile")
   h.back("/pages/7/edit")
   assert.equal(h.panels().length, 2)
+})
+
+test("restores validated tabs and the active tab from local storage", () => {
+  const h = harness("/", {
+    version: 1,
+    paths: ["/pages", "/profile", "/pages", "https://bad.example", "/api/users"],
+    active: "/profile",
+  })
+  assert.equal(h.panels().length, 2)
+  assert.equal(h.page().type, "ProfilePage")
+  assert.deepEqual(Array.from(h.stored().paths), ["/pages", "/profile"])
+  assert.equal(h.stored().active, "/profile")
+})
+test("an explicit editor URL overrides a previously active tab", async () => {
+  const h = harness("/pages/7/edit", { version: 1, paths: ["/profile"], active: "/profile" })
+  await h.flush()
+  assert.equal(h.page().type, "PageForm")
+  assert.equal(h.panels().length, 2)
+})
+test("persists navigation without form records or dirty values", () => {
+  const h = harness("/pages")
+  h.page().props.onEdit({ id: 1, title: "Private title", content: "Secret draft" })
+  h.active().props.children.props.onInputCapture()
+  const saved = h.stored()
+  assert.deepEqual(Array.from(saved.paths), ["/pages", "/pages/1/edit"])
+  assert.equal(JSON.stringify(saved).includes("Secret draft"), false)
+  assert.equal(JSON.stringify(saved).includes("Private title"), false)
+  h.confirm(true)
+  h.workspace().close(h.active().key)
+  assert.deepEqual(Array.from(h.stored().paths), ["/pages"])
+})
+test("refresh requires confirmation for a dirty form and remounts only that tab", async () => {
+  const h = harness("/pages")
+  const listKey = h.active().props.children.props.children.key
+  h.page().props.onCreate()
+  h.active().props.children.props.onInputCapture()
+  const id = h.active().key
+  const before = h.active().props.children.props.children.key
+  await h.workspace().refresh()
+  assert.equal(h.active().props.children.props.children.key, before)
+  h.confirm(true)
+  await h.workspace().refresh()
+  assert.equal(h.active().key, id)
+  assert.notEqual(h.active().props.children.props.children.key, before)
+  assert.equal(h.workspace().tabs.find((tab) => tab.id === id).dirty, false)
+  h.workspace().activate(h.workspace().tabs[0].id)
+  assert.equal(h.active().props.children.props.children.key, listKey)
 })

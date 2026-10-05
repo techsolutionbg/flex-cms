@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { adminRoute, adminUrl } from "@/lib/admin-routes"
+import { isWorkspacePath, readWorkspace, writeWorkspace } from "@/lib/workspace-storage"
 import type { PageRecord, PluginRecord, UserRecord } from "@/lib/admin-types"
 import { DashboardPage } from "@/pages/dashboard-page"
 import { PageForm, PageSettingsForm, PagesPage } from "@/pages/pages"
@@ -40,10 +41,13 @@ let sequence = 0
 export function AdminWorkspace({
   onLogout,
   loggingOut,
+  accountId = 0,
 }: {
   onLogout: () => void
   loggingOut: boolean
+  accountId?: number
 }) {
+  const storageKey = `flex-admin-workspace:v1:${adminUrl("/")}:${accountId}`
   const [tabs, setTabs] = useState<Tab[]>([])
   const [active, setActive] = useState("")
   const tabsRef = useRef(tabs)
@@ -110,6 +114,7 @@ export function AdminWorkspace({
     }
   }
   function open(path: string, data: Partial<Tab> = {}, history = true) {
+    if (!isWorkspacePath(path)) path = "/"
     const existing = tabsRef.current.find((tab) => tab.path === path)
     if (existing) {
       activate(existing.id, history)
@@ -161,7 +166,12 @@ export function AdminWorkspace({
     }
   }
   useEffect(() => {
-    open(adminRoute(), {}, false)
+    const restored = readWorkspace(storageKey)
+    restored.paths.forEach((path) => open(path, {}, false))
+    const incoming = adminRoute()
+    const target = incoming === "/" && restored.active ? restored.active : incoming
+    open(target, {}, false)
+    if (target !== incoming) window.history.replaceState(null, "", adminUrl(target))
     const back = () => open(adminRoute(), {}, false)
     window.addEventListener("popstate", back)
     const unload = (event: BeforeUnloadEvent) => {
@@ -176,6 +186,31 @@ export function AdminWorkspace({
       window.removeEventListener("beforeunload", unload)
     }
   }, [])
+
+  useEffect(() => {
+    const selected = tabs.find((tab) => tab.id === active)
+    if (selected)
+      writeWorkspace(
+        storageKey,
+        tabs.map((tab) => tab.path),
+        selected.path,
+      )
+  }, [tabs, active, storageKey])
+
+  async function refresh(id: string) {
+    const tab = tabsRef.current.find((item) => item.id === id)
+    if (
+      !tab ||
+      tab.loading ||
+      (tab.dirty &&
+        !window.confirm(
+          `Презареждането на „${tab.title}“ ще изтрие незапазените промени. Да продължим ли?`,
+        ))
+    )
+      return
+    patch(id, { dirty: false, error: undefined, revision: tab.revision + 1 })
+    await hydrate(tab)
+  }
 
   function navigate(label: string) {
     open(Object.entries(sections).find(([, title]) => title === label)?.[0] ?? "/")
@@ -279,7 +314,7 @@ export function AdminWorkspace({
       )
     if (tab.plugin)
       return <PluginDetailPage {...common} plugin={tab.plugin} onBack={() => open("/plugins")} />
-    return <DashboardPage {...common} />
+    return <DashboardPage {...common} onCreatePage={() => open("/pages/create")} />
   }
   return (
     <>
@@ -294,6 +329,8 @@ export function AdminWorkspace({
             close,
             saved: () => patch(tab.id, { dirty: false }),
             changed: () => patch(tab.id, { dirty: true }),
+            refresh: () => void refresh(tab.id),
+            refreshing: Boolean(tab.loading),
           }}
         >
           <div

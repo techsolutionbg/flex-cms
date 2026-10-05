@@ -38,6 +38,18 @@ export function CollapsibleSection({
   return (
     <section
       className={`collapsible-section${open ? " is-open" : " is-closed"}${className ? ` ${className}` : ""}`}
+      onInvalidCapture={(event) => {
+        if (open) return
+        event.preventDefault()
+        setOpen(true)
+        const field = event.target as HTMLInputElement
+        window.setTimeout(() => {
+          if (field.isConnected) {
+            field.focus()
+            field.reportValidity()
+          }
+        }, 250)
+      }}
     >
       <button
         className="collapsible-section-header"

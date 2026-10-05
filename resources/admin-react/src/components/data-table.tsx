@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
+import { PaginationControls } from "./pagination-controls"
 
 export type DataTableColumn<T> = {
   key: string
@@ -71,7 +72,8 @@ export function DataTable<T>({
     })
   }, [columns, data, descending, sortKey])
   const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize))
-  const visibleData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const activePage = Math.max(1, Math.min(currentPage, totalPages))
+  const visibleData = sortedData.slice((activePage - 1) * pageSize, activePage * pageSize)
   const visibleKeys = visibleData.map(rowKey)
   const allVisibleSelected =
     visibleKeys.length > 0 && visibleKeys.every((key) => selectedKeys.has(key))
@@ -216,28 +218,15 @@ export function DataTable<T>({
       </div>
       <div className="react-pagination">
         <span>
-          Показани {sortedData.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–
-          {Math.min(currentPage * pageSize, sortedData.length)} от {sortedData.length}
+          Показани {sortedData.length === 0 ? 0 : (activePage - 1) * pageSize + 1}–
+          {Math.min(activePage * pageSize, sortedData.length)} от {sortedData.length}
         </span>
-        <div>
-          <button
-            type="button"
-            aria-label="Предишна страница"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-          >
-            ‹
-          </button>
-          <strong>{currentPage}</strong>
-          <button
-            type="button"
-            aria-label="Следваща страница"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-          >
-            ›
-          </button>
-        </div>
+        <PaginationControls
+          page={activePage}
+          totalPages={totalPages}
+          loading={loading}
+          onChange={setCurrentPage}
+        />
       </div>
     </div>
   )

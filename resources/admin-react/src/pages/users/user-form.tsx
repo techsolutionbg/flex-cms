@@ -1,7 +1,8 @@
 import { useState, type SyntheticEvent } from "react"
-import { LoaderCircle } from "lucide-react"
+import { LoaderCircle, Mail, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
+import { CollapsibleSection } from "@/components/collapsible-section"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
@@ -105,99 +106,108 @@ export function UserForm({
         </div>
       </div>
       <form className="react-user-form" onSubmit={save}>
-        <div className="react-form-grid">
-          <label className="react-form-field">
-            <span>
-              Име <b>*</b>
-            </span>
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
-            <small>Името, което ще се показва в административния панел.</small>
-          </label>
-          <label className="react-form-field">
-            <span>
-              Имейл <b>*</b>
-            </span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-            <small>Имейл адресът се използва за вход.</small>
-          </label>
-          <label className="react-form-field">
-            <span>Роля</span>
-            <DropdownMenu
-              ariaLabel="Избор на роля"
-              triggerClassName="react-form-select"
-              trigger={
-                <>
-                  <span>{roleLabels[role]}</span>
-                  <DropdownChevron />
-                </>
-              }
-            >
-              <DropdownOption
-                selected={role === "user"}
-                disabled={isSuperAdmin}
-                onClick={() => setRole("user")}
+        <CollapsibleSection
+          title="Основна информация"
+          icon={UserRound}
+          storageKey="user-form-details"
+        >
+          <div className="react-form-grid">
+            <label className="react-form-field">
+              <span>
+                Име <b>*</b>
+              </span>
+              <input value={name} onChange={(event) => setName(event.target.value)} required />
+              <small>Името, което ще се показва в административния панел.</small>
+            </label>
+            <label className="react-form-field">
+              <span>
+                Имейл <b>*</b>
+              </span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+              <small>Имейл адресът се използва за вход.</small>
+            </label>
+            <label className="react-form-field">
+              <span>Роля</span>
+              <DropdownMenu
+                ariaLabel="Избор на роля"
+                triggerClassName="react-form-select"
+                trigger={
+                  <>
+                    <span>{roleLabels[role]}</span>
+                    <DropdownChevron />
+                  </>
+                }
               >
-                Потребител
-              </DropdownOption>
-              <DropdownOption
-                selected={role === "editor"}
-                disabled={isSuperAdmin}
-                onClick={() => setRole("editor")}
+                <DropdownOption
+                  selected={role === "user"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setRole("user")}
+                >
+                  Потребител
+                </DropdownOption>
+                <DropdownOption
+                  selected={role === "editor"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setRole("editor")}
+                >
+                  Редактор
+                </DropdownOption>
+                <DropdownOption
+                  selected={role === "admin"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setRole("admin")}
+                >
+                  Администратор
+                </DropdownOption>
+                <DropdownOption
+                  selected={role === "super_admin"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setRole("super_admin")}
+                >
+                  Супер администратор
+                </DropdownOption>
+              </DropdownMenu>
+            </label>
+            <label className="react-form-field">
+              <span>Статус</span>
+              <DropdownMenu
+                ariaLabel="Избор на статус"
+                triggerClassName="react-form-select"
+                trigger={
+                  <>
+                    <span>{status === "active" ? "Активен" : "Деактивиран"}</span>
+                    <DropdownChevron />
+                  </>
+                }
               >
-                Редактор
-              </DropdownOption>
-              <DropdownOption
-                selected={role === "admin"}
-                disabled={isSuperAdmin}
-                onClick={() => setRole("admin")}
-              >
-                Администратор
-              </DropdownOption>
-              <DropdownOption
-                selected={role === "super_admin"}
-                disabled={isSuperAdmin}
-                onClick={() => setRole("super_admin")}
-              >
-                Супер администратор
-              </DropdownOption>
-            </DropdownMenu>
-          </label>
-          <label className="react-form-field">
-            <span>Статус</span>
-            <DropdownMenu
-              ariaLabel="Избор на статус"
-              triggerClassName="react-form-select"
-              trigger={
-                <>
-                  <span>{status === "active" ? "Активен" : "Деактивиран"}</span>
-                  <DropdownChevron />
-                </>
-              }
-            >
-              <DropdownOption
-                selected={status === "active"}
-                disabled={isSuperAdmin}
-                onClick={() => setStatus("active")}
-              >
-                Активен
-              </DropdownOption>
-              <DropdownOption
-                selected={status === "disabled"}
-                disabled={isSuperAdmin}
-                onClick={() => setStatus("disabled")}
-              >
-                Деактивиран
-              </DropdownOption>
-            </DropdownMenu>
-          </label>
-        </div>
-        <section className="react-form-section">
-          <h2>{editing ? "Смяна на паролата" : "Парола"}</h2>
+                <DropdownOption
+                  selected={status === "active"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setStatus("active")}
+                >
+                  Активен
+                </DropdownOption>
+                <DropdownOption
+                  selected={status === "disabled"}
+                  disabled={isSuperAdmin}
+                  onClick={() => setStatus("disabled")}
+                >
+                  Деактивиран
+                </DropdownOption>
+              </DropdownMenu>
+            </label>
+          </div>
+        </CollapsibleSection>
+        <CollapsibleSection
+          title={editing ? "Смяна на паролата" : "Парола"}
+          icon={Shield}
+          storageKey={editing ? "user-form-change-password" : "user-form-password"}
+        >
           <div className="react-form-grid">
             <label className="react-form-field">
               <span>
@@ -227,16 +237,22 @@ export function UserForm({
               />
             </label>
           </div>
-        </section>
+        </CollapsibleSection>
         {!editing && (
-          <label className="react-checkbox-field">
-            <input
-              type="checkbox"
-              checked={sendConfirmation}
-              onChange={(event) => setSendConfirmation(event.target.checked)}
-            />
-            <span>Изпрати код за потвърждение на имейла</span>
-          </label>
+          <CollapsibleSection
+            title="Потвърждение на имейла"
+            icon={Mail}
+            storageKey="user-form-confirmation"
+          >
+            <label className="react-checkbox-field">
+              <input
+                type="checkbox"
+                checked={sendConfirmation}
+                onChange={(event) => setSendConfirmation(event.target.checked)}
+              />
+              <span>Изпрати код за потвърждение на имейла</span>
+            </label>
+          </CollapsibleSection>
         )}
         <div className="react-form-actions">
           <button type="submit" disabled={saving}>
