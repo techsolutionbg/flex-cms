@@ -23,6 +23,12 @@ final class PublicPageSet
         }
     }
 
+    public function findPublishedById(int $id): ?Page
+    {
+        $page = $this->pagesById[$id] ?? null;
+        return $page?->getAttribute('status') === 'published' ? $page : null;
+    }
+
     public function findPublishedBySlug(string $slug): ?Page
     {
         foreach ($this->pages as $page) {

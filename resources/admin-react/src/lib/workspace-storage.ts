@@ -1,6 +1,8 @@
 const simplePaths = new Set([
   "/",
   "/pages",
+  "/menus",
+  "/menus/create",
   "/users",
   "/profile",
   "/themes",
@@ -19,6 +21,8 @@ export function isWorkspacePath(value: unknown): value is string {
     (simplePaths.has(value) ||
       /^\/pages\/\d+\/(edit|settings)$/.test(value) ||
       /^\/users\/\d+\/edit$/.test(value) ||
+      /^\/menus\/\d+\/edit$/.test(value) ||
+      /^\/menus\/\d+\/structure$/.test(value) ||
       /^\/plugins\/[a-zA-Z0-9._-]+$/.test(value))
   )
 }

@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+.menu-locations-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+.menu-locations-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.menu-locations-list dt {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.menu-locations-list dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .admin-page-refresh {
   display: inline-flex;
   align-items: center;
@@ -323,7 +345,7 @@ body {
 }
 .installer-react-field label {
   color: #172118;
-  font-weight: 650;
+  font-weight: 400;
 }
 .installer-react-generated-password {
   color: #687268;
@@ -835,7 +857,7 @@ body {
   gap: 0.35rem;
   color: #687268;
   font-size: 0.8rem;
-  font-weight: 650;
+  font-weight: 400;
 }
 .react-filter-field input {
   min-width: 12rem;
@@ -902,7 +924,7 @@ body {
   display: grid;
   gap: 0.45rem;
   color: #172118;
-  font-weight: 650;
+  font-weight: 400;
 }
 .react-page-form input,
 .react-page-form textarea {
@@ -962,7 +984,7 @@ body {
   align-content: start;
   gap: 0.45rem;
   color: #172118;
-  font-weight: 650;
+  font-weight: 400;
 }
 .react-form-field > span {
   display: flex;
@@ -2616,7 +2638,7 @@ body {
   margin-left: auto;
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.collapsible-section.is-closed .collapsible-section-chevron {
+.collapsible-section.is-closed > .collapsible-section-header > .collapsible-section-chevron {
   transform: rotate(-90deg);
 }
 .collapsible-section-body {
@@ -2624,7 +2646,7 @@ body {
   grid-template-rows: 0fr;
   transition: grid-template-rows 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.collapsible-section.is-open .collapsible-section-body {
+.collapsible-section.is-open > .collapsible-section-body {
   grid-template-rows: 1fr;
 }
 .collapsible-section-body-inner {
@@ -2633,22 +2655,22 @@ body {
   overflow: hidden;
   padding: 1.25rem;
 }
-.collapsible-section.is-closed .collapsible-section-body-inner {
+.collapsible-section.is-closed > .collapsible-section-body > .collapsible-section-body-inner {
   padding-top: 0;
   padding-bottom: 0;
 }
-.collapsible-section.is-closed .collapsible-section-body {
+.collapsible-section.is-closed > .collapsible-section-body {
   min-height: 0;
 }
 .content-editor-section.is-open,
-.content-editor-section.is-open .collapsible-section-body-inner {
+.content-editor-section.is-open > .collapsible-section-body > .collapsible-section-body-inner {
   overflow: visible;
 }
 /* Round painted surfaces too, so editor popovers can remain outside the section. */
 .collapsible-section-header {
   border-radius: var(--section-inner-radius) var(--section-inner-radius) 0 0;
 }
-.collapsible-section.is-closed .collapsible-section-header {
+.collapsible-section.is-closed > .collapsible-section-header {
   border-radius: var(--section-inner-radius);
 }
 .collapsible-section-body {
@@ -2888,7 +2910,7 @@ body {
 .react-bulk-toolbar,
 .react-data-table th,
 .react-table-filter-panel.is-open .react-table-filter-header,
-.collapsible-section.is-open .collapsible-section-header {
+.collapsible-section.is-open > .collapsible-section-header {
   background: var(--surface-subtle);
 }
 .react-page-heading h1,
@@ -3094,7 +3116,7 @@ select:focus-visible,
 .collapsible-section-header[aria-expanded="true"] {
   background: var(--surface-hover);
 }
-.collapsible-section.is-open .collapsible-section-header {
+.collapsible-section.is-open > .collapsible-section-header {
   border-bottom-color: var(--border-strong);
 }
 .react-table-filter-panel.is-open .react-table-filter-header button,
@@ -3278,6 +3300,16 @@ select:focus-visible,
 }
 .react-ui-label {
   color: var(--text-primary);
+  font-weight: 400;
+}
+input,
+textarea,
+.react-form-field input,
+.react-filter-field input,
+.react-page-form input,
+.react-page-form textarea,
+.react-ui-input {
+  font-weight: 400;
 }
 .react-ui-input {
   border-color: var(--control-border);
@@ -3416,7 +3448,7 @@ select:focus-visible,
   outline: 2px solid var(--focus-ring);
   outline-offset: -3px;
 }
-.collapsible-section.is-open .collapsible-section-header {
+.collapsible-section.is-open > .collapsible-section-header {
   color: var(--text-primary);
 }
 
@@ -3950,6 +3982,18 @@ select:focus-visible,
   background: var(--surface-subtle);
   color: var(--text-disabled);
 }
+.react-table-location {
+  display: inline-block;
+  color: var(--text-primary);
+  font-size: inherit;
+  line-height: 1.45;
+}
+.react-table-location + .react-table-location {
+  margin-top: 0.2rem;
+}
+.react-table-location-empty {
+  color: var(--text-muted);
+}
 
 /* Interaction states share semantic tokens in both palettes. Keep layout separate. */
 .collapsible-section {
@@ -3958,17 +4002,17 @@ select:focus-visible,
 .collapsible-section.is-open {
   border-color: var(--section-expanded-border);
 }
-.collapsible-section.is-open .collapsible-section-header {
+.collapsible-section.is-open > .collapsible-section-header {
   border-bottom-color: var(--border);
   background: var(--section-expanded-bg);
 }
-.collapsible-section.is-open .collapsible-section-header:hover {
+.collapsible-section.is-open > .collapsible-section-header:hover {
   background: var(--section-expanded-hover);
 }
-.collapsible-section.is-open .collapsible-section-header > svg {
+.collapsible-section.is-open > .collapsible-section-header > svg {
   color: var(--control-accent);
 }
-.collapsible-section.is-closed .collapsible-section-header {
+.collapsible-section.is-closed > .collapsible-section-header {
   border-bottom-color: transparent;
 }
 .collapsible-section-body {
@@ -4055,4 +4099,318 @@ select:focus-visible,
   .collapsible-section-body {
     transition: none;
   }
+}
+
+.menu-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.menu-list-row,
+.menu-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.menu-list-row,
+.menu-editor-item {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--section-radius);
+  background: var(--surface-subtle);
+  min-width: 0;
+}
+.menu-list-row small {
+  display: block;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.menu-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.menu-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.menu-structure-form {
+  container-type: inline-size;
+  container-name: menu-structure;
+}
+.menu-structure-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+@container menu-structure (min-width: 60rem) {
+  .menu-structure-layout {
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  }
+}
+.menu-structure-heading-actions {
+  display: none;
+}
+@media (min-width: 1280px) {
+  .menu-structure-heading-actions {
+    display: flex;
+    flex-shrink: 0;
+  }
+  .menu-structure-mobile-actions {
+    display: none;
+  }
+}
+.menu-structure-layout > aside {
+  min-width: 0;
+}
+.menu-structure-items {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: menu-items;
+}
+@container menu-items (max-width: 32rem) {
+  .menu-structure-items .react-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.menu-structure-item-list {
+  display: grid;
+  gap: 1rem;
+}
+.menu-structure-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.menu-structure-draggable {
+  position: relative;
+  min-width: 0;
+}
+.menu-structure-draggable > .collapsible-section > .collapsible-section-header {
+  padding-inline-start: 3rem;
+}
+.menu-structure-drag-handle {
+  position: absolute;
+  top: 1.1rem;
+  inset-inline-start: 0.5rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: grab;
+  touch-action: none;
+}
+.menu-structure-drag-handle:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.menu-structure-drag-handle:active:not(:disabled) {
+  cursor: grabbing;
+}
+.menu-structure-drag-handle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+}
+.menu-structure-drag-handle:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+.menu-structure-drop-marker {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  inset-inline-end: 0;
+  z-index: 3;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--control-accent);
+  pointer-events: none;
+}
+.menu-structure-drop-marker::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--control-accent);
+}
+.menu-structure-drop-marker.is-before {
+  top: -0.55rem;
+}
+.menu-structure-drop-marker > span {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 6px;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--control-accent);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu-structure-items .menu-fieldset > .react-form-grid {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin-bottom: 1rem;
+}
+.menu-structure-pages {
+  max-height: 28rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu-structure-pages li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+.menu-structure-pages li:not(:last-child)::after {
+  position: absolute;
+  right: -1rem;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: var(--border-subtle);
+  content: "";
+  pointer-events: none;
+}
+.menu-structure-pages .menu-structure-page-row {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+}
+.menu-structure-pages .menu-structure-page-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--control-accent);
+}
+.menu-structure-pages-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.menu-structure-page-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.menu-structure-pages .react-status-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.menu-item-heading {
+  margin-bottom: 1rem;
+}
+.menu-item-heading strong {
+  overflow-wrap: anywhere;
+}
+.menu-tree-node + .menu-tree-node {
+  margin-top: 1rem;
+}
+.menu-tree-children:has(> *) {
+  margin: 1rem 0 1rem 1.25rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border-strong);
+}
+.menu-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+.menu-checkbox input {
+  accent-color: var(--control-accent);
+}
+.menu-drag-handle {
+  cursor: grab;
+}
+.menu-drag-handle:active {
+  cursor: grabbing;
+}
+@media (max-width: 640px) {
+  .menu-tree-children:has(> *) {
+    margin-left: 0.4rem;
+    padding-left: 0.4rem;
+  }
+  .menu-editor-item {
+    padding: 0.75rem;
+  }
+}
+
+.menu-fieldset select,
+.menu-locations select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.45rem;
+  background: var(--control-bg);
+  color: var(--control-text);
+  font: inherit;
+}
+.menu-fieldset select:focus-visible,
+.menu-locations select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.menu-fieldset :disabled,
+.menu-locations :disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.menu-locations.react-form-grid {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin-bottom: 1rem;
+}
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.7rem 0.9rem;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.menu-button svg {
+  flex-shrink: 0;
+}
+.menu-button:disabled {
+  cursor: not-allowed;
 }

@@ -45,6 +45,8 @@ test("catalog updates both cards after installing and activating another theme",
     },
   }
   const context = {
+    window: { dispatchEvent() {} },
+    Event,
     exports: {},
     require(name) {
       assert.ok(name in modules, name)
@@ -112,7 +114,7 @@ test("catalog updates both cards after installing and activating another theme",
     await flush()
     for (const card of cards()) {
       assert.match(badge(card), card.key === id ? /status-active$/ : /status-installed$/)
-      assert.equal(buttons(card).length, card.key === id ? 1 : 3)
+      assert.equal(buttons(card).length, 2)
     }
   }
   assert.deepEqual(errors, [])

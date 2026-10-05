@@ -36,9 +36,9 @@ final class ThemeManager
         }
         $phpTemplate = $this->phpTemplate($theme, $template);
         if ($phpTemplate !== null) {
-        $themeAsset = fn(string $asset): string => ltrim($asset, '/') === 'style.css'
-            ? '/themes/' . rawurlencode($theme) . '/style.css'
-            : '/themes/' . rawurlencode($theme) . '/assets/' . ltrim($asset, '/');
+            $themeAsset = fn(string $asset): string => ltrim($asset, '/') === 'style.css'
+                ? '/themes/' . rawurlencode($theme) . '/style.css'
+                : '/themes/' . rawurlencode($theme) . '/assets/' . ltrim($asset, '/');
             ob_start();
             try {
                 extract($data + ['theme' => $theme, 'theme_asset' => $themeAsset], EXTR_SKIP);
@@ -50,7 +50,9 @@ final class ThemeManager
             }
         }
         $templatesPath = $this->paths->themes($theme . '/templates');
-        if (!is_dir($templatesPath)) throw new \RuntimeException(sprintf('Активната тема „%s“ не е намерена.', $theme));
+        if (!is_dir($templatesPath)) {
+            throw new \RuntimeException(sprintf('Активната тема „%s“ не е намерена.', $theme));
+        }
         if ($this->twig === null || $this->loadedTheme !== $theme) {
             $this->twig = new Environment(new FilesystemLoader($templatesPath), ['cache' => false, 'strict_variables' => true]);
             $this->loadedTheme = $theme;
@@ -80,6 +82,38 @@ final class ThemeManager
         }
 
         return '';
+    }
+
+    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>} */
+    public function capabilities(): array
+    {
+        return $this->capabilitiesForTheme($this->activeTheme());
+    }
+
+    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>} */
+    public function capabilitiesForTheme(string $theme): array
+    {
+        $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => []];
+        if ($theme === '' || preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) !== 1) {
+            return $result;
+        }
+        if (!is_file($this->paths->themes($theme . '/theme.json'))) {
+            return $result;
+        }
+        try {
+            $data = json_decode((string) file_get_contents($this->paths->themes($theme . '/theme.json')), true, 512, JSON_THROW_ON_ERROR);
+            $manifest = ThemeManifest::fromArray($data);
+            if ($manifest->id !== $theme) {
+                return $result;
+            }
+            $result['supports']['menus'] = ($manifest->supports['menus'] ?? false) === true;
+            if ($result['supports']['menus']) {
+                $result['menu_locations'] = $manifest->menuLocations;
+            }
+        } catch (\Throwable) {
+            // Missing or invalid manifests never grant access to theme capabilities.
+        }
+        return $result;
     }
 
     private function renderNoTheme(): string
@@ -138,6 +172,7 @@ final class ThemeManager
                 if ($manifest['id'] !== $directory || preg_match('/^[a-z0-9][a-z0-9._-]*$/', $manifest['id']) !== 1) {
                     throw new \RuntimeException('ID на темата трябва да съвпада с името на папката.');
                 }
+                ThemeManifest::fromArray($manifest);
                 foreach (['name', 'version', 'author', 'description'] as $field) {
                     if (isset($manifest[$field]) && is_string($manifest[$field])) {
                         $record[$field] = trim($manifest[$field]);
@@ -156,9 +191,9 @@ final class ThemeManager
                 if ($screenshot !== '' && preg_match('/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._\/-]*$/', $screenshot) === 1 && is_file($path . '/assets/' . $screenshot)) {
                     $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $screenshot)));
                 }
-            $record['valid'] = is_file($path . '/index.php') || is_dir($path . '/templates');
-            if (!$record['valid']) {
-                $record['error'] = 'Липсва index.php или папка templates.';
+                $record['valid'] = is_file($path . '/index.php') || is_dir($path . '/templates');
+                if (!$record['valid']) {
+                    $record['error'] = 'Липсва index.php или папка templates.';
                 }
             } catch (\Throwable $exception) {
                 $record['error'] = $exception->getMessage();
@@ -203,8 +238,12 @@ final class ThemeManager
     public function deactivate(string $id): array
     {
         $theme = array_values(array_filter($this->all(), static fn(array $item): bool => $item['id'] === $id))[0] ?? null;
-        if (!is_array($theme) || !$theme['valid']) throw new \RuntimeException('Темата не е валидна и не може да бъде деактивирана.');
-        if ($this->activeTheme() !== $id) throw new \RuntimeException('Темата не е активна.');
+        if (!is_array($theme) || !$theme['valid']) {
+            throw new \RuntimeException('Темата не е валидна и не може да бъде деактивирана.');
+        }
+        if ($this->activeTheme() !== $id) {
+            throw new \RuntimeException('Темата не е активна.');
+        }
         $this->saveSetting('site.previous_theme', $id);
         $this->saveSetting('site.active_theme', 'no-theme');
         return [...$theme, 'active' => false];
@@ -214,11 +253,17 @@ final class ThemeManager
     public function delete(string $id): array
     {
         $theme = array_values(array_filter($this->all(), static fn(array $item): bool => $item['id'] === $id))[0] ?? null;
-        if (!is_array($theme)) throw new \RuntimeException('Темата не е намерена.');
-        if ($theme['active'] || $this->activeTheme() === $id) throw new \RuntimeException('Активната тема не може да бъде изтрита.');
+        if (!is_array($theme)) {
+            throw new \RuntimeException('Темата не е намерена.');
+        }
+        if ($theme['active'] || $this->activeTheme() === $id) {
+            throw new \RuntimeException('Активната тема не може да бъде изтрита.');
+        }
         $root = realpath($this->paths->themes());
         $path = realpath((string) $theme['path']);
-        if ($root === false || $path === false || dirname($path) !== rtrim($root, DIRECTORY_SEPARATOR)) throw new \RuntimeException('Пътят на темата е невалиден.');
+        if ($root === false || $path === false || dirname($path) !== rtrim($root, DIRECTORY_SEPARATOR)) {
+            throw new \RuntimeException('Пътят на темата е невалиден.');
+        }
         $this->deleteDirectory($path);
         return $theme;
     }
@@ -236,17 +281,25 @@ final class ThemeManager
     private function phpTemplate(string $theme, string $template): ?string
     {
         $root = $this->paths->themes($theme);
-        if (!is_dir($root)) return null;
+        if (!is_dir($root)) {
+            return null;
+        }
         foreach ([pathinfo($template, PATHINFO_FILENAME) . '.php', 'index.php'] as $candidate) {
             $path = $root . '/' . $candidate;
-            if (is_file($path) && is_readable($path)) return $path;
+            if (is_file($path) && is_readable($path)) {
+                return $path;
+            }
         }
         return null;
     }
 
     private function deleteDirectory(string $path): void
     {
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $item) $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
-        if (!@rmdir($path)) throw new \RuntimeException('Файловете на темата не могат да бъдат изтрити.');
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $item) {
+            $item->isDir() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+        }
+        if (!@rmdir($path)) {
+            throw new \RuntimeException('Файловете на темата не могат да бъдат изтрити.');
+        }
     }
 }

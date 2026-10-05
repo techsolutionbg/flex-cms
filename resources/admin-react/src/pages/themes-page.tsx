@@ -82,6 +82,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
       }
 
       const body = await sendAction(action)
+      window.dispatchEvent?.(new Event("flex-admin-theme-changed"))
       if (body.themes) setThemes(body.themes)
       else await loadThemes()
       toast.success(
@@ -95,6 +96,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
       )
     } catch (reason) {
       if (themesAfterDeactivation) {
+        window.dispatchEvent?.(new Event("flex-admin-theme-changed"))
         setThemes(themesAfterDeactivation)
         const message = reason instanceof Error ? reason.message : "неизвестна грешка"
         toast.error(`Темата е деактивирана, но не беше изтрита: ${message}`)

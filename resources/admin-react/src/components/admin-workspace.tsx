@@ -12,6 +12,10 @@ import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugin
 import { UpdatesPage } from "@/pages/updates-page"
 import { AdminShell } from "./admin-shell"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
+import type { ThemeCapabilities } from "./admin-workspace-context"
+import { MenusPage } from "@/pages/menus-page"
+import { MenuEditor } from "@/pages/menu-editor"
+import { MenuStructurePage } from "@/pages/menu-structure-page"
 
 type Tab = {
   id: string
@@ -28,6 +32,7 @@ type Tab = {
 const sections: Record<string, string> = {
   "/": "Табло",
   "/pages": "Страници",
+  "/menus": "Менюта",
   "/users": "Потребители",
   "/profile": "Профил",
   "/themes": "Теми",
@@ -50,6 +55,9 @@ export function AdminWorkspace({
   const storageKey = `flex-admin-workspace:v1:${adminUrl("/")}:${accountId}`
   const [tabs, setTabs] = useState<Tab[]>([])
   const [active, setActive] = useState("")
+  const [themeCapabilities, setThemeCapabilities] = useState<ThemeCapabilities | null>(null)
+  const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null)
+  const capabilitiesRequest = useRef(0)
   const tabsRef = useRef(tabs)
   const activeRef = useRef(active)
   const scroll = useRef(new Map<string, number>())
@@ -129,7 +137,11 @@ export function AdminWorkspace({
           ? "Нова страница"
           : path === "/users/create"
             ? "Нов потребител"
-            : "Зареждане…"),
+            : path.startsWith("/menus/")
+              ? path.endsWith("/structure")
+                ? "Структура на менюто"
+                : "Меню"
+              : "Зареждане…"),
       dirty: false,
       revision: 0,
       ...data,
@@ -138,7 +150,7 @@ export function AdminWorkspace({
       !tab.page &&
       !tab.user &&
       !tab.plugin &&
-      /\/(edit|settings)$|^\/plugins\/(?!catalog$)/.test(path)
+      /^\/(pages|users)\/\d+\/(edit|settings)$|^\/plugins\/(?!catalog$)/.test(path)
     tab.loading = needsData
     scroll.current.set(activeRef.current, window.scrollY)
     tabsRef.current = [...tabsRef.current, tab]
@@ -209,8 +221,50 @@ export function AdminWorkspace({
     )
       return
     patch(id, { dirty: false, error: undefined, revision: tab.revision + 1 })
+    void loadCapabilities()
     await hydrate(tab)
   }
+
+  async function loadCapabilities() {
+    const request = ++capabilitiesRequest.current
+    try {
+      const response = await fetch("/api/admin/theme-capabilities", {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
+      })
+      const body = await response.json()
+      if (!response.ok)
+        throw new Error(
+          body.error?.message ?? "Възможностите на темата не можаха да бъдат заредени.",
+        )
+      if (request === capabilitiesRequest.current) {
+        setThemeCapabilities(body)
+        setCapabilitiesError(null)
+      }
+    } catch (error) {
+      if (request === capabilitiesRequest.current) {
+        setThemeCapabilities(null)
+        setCapabilitiesError(
+          error instanceof Error ? error.message : "Грешка при проверка на темата.",
+        )
+      }
+    }
+  }
+  useEffect(() => {
+    void loadCapabilities()
+    const reload = () => {
+      void loadCapabilities()
+    }
+    window.addEventListener("flex-admin-theme-changed", reload)
+    window.addEventListener("focus", reload)
+    return () => {
+      capabilitiesRequest.current++
+      window.removeEventListener("flex-admin-theme-changed", reload)
+      window.removeEventListener("focus", reload)
+    }
+  }, [])
 
   function navigate(label: string) {
     open(Object.entries(sections).find(([, title]) => title === label)?.[0] ?? "/")
@@ -221,7 +275,9 @@ export function AdminWorkspace({
       window.history.replaceState(null, "", adminUrl(data.path))
     setTabs((current) =>
       current.map((item) =>
-        ["/pages", "/users"].includes(item.path) ? { ...item, revision: item.revision + 1 } : item,
+        ["/pages", "/users", "/menus"].includes(item.path) && !item.dirty
+          ? { ...item, revision: item.revision + 1 }
+          : item,
       ),
     )
   }
@@ -247,6 +303,16 @@ export function AdminWorkspace({
         </AdminShell>
       )
     switch (tab.path) {
+      case "/menus":
+        return (
+          <MenusPage
+            {...common}
+            capabilities={themeCapabilities}
+            error={capabilitiesError}
+            onCreate={() => open("/menus/create")}
+            onEdit={(menu) => open(`/menus/${menu.id}/edit`, { title: menu.name })}
+          />
+        )
       case "/pages":
         return (
           <PagesPage
@@ -279,6 +345,28 @@ export function AdminWorkspace({
       case "/updates":
         return <UpdatesPage {...common} />
     }
+    const menuStructureMatch = tab.path.match(/^\/menus\/(\d+)\/structure$/)
+    if (menuStructureMatch)
+      return (
+        <MenuStructurePage
+          {...common}
+          capabilities={themeCapabilities}
+          error={capabilitiesError}
+          menuId={Number(menuStructureMatch[1])}
+        />
+      )
+    if (/^\/menus\/(create|\d+\/edit)$/.test(tab.path))
+      return (
+        <MenuEditor
+          {...common}
+          capabilities={themeCapabilities}
+          error={capabilitiesError}
+          id={tab.path === "/menus/create" ? null : Number(tab.path.split("/")[2])}
+          onBack={() => open("/menus")}
+          onSaved={(menu) => saved(tab, { title: menu.name, path: `/menus/${menu.id}/edit` })}
+          onStructure={(menuId) => open(`/menus/${menuId}/structure`, { title: "Структура на менюто" })}
+        />
+      )
     if (/^\/pages\/(create|\d+\/edit)$/.test(tab.path))
       return (
         <PageForm
@@ -331,6 +419,8 @@ export function AdminWorkspace({
             changed: () => patch(tab.id, { dirty: true }),
             refresh: () => void refresh(tab.id),
             refreshing: Boolean(tab.loading),
+            themeCapabilities,
+            capabilitiesError,
           }}
         >
           <div

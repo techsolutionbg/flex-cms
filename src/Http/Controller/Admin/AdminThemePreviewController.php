@@ -12,6 +12,7 @@ use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
 use Flex\Themes\ThemeManager;
+use Flex\Menus\PublicMenuRenderer;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -24,6 +25,7 @@ final readonly class AdminThemePreviewController
         private ConfigRepositoryInterface $configuration,
         private ExtensionApiInterface $extensionApi,
         private ResponseFactoryInterface $responses,
+        private PublicMenuRenderer $menus,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -59,6 +61,6 @@ final readonly class AdminThemePreviewController
             'head_tags' => is_string($headTags) ? $headTags : '',
             'navigation' => $navigation,
             'preview' => true,
-        ]));
+        ] + $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations'])));
     }
 }

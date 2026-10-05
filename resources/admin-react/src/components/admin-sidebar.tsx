@@ -1,5 +1,6 @@
 import {
   FileText,
+  ListTree,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
@@ -11,7 +12,8 @@ import {
   UsersRound,
   X,
 } from "lucide-react"
-import { useState } from "react"
+import { useContext, useState } from "react"
+import { AdminWorkspaceContext } from "./admin-workspace-context"
 import { adminUrl } from "@/lib/admin-routes"
 
 type SidebarItem = {
@@ -51,6 +53,17 @@ const groups: SidebarGroup[] = [
   },
 ]
 
+const sidebarPaths: Record<string, string> = {
+  Табло: "/",
+  Страници: "/pages",
+  Менюта: "/menus",
+  Теми: "/themes",
+  Потребители: "/users",
+  Разширения: "/plugins",
+  Обновявания: "/updates",
+  Профил: "/profile",
+}
+
 export function AdminSidebar({
   onLogout,
   onNavigate,
@@ -65,6 +78,19 @@ export function AdminSidebar({
   collapsed?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const workspace = useContext(AdminWorkspaceContext)
+  const visibleGroups = groups.map((group) =>
+    group.label === "Основни" && workspace?.themeCapabilities?.supports.menus
+      ? {
+          ...group,
+          items: [
+            ...group.items.slice(0, 2),
+            { label: "Менюта", icon: ListTree },
+            ...group.items.slice(2),
+          ],
+        }
+      : group,
+  )
 
   function navigateFromSidebar(label: string) {
     if (label === "Профил") {
@@ -112,7 +138,7 @@ export function AdminSidebar({
         </div>
 
         <nav aria-label="Основна навигация">
-          {groups.map((group) => (
+          {visibleGroups.map((group) => (
             <div className="sidebar-group-react" key={group.label}>
               <p className="sidebar-group-label-react">{group.label}</p>
               <ul>
@@ -120,9 +146,17 @@ export function AdminSidebar({
                   <li key={label}>
                     <a
                       className={`sidebar-link-react${activeItem === label ? " is-active" : ""}`}
-                      href={`#${label.toLowerCase()}`}
+                      href={adminUrl(sidebarPaths[label] ?? "/")}
                       title={collapsed ? label : undefined}
                       onClick={(event) => {
+                        if (
+                          event.button !== 0 ||
+                          event.ctrlKey ||
+                          event.metaKey ||
+                          event.shiftKey ||
+                          event.altKey
+                        )
+                          return
                         event.preventDefault()
                         navigateFromSidebar(label)
                       }}

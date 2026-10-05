@@ -87,6 +87,7 @@ export function ThemeStorePage({ onLogout, onNavigate, onBack, loggingOut }: The
       if (action === "deactivate" && updated.active)
         throw new Error("Сървърът не потвърди деактивирането на темата.")
       if (!body.themes) throw new Error("Сървърът не върна актуалния списък с инсталирани теми.")
+      window.dispatchEvent?.(new Event("flex-admin-theme-changed"))
       const installedThemes = new Map(body.themes.map((item) => [item.id, item]))
       setActiveThemeId(
         action === "activate"

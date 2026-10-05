@@ -5,7 +5,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        "react-ui-input min-h-12 w-full rounded-[0.6rem] border px-5 py-3 text-base outline-none transition",
+        "react-ui-input min-h-12 w-full rounded-[0.6rem] border px-5 py-3 text-base font-normal outline-none transition",
         className,
       )}
       {...props}

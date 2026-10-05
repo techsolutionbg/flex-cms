@@ -2,6 +2,11 @@ import { createContext, useContext } from "react"
 import { X } from "lucide-react"
 
 export type WorkspaceTab = { id: string; title: string; dirty: boolean }
+export type ThemeCapabilities = {
+  theme: string | null
+  supports: { menus: boolean }
+  menu_locations: Record<string, string>
+}
 export const AdminWorkspaceContext = createContext<{
   tabs: WorkspaceTab[]
   active: string
@@ -12,6 +17,8 @@ export const AdminWorkspaceContext = createContext<{
   changed: () => void
   refresh: () => void
   refreshing: boolean
+  themeCapabilities: ThemeCapabilities | null
+  capabilitiesError: string | null
 } | null>(null)
 
 export function useWorkspaceSaved() {

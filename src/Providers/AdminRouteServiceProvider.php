@@ -10,6 +10,8 @@ use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Http\Controller\Admin\{AdminDashboardSummaryController, AdminPagesDataController, AdminPluginActionController, AdminPluginCatalogDataController, AdminPluginUploadController, AdminPluginsDataController, AdminThemeActionController, AdminThemeCatalogDataController, AdminThemePreviewController, AdminThemesDataController, AdminUpdatesActionController, AdminUpdatesDataController};
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController, UpdatePageStatusController};
 use Flex\Session\CsrfMiddleware;
+use Flex\Http\Controller\Admin\AdminThemeCapabilitiesController;
+use Flex\Http\Controller\Admin\AdminMenusDataController;
 use Psr\Container\ContainerInterface;
 
 final class AdminRouteServiceProvider implements ServiceProviderInterface
@@ -27,6 +29,15 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/plugins', AdminPluginsDataController::class, 'api.admin.plugins', $auth);
         $r->add('GET', '/api/admin/plugins/catalog', AdminPluginCatalogDataController::class, 'api.admin.plugins.catalog', $auth);
         $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
+        $r->add('GET', '/api/admin/theme-capabilities', AdminThemeCapabilitiesController::class, 'api.admin.theme-capabilities', $auth);
+        $r->add('GET', '/api/admin/menus', AdminMenusDataController::class, 'api.admin.menus', $auth);
+        $r->add('GET', '/api/admin/menus/{id}', AdminMenusDataController::class, 'api.admin.menus.show', $auth);
+        $r->add('POST', '/api/admin/menus', AdminMenusDataController::class, 'api.admin.menus.create', $write);
+        $r->add('PUT', '/api/admin/menus/{id}', AdminMenusDataController::class, 'api.admin.menus.update', $write);
+        $r->add('DELETE', '/api/admin/menus/{id}', AdminMenusDataController::class, 'api.admin.menus.delete', $write);
+        $r->add('POST', '/api/admin/menus/{id}/restore', AdminMenusDataController::class, 'api.admin.menus.restore', $write);
+        $r->add('DELETE', '/api/admin/menus/{id}/force', AdminMenusDataController::class, 'api.admin.menus.force-delete', $write);
+        $r->add('POST', '/api/admin/menu-assignments', AdminMenusDataController::class, 'api.admin.menus.assignments', $write);
         $r->add('GET', '/api/admin/themes/catalog', AdminThemeCatalogDataController::class, 'api.admin.themes.catalog', $auth);
         $r->add('GET', '/api/admin/updates', AdminUpdatesDataController::class, 'api.admin.updates', $auth);
         $r->add('GET', '/admin/themes/{id}/preview', AdminThemePreviewController::class, 'admin.themes.preview', $auth);

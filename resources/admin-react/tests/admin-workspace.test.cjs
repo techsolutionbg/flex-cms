@@ -18,7 +18,8 @@ function harness(initial = "/", restored = null) {
     routes = []
   let cursor = 0,
     path = initial,
-    confirm = false
+    confirm = false,
+    menusSupported = true
   const jsx = (type, props, key) => ({ type, props, key })
   const react = {
     useState(value) {
@@ -67,6 +68,9 @@ function harness(initial = "/", restored = null) {
     "theme-store-page": ["ThemeStorePage"],
     plugins: ["PluginCatalogPage", "PluginDetailPage", "PluginsPage"],
     "updates-page": ["UpdatesPage"],
+    "menus-page": ["MenusPage"],
+    "menu-editor": ["MenuEditor"],
+    "menu-structure-page": ["MenuStructurePage"],
   }))
     modules["@/pages/" + name] = Object.fromEntries(exports.map((value) => [value, value]))
   const exports = {}
@@ -104,13 +108,26 @@ function harness(initial = "/", restored = null) {
           },
         },
       },
-      fetch: async () => ({
+      fetch: async (url) => ({
         ok: true,
-        json: async () => ({
-          pages: [
-            { id: 7, title: "Page seven", content: "Original", slug: "seven", status: "draft" },
-          ],
-        }),
+        json: async () =>
+          url === "/api/admin/theme-capabilities"
+            ? {
+                theme: "demo",
+                supports: { menus: menusSupported },
+                menu_locations: menusSupported ? { primary: "Main" } : {},
+              }
+            : {
+                pages: [
+                  {
+                    id: 7,
+                    title: "Page seven",
+                    content: "Original",
+                    slug: "seven",
+                    status: "draft",
+                  },
+                ],
+              },
       }),
     },
   )
@@ -124,9 +141,17 @@ function harness(initial = "/", restored = null) {
   const active = () => panels().find((node) => !node.props.children.props.hidden)
   const page = () => active().props.children.props.children.props.children
   return {
-    stored: () => {
+    startCapabilities: () => {
       render()
       effects.at(-1)()
+    },
+    changeThemeSupport: (supported) => {
+      menusSupported = supported
+      listeners["flex-admin-theme-changed"]()
+    },
+    stored: () => {
+      render()
+      effects.findLast((effect) => String(effect).includes("writeWorkspace"))()
       return JSON.parse(storage.get(storageKey))
     },
     panels,
@@ -253,4 +278,35 @@ test("refresh requires confirmation for a dirty form and remounts only that tab"
   assert.equal(h.workspace().tabs.find((tab) => tab.id === id).dirty, false)
   h.workspace().activate(h.workspace().tabs[0].id)
   assert.equal(h.active().props.children.props.children.key, listKey)
+})
+
+test("updates a mounted menus tab immediately when the active theme loses or gains support", async () => {
+  const h = harness("/")
+  h.startCapabilities()
+  await h.flush()
+  h.page().props.onNavigate("Менюта")
+  assert.equal(h.page().type, "MenusPage")
+  assert.equal(h.page().props.capabilities.supports.menus, true)
+  const id = h.active().key
+  h.changeThemeSupport(false)
+  await h.flush()
+  assert.equal(h.active().key, id)
+  assert.equal(h.page().props.capabilities.supports.menus, false)
+  h.changeThemeSupport(true)
+  await h.flush()
+  assert.equal(h.page().props.capabilities.supports.menus, true)
+})
+
+test("menu editors open and restore without the generic hydration spinner", () => {
+  const h = harness("/menus")
+  h.page().props.onCreate()
+  assert.equal(h.page().type, "MenuEditor")
+  h.workspace().changed()
+  h.page().props.onSaved({ id: 12, name: "Основно", version: 1, items: [] })
+  assert.equal(h.page().props.id, 12)
+  assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, false)
+  assert.equal(h.stored().active, "/menus/12/edit")
+  const restored = harness("/menus/12/edit")
+  assert.equal(restored.page().type, "MenuEditor")
+  assert.equal(restored.page().props.id, 12)
 })
