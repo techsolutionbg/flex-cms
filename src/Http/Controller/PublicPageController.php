@@ -12,6 +12,7 @@ use Flex\Pages\PageRepository;
 use Flex\Pages\PublicPageSet;
 use Flex\Themes\ThemeManager;
 use Flex\Menus\PublicMenuRenderer;
+use Flex\Menus\PublicMenuApi;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,8 +30,11 @@ final readonly class PublicPageController
             if (str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json')) {
                 return $this->responses->json(['error' => ['status' => 404, 'message' => 'Страницата не е намерена.']], 404);
             }
+            $capabilities = $this->themes->capabilities();
+            $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
+            $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
 
-            return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена']), 404);
+            return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена'] + $menuData), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
         $navigation = array_map(fn(Page $item): array => [
@@ -45,6 +49,7 @@ final readonly class PublicPageController
 
         $capabilities = $this->themes->capabilities();
         $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
+        $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
         return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation] + $menuData));
     }
 

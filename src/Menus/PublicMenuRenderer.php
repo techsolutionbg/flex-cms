@@ -28,36 +28,67 @@ final readonly class PublicMenuRenderer
             if (!isset($bindings[$location])) {
                 continue;
             }
-            $rows = $db->table('menu_items')->where('menu_id', $bindings[$location])->orderBy('position')->get()->all();
-            $build = function (?string $parent, int $depth = 1) use (&$build, $rows, $pages): array {
-                if ($depth > 3) {
-                    return [];
-                }
-                $items = [];
-                foreach ($rows as $row) {
-                    if ($row->parent_key !== $parent) {
-                        continue;
-                    }
-                    $page = $row->type === 'page' ? $pages->findPublishedById((int) $row->page_id) : null;
-                    if ($row->type === 'page' && $page === null) {
-                        continue;
-                    }
-                    $url = $page && !$row->url ? '/' . ltrim($pages->publicPath($page), '/') : (string) $row->url;
-                    if (!MenuService::safeUrl($url)) {
-                        continue;
-                    }
-                    $items[] = ['id' => $row->item_key, 'label' => $row->label, 'url' => $url, 'new_tab' => (bool) $row->new_tab, 'seo_title' => $row->seo_title, 'aria_label' => $row->aria_label, 'css_class' => $row->css_class, 'rel' => $row->rel, 'children' => $build($row->item_key, $depth + 1)];
-                }
-                return $items;
-            };
-            $menus[$location] = $build(null);
-            $html[$location] = $this->html($menus[$location]);
+            $menus[$location] = $this->itemsForMenu((int) $bindings[$location], $pages);
+            $html[$location] = $this->renderItems($menus[$location]);
         }
         return ['menus' => $menus, 'menu_html' => $html];
     }
 
+    /** Return one active, non-deleted menu and its safe public tree by slug. */
+    public function bySlug(string $slug, PublicPageSet $pages): array
+    {
+        $slug = trim($slug);
+        if ($slug === '') {
+            return [];
+        }
+        $menu = $this->database->connection()->table('menus')
+            ->where('slug', $slug)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->first();
+        if ($menu === null) {
+            return [];
+        }
+
+        return [
+            'id' => (int) $menu->id,
+            'name' => (string) $menu->name,
+            'slug' => (string) $menu->slug,
+            'items' => $this->itemsForMenu((int) $menu->id, $pages),
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function itemsForMenu(int $menuId, PublicPageSet $pages): array
+    {
+        $rows = $this->database->connection()->table('menu_items')->where('menu_id', $menuId)->orderBy('position')->get()->all();
+        $build = function (?string $parent, int $depth = 1) use (&$build, $rows, $pages): array {
+            if ($depth > 3) {
+                return [];
+            }
+            $items = [];
+            foreach ($rows as $row) {
+                if ($row->parent_key !== $parent) {
+                    continue;
+                }
+                $page = $row->type === 'page' ? $pages->findPublishedById((int) $row->page_id) : null;
+                if ($row->type === 'page' && $page === null) {
+                    continue;
+                }
+                $url = $page && !$row->url ? '/' . ltrim($pages->publicPath($page), '/') : (string) $row->url;
+                if (!MenuService::safeUrl($url)) {
+                    continue;
+                }
+                $items[] = ['id' => $row->item_key, 'label' => $row->label, 'url' => $url, 'new_tab' => (bool) $row->new_tab, 'seo_title' => $row->seo_title, 'aria_label' => $row->aria_label, 'css_class' => $row->css_class, 'rel' => $row->rel, 'children' => $build($row->item_key, $depth + 1)];
+            }
+            return $items;
+        };
+
+        return $build(null);
+    }
+
     /** @param list<array<string, mixed>> $items */
-    private function html(array $items): string
+    public function renderItems(array $items): string
     {
         if ($items === []) {
             return '';
@@ -81,7 +112,7 @@ final readonly class PublicMenuRenderer
             }
             $html .= '<li><a href="' . $escape($item['url']) . '"' . $attributes . '>' . $escape($item['label']) . '</a>';
             if ($item['children'] !== []) {
-                $html .= '<details class="theme-submenu"><summary aria-label="' . $escape('Подменю: ' . $item['label']) . '">▾</summary>' . $this->html($item['children']) . '</details>';
+                $html .= '<details class="theme-submenu"><summary aria-label="' . $escape('Подменю: ' . $item['label']) . '">▾</summary>' . $this->renderItems($item['children']) . '</details>';
             }
             $html .= '</li>';
         }

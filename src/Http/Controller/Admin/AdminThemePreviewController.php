@@ -13,6 +13,7 @@ use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
 use Flex\Themes\ThemeManager;
 use Flex\Menus\PublicMenuRenderer;
+use Flex\Menus\PublicMenuApi;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -45,7 +46,10 @@ final readonly class AdminThemePreviewController
         $slug = trim($this->configuration->string('app.public_home_slug', 'home'));
         $page = $slug === '' ? null : $publicPages->findPublishedBySlug($slug);
         if (!$page instanceof Page) {
-            return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', ['title' => 'Няма публикувана начална страница']), 404);
+            $menuData = $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations']);
+            $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+
+            return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', ['title' => 'Няма публикувана начална страница'] + $menuData), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
         $navigation = array_map(fn(Page $item): array => [
@@ -54,6 +58,9 @@ final readonly class AdminThemePreviewController
         ], $publicPages->publishedNavigation());
         $headTags = $this->extensionApi->applyFilters('public.head', '', ['page' => $page->toPublicArray(), 'request' => $request]);
 
+        $menuData = $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations']);
+        $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+
         return $this->responses->html($this->themes->renderForTheme($theme, 'page.twig', [
             'page' => $page,
             'page_public_path' => $publicPages->publicPath($page),
@@ -61,6 +68,6 @@ final readonly class AdminThemePreviewController
             'head_tags' => is_string($headTags) ? $headTags : '',
             'navigation' => $navigation,
             'preview' => true,
-        ] + $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations'])));
+        ] + $menuData));
     }
 }
