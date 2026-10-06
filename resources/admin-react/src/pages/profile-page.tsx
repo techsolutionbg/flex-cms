@@ -1,3 +1,5 @@
+import { Save } from "lucide-react"
+import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useState, type SyntheticEvent } from "react"
 import { LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
@@ -234,10 +236,14 @@ export function ProfilePage({
               </div>
             </CollapsibleSection>
             <div className="react-form-actions">
-              <button type="submit" disabled={saving}>
-                {saving && <LoaderCircle className="mr-2 inline-block size-4 animate-spin" />}Запази
-                промените
-              </button>
+              <LoadingButton
+                icon={<Save aria-hidden="true" />}
+                loading={saving}
+                type="submit"
+                disabled={saving}
+              >
+                Запази промените
+              </LoadingButton>
             </div>
           </form>
         )

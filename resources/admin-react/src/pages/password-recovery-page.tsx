@@ -182,7 +182,7 @@ export function PasswordRecoveryPage({
                 </div>
               </>
             )}
-            <Button className="w-full" disabled={busy} type="submit">
+            <Button className="w-full" disabled={busy} loading={busy} type="submit">
               {busy ? (
                 <>
                   <LoaderCircle className="mr-2 size-4 animate-spin" />
@@ -204,6 +204,7 @@ export function PasswordRecoveryPage({
             className="mt-4 w-full"
             type="button"
             disabled={busy || seconds > 0}
+            loading={busy}
             onClick={() => void send("request")}
           >
             {seconds > 0 ? `Нов код след ${seconds} сек.` : "Изпрати нов код"}

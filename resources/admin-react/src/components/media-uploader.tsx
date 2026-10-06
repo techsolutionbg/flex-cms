@@ -149,6 +149,7 @@ export function MediaUploader({
       <Button
         variant="secondary"
         type="button"
+        loading={busy}
         disabled={busy || acceptedTypes.length === 0}
         onClick={() => input.current?.click()}
       >

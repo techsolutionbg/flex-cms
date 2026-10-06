@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import { LoaderCircle, Menu, RefreshCw } from "lucide-react"
+import { Menu, RefreshCw } from "lucide-react"
+import { LoadingButton } from "./loading-button"
 import { useContext, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
 import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-context"
@@ -64,31 +65,28 @@ export function AdminShell({
           </button>
           <span className="admin-topbar-title-react">{title}</span>
           {workspace && (
-            <button
+            <LoadingButton
               className="admin-page-refresh"
               type="button"
               aria-label="Презареди данните в страницата"
               title="Презареди данните в страницата"
               disabled={workspace.refreshing}
+              loading={workspace.refreshing}
+              icon={<RefreshCw size={18} aria-hidden="true" />}
               onClick={workspace.refresh}
             >
-              <RefreshCw
-                size={18}
-                className={workspace.refreshing ? "animate-spin" : undefined}
-                aria-hidden="true"
-              />
               <span>Презареди</span>
-            </button>
+            </LoadingButton>
           )}
-          <button
+          <LoadingButton
             className="admin-logout-react"
             type="button"
             onClick={onLogout}
             disabled={loggingOut}
+            loading={loggingOut}
           >
-            {loggingOut && <LoaderCircle className="react-button-spinner" />}
             {loggingOut ? "Излизане…" : "Изход"}
-          </button>
+          </LoadingButton>
         </header>
         <AdminWorkspaceTabs />
         <main className="admin-content-react">{children}</main>

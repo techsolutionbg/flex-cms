@@ -1,3 +1,4 @@
+import { LoadingButton } from "@/components/loading-button"
 import { AlertTriangle, X } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useEffect } from "react"
@@ -67,15 +68,15 @@ export function ConfirmDialog({
           <button type="button" className="react-dialog-cancel" onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </button>
-          <button
+          <LoadingButton
             type="button"
             className={`react-dialog-confirm${danger ? " is-danger" : ""}`}
             onClick={onConfirm}
             disabled={busy}
+            loading={busy}
           >
-            {busy && <span className="react-button-spinner" />}
             {confirmLabel}
-          </button>
+          </LoadingButton>
         </div>
       </section>
     </div>,

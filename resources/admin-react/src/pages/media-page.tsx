@@ -1,3 +1,4 @@
+import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState } from "react"
 import { FileImage, Info, Upload } from "lucide-react"
@@ -306,13 +307,14 @@ export function MediaPage({
             </CollapsibleSection>
             {saved && <p role="status">Готово.</p>}
             <div className="react-form-actions">
-              <button
+              <LoadingButton
+                loading={busy}
                 className="react-primary-button"
                 type="submit"
                 disabled={busy || !canEdit || !!record.deleted_at}
               >
                 {busy ? "Записване…" : "Запази"}
-              </button>
+              </LoadingButton>
               <button className="react-secondary-button" type="button" onClick={onBack}>
                 Към библиотеката
               </button>

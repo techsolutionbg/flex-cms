@@ -18,7 +18,7 @@ export function LoadingButton({
   return (
     <button
       {...props}
-      className={`react-loading-button ${className}`}
+      className={`react-action-button react-loading-button ${className}`}
       disabled={loading || disabled}
       aria-busy={loading}
     >

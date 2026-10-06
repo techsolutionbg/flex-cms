@@ -1,6 +1,8 @@
+import { Save } from "lucide-react"
+import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState, type SyntheticEvent } from "react"
-import { LayoutTemplate, LoaderCircle, Navigation, Puzzle, Search } from "lucide-react"
+import { LayoutTemplate, Navigation, Puzzle, Search } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -272,10 +274,15 @@ export function PageSettingsForm({
           </CollapsibleSection>
         ))}
         <div className="react-form-actions">
-          <button className="react-primary-button" type="submit" disabled={saving}>
-            {saving && <LoaderCircle className="react-button-spinner" />}
+          <LoadingButton
+            icon={<Save aria-hidden="true" />}
+            loading={saving}
+            className="react-primary-button"
+            type="submit"
+            disabled={saving}
+          >
             {saving ? "Записване…" : "Запази настройките"}
-          </button>
+          </LoadingButton>
           <button type="button" onClick={onBack}>
             Отказ
           </button>

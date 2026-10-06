@@ -23,6 +23,7 @@ function structure({
     root
   const jsx = (type, props) => ({ type, props })
   const modules = {
+    "@/components/loading-button": { LoadingButton: "button" },
     react: {
       useState(initial) {
         const index = cursor++

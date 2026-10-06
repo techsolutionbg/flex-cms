@@ -46,6 +46,7 @@ function harness(initial = "/", restored = null) {
     "react/jsx-runtime": { jsx, jsxs: jsx },
     "@/lib/admin-routes": { adminRoute: () => path, adminUrl: (value) => value },
     "./admin-shell": { AdminShell: "AdminShell" },
+    "./confirm-dialog": { ConfirmDialog: "ConfirmDialog" },
     "./admin-workspace-context": { AdminWorkspaceContext: { Provider: "Provider" } },
   }
   const storageExports = {}
@@ -141,7 +142,10 @@ function harness(initial = "/", restored = null) {
   }
   render()
   effects[0]()
-  const panels = () => render()
+  const panels = () =>
+    render()
+      .flat()
+      .filter((node) => node.type === "Provider")
   const active = () => panels().find((node) => !node.props.children.props.hidden)
   const page = () => active().props.children.props.children.props.children
   return {
@@ -163,6 +167,7 @@ function harness(initial = "/", restored = null) {
     page,
     routes,
     workspace: () => active().props.value,
+    dialog: () => render().find((node) => node.type === "ConfirmDialog"),
     confirm(value) {
       confirm = value
     },
@@ -387,4 +392,50 @@ test("search and filters in a media picker do not mark the page form dirty", () 
   assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, false)
   h.workspace().changed()
   assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, true)
+})
+
+test("closing all clean tabs returns to the dashboard and persists only that tab", () => {
+  const h = harness("/pages")
+  h.page().props.onNavigate("Профил")
+  h.page().props.onNavigate("Медийна библиотека")
+  assert.equal(h.panels().length, 3)
+  assert.equal(h.workspace().canCloseAll, true)
+  h.workspace().closeAll()
+  assert.equal(h.dialog().props.open, false)
+  assert.equal(h.panels().length, 1)
+  assert.equal(h.page().type, "DashboardPage")
+  assert.equal(h.workspace().canCloseAll, false)
+  assert.equal(h.routes.at(-1), "/")
+  assert.deepEqual(h.stored().paths, ["/"])
+  assert.equal(h.stored().active, "/")
+  const restored = harness("/", h.stored())
+  assert.equal(restored.panels().length, 1)
+  assert.equal(restored.page().type, "DashboardPage")
+})
+
+test("closing all dirty tabs requires one shared confirmation and cancel preserves drafts", () => {
+  const h = harness("/pages/create")
+  h.workspace().changed()
+  const first = h.active().key
+  h.page().props.onNavigate("Профил")
+  h.workspace().changed()
+  const second = h.active().key
+  h.workspace().closeAll()
+  assert.equal(h.dialog().props.open, true)
+  assert.match(h.dialog().props.message, /2 таба/)
+  assert.equal(h.panels().length, 2)
+  h.dialog().props.onCancel()
+  assert.equal(h.dialog().props.open, false)
+  assert.equal(h.active().key, second)
+  assert.equal(h.workspace().tabs.filter((tab) => tab.dirty).length, 2)
+  h.workspace().activate(first)
+  assert.equal(h.page().type, "PageForm")
+  h.workspace().closeAll()
+  h.dialog().props.onConfirm()
+  assert.equal(h.panels().length, 1)
+  assert.equal(h.page().type, "DashboardPage")
+  assert.equal(
+    h.workspace().tabs.some((tab) => tab.dirty),
+    false,
+  )
 })

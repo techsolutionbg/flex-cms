@@ -13,6 +13,7 @@ import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugin
 import { UpdatesPage } from "@/pages/updates-page"
 import { SettingsPage } from "@/pages/settings-page"
 import { AdminShell } from "./admin-shell"
+import { ConfirmDialog } from "./confirm-dialog"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import type { ThemeCapabilities } from "./admin-workspace-context"
 import { MenusPage } from "@/pages/menus-page"
@@ -61,6 +62,7 @@ export function AdminWorkspace({
   const storageKey = `flex-admin-workspace:v1:${adminUrl("/")}:${accountId}`
   const [tabs, setTabs] = useState<Tab[]>([])
   const [active, setActive] = useState("")
+  const [confirmCloseAll, setConfirmCloseAll] = useState(false)
   const [themeCapabilities, setThemeCapabilities] = useState<ThemeCapabilities | null>(null)
   const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null)
   const capabilitiesRequest = useRef(0)
@@ -185,6 +187,20 @@ export function AdminWorkspace({
       if (remaining.length) activate(remaining[Math.min(index, remaining.length - 1)].id)
       else open("/")
     }
+  }
+  function finishCloseAll() {
+    setConfirmCloseAll(false)
+    tabsRef.current = []
+    activeRef.current = ""
+    setTabs([])
+    setActive("")
+    open("/")
+    scroll.current.clear()
+  }
+  function closeAll() {
+    if (tabsRef.current.every((tab) => tab.path === "/" && !tab.dirty)) return
+    if (tabsRef.current.some((tab) => tab.dirty)) setConfirmCloseAll(true)
+    else finishCloseAll()
   }
   useEffect(() => {
     const restored = readWorkspace(storageKey)
@@ -467,6 +483,8 @@ export function AdminWorkspace({
             panel: tab.id,
             activate,
             close,
+            closeAll,
+            canCloseAll: tabs.some((item) => item.path !== "/" || item.dirty),
             saved: () => patch(tab.id, { dirty: false }),
             changed: () => patch(tab.id, { dirty: true }),
             refresh: () => void refresh(tab.id),
@@ -503,6 +521,14 @@ export function AdminWorkspace({
           </div>
         </AdminWorkspaceContext.Provider>
       ))}
+      <ConfirmDialog
+        open={confirmCloseAll}
+        title="Затваряне на всички табове"
+        message={`Има незапазени промени в ${tabs.filter((tab) => tab.dirty).length} таба. Ако продължите, те ще бъдат загубени. Панелът ще се върне към таблото.`}
+        confirmLabel="Затвори без запазване"
+        onCancel={() => setConfirmCloseAll(false)}
+        onConfirm={finishCloseAll}
+      />
     </>
   )
 }

@@ -1,3 +1,4 @@
+import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowUp, FileText, GripVertical, ListTree, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -186,7 +187,8 @@ export function MenuStructurePage({
         </div>
         {supported && (!failure || menu) && (
           <div className="react-form-actions menu-structure-heading-actions">
-            <button
+            <LoadingButton
+              loading={saving}
               type="submit"
               form={`menu-structure-form-${menuId}`}
               className="react-primary-button menu-button"
@@ -194,7 +196,7 @@ export function MenuStructurePage({
             >
               <Save size={18} />
               {saving ? "Запазване…" : "Запази структурата"}
-            </button>
+            </LoadingButton>
           </div>
         )}
       </div>
@@ -575,14 +577,15 @@ export function MenuStructurePage({
               </div>
             </div>
             <div className="react-form-actions menu-structure-mobile-actions">
-              <button
+              <LoadingButton
+                loading={saving}
                 type="submit"
                 className="react-primary-button menu-button"
                 disabled={saving || loading || !menu}
               >
                 <Save size={18} />
                 {saving ? "Запазване…" : "Запази структурата"}
-              </button>
+              </LoadingButton>
             </div>
           </form>
         )

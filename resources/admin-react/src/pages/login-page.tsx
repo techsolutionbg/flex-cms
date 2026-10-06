@@ -101,7 +101,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
               required
             />
           </div>
-          <Button className="w-full" type="submit" disabled={submitting}>
+          <Button className="w-full" type="submit" disabled={submitting} loading={submitting}>
             {submitting ? (
               <>
                 <LoaderCircle className="mr-2 size-4 animate-spin" />

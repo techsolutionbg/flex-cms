@@ -209,12 +209,12 @@ export function ThemesPage({
                     {theme.valid && (
                       <LoadingButton
                         type="button"
+                        loading={busy}
                         disabled={busy}
                         onClick={() =>
                           void runAction(theme, theme.active ? "deactivate" : "activate")
                         }
                       >
-                        {busy && <span className="react-button-spinner" />}
                         <Power aria-hidden="true" />
                         {theme.active ? "Деактивирай" : "Активирай"}
                       </LoadingButton>
@@ -222,20 +222,20 @@ export function ThemesPage({
                     {theme.update_available && (
                       <LoadingButton
                         type="button"
+                        loading={busy}
                         disabled={busy}
                         onClick={() => void runAction(theme, "update_remote")}
                       >
-                        {busy && <span className="react-button-spinner" />}
                         <Upload aria-hidden="true" />
                         Обнови
                       </LoadingButton>
                     )}
                     <LoadingButton
                       type="button"
+                      loading={busy}
                       disabled={busy}
                       onClick={() => setPendingRemoval(theme)}
                     >
-                      {busy && <span className="react-button-spinner" />}
                       <Trash2 aria-hidden="true" />
                       Изтрий
                     </LoadingButton>

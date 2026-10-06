@@ -1,5 +1,7 @@
+import { Save } from "lucide-react"
+import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useRef, useState, type SyntheticEvent } from "react"
-import { LoaderCircle, Mail, Shield, UserRound } from "lucide-react"
+import { Mail, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { CollapsibleSection } from "@/components/collapsible-section"
@@ -287,10 +289,14 @@ export function UserForm({
           </CollapsibleSection>
         )}
         <div className="react-form-actions">
-          <button type="submit" disabled={saving}>
-            {saving && <LoaderCircle className="mr-2 inline-block size-4 animate-spin" />}
+          <LoadingButton
+            icon={<Save aria-hidden="true" />}
+            loading={saving}
+            type="submit"
+            disabled={saving}
+          >
             {editing ? "Запази промените" : "Създай потребител"}
-          </button>
+          </LoadingButton>
           <button type="button" onClick={onBack} disabled={saving}>
             Отказ
           </button>

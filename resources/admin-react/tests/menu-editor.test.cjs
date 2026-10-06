@@ -65,6 +65,7 @@ function editor(id, capabilities) {
     },
   }
   const modules = {
+    "@/components/loading-button": { LoadingButton: "button" },
     react,
     "react/jsx-runtime": { jsx, jsxs: jsx },
     "lucide-react": {},

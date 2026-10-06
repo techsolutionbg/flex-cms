@@ -1,3 +1,4 @@
+import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useRef, useState } from "react"
 import { Save, Settings2 } from "lucide-react"
 import { toast } from "sonner"
@@ -278,14 +279,15 @@ export function MenuEditor({
             </CollapsibleSection>
           </fieldset>
           <div className="react-form-actions">
-            <button
+            <LoadingButton
+              loading={saving}
               type="submit"
               className="react-primary-button menu-button"
               disabled={!supported || saving || loading || !index || themeChanged}
             >
               <Save size={18} />
               {saving ? "Запазване…" : "Запази менюто"}
-            </button>
+            </LoadingButton>
           </div>
         </form>
       )}

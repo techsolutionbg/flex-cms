@@ -3,7 +3,6 @@ import {
   Images,
   ListTree,
   LayoutDashboard,
-  LoaderCircle,
   LogOut,
   Menu,
   Puzzle,
@@ -15,6 +14,7 @@ import {
   Settings,
 } from "lucide-react"
 import { useContext, useState } from "react"
+import { LoadingButton } from "./loading-button"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import { adminUrl } from "@/lib/admin-routes"
 
@@ -182,16 +182,16 @@ export function AdminSidebar({
           ))}
         </nav>
 
-        <button
+        <LoadingButton
           className="sidebar-logout-react"
           type="button"
           onClick={onLogout}
           disabled={loggingOut}
+          loading={loggingOut}
+          icon={<LogOut className="sidebar-icon-react" aria-hidden="true" />}
         >
-          <LogOut className="sidebar-icon-react" aria-hidden="true" />
-          {loggingOut && <LoaderCircle className="react-button-spinner" />}
           <span>{loggingOut ? "Излизане…" : "Изход"}</span>
-        </button>
+        </LoadingButton>
       </aside>
     </>
   )
