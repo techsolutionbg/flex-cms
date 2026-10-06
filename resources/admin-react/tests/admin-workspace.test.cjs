@@ -119,6 +119,7 @@ function harness(initial = "/", restored = null) {
                 menu_locations: menusSupported ? { primary: "Main" } : {},
               }
             : {
+                plugins: [{ id: "flex/seo", name: "Flex SEO", status: "active" }],
                 pages: [
                   {
                     id: 7,
@@ -187,6 +188,23 @@ test("opens independent page editors, retains their panel keys and deduplicates 
   assert.equal(h.panels().filter((node) => !node.props.children.props.hidden).length, 1)
   h.page().props.onNavigate("Профил")
   assert.equal(h.panels().length, 4)
+})
+
+test("plugin preview opens vendor/name identifiers and survives reload and catalog navigation", async () => {
+  const h = harness("/plugins")
+  h.page().props.onView({ id: "flex/seo", name: "Flex SEO", status: "active" })
+  assert.equal(h.page().type, "PluginDetailPage")
+  assert.equal(h.page().props.plugin.id, "flex/seo")
+  assert.equal(h.stored().active, "/plugins/flex%2Fseo")
+  const restored = harness("/plugins/flex%2Fseo", h.stored())
+  await restored.flush()
+  assert.equal(restored.page().type, "PluginDetailPage")
+  assert.equal(restored.page().props.plugin.id, "flex/seo")
+  const catalog = harness("/plugins/catalog")
+  catalog.page().props.onView("flex/seo")
+  await catalog.flush()
+  assert.equal(catalog.page().type, "PluginDetailPage")
+  assert.equal(catalog.page().props.plugin.name, "Flex SEO")
 })
 
 test("protects dirty tabs when closing or unloading and clears dirty state after saving", () => {

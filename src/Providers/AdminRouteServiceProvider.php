@@ -37,6 +37,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/dashboard', AdminDashboardSummaryController::class, 'api.admin.dashboard', $auth);
         $r->add('GET', '/api/admin/pages', AdminPagesDataController::class, 'api.admin.pages', $auth);
         $r->add('GET', '/api/admin/plugins', AdminPluginsDataController::class, 'api.admin.plugins', $auth);
+        $r->add('GET', '/api/admin/plugins/source', \Flex\Http\Controller\Admin\AdminPluginSourceController::class, 'api.admin.plugins.source', $auth);
         $r->add('GET', '/api/admin/plugins/catalog', AdminPluginCatalogDataController::class, 'api.admin.plugins.catalog', $auth);
         $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
         $r->add('GET', '/api/admin/theme-capabilities', AdminThemeCapabilitiesController::class, 'api.admin.theme-capabilities', $auth);

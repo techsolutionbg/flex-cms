@@ -82,7 +82,8 @@ export function DropdownMenu({
           >
             {children}
           </div>,
-          rootRef.current?.closest("dialog[open]") ?? document.body,
+          rootRef.current?.closest(".code-editor-shell.is-fullscreen, dialog[open]") ??
+            document.body,
         )}
     </div>
   )

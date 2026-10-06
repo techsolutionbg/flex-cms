@@ -1,7 +1,17 @@
-import { ArrowLeft, CheckCircle2, CircleAlert, PackageOpen } from "lucide-react"
+import {
+  ArrowLeft,
+  Braces,
+  CheckCircle2,
+  CircleAlert,
+  Code2,
+  PackageOpen,
+  ShieldCheck,
+} from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { ManifestEditor } from "@/components/manifest-editor"
+import { PluginSourceViewer } from "@/components/plugin-source-viewer"
+import { CollapsibleSection } from "@/components/collapsible-section"
 import type { PluginRecord } from "@/lib/admin-types"
 
 type PluginDetailPageProps = {
@@ -50,8 +60,20 @@ export function PluginDetailPage({
           Назад към разширенията
         </button>
       </div>
+      <CollapsibleSection
+        title="Код на разширението"
+        icon={Code2}
+        className="plugin-source-first-section"
+        storageKey={`plugin:${plugin.id}:source`}
+      >
+        <PluginSourceViewer pluginId={plugin.id} />
+      </CollapsibleSection>
       <div className="plugin-detail-grid">
-        <section className="react-panel">
+        <CollapsibleSection
+          title="Информация за разширението"
+          icon={PackageOpen}
+          storageKey={`plugin:${plugin.id}:information`}
+        >
           <div className="plugin-detail-title">
             <div className="plugin-catalog-icon">
               <PackageOpen aria-hidden="true" />
@@ -89,9 +111,12 @@ export function PluginDetailPage({
               {plugin.last_error}
             </div>
           )}
-        </section>
-        <section className="react-panel">
-          <h2>Разрешения</h2>
+        </CollapsibleSection>
+        <CollapsibleSection
+          title="Разрешения"
+          icon={ShieldCheck}
+          storageKey={`plugin:${plugin.id}:permissions`}
+        >
           {permissions.length ? (
             <ul className="plugin-permissions">
               {permissions.map((permission) => (
@@ -104,12 +129,16 @@ export function PluginDetailPage({
           ) : (
             <p className="react-muted">Разширението не заявява специални разрешения.</p>
           )}
-        </section>
+        </CollapsibleSection>
       </div>
-      <section className="react-panel plugin-manifest-panel">
-        <h2>Manifest</h2>
+      <CollapsibleSection
+        title="Manifest"
+        icon={Braces}
+        className="plugin-manifest-panel"
+        storageKey={`plugin:${plugin.id}:manifest`}
+      >
         <ManifestEditor value={manifest} />
-      </section>
+      </CollapsibleSection>
     </AdminShell>
   )
 }
