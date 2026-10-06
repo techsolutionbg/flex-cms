@@ -11,11 +11,18 @@ type ThemeStorePageProps = {
   onLogout: () => void
   onNavigate: (label: string) => void
   onBack: () => void
+  onDetails?: (id: string) => void
   loggingOut: boolean
 }
 type StoreAction = "install" | "activate" | "deactivate"
 
-export function ThemeStorePage({ onLogout, onNavigate, onBack, loggingOut }: ThemeStorePageProps) {
+export function ThemeStorePage({
+  onLogout,
+  onNavigate,
+  onBack,
+  onDetails,
+  loggingOut,
+}: ThemeStorePageProps) {
   const [catalog, setCatalog] = useState<ThemeCatalogRecord[]>([])
   const [activeThemeId, setActiveThemeId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -212,6 +219,7 @@ export function ThemeStorePage({ onLogout, onNavigate, onBack, loggingOut }: The
                   )}
                 </div>
                 <div className="theme-store-actions">
+                  <LoadingButton onClick={() => onDetails?.(theme.id)}>Детайли</LoadingButton>
                   {installed && (
                     <LoadingButton
                       type="button"

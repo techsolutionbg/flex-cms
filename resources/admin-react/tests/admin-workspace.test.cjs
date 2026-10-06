@@ -66,6 +66,7 @@ function harness(initial = "/", restored = null) {
     "profile-page": ["ProfilePage"],
     "themes-page": ["ThemesPage"],
     "theme-store-page": ["ThemeStorePage"],
+    "theme-detail-page": ["ThemeDetailPage"],
     plugins: ["PluginCatalogPage", "PluginDetailPage", "PluginsPage"],
     "updates-page": ["UpdatesPage"],
     "menus-page": ["MenusPage"],
@@ -188,6 +189,22 @@ test("opens independent page editors, retains their panel keys and deduplicates 
   assert.equal(h.panels().filter((node) => !node.props.children.props.hidden).length, 1)
   h.page().props.onNavigate("Профил")
   assert.equal(h.panels().length, 4)
+})
+
+test("theme details open from both lists and survive workspace restoration", async () => {
+  for (const path of ["/themes", "/theme-store"]) {
+    const h = harness(path)
+    h.page().props.onDetails("flex-starter")
+    assert.equal(h.page().type, "ThemeDetailPage")
+    assert.equal(h.page().props.id, "flex-starter")
+    assert.equal(h.stored().active, "/themes/flex-starter")
+    const restored = harness("/themes/flex-starter", h.stored())
+    await restored.flush()
+    assert.equal(restored.page().type, "ThemeDetailPage")
+    assert.equal(restored.page().props.id, "flex-starter")
+    restored.page().props.onBack()
+    assert.equal(restored.page().type, "ThemesPage")
+  }
 })
 
 test("plugin preview opens vendor/name identifiers and survives reload and catalog navigation", async () => {

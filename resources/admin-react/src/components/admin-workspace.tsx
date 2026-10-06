@@ -8,6 +8,7 @@ import { UserForm, UsersPage } from "@/pages/users"
 import { ProfilePage } from "@/pages/profile-page"
 import { ThemesPage } from "@/pages/themes-page"
 import { ThemeStorePage } from "@/pages/theme-store-page"
+import { ThemeDetailPage } from "@/pages/theme-detail-page"
 import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
 import { UpdatesPage } from "@/pages/updates-page"
 import { AdminShell } from "./admin-shell"
@@ -136,6 +137,7 @@ export function AdminWorkspace({
       path,
       title:
         sections[path] ??
+        (path.startsWith("/themes/") ? `Тема: ${path.split("/")[2]}` : undefined) ??
         (path === "/pages/create"
           ? "Нова страница"
           : path === "/users/create"
@@ -262,11 +264,21 @@ export function AdminWorkspace({
     const reload = () => {
       void loadCapabilities()
     }
-    window.addEventListener("flex-admin-theme-changed", reload)
+    const themesChanged = () => {
+      reload()
+      setTabs((current) =>
+        current.map((tab) =>
+          ["/themes", "/theme-store"].includes(tab.path)
+            ? { ...tab, revision: tab.revision + 1 }
+            : tab,
+        ),
+      )
+    }
+    window.addEventListener("flex-admin-theme-changed", themesChanged)
     window.addEventListener("focus", reload)
     return () => {
       capabilitiesRequest.current++
-      window.removeEventListener("flex-admin-theme-changed", reload)
+      window.removeEventListener("flex-admin-theme-changed", themesChanged)
       window.removeEventListener("focus", reload)
     }
   }, [])
@@ -347,9 +359,20 @@ export function AdminWorkspace({
       case "/profile":
         return <ProfilePage {...common} />
       case "/themes":
-        return <ThemesPage {...common} />
+        return (
+          <ThemesPage
+            {...common}
+            onDetails={(id) => open(`/themes/${id}`, { title: `Тема: ${id}` })}
+          />
+        )
       case "/theme-store":
-        return <ThemeStorePage {...common} onBack={() => open("/themes")} />
+        return (
+          <ThemeStorePage
+            {...common}
+            onBack={() => open("/themes")}
+            onDetails={(id) => open(`/themes/${id}`, { title: `Тема: ${id}` })}
+          />
+        )
       case "/plugins":
         return (
           <PluginsPage {...common} onCatalog={() => open("/plugins/catalog")} onView={plugin} />
@@ -365,6 +388,9 @@ export function AdminWorkspace({
       case "/updates":
         return <UpdatesPage {...common} />
     }
+    const themeMatch = tab.path.match(/^\/themes\/([a-z0-9][a-z0-9._-]*)$/)
+    if (themeMatch)
+      return <ThemeDetailPage {...common} id={themeMatch[1]} onBack={() => open("/themes")} />
     const menuStructureMatch = tab.path.match(/^\/menus\/(\d+)\/structure$/)
     if (menuStructureMatch)
       return (

@@ -79,7 +79,8 @@ test("catalog updates both cards after installing and activating another theme",
   const badge = (card) =>
     nodes(card).find((node) => node.props?.className?.startsWith("react-status-badge")).props
       .className
-  const buttons = (card) => nodes(card).filter((node) => node.type === "LoadingButton")
+  const buttons = (card) =>
+    nodes(card).filter((node) => node.type === "LoadingButton" && node.props.children !== "Детайли")
   const flush = () => new Promise((resolve) => setImmediate(resolve))
   response = {
     catalog: [

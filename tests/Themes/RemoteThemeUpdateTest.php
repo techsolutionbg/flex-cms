@@ -120,4 +120,48 @@ final class RemoteThemeUpdateTest extends TestCase
         self::assertSame('/theme-assets/flex-starter/screenshot.png', $starter['screenshot_url']);
         self::assertSame([], glob($this->root . '/storage/tmp/theme-download-*'));
     }
+
+    public function testDetailsSupportCatalogOnlyThemesLocalThemesAndCatalogFailures(): void
+    {
+        $authentication = $this->createStub(\Flex\Contracts\Auth\AuthenticationInterface::class);
+        $authentication->method('user')->willReturn(new \Flex\Auth\AuthenticatedUser(1, 'Admin', 'admin@example.test', 'super_admin', 'active'));
+        $transport = $this->createStub(RemoteCatalogTransportInterface::class);
+        $transport->method('get')->willReturnCallback(static function (string $url): RemoteCatalogTransportResponse {
+            $id = str_contains($url, 'catalog-only') ? 'catalog-only' : 'flex-starter';
+            $data = str_ends_with($url, 'index.json')
+                ? ['schema' => 1, 'repository' => 'flex-cms', 'type' => 'theme', 'themes' => array_map(static fn(string $id): array => ['id' => $id, 'name' => $id, 'manifest_url' => 'https://updates-flex-cms.kriskata.com/' . $id . '.json', 'license' => 'MIT', 'supports' => ['menus' => true], 'menu_locations' => ['primary' => 'Main']], ['flex-starter', 'catalog-only'])]
+                : ['schema' => 1, 'repository' => 'flex-cms', 'type' => 'theme', 'releases' => [['schema' => 1, 'package' => $id, 'type' => 'theme', 'version' => '1.0.1', 'channel' => 'stable', 'download_url' => 'https://updates-flex-cms.kriskata.com/release.zip', 'checksum' => str_repeat('a', 64), 'size' => 100, 'minimum_php' => '>=8.3', 'compatible_from' => '>=0.1.47 <1.0.0', 'published_at' => '2026-10-06T00:00:00+00:00', 'release_notes' => 'Release']]];
+            return new RemoteCatalogTransportResponse(200, json_encode($data, JSON_THROW_ON_ERROR), []);
+        });
+        $packages = $this->createMock(RemotePackageTransportInterface::class);
+        $packages->expects(self::never())->method('download');
+        $controller = new \Flex\Http\Controller\Admin\AdminThemeDetailController($authentication, $this->themes, new ThemeCatalogClient($this->config, $transport, $this->root), $this->installer($transport, $packages), new PlatformVersionRegistry($this->root), $this->config, new \Flex\Http\ResponseFactory(new \Nyholm\Psr7\Factory\Psr17Factory()));
+        $request = new \Nyholm\Psr7\ServerRequest('GET', 'http://localhost/api/admin/themes/catalog-only');
+        $response = $controller($request, ['id' => 'catalog-only']);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('no-store', $response->getHeaderLine('Cache-Control'));
+        $theme = json_decode((string) $response->getBody(), true)['theme'];
+        self::assertFalse($theme['installed']);
+        self::assertSame('MIT', $theme['license']);
+        self::assertSame(['primary' => 'Main'], $theme['menu_locations']);
+        self::assertTrue($theme['releases'][0]['compatible']);
+        $local = json_decode((string) $controller($request, ['id' => 'flex-starter'])->getBody(), true)['theme'];
+        self::assertTrue($local['installed']);
+        self::assertFalse($local['active']);
+        self::assertTrue($local['update_available']);
+        $this->themes->activate('flex-starter');
+        self::assertTrue(json_decode((string) $controller($request, ['id' => 'flex-starter'])->getBody(), true)['theme']['active']);
+        self::assertSame(404, $controller($request, ['id' => '../private'])->getStatusCode());
+        self::assertSame(404, $controller($request, ['id' => 'missing'])->getStatusCode());
+        $offline = $this->createStub(RemoteCatalogTransportInterface::class);
+        $offline->method('get')->willThrowException(new \Flex\Updates\Exception\RemoteCatalogException('Offline'));
+        $offlineController = new \Flex\Http\Controller\Admin\AdminThemeDetailController($authentication, $this->themes, new ThemeCatalogClient($this->config, $offline, $this->root . '/offline'), $this->installer($transport, $packages), new PlatformVersionRegistry($this->root), $this->config, new \Flex\Http\ResponseFactory(new \Nyholm\Psr7\Factory\Psr17Factory()));
+        self::assertSame(200, $offlineController($request, ['id' => 'flex-starter'])->getStatusCode());
+        self::assertNotNull(json_decode((string) $offlineController($request, ['id' => 'flex-starter'])->getBody(), true)['theme']['catalog_error']);
+        self::assertSame(502, $offlineController($request, ['id' => 'catalog-only'])->getStatusCode());
+        $guest = $this->createStub(\Flex\Contracts\Auth\AuthenticationInterface::class);
+        $guest->method('user')->willReturn(null);
+        $guestController = new \Flex\Http\Controller\Admin\AdminThemeDetailController($guest, $this->themes, new ThemeCatalogClient($this->config, $transport, $this->root), $this->installer($transport, $packages), new PlatformVersionRegistry($this->root), $this->config, new \Flex\Http\ResponseFactory(new \Nyholm\Psr7\Factory\Psr17Factory()));
+        self::assertSame(403, $guestController($request, ['id' => 'flex-starter'])->getStatusCode());
+    }
 }

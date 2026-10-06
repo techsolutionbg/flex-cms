@@ -50,6 +50,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('DELETE', '/api/admin/menus/{id}/force', AdminMenusDataController::class, 'api.admin.menus.force-delete', $write);
         $r->add('POST', '/api/admin/menu-assignments', AdminMenusDataController::class, 'api.admin.menus.assignments', $write);
         $r->add('GET', '/api/admin/themes/catalog', AdminThemeCatalogDataController::class, 'api.admin.themes.catalog', $auth);
+        $r->add('GET', '/api/admin/themes/{id}', \Flex\Http\Controller\Admin\AdminThemeDetailController::class, 'api.admin.themes.detail', $auth);
         $r->add('GET', '/api/admin/updates', AdminUpdatesDataController::class, 'api.admin.updates', $auth);
         $r->add('GET', '/admin/themes/{id}/preview', AdminThemePreviewController::class, 'admin.themes.preview', $auth);
         $r->add('POST', '/api/themes/action', AdminThemeActionController::class, 'api.themes.action', $write);

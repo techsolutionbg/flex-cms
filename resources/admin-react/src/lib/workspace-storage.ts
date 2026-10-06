@@ -23,6 +23,7 @@ export function isWorkspacePath(value: unknown): value is string {
     (simplePaths.has(value) ||
       /^\/pages\/\d+\/(edit|settings)$/.test(value) ||
       /^\/media\/\d+\/edit$/.test(value) ||
+      /^\/themes\/[a-z0-9][a-z0-9._-]*$/.test(value) ||
       /^\/users\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/structure$/.test(value) ||

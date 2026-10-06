@@ -18,11 +18,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
-    "quill": "^2.0.3",
+    "quill": "2.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^2.6.0"
+  },
+  "overrides": {
+    "dompurify": "3.4.16"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",

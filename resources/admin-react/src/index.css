@@ -4806,3 +4806,53 @@ select:focus-visible,
 .media-picker-heading h2 {
   margin: 0;
 }
+.theme-detail-sections {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.theme-detail-preview {
+  display: block;
+  width: min(100%, 48rem);
+  height: auto;
+  border-radius: 0.75rem;
+}
+.theme-detail-overview > .collapsible-section-body > .collapsible-section-body-inner {
+  display: grid;
+  gap: 1rem;
+}
+.theme-detail-overview > .collapsible-section-body > .collapsible-section-body-inner > p {
+  margin: 0;
+}
+.theme-detail-overview .theme-card-actions {
+  padding: 0;
+  justify-content: flex-start;
+}
+.theme-detail-overview .theme-card-actions > button {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+}
+.theme-detail-info {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+}
+.theme-detail-info > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 1rem;
+}
+.theme-detail-info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.theme-detail-notes {
+  white-space: pre-wrap;
+}
+@media (max-width: 640px) {
+  .theme-detail-info > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}

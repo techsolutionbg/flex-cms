@@ -14,10 +14,17 @@ type ThemesPageProps = {
   onLogout: () => void
   onNavigate: (label: string) => void
   onCatalog?: () => void
+  onDetails?: (id: string) => void
   loggingOut: boolean
 }
 
-export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: ThemesPageProps) {
+export function ThemesPage({
+  onLogout,
+  onNavigate,
+  onCatalog,
+  onDetails,
+  loggingOut,
+}: ThemesPageProps) {
   const [themes, setThemes] = useState<ThemeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -198,6 +205,7 @@ export function ThemesPage({ onLogout, onNavigate, onCatalog, loggingOut }: Them
                     {theme.error && <small className="react-error-text">{theme.error}</small>}
                   </div>
                   <div className="theme-card-actions">
+                    <LoadingButton onClick={() => onDetails?.(theme.id)}>Детайли</LoadingButton>
                     {theme.valid && (
                       <LoadingButton
                         type="button"

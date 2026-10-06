@@ -32,6 +32,11 @@ final readonly class RemoteThemeIndex
                 'screenshot_url' => is_string($theme['screenshot_url'] ?? null) ? trim($theme['screenshot_url']) : null,
                 'tags' => is_array($theme['tags'] ?? null) ? array_values(array_filter($theme['tags'], 'is_string')) : [],
                 'minimum_platform_version' => is_string($theme['minimum_platform_version'] ?? null) ? trim($theme['minimum_platform_version']) : '',
+                'license' => is_string($theme['license'] ?? null) ? trim($theme['license']) : null,
+                'homepage' => is_string($theme['homepage'] ?? null) ? trim($theme['homepage']) : null,
+                'documentation' => is_string($theme['documentation'] ?? null) ? trim($theme['documentation']) : null,
+                'supports' => is_array($theme['supports'] ?? null) ? $theme['supports'] : null,
+                'menu_locations' => is_array($theme['menu_locations'] ?? null) ? $theme['menu_locations'] : null,
             ];
         }
 
