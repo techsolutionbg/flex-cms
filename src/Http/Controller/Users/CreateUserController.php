@@ -25,7 +25,7 @@ final readonly class CreateUserController
     {
         $input = $this->input->all($request);
         $user = $this->users->create($input);
-        $confirmationSent = filter_var($input['send_confirmation'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $confirmationSent = $user->getAttribute('email_verification_required') === true;
         if ($confirmationSent) {
             $this->verification->sendCode($user);
         }

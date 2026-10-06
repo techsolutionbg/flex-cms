@@ -17,7 +17,13 @@ final class RemoteCatalogClient
         private readonly ConfigRepositoryInterface $configuration,
         private readonly RemoteCatalogTransportInterface $transport,
         private readonly string $basePath,
+        private readonly ?\Flex\Settings\SectionSettings $settings = null,
     ) {}
+
+    public function channel(): string
+    {
+        return $this->settings?->all('updates')['channel'] ?? $this->configuration->string('extensions.updates.channel');
+    }
 
     public function platformCatalog(): RemoteCatalog
     {

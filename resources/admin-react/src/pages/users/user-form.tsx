@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from "react"
+import { useEffect, useRef, useState, type SyntheticEvent } from "react"
 import { LoaderCircle, Mail, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -40,6 +40,26 @@ export function UserForm({
   const [passwordConfirmation, setPasswordConfirmation] = useState("")
   const [sendConfirmation, setSendConfirmation] = useState(!editing)
   const [saving, setSaving] = useState(false)
+  const roleChanged = useRef(false)
+  const [minimumPassword, setMinimumPassword] = useState(12)
+  useEffect(() => {
+    const abort = new AbortController()
+    fetch("/api/admin/settings/users", {
+      credentials: "include",
+      signal: AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Правилата за потребители не могат да бъдат заредени.")
+        const body = await response.json()
+        if (abort.signal.aborted) return
+        setMinimumPassword(Number(body.settings.password_min_length))
+        if (!editing && !roleChanged.current) setRole(body.settings.default_role)
+      })
+      .catch((error) => {
+        if (!abort.signal.aborted) toast.error(error.message)
+      })
+    return () => abort.abort()
+  }, [editing])
 
   async function save(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -146,28 +166,40 @@ export function UserForm({
                 <DropdownOption
                   selected={role === "user"}
                   disabled={isSuperAdmin}
-                  onClick={() => setRole("user")}
+                  onClick={() => {
+                    roleChanged.current = true
+                    setRole("user")
+                  }}
                 >
                   Потребител
                 </DropdownOption>
                 <DropdownOption
                   selected={role === "editor"}
                   disabled={isSuperAdmin}
-                  onClick={() => setRole("editor")}
+                  onClick={() => {
+                    roleChanged.current = true
+                    setRole("editor")
+                  }}
                 >
                   Редактор
                 </DropdownOption>
                 <DropdownOption
                   selected={role === "admin"}
                   disabled={isSuperAdmin}
-                  onClick={() => setRole("admin")}
+                  onClick={() => {
+                    roleChanged.current = true
+                    setRole("admin")
+                  }}
                 >
                   Администратор
                 </DropdownOption>
                 <DropdownOption
                   selected={role === "super_admin"}
                   disabled={isSuperAdmin}
-                  onClick={() => setRole("super_admin")}
+                  onClick={() => {
+                    roleChanged.current = true
+                    setRole("super_admin")
+                  }}
                 >
                   Супер администратор
                 </DropdownOption>
@@ -221,7 +253,7 @@ export function UserForm({
                 onChange={(event) => setPassword(event.target.value)}
                 required={!editing}
               />
-              <small>Паролата трябва да съдържа поне 12 символа.</small>
+              <small>Паролата трябва да съдържа поне {minimumPassword} символа.</small>
             </label>
             <label className="react-form-field">
               <span>

@@ -12,7 +12,7 @@ use Symfony\Component\Mime\{Address, Email};
 
 final readonly class PasswordRecovery
 {
-    public function __construct(private DatabaseManager $database, private ConfigRepositoryInterface $config, private PasswordHasher $passwords, private MailerInterface $mailer) {}
+    public function __construct(private DatabaseManager $database, private ConfigRepositoryInterface $config, private PasswordHasher $passwords, private MailerInterface $mailer, private ?\Flex\Settings\SectionSettings $settings = null) {}
 
     private function digest(string $value): string
     {
@@ -114,13 +114,14 @@ final readonly class PasswordRecovery
     public function reset(string $email, string $grant, string $password, string $confirmation, string $ip): void
     {
         $email = $this->email($email);
-        $this->limit('reset-ip', $ip, 30);
-        if (mb_strlen($password) < 12 || strlen($password) > 72 || $password !== $confirmation) {
-            throw new \InvalidArgumentException('Паролите трябва да съвпадат, да съдържат поне 12 знака и да не надвишават 72 байта.', 422);
+        $minimum = (int) ($this->settings?->all('users')['password_min_length'] ?? 12);
+        if (mb_strlen($password) < $minimum || strlen($password) > 72 || $password !== $confirmation) {
+            throw new \InvalidArgumentException("Паролите трябва да съвпадат, да съдържат поне $minimum знака и да не надвишават 72 байта.", 422);
         }
         if (preg_match('/^[a-f0-9]{64}$/', $grant) !== 1) {
             throw new \InvalidArgumentException('Потвърждението е невалидно. Заявете нов код.', 422);
         }
+        $this->limit('reset-ip', $ip, 30);
         $hash = $this->passwords->hash($password);
         $valid = $this->database->transaction(function (Connection $db) use ($email, $grant, $hash): bool {
             $user = $db->table('users')->where('email', $email)->whereNull('deleted_at')->where('status', 'active')->where('role', 'super_admin')->lockForUpdate()->first();

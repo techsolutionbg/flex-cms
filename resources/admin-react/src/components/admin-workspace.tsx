@@ -11,6 +11,7 @@ import { ThemeStorePage } from "@/pages/theme-store-page"
 import { ThemeDetailPage } from "@/pages/theme-detail-page"
 import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
 import { UpdatesPage } from "@/pages/updates-page"
+import { SettingsPage } from "@/pages/settings-page"
 import { AdminShell } from "./admin-shell"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import type { ThemeCapabilities } from "./admin-workspace-context"
@@ -44,6 +45,7 @@ const sections: Record<string, string> = {
   "/plugins": "Разширения",
   "/plugins/catalog": "Каталог с разширения",
   "/updates": "Обновявания",
+  "/settings": "Настройки",
 }
 let sequence = 0
 
@@ -387,6 +389,8 @@ export function AdminWorkspace({
         )
       case "/updates":
         return <UpdatesPage {...common} />
+      case "/settings":
+        return <SettingsPage {...common} />
     }
     const themeMatch = tab.path.match(/^\/themes\/([a-z0-9][a-z0-9._-]*)$/)
     if (themeMatch)

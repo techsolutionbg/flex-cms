@@ -13,11 +13,11 @@ final readonly class MediaService
 {
     private const TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif', 'application/pdf' => 'pdf', 'audio/mpeg' => 'mp3', 'audio/ogg' => 'ogg', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav', 'video/mp4' => 'mp4', 'video/webm' => 'webm'];
 
-    public function __construct(private DatabaseManager $database, private ProjectPaths $paths, private ConfigRepositoryInterface $config) {}
+    public function __construct(private DatabaseManager $database, private ProjectPaths $paths, private ConfigRepositoryInterface $config, private ?\Flex\Settings\SectionSettings $settings = null) {}
 
     public function maxBytes(): int
     {
-        $limit = max(1, (int) $this->config->get('filesystems.media.max_upload_mb', 64)) * 1024 * 1024;
+        $limit = max(1, (int) ($this->settings?->all('media')['max_upload_mb'] ?? $this->config->get('filesystems.media.max_upload_mb', 64))) * 1024 * 1024;
         foreach (['upload_max_filesize', 'post_max_size'] as $setting) {
             $value = (string) ini_get($setting);
             $bytes = (int) $value * match (strtolower(substr($value, -1))) {
@@ -28,6 +28,16 @@ final readonly class MediaService
             }
         }
         return max(1, $limit);
+    }
+
+    /** @return list<string> */
+    public function allowedTypes(): array
+    {
+        $policy = $this->settings?->all('media');
+        return array_values(array_filter(array_keys(self::TYPES), static function (string $mime) use ($policy): bool {
+            $category = match (true) { str_starts_with($mime, 'image/') => 'allow_images', str_starts_with($mime, 'audio/') => 'allow_audio', str_starts_with($mime, 'video/') => 'allow_video', default => 'allow_documents' };
+            return ($policy[$category] ?? '1') === '1';
+        }));
     }
 
     /** @return list<array<string, mixed>> */
@@ -79,6 +89,9 @@ final readonly class MediaService
             if (!is_string($mime) || !isset(self::TYPES[$mime])) {
                 throw new MediaException('Неподдържан тип файл. SVG, HTML и изпълними файлове не се приемат.', 422);
             }
+            $policy = $this->settings?->all('media');
+            $category = match (true) { str_starts_with($mime, 'image/') => 'allow_images', str_starts_with($mime, 'audio/') => 'allow_audio', str_starts_with($mime, 'video/') => 'allow_video', default => 'allow_documents' };
+            if (($policy[$category] ?? '1') !== '1') throw new MediaException('Тази категория файлове е изключена в настройките на медийната библиотека.', 422);
             $width = $height = null;
             if (str_starts_with($mime, 'image/')) {
                 $dimensions = @getimagesize($temporary);
@@ -98,12 +111,12 @@ final readonly class MediaService
             }
             $created[] = $root . '/' . $path;
             $thumbnail = null;
-            if ($width !== null && function_exists('imagecreatefromstring')) {
+            if ($width !== null && ($policy['generate_thumbnails'] ?? '1') === '1' && function_exists('imagecreatefromstring')) {
                 $image = @imagecreatefromstring((string) file_get_contents($root . '/' . $path));
                 if ($image === false) {
                     throw new MediaException('Изображението не може да бъде обработено.', 422);
                 }
-                $scale = min(1, 400 / max($width, $height));
+                $scale = min(1, (int) ($policy['thumbnail_edge'] ?? 400) / max($width, $height));
                 $preview = imagecreatetruecolor(max(1, (int) ($width * $scale)), max(1, (int) ($height * $scale)));
                 imagealphablending($preview, false);
                 imagesavealpha($preview, true);

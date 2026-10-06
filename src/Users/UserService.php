@@ -18,6 +18,7 @@ final readonly class UserService
         private UserRepository $users,
         private PasswordHasher $passwords,
         private DatabaseManager $database,
+        private ?\Flex\Settings\SectionSettings $settings = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -34,7 +35,7 @@ final readonly class UserService
             'password_hash' => $this->passwords->hash($data['password']),
             'role' => $data['role'],
             'status' => $data['status'],
-            'email_verification_required' => filter_var($attributes['send_confirmation'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'email_verification_required' => ($this->settings?->all('users')['require_email_verification'] ?? '0') === '1' || filter_var($attributes['send_confirmation'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ]));
     }
 
@@ -158,7 +159,7 @@ final readonly class UserService
         $name = trim(is_string($attributes['name'] ?? null) ? $attributes['name'] : (string) $current?->getAttribute('name'));
         $email = strtolower(trim(is_string($attributes['email'] ?? null) ? $attributes['email'] : (string) $current?->getAttribute('email')));
         $password = is_string($attributes['password'] ?? null) ? $attributes['password'] : '';
-        $role = is_string($attributes['role'] ?? null) ? $attributes['role'] : (string) ($current?->getAttribute('role') ?? 'user');
+        $role = is_string($attributes['role'] ?? null) ? $attributes['role'] : (string) ($current?->getAttribute('role') ?? $this->settings?->all('users')['default_role'] ?? 'user');
         $status = is_string($attributes['status'] ?? null) ? $attributes['status'] : (string) ($current?->getAttribute('status') ?? 'active');
         $errors = [];
 
@@ -170,8 +171,9 @@ final readonly class UserService
         } elseif ($this->users->emailExists($email, $id)) {
             $errors[] = 'Имейл адресът вече се използва.';
         }
-        if (($creating || $password !== '') && strlen($password) < 12) {
-            $errors[] = 'Паролата трябва да съдържа поне 12 символа.';
+        $minimum = (int) ($this->settings?->all('users')['password_min_length'] ?? 12);
+        if (($creating || $password !== '') && (mb_strlen($password) < $minimum || strlen($password) > 72)) {
+            $errors[] = "Паролата трябва да съдържа поне $minimum символа и до 72 байта.";
         }
         if (($creating || $password !== '') && array_key_exists('password_confirmation', $attributes) && $password !== (string) $attributes['password_confirmation']) {
             $errors[] = 'Паролата и потвърждението не съвпадат.';

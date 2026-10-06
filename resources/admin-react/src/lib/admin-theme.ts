@@ -2,6 +2,26 @@ export type AdminThemeMode = "system" | "light" | "dark"
 
 const storageKey = "flex-admin-theme"
 
+export function applyAdminSettings(values: Record<string, string>): void {
+  if (["system", "light", "dark"].includes(values.theme))
+    setAdminTheme(values.theme as AdminThemeMode)
+  try {
+    window.localStorage.setItem("flex-admin-remember-tabs", values.remember_tabs)
+  } catch {
+    /* Storage is optional. */
+  }
+}
+
+export async function loadAdminSettings(): Promise<void> {
+  const response = await fetch("/api/admin/settings/admin", {
+    credentials: "include",
+    signal: AbortSignal.timeout(10000),
+  })
+  if (!response.ok) throw new Error("Предпочитанията на панела не могат да бъдат заредени.")
+  const body = await response.json()
+  applyAdminSettings(body.settings)
+}
+
 export function getAdminTheme(): AdminThemeMode {
   try {
     const value = window.localStorage.getItem(storageKey)

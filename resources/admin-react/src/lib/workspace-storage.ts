@@ -12,6 +12,7 @@ const simplePaths = new Set([
   "/plugins",
   "/plugins/catalog",
   "/updates",
+  "/settings",
   "/pages/create",
   "/users/create",
 ])
@@ -33,6 +34,8 @@ export function isWorkspacePath(value: unknown): value is string {
 
 export function readWorkspace(key: string): { paths: string[]; active: string | null } {
   try {
+    if (window.localStorage.getItem("flex-admin-remember-tabs") === "0")
+      return { paths: [], active: null }
     const saved = JSON.parse(window.localStorage.getItem(key) ?? "null")
     if (saved?.version !== 1 || !Array.isArray(saved.paths)) return { paths: [], active: null }
     const paths = [...new Set<string>(saved.paths.filter(isWorkspacePath))].slice(0, 30)
@@ -44,6 +47,10 @@ export function readWorkspace(key: string): { paths: string[]; active: string | 
 
 export function writeWorkspace(key: string, paths: string[], active: string) {
   try {
+    if (window.localStorage.getItem("flex-admin-remember-tabs") === "0") {
+      window.localStorage.removeItem(key)
+      return
+    }
     // Persist navigation only. Form values, passwords and API records stay in memory.
     window.localStorage.setItem(
       key,

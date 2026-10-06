@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState, type SyntheticEvent } from "react"
 import { LayoutTemplate, LoaderCircle, Navigation, Puzzle, Search } from "lucide-react"
 import { toast } from "sonner"
@@ -251,7 +252,7 @@ export function PageSettingsForm({
                   <label key={`${field.plugin}.${field.id}`}>
                     {field.label}
                     {field.type === "textarea" ? (
-                      <textarea
+                      <Textarea
                         value={String(current ?? "")}
                         maxLength={field.max_length ?? 10000}
                         onChange={(event) => setPluginSetting(field, event.target.value)}

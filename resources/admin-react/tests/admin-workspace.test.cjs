@@ -69,6 +69,7 @@ function harness(initial = "/", restored = null) {
     "theme-detail-page": ["ThemeDetailPage"],
     plugins: ["PluginCatalogPage", "PluginDetailPage", "PluginsPage"],
     "updates-page": ["UpdatesPage"],
+    "settings-page": ["SettingsPage"],
     "menus-page": ["MenusPage"],
     "menu-editor": ["MenuEditor"],
     "menu-structure-page": ["MenuStructurePage"],

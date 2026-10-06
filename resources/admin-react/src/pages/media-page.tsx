@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState } from "react"
 import { FileImage, Info, Upload } from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
@@ -119,6 +120,7 @@ export function MediaPage({
               <CollapsibleSection title="Качване на нови файлове" icon={Upload}>
                 <MediaUploader
                   maxBytes={uploadIndex.max_bytes}
+                  allowedTypes={uploadIndex.allowed_types}
                   onBusyChange={(uploading) => (uploading ? changed?.() : markSaved?.())}
                   onUploaded={(item) => setUploaded((current) => [item, ...current])}
                 />
@@ -264,7 +266,7 @@ export function MediaPage({
                       }
                     </label>
                     {field === "caption" || field === "description" ? (
-                      <textarea
+                      <Textarea
                         id={`media-${id}-${field}`}
                         value={record[field]}
                         maxLength={field === "caption" ? 2000 : 10000}

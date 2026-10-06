@@ -19,7 +19,7 @@ final class ThemeManager
     private ?PublicMenuApi $menuApi = null;
     private ?\Flex\Media\PublicMediaApi $mediaApi = null;
 
-    public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration) {}
+    public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration, private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null) {}
 
     /** @param array<string, mixed> $data */
     public function render(string $template, array $data = []): string
@@ -35,6 +35,10 @@ final class ThemeManager
     /** @param array<string, mixed> $data */
     public function renderForTheme(string $theme, string $template, array $data = []): string
     {
+        if ($this->generalSettings !== null) {
+            $data['site'] = $this->generalSettings->all();
+            $data['site_format_date'] = fn(\DateTimeInterface $date): string => $this->generalSettings->formatDate($date);
+        }
         if (preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) !== 1) {
             throw new \RuntimeException('Невалиден идентификатор на тема.');
         }
@@ -69,6 +73,7 @@ final class ThemeManager
         if ($this->twig === null || $this->loadedTheme !== $theme) {
             $this->twig = new Environment(new FilesystemLoader($templatesPath), ['cache' => false, 'strict_variables' => true]);
             $this->twig->addFunction(new TwigFunction('flex_menu', fn(string $slug): array => $this->menuApi?->get($slug) ?? []));
+            $this->twig->addFunction(new TwigFunction('site_format_date', fn(\DateTimeInterface $date): string => $this->generalSettings?->formatDate($date) ?? $date->format('d.m.Y H:i')));
             $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
             $this->loadedTheme = $theme;

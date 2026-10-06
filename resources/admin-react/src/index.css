@@ -4856,3 +4856,95 @@ select:focus-visible,
     gap: 0.25rem;
   }
 }
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.settings-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+.settings-tab svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+.settings-tab.is-active {
+  background: var(--surface-active);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.settings-placeholder {
+  display: grid;
+  gap: 0.75rem;
+}
+.settings-placeholder p {
+  margin: 0;
+}
+.settings-panel > form {
+  display: grid;
+  gap: 1.15rem;
+}
+.settings-panel .settings-field-wide {
+  grid-column: 1 / -1;
+}
+.settings-panel .settings-save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+.settings-panel .settings-save-button svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+/* Multiline controls use the same geometry and theme tokens as text fields. */
+input.react-ui-input,
+textarea.react-ui-textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.45rem;
+  background: var(--control-bg);
+  color: var(--control-text);
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 150ms, background-color 150ms;
+}
+textarea.react-ui-textarea {
+  line-height: 1.55;
+  resize: vertical;
+}
+input.react-ui-input::placeholder,
+textarea.react-ui-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+input.react-ui-input:hover:not(:disabled),
+textarea.react-ui-textarea:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+input.react-ui-input:focus,
+textarea.react-ui-textarea:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+input.react-ui-input:disabled,
+textarea.react-ui-textarea:disabled {
+  background: var(--surface-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}

@@ -49,17 +49,17 @@ final readonly class AdminUpdatesDataController
                 $state = $job->status === UpdateJobStore::STATUS_RUNNING && $job->type === 'platform' ? $this->states->read() : null;
                 if ($state !== null && $job->packageId !== null && $state->to !== $job->packageId) $state = null;
                 if ($state !== null) $phase = $state->phase;
-                return $this->responses->json(['job' => $job->toArray() + ['phase' => $phase, 'files_processed' => $state?->filesProcessed ?? 0, 'files_total' => $state?->filesTotal ?? 0]], 200, ['Cache-Control' => 'no-store']);
+                return $this->responses->json(['job' => $job->toArray() + ['phase' => $phase, 'files_processed' => $state->filesProcessed ?? 0, 'files_total' => $state->filesTotal ?? 0]], 200, ['Cache-Control' => 'no-store']);
             }
             return $this->responses->json(['error' => ['message' => 'Задачата за обновяване не е намерена.']], 404);
         }
 
         $currentVersion = $this->versions->current()->value;
-        $remote = ['current_version' => $currentVersion, 'channel' => $this->configuration->string('extensions.updates.channel'), 'available' => null, 'error' => null];
+        $remote = ['current_version' => $currentVersion, 'channel' => $this->catalog->channel() ?: $this->configuration->string('extensions.updates.channel'), 'available' => null, 'error' => null];
         $releases = [];
         try {
             $catalog = $this->catalog->platformCatalog();
-            $release = RemotePlatformUpdater::selectLatest($catalog, $this->versions->current(), $this->configuration->string('extensions.updates.channel'));
+            $release = RemotePlatformUpdater::selectLatest($catalog, $this->versions->current(), $this->catalog->channel());
             if ($release !== null) {
                 $remote['available'] = ['version' => $release->version->value, 'release_notes' => $release->releaseNotes, 'size' => $release->size, 'published_at' => $release->publishedAt, 'channel' => $release->channel->value];
             }

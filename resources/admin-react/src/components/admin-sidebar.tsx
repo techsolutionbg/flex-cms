@@ -12,6 +12,7 @@ import {
   UserRound,
   UsersRound,
   X,
+  Settings,
 } from "lucide-react"
 import { useContext, useState } from "react"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
@@ -47,7 +48,10 @@ const groups: SidebarGroup[] = [
   },
   {
     label: "Система",
-    items: [{ label: "Обновявания", icon: RefreshCw }],
+    items: [
+      { label: "Обновявания", icon: RefreshCw },
+      { label: "Настройки", icon: Settings },
+    ],
   },
   {
     label: "Акаунт",
@@ -64,6 +68,7 @@ const sidebarPaths: Record<string, string> = {
   Потребители: "/users",
   Разширения: "/plugins",
   Обновявания: "/updates",
+  Настройки: "/settings",
   Профил: "/profile",
 }
 

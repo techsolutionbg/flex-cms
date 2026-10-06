@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react"
 
 type LoadingButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean
+  icon?: ReactNode
   children: ReactNode
 }
 
@@ -10,6 +11,7 @@ export function LoadingButton({
   loading = false,
   disabled = false,
   children,
+  icon,
   className = "",
   ...props
 }: LoadingButtonProps) {
@@ -18,8 +20,9 @@ export function LoadingButton({
       {...props}
       className={`react-loading-button ${className}`}
       disabled={loading || disabled}
+      aria-busy={loading}
     >
-      {loading && <LoaderCircle className="react-button-spinner" />}
+      {loading ? <LoaderCircle className="react-button-spinner" aria-hidden="true" /> : icon}
       {children}
     </button>
   )

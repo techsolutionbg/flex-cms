@@ -14,11 +14,25 @@ export function MediaUploader({
   maxBytes,
   onUploaded,
   imagesOnly = false,
+  allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "application/pdf",
+    "audio/mpeg",
+    "audio/ogg",
+    "audio/wav",
+    "audio/x-wav",
+    "video/mp4",
+    "video/webm",
+  ],
   onBusyChange,
 }: {
   maxBytes: number
   onUploaded: (record: MediaRecord) => void
   imagesOnly?: boolean
+  allowedTypes?: string[]
   onBusyChange?: (busy: boolean) => void
 }) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -27,6 +41,27 @@ export function MediaUploader({
   const [dragging, setDragging] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const controller = useRef<AbortController | null>(null)
+  const acceptedTypes = allowedTypes.filter((type) => !imagesOnly || type.startsWith("image/"))
+  const acceptedLabels = [
+    ...new Set(
+      acceptedTypes.map(
+        (type) =>
+          ({
+            "image/jpeg": "JPEG",
+            "image/png": "PNG",
+            "image/webp": "WebP",
+            "image/gif": "GIF",
+            "application/pdf": "PDF",
+            "audio/mpeg": "MP3",
+            "audio/ogg": "OGG",
+            "audio/wav": "WAV",
+            "audio/x-wav": "WAV",
+            "video/mp4": "MP4",
+            "video/webm": "WebM",
+          })[type] ?? type,
+      ),
+    ),
+  ]
   useEffect(() => () => controller.current?.abort(), [])
   function patch(id: string, values: Partial<Task>) {
     setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...values } : task)))
@@ -47,6 +82,10 @@ export function MediaUploader({
     setBusy(true)
     onBusyChange?.(true)
     for (const { file, id } of entries) {
+      if (acceptedTypes.length === 0 || (file.type !== "" && !acceptedTypes.includes(file.type))) {
+        patch(id, { status: "error", error: "Този тип файл не е разрешен от настройките." })
+        continue
+      }
       if (
         imagesOnly &&
         !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)
@@ -102,25 +141,24 @@ export function MediaUploader({
         ref={input}
         type="file"
         multiple
-        disabled={busy}
-        accept={
-          imagesOnly
-            ? "image/jpeg,image/png,image/webp,image/gif"
-            : "image/jpeg,image/png,image/webp,image/gif,application/pdf,audio/mpeg,audio/ogg,audio/wav,video/mp4,video/webm"
-        }
+        disabled={busy || acceptedTypes.length === 0}
+        accept={acceptedTypes.join(",")}
         onChange={(event) => void upload(Array.from(event.target.files ?? []))}
         hidden
       />
       <Button
         variant="secondary"
         type="button"
-        disabled={busy}
+        disabled={busy || acceptedTypes.length === 0}
         onClick={() => input.current?.click()}
       >
         <Upload size={18} /> Избери файлове
       </Button>
       <p>Изберете до 20 файла наведнъж или ги пуснете тук. Качването започва автоматично.</p>
-      <p>До {mediaSize(maxBytes)} на файл. Изображения, PDF, аудио и видео. SVG не се поддържа.</p>
+      <p>
+        До {mediaSize(maxBytes)} на файл. Разрешени типове:{" "}
+        {acceptedLabels.length ? acceptedLabels.join(", ") : "няма"}. SVG не се поддържа.
+      </p>
       {error && (
         <p role="alert" className="react-form-error">
           {error}

@@ -19,8 +19,8 @@ final class MailServiceProvider implements ServiceProviderInterface
     public function definitions(): array
     {
         return [
-            MailerInterface::class => factory(static function (ConfigRepositoryInterface $configuration): MailerInterface {
-                return new Mailer(Transport::fromDsn($configuration->string('mail.dsn')));
+            MailerInterface::class => factory(static function (ConfigRepositoryInterface $configuration, \Flex\Settings\SectionSettings $settings): MailerInterface {
+                return new \Flex\Mail\SettingsMailer(new Mailer(Transport::fromDsn($configuration->string('mail.dsn'))), $settings);
             }),
             EmailVerificationService::class => static fn(ContainerInterface $container): EmailVerificationService => new EmailVerificationService(
                 $container->get(MailerInterface::class),

@@ -37,7 +37,7 @@ final readonly class AdminMediaController
                 if (!is_string($view)) {
                     throw new MediaException('Невалиден изглед.', 422);
                 }
-                $result = $id === null ? ['media' => $this->media->index($view), 'max_bytes' => $this->media->maxBytes(), 'permissions' => $permissions] : ['media' => $this->media->get($id), 'usage' => $this->media->usage($id), 'permissions' => $permissions];
+                $result = $id === null ? ['media' => $this->media->index($view), 'max_bytes' => $this->media->maxBytes(), 'allowed_types' => $this->media->allowedTypes(), 'permissions' => $permissions] : ['media' => $this->media->get($id), 'usage' => $this->media->usage($id), 'permissions' => $permissions];
             } elseif ($method === 'POST' && $id === null) {
                 $file = $request->getUploadedFiles()['file'] ?? null;
                 if (!$file instanceof UploadedFileInterface) {

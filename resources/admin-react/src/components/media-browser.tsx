@@ -267,6 +267,7 @@ export function MediaBrowser({
       {picker && view === "active" && index?.permissions.upload && (
         <MediaUploader
           maxBytes={index.max_bytes}
+          allowedTypes={index.allowed_types}
           imagesOnly={imagesOnly}
           onUploaded={(record) =>
             setIndex((current) =>

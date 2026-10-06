@@ -23,6 +23,7 @@ final class AuthenticationManager implements AuthenticationInterface
         private readonly PasswordHasher $passwords,
         private readonly SessionInterface $session,
         private readonly LoginThrottle $throttle,
+        private readonly ?\Flex\Settings\SectionSettings $settings = null,
     ) {}
 
     public function user(): ?AuthenticatedUser
@@ -32,6 +33,12 @@ final class AuthenticationManager implements AuthenticationInterface
         }
 
         $this->resolved = true;
+        $lastActivity = $this->session->get('auth_last_activity');
+        $idleMinutes = (int) ($this->settings?->all('users')['session_idle_minutes'] ?? 120);
+        if (is_int($lastActivity) && time() - $lastActivity >= $idleMinutes * 60) {
+            $this->session->invalidate();
+            return null;
+        }
         $userId = $this->session->get(self::SESSION_KEY);
         if (!is_int($userId) && !(is_string($userId) && ctype_digit($userId))) {
             return null;
@@ -44,6 +51,7 @@ final class AuthenticationManager implements AuthenticationInterface
             return null;
         }
 
+        $this->session->put('auth_last_activity', time());
         return $this->currentUser = $user->identity();
     }
 
@@ -81,6 +89,7 @@ final class AuthenticationManager implements AuthenticationInterface
         $this->session->regenerate();
         $this->session->put(self::SESSION_KEY, (int) $user->getAttribute('id'));
         $this->session->put('auth_version', (int) $user->getAttribute('auth_version'));
+        $this->session->put('auth_last_activity', time());
         $this->throttle->clear($email, $ipAddress);
         $this->resolved = true;
         $this->currentUser = $user->identity();

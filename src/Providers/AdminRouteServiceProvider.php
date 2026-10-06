@@ -40,6 +40,10 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/plugins/source', \Flex\Http\Controller\Admin\AdminPluginSourceController::class, 'api.admin.plugins.source', $auth);
         $r->add('GET', '/api/admin/plugins/catalog', AdminPluginCatalogDataController::class, 'api.admin.plugins.catalog', $auth);
         $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
+        $r->add('GET', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general', $auth);
+        $r->add('PUT', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general.save', $write);
+        $r->add('GET', '/api/admin/settings/{section:public|users|media|mail|updates|admin|maintenance}', \Flex\Http\Controller\Admin\AdminSectionSettingsController::class, 'api.admin.settings.section', $auth);
+        $r->add('PUT', '/api/admin/settings/{section:public|users|media|mail|updates|admin|maintenance}', \Flex\Http\Controller\Admin\AdminSectionSettingsController::class, 'api.admin.settings.section.save', $write);
         $r->add('GET', '/api/admin/theme-capabilities', AdminThemeCapabilitiesController::class, 'api.admin.theme-capabilities', $auth);
         $r->add('GET', '/api/admin/menus', AdminMenusDataController::class, 'api.admin.menus', $auth);
         $r->add('GET', '/api/admin/menus/{id}', AdminMenusDataController::class, 'api.admin.menus.show', $auth);

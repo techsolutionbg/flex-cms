@@ -31,7 +31,7 @@ final class RemotePlatformUpdater
         $current = $this->versions->current();
         $release = $this->resolveRelease($targetVersion, $current);
         if ($release === null) {
-            throw new RemoteCatalogException(sprintf('No compatible %s platform update is available for %s.', $this->configuration->string('extensions.updates.channel'), $current->value));
+            throw new RemoteCatalogException(sprintf('No compatible %s platform update is available for %s.', $this->catalog->channel(), $current->value));
         }
         $this->assertPluginCompatibility($release->version);
 
@@ -56,7 +56,7 @@ final class RemotePlatformUpdater
     {
         $current ??= $this->versions->current();
         $catalog = $this->catalog->platformCatalog();
-        $channel = $this->configuration->string('extensions.updates.channel');
+        $channel = $this->catalog->channel();
         if ($targetVersion === null || $targetVersion === '') {
             return self::selectLatest($catalog, $current, $channel);
         }

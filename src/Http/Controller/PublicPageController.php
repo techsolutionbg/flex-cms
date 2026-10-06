@@ -18,11 +18,18 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class PublicPageController
 {
-    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ?\Flex\Media\PublicMediaApi $media = null) {}
+    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ?\Flex\Media\PublicMediaApi $media = null, private ?\Flex\Settings\SectionSettings $siteSettings = null, private ?\Flex\Contracts\Http\ViewRendererInterface $views = null) {}
 
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
+        $publicSettings = $this->siteSettings?->all('public');
+        if (($publicSettings['closed'] ?? '0') === '1') {
+            $html = $this->views?->render('system/site-closed.twig', ['message' => $publicSettings['closed_message']]);
+            return $html === null
+                ? $this->responses->json(['message' => $publicSettings['closed_message']], 503)
+                : $this->responses->html($html, 503, ['Retry-After' => '300', 'Cache-Control' => 'no-store']);
+        }
         $slug = trim((string) ($arguments['slug'] ?? ''), '/');
         $publicPages = $this->pages->publicPageSet();
         $page = $slug === '' ? $this->homePage($publicPages) : $publicPages->findPublishedByPath($slug);
@@ -58,6 +65,10 @@ final readonly class PublicPageController
 
     private function homePage(PublicPageSet $publicPages): ?Page
     {
+        $id = (int) ($this->siteSettings?->all('public')['home_page_id'] ?? 0);
+        if ($id > 0) {
+            return $publicPages->findPublishedById($id);
+        }
         $slug = trim($this->configuration->string('app.public_home_slug', 'home'));
 
         return $slug === '' ? null : $publicPages->findPublishedBySlug($slug);

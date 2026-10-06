@@ -16,11 +16,13 @@ final class MediaServiceTest extends TestCase
     private DatabaseManager $database;
     private MediaService $media;
     private string $directory;
+    private ConfigurationRepository $config;
 
     protected function setUp(): void
     {
         $this->directory = sys_get_temp_dir() . '/flex-media-' . bin2hex(random_bytes(5));
         $config = new ConfigurationRepository(['paths' => ['public_media' => 'media'], 'filesystems' => ['media' => ['max_upload_mb' => 1]], 'database' => ['default' => 'sqlite', 'connections' => ['sqlite' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]]]);
+        $this->config = $config;
         $this->database = new DatabaseManager($config);
         $this->database->schema()->create('users', static function (Blueprint $table): void {
             $table->increments('id');
@@ -79,6 +81,33 @@ final class MediaServiceTest extends TestCase
         $bytes = (string) ob_get_clean();
         imagedestroy($image);
         return new UploadedFile(Stream::create($bytes), strlen($bytes), UPLOAD_ERR_OK, '../снимка.php', 'application/x-php');
+    }
+
+    public function testSettingsControlThumbnailSizeAndRejectDisabledCategories(): void
+    {
+        $this->database->schema()->create('settings', static function (Blueprint $table): void {
+            $table->string('key')->primary(); $table->text('value'); $table->string('type'); $table->string('group'); $table->boolean('autoload'); $table->timestamps();
+        });
+        $settings = new \Flex\Settings\SectionSettings($this->database, $this->config);
+        $values = array_replace($settings->all('media'), ['thumbnail_edge' => '200']);
+        $settings->save('media', $values);
+        $media = new MediaService($this->database, new ProjectPaths($this->directory, $this->config), $this->config, $settings);
+        $record = $media->upload($this->image(), 7);
+        $preview = getimagesize($this->directory . '/media/' . $record['thumbnail_path']);
+        self::assertSame([200, 150], array_slice($preview, 0, 2));
+        $settings->save('media', array_replace($values, ['generate_thumbnails' => '0']));
+        self::assertNull($media->upload($this->image(), 7)['thumbnail_path']);
+        $settings->save('media', array_replace($values, ['allow_images' => '0']));
+        try { $media->upload($this->image(), 7); self::fail('Disabled image category accepted'); }
+        catch (MediaException $error) { self::assertSame(422, $error->getCode()); }
+        self::assertSame(2, $this->database->connection()->table('media')->count());
+        foreach (['max_upload_mb' => '0', 'thumbnail_edge' => '1201', 'allow_audio' => 'yes'] as $key => $value) {
+            try { $settings->save('media', array_replace($values, [$key => $value])); self::fail('Invalid media setting accepted'); }
+            catch (\InvalidArgumentException $error) { self::assertSame(422, $error->getCode()); }
+        }
+        try { $settings->save('media', array_replace($values, ['allow_images' => '0', 'allow_documents' => '0', 'allow_audio' => '0', 'allow_video' => '0'])); self::fail('All categories disabled'); }
+        catch (\InvalidArgumentException $error) { self::assertSame(422, $error->getCode()); }
+        self::assertSame(1048576, $media->maxBytes());
     }
 
     public function testUploadUsesContentTypeAndMakesThumbnailWithoutChangingOriginal(): void

@@ -28,7 +28,7 @@ final class UpdateServiceProvider implements ServiceProviderInterface
         return [
             PlatformVersionRegistry::class => create()->constructor(get('base_path')),
             RemoteCatalogTransportInterface::class => autowire(CurlRemoteCatalogTransport::class),
-            RemoteCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path')),
+            RemoteCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path'), get(\Flex\Settings\SectionSettings::class)),
             ThemeCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path')),
             RemotePackageTransportInterface::class => autowire(CurlRemotePackageTransport::class),
             RemotePackageDownloader::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemotePackageTransportInterface::class), get('base_path')),

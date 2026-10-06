@@ -21,6 +21,7 @@ export type MediaRecord = {
 export type MediaIndex = {
   media: MediaRecord[]
   max_bytes: number
+  allowed_types?: string[]
   permissions: Record<"view" | "upload" | "edit" | "delete", boolean>
 }
 

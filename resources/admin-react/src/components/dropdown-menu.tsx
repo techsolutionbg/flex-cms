@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react"
 import { createPortal } from "react-dom"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 
 type DropdownMenuProps = {
@@ -21,17 +21,38 @@ export function DropdownMenu({
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 176 })
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 176, maxHeight: 320 })
 
   function reposition() {
     const rect = triggerRef.current?.getBoundingClientRect()
-    if (rect)
-      setPosition({
-        top: rect.bottom + 6,
-        left: Math.max(8, rect.right - Math.max(rect.width, 176)),
-        width: Math.max(rect.width, 176),
-      })
+    if (!rect || !menuRef.current) return
+    const viewport = window.visualViewport
+    const viewportTop = viewport?.offsetTop ?? 0
+    const viewportLeft = viewport?.offsetLeft ?? 0
+    const viewportHeight = viewport?.height ?? window.innerHeight
+    const viewportWidth = viewport?.width ?? window.innerWidth
+    const below = Math.max(0, viewportTop + viewportHeight - rect.bottom - 14)
+    const above = Math.max(0, rect.top - viewportTop - 14)
+    const desiredHeight = Math.min(menuRef.current.scrollHeight + 2, 320)
+    const openAbove = below < desiredHeight && above > below
+    const maxHeight = Math.min(320, openAbove ? above : below)
+    const height = Math.min(desiredHeight, maxHeight)
+    const width = Math.min(Math.max(rect.width, 176), Math.max(0, viewportWidth - 16))
+    setPosition({
+      top: Math.max(viewportTop + 8, openAbove ? rect.top - 6 - height : rect.bottom + 6),
+      left: Math.max(
+        viewportLeft + 8,
+        Math.min(rect.right - width, viewportLeft + viewportWidth - width - 8),
+      ),
+      width,
+      maxHeight,
+    })
   }
+
+  useLayoutEffect(() => {
+    if (open) reposition()
+  }, [open, children])
 
   useEffect(() => {
     function closeOnOutside(event: MouseEvent) {
@@ -50,12 +71,16 @@ export function DropdownMenu({
       reposition()
       window.addEventListener("resize", reposition)
       window.addEventListener("scroll", reposition, true)
+      window.visualViewport?.addEventListener("resize", reposition)
+      window.visualViewport?.addEventListener("scroll", reposition)
     }
     return () => {
       document.removeEventListener("mousedown", closeOnOutside)
       document.removeEventListener("keydown", closeOnEscape)
       window.removeEventListener("resize", reposition)
       window.removeEventListener("scroll", reposition, true)
+      window.visualViewport?.removeEventListener("resize", reposition)
+      window.visualViewport?.removeEventListener("scroll", reposition)
     }
   }, [open])
 
@@ -77,7 +102,14 @@ export function DropdownMenu({
           <div
             className={`universal-dropdown-menu${rootRef.current?.closest(".media-page-content, .media-picker-dialog") ? " media-dropdown-menu" : ""}`}
             role="menu"
-            style={{ top: position.top, left: position.left, minWidth: position.width }}
+            ref={menuRef}
+            style={{
+              top: position.top,
+              left: position.left,
+              width: position.width,
+              maxHeight: position.maxHeight,
+              overflowY: "auto",
+            }}
             onClick={() => setOpen(false)}
           >
             {children}

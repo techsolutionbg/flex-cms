@@ -15,6 +15,7 @@ final class NativeSession implements SessionInterface
     public function __construct(
         private readonly ConfigRepositoryInterface $configuration,
         private readonly ProjectPaths $paths,
+        private readonly ?\Flex\Settings\SectionSettings $settings = null,
     ) {}
 
     public function start(): void
@@ -37,8 +38,9 @@ final class NativeSession implements SessionInterface
         session_name($this->configuration->string('session.name'));
         session_save_path($savePath);
         $domain = $this->configuration->get('session.domain');
+        $lifetime = (int) ($this->settings?->all('users')['session_idle_minutes'] ?? $this->configuration->int('session.lifetime')) * 60;
         session_set_cookie_params([
-            'lifetime' => $this->configuration->int('session.lifetime') * 60,
+            'lifetime' => $this->settings === null ? $lifetime : 0,
             'path' => $this->configuration->string('session.path'),
             'domain' => is_string($domain) ? $domain : null,
             'secure' => $this->configuration->bool('session.secure'),
@@ -50,7 +52,7 @@ final class NativeSession implements SessionInterface
             'use_only_cookies' => 1,
             'cookie_httponly' => 1,
             'cookie_secure' => $this->configuration->bool('session.secure') ? 1 : 0,
-            'gc_maxlifetime' => $this->configuration->int('session.lifetime') * 60,
+            'gc_maxlifetime' => $lifetime,
         ])) {
             throw new \RuntimeException('The session could not be started.');
         }

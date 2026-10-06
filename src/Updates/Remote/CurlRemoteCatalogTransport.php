@@ -13,8 +13,10 @@ final class CurlRemoteCatalogTransport implements RemoteCatalogTransportInterfac
     public function __construct(
         private readonly int $timeout = 10,
         private readonly string $userAgent = 'Flex-CMS-Update-Client/1.0',
+        private readonly ?\Flex\Settings\SectionSettings $settings = null,
     ) {}
 
+    /** @param list<string> $headers */
     public function get(string $url, array $headers = []): RemoteCatalogTransportResponse
     {
         $handle = curl_init($url);
@@ -23,13 +25,14 @@ final class CurlRemoteCatalogTransport implements RemoteCatalogTransportInterfac
         }
 
         $responseHeaders = [];
+        $timeout = (int) ($this->settings?->all('updates')['catalog_timeout'] ?? $this->timeout);
         curl_setopt_array($handle, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_CONNECTTIMEOUT => min($this->timeout, 10),
-            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_CONNECTTIMEOUT => min($timeout, 10),
+            CURLOPT_TIMEOUT => $timeout,
             CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_USERAGENT => $this->userAgent,
+            CURLOPT_USERAGENT => $this->userAgent !== '' ? $this->userAgent : 'Flex-CMS-Update-Client/1.0',
             CURLOPT_HEADERFUNCTION => static function ($handle, string $line) use (&$responseHeaders): int {
                 $separator = strpos($line, ':');
                 if ($separator !== false) {
@@ -49,7 +52,7 @@ final class CurlRemoteCatalogTransport implements RemoteCatalogTransportInterfac
         $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         curl_close($handle);
 
-        if ($body === false) {
+        if (!is_string($body)) {
             throw new RemoteCatalogException(sprintf('The update catalog request failed: %s', $error !== '' ? $error : 'unknown transport error.'));
         }
 
