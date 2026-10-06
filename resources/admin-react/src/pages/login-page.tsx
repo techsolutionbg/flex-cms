@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PasswordRecoveryPage } from "./password-recovery-page"
 export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [recovering, setRecovering] = useState(false)
 
   async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -51,11 +53,16 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
     }
   }
 
+  if (recovering)
+    return <PasswordRecoveryPage initialEmail={email} onBack={() => setRecovering(false)} />
+
   return (
     <main className="react-login-screen flex min-h-screen items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center">
-          <img className="mx-auto h-auto w-52" src="/assets/brand/logo.png" alt="Flex CMS" />
+          <div className="react-login-brand mx-auto w-52">
+            <img className="h-auto w-full" src="/assets/brand/logo.png" alt="Flex CMS" />
+          </div>
           <p className="react-login-description mt-5">Влезте, за да управлявате сайта.</p>
         </div>
         {error && (
@@ -107,6 +114,18 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
             )}
           </Button>
         </form>
+        <Button
+          variant="secondary"
+          className="mt-4 w-full"
+          type="button"
+          disabled={submitting}
+          onClick={() => {
+            setPassword("")
+            setRecovering(true)
+          }}
+        >
+          Забравена парола?
+        </Button>
       </Card>
     </main>
   )

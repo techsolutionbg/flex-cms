@@ -109,8 +109,8 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "${MAILPIT_SMTP_FORWARD_PORT:-1025}:1025"
-      - "${MAILPIT_FORWARD_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_FORWARD_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_FORWARD_PORT:-8025}:8025"
     healthcheck:
       test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8025/livez"]
       interval: 10s

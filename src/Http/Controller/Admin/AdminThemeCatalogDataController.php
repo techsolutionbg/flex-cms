@@ -20,6 +20,7 @@ final readonly class AdminThemeCatalogDataController
         private ThemeManager $themes,
         private ThemeCatalogClient $catalog,
         private ResponseFactoryInterface $responses,
+        private \Flex\Updates\Remote\RemoteThemeInstaller $installer,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -36,10 +37,7 @@ final readonly class AdminThemeCatalogDataController
             $catalog = [];
             foreach ($index->manifests as $id => $_manifestUrl) {
                 $manifest = $this->catalog->manifest($id);
-                $releases = array_values(array_filter($manifest->releases, static fn($release): bool => $release->channel->value === 'stable'));
-                if ($releases === []) $releases = $manifest->releases;
-                usort($releases, static fn($left, $right): int => version_compare($right->version, $left->version));
-                $latest = $releases[0] ?? null;
+                $latest = $this->installer->latestCompatibleRelease($manifest, $id);
                 if ($latest === null) continue;
 
                 $local = array_values(array_filter($installed, static fn(array $theme): bool => $theme['id'] === $id))[0] ?? null;

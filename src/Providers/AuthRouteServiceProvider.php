@@ -23,6 +23,7 @@ final class AuthRouteServiceProvider implements ServiceProviderInterface
         $r->add('POST', '/verify-email', EmailVerificationController::class, 'auth.verify-email', [CsrfMiddleware::class]);
         $r->get('/api/auth/csrf', CsrfTokenController::class, 'api.auth.csrf');
         $r->add('POST', '/api/auth/login', LoginController::class, 'api.auth.login', [CsrfMiddleware::class]);
+        $r->add('POST', '/api/auth/password/{stage}', \Flex\Http\Controller\Auth\PasswordRecoveryController::class, 'api.auth.password', [CsrfMiddleware::class]);
         $r->add('POST', '/api/auth/logout', LogoutController::class, 'api.auth.logout', [CsrfMiddleware::class,RequireAuthenticationMiddleware::class]);
         $r->add('GET', '/api/auth/me', CurrentUserController::class, 'api.auth.me', [RequireAuthenticationMiddleware::class]);
     }

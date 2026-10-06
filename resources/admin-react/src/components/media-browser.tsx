@@ -42,7 +42,10 @@ export function MediaBrowser({
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState("")
-  const [deleting, setDeleting] = useState<MediaRecord | null>(null)
+  const [deleting, setDeleting] = useState<{
+    record: MediaRecord
+    operation: "trash" | "force"
+  } | null>(null)
   const [revision, setRevision] = useState(0)
   useEffect(() => {
     const refresh = () => setRevision((current) => current + 1)
@@ -122,7 +125,10 @@ export function MediaBrowser({
               {picker ? "Избери" : "Преглед и редакция"}
             </DropdownOption>
             {!picker && index?.permissions.delete && (
-              <DropdownOption disabled={busy} onClick={() => void action(record, "trash")}>
+              <DropdownOption
+                disabled={busy}
+                onClick={() => setDeleting({ record, operation: "trash" })}
+              >
                 Премести в кошчето
               </DropdownOption>
             )}
@@ -132,7 +138,10 @@ export function MediaBrowser({
             <DropdownOption disabled={busy} onClick={() => void action(record, "restore")}>
               Възстанови
             </DropdownOption>
-            <DropdownOption disabled={busy} onClick={() => setDeleting(record)}>
+            <DropdownOption
+              disabled={busy}
+              onClick={() => setDeleting({ record, operation: "force" })}
+            >
               Изтрий завинаги
             </DropdownOption>
           </>
@@ -324,13 +333,20 @@ export function MediaBrowser({
       )}
       <ConfirmDialog
         open={!!deleting}
-        title="Изтриване на файл"
-        message={`Да изтрием ли окончателно „${deleting?.title}“? Файлът и миниатюрата ще бъдат премахнати. Използваните в страници файлове са защитени.`}
+        title={deleting?.operation === "trash" ? "Преместване в кошчето" : "Изтриване на файл"}
+        message={
+          deleting?.operation === "trash"
+            ? `Да преместим ли „${deleting.record.title || deleting.record.original_name}“ в кошчето? Файлът може да бъде възстановен по-късно.`
+            : `Да изтрием ли окончателно „${deleting?.record.title || deleting?.record.original_name}“? Файлът и миниатюрата ще бъдат премахнати. Използваните в страници файлове са защитени.`
+        }
         busy={busy}
-        confirmLabel="Изтрий завинаги"
-        onCancel={() => setDeleting(null)}
+        confirmLabel={deleting?.operation === "trash" ? "Премести в кошчето" : "Изтрий завинаги"}
+        danger={deleting?.operation === "force"}
+        onCancel={() => {
+          if (!busy) setDeleting(null)
+        }}
         onConfirm={() => {
-          if (deleting) void action(deleting, "force")
+          if (deleting) void action(deleting.record, deleting.operation)
         }}
       />
     </div>

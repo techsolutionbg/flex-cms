@@ -8,6 +8,10 @@ import { AdminWorkspace } from "@/components/admin-workspace"
 import { adminRedirectTarget, adminRoute, adminUrl } from "@/lib/admin-routes"
 import { getAdminTheme, setAdminTheme } from "@/lib/admin-theme"
 import "./index.css"
+import { installRequestTracking } from "@/lib/request-tracker"
+import { GlobalLoadingBar } from "@/components/global-loading-bar"
+
+installRequestTracking()
 
 function App() {
   const installerRoute = window.location.pathname.replace(/\/$/, "").endsWith("/install")
@@ -169,4 +173,9 @@ function App() {
     </>
   )
 }
-createRoot(document.getElementById("root")!).render(<App />)
+createRoot(document.getElementById("root")!).render(
+  <>
+    <GlobalLoadingBar />
+    <App />
+  </>,
+)

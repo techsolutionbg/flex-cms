@@ -38,6 +38,7 @@ final class AuthenticationManagerTest extends TestCase
             $table->string('password_hash');
             $table->string('role');
             $table->string('status');
+            $table->integer('auth_version')->default(0);
             $table->dateTime('last_login_at')->nullable();
             $table->dateTime('deleted_at')->nullable();
             $table->timestamps();
@@ -77,6 +78,14 @@ final class AuthenticationManagerTest extends TestCase
         self::assertSame((int) $user->getAttribute('id'), $this->session->get('auth_user_id'));
         self::assertSame('admin@example.test', $authentication->user()?->email);
         self::assertNotNull($this->users->find((int) $user->getAttribute('id'))?->getAttribute('last_login_at'));
+    }
+
+    public function testPasswordResetInvalidatesAnExistingSession(): void
+    {
+        $user = $this->users->create(['name' => 'Admin', 'email' => 'admin@example.test', 'password_hash' => $this->passwords->hash('correct-password'), 'role' => 'super_admin', 'status' => 'active']);
+        self::assertTrue($this->manager()->attempt('admin@example.test', 'correct-password', '127.0.0.1'));
+        $this->database->connection()->table('users')->where('id', $user->getAttribute('id'))->update(['auth_version' => 1]);
+        self::assertNull($this->manager()->user());
     }
 
     public function testItRejectsInvalidCredentialsAndDisabledUsers(): void

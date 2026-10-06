@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+.admin-global-loading {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  z-index: 10000;
+  pointer-events: none;
+  overflow: hidden;
+}
+.admin-global-loading span {
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: var(--control-accent);
+  animation: admin-global-loading 1.2s ease-in-out infinite;
+}
+.admin-global-loading.is-complete span {
+  width: 100%;
+  animation: none;
+}
+@keyframes admin-global-loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(385%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-global-loading span {
+    width: 100%;
+    animation: none;
+  }
+}
+
+:root {
+  --brand-logo-surface: #fff;
+}
+.react-login-brand {
+  border-radius: 0.65rem;
+}
+:root[data-admin-theme="dark"] .react-login-brand {
+  background: var(--brand-logo-surface);
+  padding: 0.65rem 0.8rem;
+}
+
 .menu-locations-list {
   display: grid;
   gap: 10px;

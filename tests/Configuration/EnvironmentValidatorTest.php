@@ -16,13 +16,11 @@ final class EnvironmentValidatorTest extends TestCase
     public function testProjectConfigurationIsValid(): void
     {
         $basePath = dirname(__DIR__, 2);
-        copy($basePath . '/.env', $basePath . '/storage/.env');
         (new EnvironmentLoader())->load($basePath);
         $configuration = (new ConfigurationLoader())->load($basePath, false);
 
         (new EnvironmentValidator())->validate($configuration);
 
-        copy($basePath . '/.env', $basePath . '/storage/.env');
 
         self::addToAssertionCount(1);
     }

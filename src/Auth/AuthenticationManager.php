@@ -38,7 +38,7 @@ final class AuthenticationManager implements AuthenticationInterface
         }
 
         $user = $this->users->find((int) $userId);
-        if ($user === null || $user->getAttribute('status') !== 'active' || ($user->getAttribute('email_verification_required') === true && $user->getAttribute('email_verified_at') === null)) {
+        if ($user === null || (int) $this->session->get('auth_version', 0) !== (int) $user->getAttribute('auth_version') || $user->getAttribute('status') !== 'active' || ($user->getAttribute('email_verification_required') === true && $user->getAttribute('email_verified_at') === null)) {
             $this->session->remove(self::SESSION_KEY);
 
             return null;
@@ -80,6 +80,7 @@ final class AuthenticationManager implements AuthenticationInterface
 
         $this->session->regenerate();
         $this->session->put(self::SESSION_KEY, (int) $user->getAttribute('id'));
+        $this->session->put('auth_version', (int) $user->getAttribute('auth_version'));
         $this->throttle->clear($email, $ipAddress);
         $this->resolved = true;
         $this->currentUser = $user->identity();

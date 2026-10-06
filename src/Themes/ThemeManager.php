@@ -204,6 +204,9 @@ final class ThemeManager
                         : array_values(array_filter(array_map(static fn(mixed $support, mixed $enabled): string => $enabled && is_string($support) ? trim($support) : '', array_keys($supports), $supports), static fn(string $support): bool => $support !== ''));
                 }
                 $screenshot = is_string($manifest['screenshot'] ?? null) ? trim($manifest['screenshot']) : '';
+                if (str_starts_with($screenshot, 'assets/')) {
+                    $screenshot = substr($screenshot, strlen('assets/'));
+                }
                 if ($screenshot !== '' && preg_match('/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._\/-]*$/', $screenshot) === 1 && is_file($path . '/assets/' . $screenshot)) {
                     $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $screenshot)));
                 }

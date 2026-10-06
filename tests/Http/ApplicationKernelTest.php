@@ -45,20 +45,20 @@ final class ApplicationKernelTest extends TestCase
         self::assertStringContainsString('GET', $methodNotAllowed->getHeaderLine('Allow'));
     }
 
-    public function testItRedirectsUnauthenticatedVisitorsAwayFromTheAdminPanel(): void
+    public function testItRejectsUnauthenticatedAdminApiRequests(): void
     {
-        $response = $this->kernel->handle(new ServerRequest('GET', 'http://localhost/admin'));
+        $response = $this->kernel->handle((new ServerRequest('GET', 'http://localhost/api/auth/me'))->withHeader('Accept', 'application/json'));
 
-        self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/login', $response->getHeaderLine('Location'));
+        self::assertSame(401, $response->getStatusCode());
+        self::assertSame(401, json_decode((string) $response->getBody(), true)['error']['status']);
     }
 
-    public function testItRedirectsUnauthenticatedVisitorsAwayFromTheUpdatesPanel(): void
+    public function testItRejectsUnauthenticatedUpdatesApiRequests(): void
     {
-        $response = $this->kernel->handle(new ServerRequest('GET', 'http://localhost/admin/updates'));
+        $response = $this->kernel->handle((new ServerRequest('GET', 'http://localhost/api/admin/updates'))->withHeader('Accept', 'application/json'));
 
-        self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/login', $response->getHeaderLine('Location'));
+        self::assertSame(401, $response->getStatusCode());
+        self::assertSame(401, json_decode((string) $response->getBody(), true)['error']['status']);
     }
 
     public function testItRejectsUntrustedHostsBeforeRouting(): void
