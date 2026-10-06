@@ -17,6 +17,7 @@ final class ThemeManager
     private ?Environment $twig = null;
     private ?string $loadedTheme = null;
     private ?PublicMenuApi $menuApi = null;
+    private ?\Flex\Media\PublicMediaApi $mediaApi = null;
 
     public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration) {}
 
@@ -40,6 +41,9 @@ final class ThemeManager
         $menuApi = ($data['__flex_menu_api'] ?? null) instanceof PublicMenuApi ? $data['__flex_menu_api'] : null;
         unset($data['__flex_menu_api']);
         $this->menuApi = $menuApi;
+        $mediaApi = ($data['__flex_media_api'] ?? null) instanceof \Flex\Media\PublicMediaApi ? $data['__flex_media_api'] : null;
+        unset($data['__flex_media_api']);
+        $this->mediaApi = $mediaApi;
         $phpTemplate = $this->phpTemplate($theme, $template);
         if ($phpTemplate !== null) {
             $themeAsset = fn(string $asset): string => ltrim($asset, '/') === 'style.css'
@@ -49,7 +53,8 @@ final class ThemeManager
             try {
                 $flexMenu = static fn(string $slug): array => $menuApi?->get($slug) ?? [];
                 $flexMenuHtml = static fn(string $slug): string => $menuApi?->html($slug) ?? '';
-                extract($data + ['theme' => $theme, 'theme_asset' => $themeAsset, 'flex_menu' => $flexMenu, 'flex_menu_html' => $flexMenuHtml], EXTR_SKIP);
+                $flexMedia = static fn(int $id): array => $mediaApi?->get($id) ?? [];
+                extract($data + ['theme' => $theme, 'theme_asset' => $themeAsset, 'flex_menu' => $flexMenu, 'flex_menu_html' => $flexMenuHtml, 'flex_media' => $flexMedia], EXTR_SKIP);
                 include $phpTemplate;
                 return (string) ob_get_clean();
             } catch (\Throwable $exception) {
@@ -64,6 +69,7 @@ final class ThemeManager
         if ($this->twig === null || $this->loadedTheme !== $theme) {
             $this->twig = new Environment(new FilesystemLoader($templatesPath), ['cache' => false, 'strict_variables' => true]);
             $this->twig->addFunction(new TwigFunction('flex_menu', fn(string $slug): array => $this->menuApi?->get($slug) ?? []));
+            $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
             $this->loadedTheme = $theme;
         }

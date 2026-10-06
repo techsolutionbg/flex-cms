@@ -23,6 +23,7 @@ final readonly class PageService
         private ?ContentBlockRegistry $contentBlocks = null,
         private ?PageFieldRegistry $pageFields = null,
         private ?PageSettingsRegistry $pageSettings = null,
+        private ?\Flex\Media\MediaService $media = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -98,7 +99,7 @@ final readonly class PageService
     public function forceDelete(int $id): void
     {
         $page = $this->pages->find($id, true);
-        if ($page === null || $page->deleted_at === null) {
+        if ($page === null || $page->getAttribute('deleted_at') === null) {
             throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
         }
         $page->forceDelete();
@@ -108,7 +109,7 @@ final readonly class PageService
     public function restore(int $id): void
     {
         $page = $this->pages->find($id, true);
-        if ($page === null || $page->deleted_at === null) {
+        if ($page === null || $page->getAttribute('deleted_at') === null) {
             throw new PageNotFound(sprintf('Trashed page %d was not found.', $id));
         }
         $page->restore();
@@ -119,7 +120,9 @@ final readonly class PageService
     public function updateSettings(int $id, array $settings): Page
     {
         $page = $this->pages->find($id);
-        if ($page === null) throw new PageNotFound(sprintf('Page %d was not found.', $id));
+        if ($page === null) {
+            throw new PageNotFound(sprintf('Page %d was not found.', $id));
+        }
 
         $page->setAttribute('settings', [
             'seo_title' => mb_substr(trim((string) ($settings['seo_title'] ?? '')), 0, 190),
@@ -152,7 +155,10 @@ final readonly class PageService
         return $fields;
     }
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * @param array<string, mixed> $attributes
+     * @return array<string, mixed>
+     */
     private function validate(array $attributes, ?int $exceptId = null): array
     {
         $title = trim((string) ($attributes['title'] ?? ''));
@@ -164,6 +170,26 @@ final readonly class PageService
         $rawParentId = $attributes['parent_id'] ?? null;
         $parentId = $rawParentId === null || $rawParentId === '' ? null : filter_var($rawParentId, FILTER_VALIDATE_INT);
         $errors = [];
+        $featured = [];
+        if (array_key_exists('featured_media_id', $attributes)) {
+            $raw = $attributes['featured_media_id'];
+            $mediaId = $raw === null || $raw === '' ? null : filter_var($raw, FILTER_VALIDATE_INT);
+            if ($mediaId !== null) {
+                try {
+                    if (!is_int($mediaId) || $mediaId < 1 || $this->media === null) {
+                        throw new \Flex\Media\MediaException('Invalid image', 422);
+                    }
+                    $image = $this->media->get($mediaId);
+                    $previous = $exceptId ? $this->pages->find($exceptId)?->getAttribute('featured_media_id') : null;
+                    if (!str_starts_with((string) $image['mime'], 'image/') || ($image['deleted_at'] !== null && $previous !== $mediaId)) {
+                        throw new \Flex\Media\MediaException('Invalid image', 422);
+                    }
+                } catch (\Flex\Media\MediaException) {
+                    $errors['featured_media_id'][] = 'Изберете налично изображение от библиотеката.';
+                }
+            }
+            $featured['featured_media_id'] = $mediaId;
+        }
 
         if ($title === '' || mb_strlen($title) > 190) {
             $errors['title'][] = 'Заглавието е задължително и не може да бъде по-дълго от 190 символа.';
@@ -190,7 +216,7 @@ final readonly class PageService
             throw new PageValidationFailed($errors);
         }
 
-        return ['title' => $title, 'slug' => $slug, 'content' => $content, 'blocks' => $blocks, 'status' => $status, 'parent_id' => $parentId];
+        return ['title' => $title, 'slug' => $slug, 'content' => $content, 'blocks' => $blocks, 'status' => $status, 'parent_id' => $parentId] + $featured;
     }
 
     /** @return list<array{type: string, data: array<string, mixed>}> */
@@ -220,7 +246,7 @@ final readonly class PageService
             $blocks[] = ['type' => $type, 'data' => $block['data']];
         }
 
-        return array_values(array_slice($blocks, 0, 100));
+        return array_slice($blocks, 0, 100);
     }
 
     private function isDescendantOf(int $candidateId, int $ancestorId): bool
@@ -230,10 +256,16 @@ final readonly class PageService
         while ($current > 0 && !isset($visited[$current])) {
             $visited[$current] = true;
             $page = $this->pages->find($current);
-            if ($page === null) return false;
+            if ($page === null) {
+                return false;
+            }
             $parent = $page->getAttribute('parent_id');
-            if ($parent === null) return false;
-            if ((int) $parent === $ancestorId) return true;
+            if ($parent === null) {
+                return false;
+            }
+            if ((int) $parent === $ancestorId) {
+                return true;
+            }
             $current = (int) $parent;
         }
         return false;

@@ -13,7 +13,7 @@ final class Page extends Model
 
     protected $table = 'pages';
 
-    protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at', 'settings', 'blocks'];
+    protected $fillable = ['author_id', 'parent_id', 'title', 'slug', 'content', 'status', 'published_at', 'settings', 'blocks', 'featured_media_id'];
 
     protected function casts(): array
     {
@@ -21,6 +21,7 @@ final class Page extends Model
             'id' => 'integer',
             'author_id' => 'integer',
             'parent_id' => 'integer',
+            'featured_media_id' => 'integer',
             'published_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
@@ -37,6 +38,7 @@ final class Page extends Model
             'id' => (int) $this->getAttribute('id'),
             'author_id' => $this->getAttribute('author_id') === null ? null : (int) $this->getAttribute('author_id'),
             'parent_id' => $this->getAttribute('parent_id') === null ? null : (int) $this->getAttribute('parent_id'),
+            'featured_media_id' => $this->getAttribute('featured_media_id') === null ? null : (int) $this->getAttribute('featured_media_id'),
             'title' => (string) $this->getAttribute('title'),
             'slug' => (string) $this->getAttribute('slug'),
             'content' => (string) ($this->getAttribute('content') ?? ''),

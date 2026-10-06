@@ -7,6 +7,10 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { CheckboxField } from "@/components/checkbox-field"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { RichTextEditor } from "@/components/rich-text-editor"
+import { MediaPicker } from "@/components/media-picker"
+import { MediaPreview } from "@/components/media-browser"
+import { useWorkspaceChanged } from "@/components/admin-workspace-context"
+import { mediaRequest, type MediaRecord } from "@/lib/media-api"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
 type PageFormProps = {
@@ -41,11 +45,32 @@ export function PageForm({
   const [slugEdited, setSlugEdited] = useState(Boolean(page))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [featuredId, setFeaturedId] = useState<number | null>(page?.featured_media_id ?? null)
+  const [featured, setFeatured] = useState<MediaRecord | null>(null)
+  const [mediaOpen, setMediaOpen] = useState(false)
+  const changed = useWorkspaceChanged()
+  useEffect(() => {
+    setFeatured(null)
+    if (!featuredId) return
+    const abort = new AbortController()
+    mediaRequest<{ media: MediaRecord }>(
+      `/api/admin/media/${featuredId}`,
+      "GET",
+      undefined,
+      abort.signal,
+    )
+      .then((data) => setFeatured(data.media))
+      .catch((error) => {
+        if (!abort.signal.aborted) toast.error(error.message)
+      })
+    return () => abort.abort()
+  }, [featuredId])
 
   useEffect(() => {
     setTitle(page?.title ?? "")
     setSlug(page?.slug ?? "")
     setContent(page?.content ?? "")
+    setFeaturedId(page?.featured_media_id ?? null)
     setStatus(page?.status ?? "draft")
     setParentId(page?.parent_id ?? null)
     setSlugEdited(Boolean(page))
@@ -105,6 +130,7 @@ export function PageForm({
           title,
           slug,
           content,
+          featured_media_id: featuredId,
           status,
           parent_id: parentId,
           plugin_fields: pluginFields,
@@ -168,6 +194,16 @@ export function PageForm({
           {error}
         </div>
       )}
+      <MediaPicker
+        open={mediaOpen}
+        imagesOnly
+        onClose={() => setMediaOpen(false)}
+        onSelect={(record) => {
+          setFeaturedId(record.id)
+          setFeatured(record)
+          changed?.()
+        }}
+      />
       <form className="react-page-form" onSubmit={save}>
         <CollapsibleSection title="Основна информация" icon={FolderTree}>
           <div className="react-form-grid">
@@ -226,6 +262,44 @@ export function PageForm({
               </DropdownMenu>
             </label>
           </div>
+        </CollapsibleSection>
+        <CollapsibleSection
+          title="Основно изображение"
+          storageKey="page-featured-media"
+          icon={FileText}
+        >
+          {featured && (
+            <div className="media-featured-preview">
+              <MediaPreview record={featured} />
+              <p>{featured.title}</p>
+            </div>
+          )}
+          <div className="react-form-actions">
+            <button
+              className="react-secondary-button"
+              type="button"
+              disabled={saving}
+              onClick={() => setMediaOpen(true)}
+            >
+              {featuredId ? "Смени изображението" : "Избери изображение"}
+            </button>
+            {featuredId && (
+              <button
+                className="react-secondary-button"
+                type="button"
+                disabled={saving}
+                onClick={() => {
+                  setFeaturedId(null)
+                  changed?.()
+                }}
+              >
+                Премахни изображението
+              </button>
+            )}
+          </div>
+          <small className="react-field-hint">
+            Темата може да използва това изображение като водещо за страницата.
+          </small>
         </CollapsibleSection>
         <CollapsibleSection title="Съдържание" icon={FileText} className="content-editor-section">
           <label>

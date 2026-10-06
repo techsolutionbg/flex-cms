@@ -73,6 +73,7 @@ export type PagePluginField = {
 
 export type PageRecord = {
   id: number
+  featured_media_id?: number | null
   title: string
   slug: string
   parent_id?: number | null

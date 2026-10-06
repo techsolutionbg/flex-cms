@@ -16,6 +16,7 @@ import type { ThemeCapabilities } from "./admin-workspace-context"
 import { MenusPage } from "@/pages/menus-page"
 import { MenuEditor } from "@/pages/menu-editor"
 import { MenuStructurePage } from "@/pages/menu-structure-page"
+import { MediaPage } from "@/pages/media-page"
 
 type Tab = {
   id: string
@@ -32,6 +33,8 @@ type Tab = {
 const sections: Record<string, string> = {
   "/": "Табло",
   "/pages": "Страници",
+  "/media": "Медийна библиотека",
+  "/media/upload": "Качване на файлове",
   "/menus": "Менюта",
   "/users": "Потребители",
   "/profile": "Профил",
@@ -141,7 +144,9 @@ export function AdminWorkspace({
               ? path.endsWith("/structure")
                 ? "Структура на менюто"
                 : "Меню"
-              : "Зареждане…"),
+              : path.startsWith("/media/")
+                ? "Медия"
+                : "Зареждане…"),
       dirty: false,
       revision: 0,
       ...data,
@@ -275,7 +280,7 @@ export function AdminWorkspace({
       window.history.replaceState(null, "", adminUrl(data.path))
     setTabs((current) =>
       current.map((item) =>
-        ["/pages", "/users", "/menus"].includes(item.path) && !item.dirty
+        ["/pages", "/users", "/menus", "/media"].includes(item.path) && !item.dirty
           ? { ...item, revision: item.revision + 1 }
           : item,
       ),
@@ -283,6 +288,21 @@ export function AdminWorkspace({
   }
   function render(tab: Tab) {
     const common = { onLogout, loggingOut, onNavigate: navigate }
+    if (
+      tab.path === "/media" ||
+      tab.path === "/media/upload" ||
+      /^\/media\/\d+\/edit$/.test(tab.path)
+    )
+      return (
+        <MediaPage
+          {...common}
+          id={/^\/media\/\d+\/edit$/.test(tab.path) ? Number(tab.path.split("/")[2]) : undefined}
+          upload={tab.path === "/media/upload"}
+          onUpload={() => open("/media/upload")}
+          onOpen={(record) => open(`/media/${record.id}/edit`, { title: record.title })}
+          onBack={() => open("/media")}
+        />
+      )
     const editPage = (page: PageRecord) =>
       open(`/pages/${page.id}/edit`, { page, title: page.title })
     const settings = (page: PageRecord) =>
@@ -364,7 +384,9 @@ export function AdminWorkspace({
           id={tab.path === "/menus/create" ? null : Number(tab.path.split("/")[2])}
           onBack={() => open("/menus")}
           onSaved={(menu) => saved(tab, { title: menu.name, path: `/menus/${menu.id}/edit` })}
-          onStructure={(menuId) => open(`/menus/${menuId}/structure`, { title: "Структура на менюто" })}
+          onStructure={(menuId) =>
+            open(`/menus/${menuId}/structure`, { title: "Структура на менюто" })
+          }
         />
       )
     if (/^\/pages\/(create|\d+\/edit)$/.test(tab.path))
@@ -429,17 +451,20 @@ export function AdminWorkspace({
             id={`workspace-panel-${tab.id}`}
             aria-labelledby={`workspace-tab-${tab.id}`}
             onClickCapture={(event) => {
+              if ((event.target as HTMLElement).closest("[data-workspace-transient]")) return
               if (
                 (event.target as HTMLElement).closest('[role="menuitem"]') &&
                 /^\/(pages|users)\/(create|\d+\/)|^\/profile$/.test(tab.path)
               )
                 patch(tab.id, { dirty: true })
             }}
-            onInputCapture={() => {
+            onInputCapture={(event) => {
+              if ((event.target as HTMLElement).closest("[data-workspace-transient]")) return
               if (/^\/(pages|users)\/(create|\d+\/)|^\/profile$/.test(tab.path))
                 patch(tab.id, { dirty: true })
             }}
-            onChangeCapture={() => {
+            onChangeCapture={(event) => {
+              if ((event.target as HTMLElement).closest("[data-workspace-transient]")) return
               if (/^\/(pages|users)\/(create|\d+\/)|^\/profile$/.test(tab.path))
                 patch(tab.id, { dirty: true })
             }}

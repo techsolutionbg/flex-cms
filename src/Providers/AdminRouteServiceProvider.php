@@ -24,6 +24,16 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r = $container->get(RouteRegistryInterface::class);
         $auth = [RequireAuthenticationMiddleware::class,RequireSuperAdminMiddleware::class];
         $write = [CsrfMiddleware::class,...$auth];
+        $media = \Flex\Http\Controller\Admin\AdminMediaController::class;
+        $mediaAuth = [RequireAuthenticationMiddleware::class];
+        $mediaWrite = [CsrfMiddleware::class, ...$mediaAuth];
+        $r->add('GET', '/api/admin/media', $media, 'api.admin.media', $mediaAuth);
+        $r->add('GET', '/api/admin/media/{id:number}', $media, 'api.admin.media.show', $mediaAuth);
+        $r->add('POST', '/api/admin/media', $media, 'api.admin.media.upload', $mediaWrite);
+        $r->add('PUT', '/api/admin/media/{id:number}', $media, 'api.admin.media.update', $mediaWrite);
+        $r->add('DELETE', '/api/admin/media/{id:number}', $media, 'api.admin.media.trash', $mediaWrite);
+        $r->add('POST', '/api/admin/media/{id:number}/restore', $media, 'api.admin.media.restore', $mediaWrite);
+        $r->add('DELETE', '/api/admin/media/{id:number}/force', $media, 'api.admin.media.delete', $mediaWrite);
         $r->add('GET', '/api/admin/dashboard', AdminDashboardSummaryController::class, 'api.admin.dashboard', $auth);
         $r->add('GET', '/api/admin/pages', AdminPagesDataController::class, 'api.admin.pages', $auth);
         $r->add('GET', '/api/admin/plugins', AdminPluginsDataController::class, 'api.admin.plugins', $auth);

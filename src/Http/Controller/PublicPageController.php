@@ -18,7 +18,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class PublicPageController
 {
-    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus) {}
+    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ?\Flex\Media\PublicMediaApi $media = null) {}
 
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
@@ -33,6 +33,7 @@ final readonly class PublicPageController
             $capabilities = $this->themes->capabilities();
             $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
             $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+            $menuData['__flex_media_api'] = $this->media;
 
             return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена'] + $menuData), 404);
         }
@@ -50,6 +51,8 @@ final readonly class PublicPageController
         $capabilities = $this->themes->capabilities();
         $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
         $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+        $menuData['__flex_media_api'] = $this->media;
+        $menuData['featured_media'] = $this->media?->get((int) $page->getAttribute('featured_media_id')) ?? [];
         return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation] + $menuData));
     }
 

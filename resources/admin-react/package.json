@@ -7,7 +7,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "node --test tests/*.test.cjs",
-    "dev": "vite",
+    "dev": "vite --config vite.config.ts",
     "build": "tsc -b && vite build",
     "build:admin": "tsc -b && vite build --config vite.admin.config.ts",
     "build:installer": "tsc -b && vite build --config vite.installer.config.ts",

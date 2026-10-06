@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { MediaPicker } from "./media-picker"
 import { useWorkspaceChanged } from "./admin-workspace-context"
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
@@ -39,6 +40,8 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const editorRef = useRef<Quill | null>(null)
   const valueRef = useRef(value)
   const onChangeRef = useRef(onChange)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const insertion = useRef(0)
 
   useEffect(() => {
     valueRef.current = value
@@ -50,14 +53,27 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
     const editor = new Quill(hostRef.current, {
       theme: "snow",
       placeholder: "Въведете съдържанието на страницата…",
-      modules: { toolbar },
+      modules: {
+        toolbar: {
+          container: toolbar,
+          handlers: {
+            image: () => {
+              insertion.current = editor.getSelection()?.index ?? editor.getLength() - 1
+              setPickerOpen(true)
+            },
+          },
+        },
+      },
     })
     editorRef.current = editor
     if (valueRef.current) editor.clipboard.dangerouslyPasteHTML(valueRef.current, "api")
 
     const handleChange = (_delta: unknown, _previous: unknown, source: string) => {
       if (source === "user") markChanged?.()
-      const html = editor.getText().trim().length > 0 ? editor.root.innerHTML : ""
+      const html =
+        editor.getText().trim().length > 0 || editor.root.querySelector("img,video,iframe")
+          ? editor.root.innerHTML
+          : ""
       onChangeRef.current(html)
     }
     editor.on("text-change", handleChange)
@@ -77,6 +93,19 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   return (
     <div className="rich-text-editor-react">
       <div ref={hostRef} />
+      <MediaPicker
+        open={pickerOpen}
+        imagesOnly
+        onClose={() => setPickerOpen(false)}
+        onSelect={(record) => {
+          const editor = editorRef.current
+          if (!editor) return
+          const index = Math.min(insertion.current, editor.getLength() - 1)
+          editor.insertEmbed(index, "image", record.url, "user")
+          editor.formatText(index, 1, { alt: record.alt }, "user")
+          editor.setSelection(index + 1, 0, "silent")
+        }}
+      />
     </div>
   )
 }

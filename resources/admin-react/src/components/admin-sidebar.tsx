@@ -1,5 +1,6 @@
 import {
   FileText,
+  Images,
   ListTree,
   LayoutDashboard,
   LoaderCircle,
@@ -33,6 +34,7 @@ const groups: SidebarGroup[] = [
     items: [
       { label: "Табло", icon: LayoutDashboard, active: true },
       { label: "Страници", icon: FileText },
+      { label: "Медийна библиотека", icon: Images },
       { label: "Теми", icon: Palette },
     ],
   },
@@ -56,6 +58,7 @@ const groups: SidebarGroup[] = [
 const sidebarPaths: Record<string, string> = {
   Табло: "/",
   Страници: "/pages",
+  "Медийна библиотека": "/media",
   Менюта: "/menus",
   Теми: "/themes",
   Потребители: "/users",
@@ -147,7 +150,7 @@ export function AdminSidebar({
                     <a
                       className={`sidebar-link-react${activeItem === label ? " is-active" : ""}`}
                       href={adminUrl(sidebarPaths[label] ?? "/")}
-                      title={collapsed ? label : undefined}
+                      title={label}
                       onClick={(event) => {
                         if (
                           event.button !== 0 ||

@@ -71,6 +71,7 @@ function harness(initial = "/", restored = null) {
     "menus-page": ["MenusPage"],
     "menu-editor": ["MenuEditor"],
     "menu-structure-page": ["MenuStructurePage"],
+    "media-page": ["MediaPage"],
   }))
     modules["@/pages/" + name] = Object.fromEntries(exports.map((value) => [value, value]))
   const exports = {}
@@ -191,7 +192,7 @@ test("opens independent page editors, retains their panel keys and deduplicates 
 test("protects dirty tabs when closing or unloading and clears dirty state after saving", () => {
   const h = harness("/pages/create")
   const id = h.active().key
-  h.active().props.children.props.onInputCapture()
+  h.active().props.children.props.onInputCapture({ target: { closest: () => null } })
   assert.equal(h.workspace().tabs[0].dirty, true)
   let prevented = false
   h.listeners.beforeunload({
@@ -214,7 +215,7 @@ test("confirms discard and chooses a remaining tab", () => {
   const h = harness("/pages")
   h.page().props.onCreate()
   const id = h.active().key
-  h.active().props.children.props.onInputCapture()
+  h.active().props.children.props.onInputCapture({ target: { closest: () => null } })
   h.confirm(true)
   h.workspace().close(id)
   assert.equal(h.panels().length, 1)
@@ -253,7 +254,7 @@ test("an explicit editor URL overrides a previously active tab", async () => {
 test("persists navigation without form records or dirty values", () => {
   const h = harness("/pages")
   h.page().props.onEdit({ id: 1, title: "Private title", content: "Secret draft" })
-  h.active().props.children.props.onInputCapture()
+  h.active().props.children.props.onInputCapture({ target: { closest: () => null } })
   const saved = h.stored()
   assert.deepEqual(Array.from(saved.paths), ["/pages", "/pages/1/edit"])
   assert.equal(JSON.stringify(saved).includes("Secret draft"), false)
@@ -266,7 +267,7 @@ test("refresh requires confirmation for a dirty form and remounts only that tab"
   const h = harness("/pages")
   const listKey = h.active().props.children.props.children.key
   h.page().props.onCreate()
-  h.active().props.children.props.onInputCapture()
+  h.active().props.children.props.onInputCapture({ target: { closest: () => null } })
   const id = h.active().key
   const before = h.active().props.children.props.children.key
   await h.workspace().refresh()
@@ -309,4 +310,45 @@ test("menu editors open and restore without the generic hydration spinner", () =
   const restored = harness("/menus/12/edit")
   assert.equal(restored.page().type, "MenuEditor")
   assert.equal(restored.page().props.id, 12)
+})
+
+test("media library and independent detail tabs persist without generic hydration", () => {
+  const h = harness("/media")
+  assert.equal(h.page().type, "MediaPage")
+  h.page().props.onOpen({ id: 7, title: "Снимка" })
+  assert.equal(h.page().props.id, 7)
+  h.workspace().changed()
+  assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, true)
+  h.workspace().saved()
+  assert.equal(h.stored().active, "/media/7/edit")
+  const restored = harness("/media/7/edit")
+  assert.equal(restored.page().type, "MediaPage")
+  assert.equal(restored.page().props.id, 7)
+})
+
+test("media upload opens in its own persisted tab and returns to the library", () => {
+  const h = harness("/media")
+  h.page().props.onUpload()
+  assert.equal(h.page().props.upload, true)
+  assert.equal(h.page().props.id, undefined)
+  assert.equal(h.stored().active, "/media/upload")
+  const restored = harness("/media/upload")
+  assert.equal(restored.page().props.upload, true)
+  restored.page().props.onBack()
+  assert.equal(restored.page().props.upload, false)
+  assert.equal(restored.stored().active, "/media")
+})
+
+test("search and filters in a media picker do not mark the page form dirty", () => {
+  const h = harness("/pages/create")
+  const transient = {
+    target: { closest: (selector) => (selector === "[data-workspace-transient]" ? {} : null) },
+  }
+  const panel = h.active().props.children.props
+  panel.onInputCapture(transient)
+  panel.onChangeCapture(transient)
+  panel.onClickCapture(transient)
+  assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, false)
+  h.workspace().changed()
+  assert.equal(h.workspace().tabs.find((tab) => tab.id === h.active().key).dirty, true)
 })

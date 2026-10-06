@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Flex\Providers;
 
-use function DI\autowire;
-use function DI\get;
-
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Extensions\ExtensionApi;
@@ -23,6 +20,9 @@ use Flex\Extensions\PluginRuntime;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Pages\PageService;
 use Psr\Container\ContainerInterface;
+
+use function DI\autowire;
+use function DI\get;
 
 final class ExtensionServiceProvider implements ServiceProviderInterface
 {
@@ -45,6 +45,7 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
                 ->constructorParameter('pageSettings', get(PageSettingsRegistry::class))
                 ->constructorParameter('routes', get(RouteRegistryInterface::class)),
             PageService::class => autowire()
+                ->constructorParameter('media', get(\Flex\Media\MediaService::class))
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
                 ->constructorParameter('pageFields', get(PageFieldRegistry::class))
                 ->constructorParameter('pageSettings', get(PageSettingsRegistry::class)),

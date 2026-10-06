@@ -1,11 +1,13 @@
 import { ChevronDown } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useEffect, useRef, useState, type ReactNode } from "react"
+import { Button } from "@/components/ui/button"
 
 type DropdownMenuProps = {
   trigger: ReactNode
   children: ReactNode
   ariaLabel: string
+  triggerVariant?: "dropdown-trigger" | "secondary"
   triggerClassName?: string
 }
 
@@ -14,6 +16,7 @@ export function DropdownMenu({
   children,
   ariaLabel,
   triggerClassName = "",
+  triggerVariant = "dropdown-trigger",
 }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -58,27 +61,28 @@ export function DropdownMenu({
 
   return (
     <div className="universal-dropdown" ref={rootRef}>
-      <button
+      <Button
+        variant={triggerVariant}
         ref={triggerRef}
-        className={`universal-dropdown-trigger ${triggerClassName}`}
+        className={triggerClassName}
         type="button"
         aria-label={ariaLabel}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
         {trigger}
-      </button>
+      </Button>
       {open &&
         createPortal(
           <div
-            className="universal-dropdown-menu"
+            className={`universal-dropdown-menu${rootRef.current?.closest(".media-page-content, .media-picker-dialog") ? " media-dropdown-menu" : ""}`}
             role="menu"
             style={{ top: position.top, left: position.left, minWidth: position.width }}
             onClick={() => setOpen(false)}
           >
             {children}
           </div>,
-          document.body,
+          rootRef.current?.closest("dialog[open]") ?? document.body,
         )}
     </div>
   )
@@ -98,15 +102,16 @@ export function DropdownOption({
   onClick: () => void
 }) {
   return (
-    <button
-      className={`universal-dropdown-option${selected ? " is-selected" : ""}${danger ? " is-danger" : ""}`}
+    <Button
+      variant="dropdown-option"
+      className={`${selected ? "is-selected" : ""}${danger ? " is-danger" : ""}`}
       type="button"
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
