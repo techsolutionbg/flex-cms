@@ -34,6 +34,7 @@ export type ExtensionPageDescriptor = {
   label: string
   href: string
   module: string
+  navigation?: { group: string; icon: string }
   embeddable: boolean
 }
 

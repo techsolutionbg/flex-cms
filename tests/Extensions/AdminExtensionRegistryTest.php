@@ -48,7 +48,18 @@ final class AdminExtensionRegistryTest extends TestCase
         self::assertSame('/extension-pages/acme-forms-forms', $page['href']);
         self::assertSame('/extensions/acme/forms/assets/assets/admin.js', $page['module']);
         self::assertTrue($page['embeddable']);
+        self::assertSame(['group' => 'extensions', 'icon' => 'puzzle'], $page['navigation']);
         $this->expectException(\InvalidArgumentException::class);
         $registrar->page('other', 'Unsafe', '../admin.js');
+    }
+
+    public function testPagesDeclareNavigationWithoutPluginSpecificCoreRules(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('acme/photos', ['admin.ui']);
+        $registrar->page('photos', 'Снимки', 'admin.js', false, ['group' => 'content', 'icon' => 'images']);
+        self::assertSame(['group' => 'content', 'icon' => 'images'], $registry->bootstrap()['pages'][0]['navigation']);
+        $this->expectException(\InvalidArgumentException::class);
+        $registrar->page('invalid', 'Невалидно', 'admin.js', false, ['group' => 'unknown']);
     }
 }

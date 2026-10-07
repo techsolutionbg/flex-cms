@@ -43,10 +43,10 @@ final class AdminExtensionRegistry
             /** @param list<string> $permissions */
             public function __construct(private array $permissions, private \Closure $addSidebarItem, private \Closure $addSlot, private AdminExtensionRegistry $registry, private string $pluginId) {}
 
-            public function page(string $id, string $label, string $module, bool $embeddable = false): void
+            public function page(string $id, string $label, string $module, bool $embeddable = false, array $navigation = []): void
             {
                 $this->assertPermission();
-                $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable);
+                $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable, $navigation);
             }
 
             public function sidebarItem(string $id, string $label, string $href, int $priority = 50): void
@@ -88,16 +88,22 @@ final class AdminExtensionRegistry
         return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages)];
     }
 
-    public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable): void
+    public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = []): void
     {
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $id) || trim($label) === '' ||
             !preg_match('/^[a-zA-Z0-9_\/.\-]+\.js$/D', $module) || str_contains($module, '..') || str_starts_with($module, '/')) {
             throw new \InvalidArgumentException('Invalid admin page ID, label or module path.');
         }
+        $group = $navigation['group'] ?? 'extensions';
+        $icon = $navigation['icon'] ?? 'puzzle';
+        if (!in_array($group, ['content', 'appearance', 'management', 'system', 'account', 'commerce', 'extensions'], true) ||
+            !in_array($icon, ['puzzle', 'images', 'shopping-bag', 'file-text', 'settings', 'users', 'palette'], true)) {
+            throw new \InvalidArgumentException('Invalid admin navigation group or icon.');
+        }
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
         $href = '/extension-pages/' . $key;
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
-            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module, 'embeddable' => $embeddable];
+            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module, 'embeddable' => $embeddable, 'navigation' => ['group' => $group, 'icon' => $icon]];
         $this->addSidebarItem($key, trim($label), $href, 50);
     }
 

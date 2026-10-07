@@ -43,3 +43,13 @@ namespaced and plugin middleware can be supplied when needed.
 Core events are exposed through `EventNames` and immutable event objects such as
 `PluginEvent` and `PageEvent`. Listeners are ordered by priority and receive only the
 validated public payload.
+
+### Administrative navigation
+
+React pages can declare an optional navigation descriptor:
+
+```php
+$context->admin?->page('photos', 'Photos', 'assets/admin.js', false, ['group' => 'content', 'icon' => 'images']);
+```
+
+Groups: content, appearance, commerce, management, system, account, extensions. Icons: puzzle, images, shopping-bag, file-text, settings, users, palette. Omitted navigation uses extensions/puzzle. Empty groups are hidden.

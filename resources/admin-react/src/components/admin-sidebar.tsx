@@ -12,6 +12,7 @@ import {
   UsersRound,
   X,
   Settings,
+  ShoppingBag,
 } from "lucide-react"
 import { useContext, useState } from "react"
 import { LoadingButton } from "./loading-button"
@@ -25,21 +26,25 @@ type SidebarItem = {
 }
 
 type SidebarGroup = {
+  id: string
   label: string
   items: SidebarItem[]
 }
 
 const groups: SidebarGroup[] = [
+  { id: "overview", label: "Основни", items: [{ label: "Табло", icon: LayoutDashboard }] },
   {
-    label: "Основни",
+    id: "content",
+    label: "Съдържание",
     items: [
-      { label: "Табло", icon: LayoutDashboard, active: true },
       { label: "Страници", icon: FileText },
       { label: "Медийна библиотека", icon: Images },
-      { label: "Теми", icon: Palette },
     ],
   },
+  { id: "appearance", label: "Външен вид", items: [{ label: "Теми", icon: Palette }] },
+  { id: "commerce", label: "Магазин", items: [] },
   {
+    id: "management",
     label: "Управление",
     items: [
       { label: "Потребители", icon: UsersRound },
@@ -47,17 +52,25 @@ const groups: SidebarGroup[] = [
     ],
   },
   {
+    id: "system",
     label: "Система",
     items: [
-      { label: "Обновявания", icon: RefreshCw },
       { label: "Настройки", icon: Settings },
+      { label: "Обновявания", icon: RefreshCw },
     ],
   },
-  {
-    label: "Акаунт",
-    items: [{ label: "Профил", icon: UserRound }],
-  },
+  { id: "extensions", label: "Допълнителни инструменти", items: [] },
+  { id: "account", label: "Акаунт", items: [{ label: "Профил", icon: UserRound }] },
 ]
+const extensionIcons: Record<string, typeof Puzzle> = {
+  puzzle: Puzzle,
+  images: Images,
+  "shopping-bag": ShoppingBag,
+  "file-text": FileText,
+  settings: Settings,
+  users: UsersRound,
+  palette: Palette,
+}
 
 const sidebarPaths: Record<string, string> = {
   Табло: "/",
@@ -87,24 +100,25 @@ export function AdminSidebar({
 }) {
   const [open, setOpen] = useState(false)
   const workspace = useContext(AdminWorkspaceContext)
-  const visibleGroups = groups.map((group) =>
-    group.label === "Основни" && workspace?.themeCapabilities?.supports.menus
-      ? {
-          ...group,
-          items: [
-            ...group.items.slice(0, 2),
-            { label: "Менюта", icon: ListTree },
-            ...group.items.slice(2),
-          ],
-        }
-      : group,
-  )
   const extensionPages = workspace?.extensionPages ?? []
-  if (extensionPages.length)
-    visibleGroups.push({
-      label: "Разширения",
-      items: extensionPages.map((page) => ({ label: page.label, icon: Puzzle })),
+  const visibleGroups = groups
+    .map((group) => {
+      const items = [...group.items]
+      if (group.id === "appearance" && workspace?.themeCapabilities?.supports.menus) {
+        items.unshift({ label: "Менюта", icon: ListTree })
+      }
+      for (const page of extensionPages) {
+        const requested = page.navigation?.group ?? "extensions"
+        const groupId = groups.some((entry) => entry.id === requested) ? requested : "extensions"
+        if (groupId === group.id)
+          items.push({
+            label: page.label,
+            icon: extensionIcons[page.navigation?.icon ?? "puzzle"] ?? Puzzle,
+          })
+      }
+      return { ...group, items }
     })
+    .filter((group) => group.items.length > 0)
 
   function navigateFromSidebar(label: string) {
     if (label === "Профил") {
