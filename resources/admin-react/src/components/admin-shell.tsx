@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { Menu, RefreshCw } from "lucide-react"
 import { LoadingButton } from "./loading-button"
 import { useContext, useState } from "react"
@@ -23,6 +23,24 @@ export function AdminShell({
   loggingOut,
 }: AdminShellProps) {
   const workspace = useContext(AdminWorkspaceContext)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const stored = Number(window.localStorage.getItem("flex-admin-sidebar-width"))
+      return stored ? Math.max(220, Math.min(400, stored)) : 248
+    } catch {
+      return 248
+    }
+  })
+  const [resizing, setResizing] = useState(false)
+  function changeWidth(width: number) {
+    const next = Math.round(Math.max(220, Math.min(400, window.innerWidth * 0.35, width)))
+    setSidebarWidth(next)
+    try {
+      window.localStorage.setItem("flex-admin-sidebar-width", String(next))
+    } catch {
+      // Keep resizing available when local storage is restricted.
+    }
+  }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem("flex-admin-sidebar-collapsed") === "true"
@@ -44,7 +62,10 @@ export function AdminShell({
   }
 
   return (
-    <div className={`admin-shell-react${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}>
+    <div
+      className={`admin-shell-react${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${resizing ? " is-sidebar-resizing" : ""}`}
+      style={{ "--sidebar-expanded-width": `${sidebarWidth}px` } as CSSProperties}
+    >
       <AdminSidebar
         onLogout={onLogout}
         onNavigate={onNavigate}
@@ -52,6 +73,44 @@ export function AdminShell({
         loggingOut={loggingOut}
         collapsed={sidebarCollapsed}
       />
+      {!sidebarCollapsed && (
+        <div
+          className="sidebar-resize-handle"
+          role="separator"
+          aria-label="Промени ширината на страничната лента"
+          aria-orientation="vertical"
+          aria-valuemin={220}
+          aria-valuemax={400}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          onPointerDown={(event) => {
+            if (event.button !== 0 || !window.matchMedia("(min-width: 1025px)").matches) return
+            event.preventDefault()
+            event.currentTarget.setPointerCapture(event.pointerId)
+            setResizing(true)
+          }}
+          onPointerMove={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) changeWidth(event.clientX)
+          }}
+          onPointerUp={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId)
+            setResizing(false)
+          }}
+          onPointerCancel={() => setResizing(false)}
+          onLostPointerCapture={() => setResizing(false)}
+          onDoubleClick={() => changeWidth(248)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault()
+              changeWidth(sidebarWidth + (event.key === "ArrowLeft" ? -10 : 10))
+            } else if (event.key === "Home") {
+              event.preventDefault()
+              changeWidth(248)
+            }
+          }}
+        />
+      )}
       <div className="admin-main-react">
         <header className="admin-topbar-react">
           <button

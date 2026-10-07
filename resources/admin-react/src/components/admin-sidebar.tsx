@@ -181,9 +181,6 @@ export function AdminSidebar({
                     >
                       <Icon className="sidebar-icon-react" aria-hidden="true" />
                       <span className="sidebar-label-react">{label}</span>
-                      {activeItem === label && (
-                        <span className="sidebar-active-dot" aria-hidden="true" />
-                      )}
                     </a>
                   </li>
                 ))}
