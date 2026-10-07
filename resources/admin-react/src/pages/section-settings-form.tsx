@@ -293,6 +293,23 @@ export function SectionSettingsForm({
                   </small>
                 </label>
                 <label className="react-form-field">
+                  <span>Максимална резолюция на изображение (мегапиксели)</span>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={100}
+                    step={1}
+                    disabled={saving}
+                    value={values.max_image_megapixels}
+                    onChange={(event) => update("max_image_megapixels", event.target.value)}
+                  />
+                  <small>
+                    1–100 мегапиксела. Например 6000 × 4000 px са 24 мегапиксела. При недостатъчна
+                    памет за миниатюра се запазва оригиналът без миниатюра.
+                  </small>
+                </label>
+                <label className="react-form-field">
                   <span>Максимална страна на миниатюрата (px)</span>
                   <input
                     type="number"

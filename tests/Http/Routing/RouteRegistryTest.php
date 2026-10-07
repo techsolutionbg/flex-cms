@@ -10,6 +10,16 @@ use PHPUnit\Framework\TestCase;
 
 final class RouteRegistryTest extends TestCase
 {
+    public function testPluginRoutesAddedAfterPublicPagesAreDispatchedBeforeTheFallback(): void
+    {
+        $registry = new RouteRegistry();
+        $registry->get('/{slug:.+}', static fn() => new \Nyholm\Psr7\Response(200, [], 'page'), 'public.page');
+        $registry->get('/admin/plugins/acme/forms/items', static fn() => new \Nyholm\Psr7\Response(200, [], 'plugin'), 'plugin.items');
+        $router = (new \Flex\Http\Routing\RouterFactory(new \DI\Container(), $registry))->create();
+        self::assertSame('plugin', (string) $router->handle(new \Nyholm\Psr7\ServerRequest('GET', '/admin/plugins/acme/forms/items'))->getBody());
+        self::assertSame('page', (string) $router->handle(new \Nyholm\Psr7\ServerRequest('GET', '/an-ordinary-page'))->getBody());
+    }
+
     public function testItRegistersNormalizedRoutes(): void
     {
         $registry = new RouteRegistry();

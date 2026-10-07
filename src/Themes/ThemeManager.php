@@ -19,7 +19,7 @@ final class ThemeManager
     private ?PublicMenuApi $menuApi = null;
     private ?\Flex\Media\PublicMediaApi $mediaApi = null;
 
-    public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration, private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null) {}
+    public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration, private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null, private readonly ?\Flex\Extension\V1\ExtensionApiInterface $extensionApi = null) {}
 
     /** @param array<string, mixed> $data */
     public function render(string $template, array $data = []): string
@@ -35,6 +35,13 @@ final class ThemeManager
     /** @param array<string, mixed> $data */
     public function renderForTheme(string $theme, string $template, array $data = []): string
     {
+        // Render into a copy: extension output must never be saved back to page content.
+        if (($data['page'] ?? null) instanceof \Flex\Pages\Page && $this->extensionApi !== null) {
+            $page = clone $data['page'];
+            $content = $this->extensionApi->applyFilters('public.content', (string) $page->getAttribute('content'), ['page' => $page->toPublicArray()]);
+            if (is_string($content)) $page->setAttribute('content', $content);
+            $data['page'] = $page;
+        }
         if ($this->generalSettings !== null) {
             $data['site'] = $this->generalSettings->all();
             $data['site_format_date'] = fn(\DateTimeInterface $date): string => $this->generalSettings->formatDate($date);

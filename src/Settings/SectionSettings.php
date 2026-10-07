@@ -13,7 +13,7 @@ final readonly class SectionSettings
         $values = match ($section) {
             'public' => ['home_page_id' => '0', 'closed' => '0', 'closed_message' => 'Сайтът временно е затворен. Моля, посетете ни отново по-късно.'],
             'users' => ['default_role' => 'user', 'require_email_verification' => '0', 'password_min_length' => '12', 'session_idle_minutes' => (string) $this->configuration->int('session.lifetime', 120)],
-            'media' => ['max_upload_mb' => (string) $this->configuration->int('filesystems.media.max_upload_mb', 64), 'allow_images' => '1', 'allow_documents' => '1', 'allow_audio' => '1', 'allow_video' => '1', 'generate_thumbnails' => '1', 'thumbnail_edge' => '400'],
+            'media' => ['max_upload_mb' => (string) $this->configuration->int('filesystems.media.max_upload_mb', 64), 'max_image_megapixels' => (string) max(1, min(100, $this->configuration->int('filesystems.media.max_image_megapixels', 48))), 'allow_images' => '1', 'allow_documents' => '1', 'allow_audio' => '1', 'allow_video' => '1', 'generate_thumbnails' => '1', 'thumbnail_edge' => '400'],
             'mail' => ['from_address' => '', 'from_name' => '', 'reply_to' => ''],
             'updates' => ['channel' => $this->configuration->string('extensions.updates.channel', 'stable'), 'catalog_timeout' => '10'],
             'admin' => ['theme' => 'system', 'remember_tabs' => '1'],
@@ -48,7 +48,7 @@ final readonly class SectionSettings
                 if (!ctype_digit($values[$key]) || (int) $values[$key] < $min || (int) $values[$key] > $max) throw new \InvalidArgumentException("Стойността за $key трябва да е между $min и $max.", 422);
             }
         } elseif ($section === 'media') {
-            foreach (['max_upload_mb' => [1, 1024], 'thumbnail_edge' => [100, 1200]] as $key => [$min, $max]) {
+            foreach (['max_upload_mb' => [1, 1024], 'max_image_megapixels' => [1, 100], 'thumbnail_edge' => [100, 1200]] as $key => [$min, $max]) {
                 if (!ctype_digit($values[$key]) || (int) $values[$key] < $min || (int) $values[$key] > $max) throw new \InvalidArgumentException("Стойността за $key трябва да е между $min и $max.", 422);
             }
             foreach (['allow_images', 'allow_documents', 'allow_audio', 'allow_video', 'generate_thumbnails'] as $key) {

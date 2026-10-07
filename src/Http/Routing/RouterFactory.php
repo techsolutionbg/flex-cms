@@ -23,7 +23,11 @@ final readonly class RouterFactory
         $router = new Router();
         $router->setStrategy($strategy);
 
-        foreach ($this->routes->all() as $definition) {
+        $definitions = $this->routes->all();
+        // Public pages are a fallback. Plugins boot after the core route providers.
+        usort($definitions, static fn(RouteDefinition $a, RouteDefinition $b): int =>
+            (int) ($a->name === 'public.page') <=> (int) ($b->name === 'public.page'));
+        foreach ($definitions as $definition) {
             $route = $router->map($definition->methods, $definition->path, $definition->handler);
             if ($definition->name !== null) {
                 $route->setName($definition->name);

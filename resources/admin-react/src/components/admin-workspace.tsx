@@ -20,6 +20,7 @@ import { MenusPage } from "@/pages/menus-page"
 import { MenuEditor } from "@/pages/menu-editor"
 import { MenuStructurePage } from "@/pages/menu-structure-page"
 import { MediaPage } from "@/pages/media-page"
+import { ExtensionPage, type ExtensionPageDescriptor } from "./extension-page"
 
 type Tab = {
   id: string
@@ -63,6 +64,8 @@ export function AdminWorkspace({
   const [tabs, setTabs] = useState<Tab[]>([])
   const [active, setActive] = useState("")
   const [confirmCloseAll, setConfirmCloseAll] = useState(false)
+  const [extensionPages, setExtensionPages] = useState<ExtensionPageDescriptor[]>([])
+  const [extensionsError, setExtensionsError] = useState("")
   const [themeCapabilities, setThemeCapabilities] = useState<ThemeCapabilities | null>(null)
   const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null)
   const capabilitiesRequest = useRef(0)
@@ -140,6 +143,8 @@ export function AdminWorkspace({
       id: String(++sequence),
       path,
       title:
+        extensionPages.find((page) => path === page.href || path.startsWith(page.href + "/"))
+          ?.label ??
         sections[path] ??
         (path.startsWith("/themes/") ? `Тема: ${path.split("/")[2]}` : undefined) ??
         (path === "/pages/create"
@@ -246,6 +251,7 @@ export function AdminWorkspace({
     )
       return
     patch(id, { dirty: false, error: undefined, revision: tab.revision + 1 })
+    void loadExtensions()
     void loadCapabilities()
     await hydrate(tab)
   }
@@ -277,6 +283,41 @@ export function AdminWorkspace({
       }
     }
   }
+  async function loadExtensions() {
+    try {
+      const response = await fetch("/api/admin/extensions", {
+        credentials: "include",
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!response.ok) throw new Error("Интерфейсите на разширенията не можаха да бъдат заредени.")
+      const body = await response.json()
+      setExtensionPages(body.pages ?? [])
+      setExtensionsError("")
+    } catch (error) {
+      setExtensionsError((error as Error).message)
+    }
+  }
+  useEffect(() => {
+    void loadExtensions()
+    const reload = () => void loadExtensions()
+    window.addEventListener("focus", reload)
+    window.addEventListener("flex-admin-plugins-changed", reload)
+    return () => {
+      window.removeEventListener("focus", reload)
+      window.removeEventListener("flex-admin-plugins-changed", reload)
+    }
+  }, [])
+  useEffect(() => {
+    setTabs((current) =>
+      current.map((tab) => {
+        const page = extensionPages.find(
+          (page) => tab.path === page.href || tab.path.startsWith(page.href + "/"),
+        )
+        return page ? { ...tab, title: page.label } : tab
+      }),
+    )
+  }, [extensionPages])
   useEffect(() => {
     void loadCapabilities()
     const reload = () => {
@@ -302,7 +343,11 @@ export function AdminWorkspace({
   }, [])
 
   function navigate(label: string) {
-    open(Object.entries(sections).find(([, title]) => title === label)?.[0] ?? "/")
+    open(
+      extensionPages.find((page) => page.label === label)?.href ??
+        Object.entries(sections).find(([, title]) => title === label)?.[0] ??
+        "/",
+    )
   }
   function saved(tab: Tab, data: Partial<Tab> = {}) {
     patch(tab.id, { ...data, dirty: false })
@@ -318,6 +363,25 @@ export function AdminWorkspace({
   }
   function render(tab: Tab) {
     const common = { onLogout, loggingOut, onNavigate: navigate }
+    if (tab.path.startsWith("/extension-pages/")) {
+      const descriptor = extensionPages.find(
+        (page) => tab.path === page.href || tab.path.startsWith(page.href + "/"),
+      )
+      return descriptor ? (
+        <ExtensionPage
+          {...common}
+          descriptor={descriptor}
+          path={tab.path}
+          navigate={(path) => open(path)}
+        />
+      ) : (
+        <AdminShell {...common} title="Разширение">
+          <p role="status">
+            {extensionsError || "Разширението е неактивно или интерфейсът се зарежда."}
+          </p>
+        </AdminShell>
+      )
+    }
     if (
       tab.path === "/media" ||
       tab.path === "/media/upload" ||
@@ -491,6 +555,7 @@ export function AdminWorkspace({
             refreshing: Boolean(tab.loading),
             themeCapabilities,
             capabilitiesError,
+            extensionPages,
           }}
         >
           <div

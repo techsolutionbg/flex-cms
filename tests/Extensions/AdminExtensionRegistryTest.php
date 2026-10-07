@@ -38,4 +38,17 @@ final class AdminExtensionRegistryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $registrar->slot('admin.editor.before', 'card', 'Unsafe');
     }
+
+    public function testReactPagesAreNamespacedAndRequireSafeModulePaths(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('acme/forms', ['admin.ui']);
+        $registrar->page('forms', 'Форми', 'assets/admin.js', true);
+        $page = $registry->bootstrap()['pages'][0];
+        self::assertSame('/extension-pages/acme-forms-forms', $page['href']);
+        self::assertSame('/extensions/acme/forms/assets/assets/admin.js', $page['module']);
+        self::assertTrue($page['embeddable']);
+        $this->expectException(\InvalidArgumentException::class);
+        $registrar->page('other', 'Unsafe', '../admin.js');
+    }
 }

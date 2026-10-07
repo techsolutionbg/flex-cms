@@ -39,6 +39,9 @@ function App() {
       const requestUrl =
         typeof input === "string" ? input : input instanceof URL ? input.pathname : input.url
 
+      if (response.ok && ["/api/plugins/action", "/api/plugins/upload"].includes(requestUrl))
+        window.dispatchEvent(new Event("flex-admin-plugins-changed"))
+
       if (response.status === 401 && requestUrl.startsWith("/api/") && adminRoute() !== "/login") {
         const currentRoute = `${window.location.pathname}${window.location.search}${window.location.hash}`
         window.location.replace(

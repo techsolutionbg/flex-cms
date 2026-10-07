@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react"
 import { ListX, X } from "lucide-react"
 import { Button } from "./ui/button"
+import type { ExtensionPageDescriptor } from "./extension-page"
 
 export type WorkspaceTab = { id: string; title: string; dirty: boolean }
 export type ThemeCapabilities = {
@@ -22,6 +23,7 @@ export const AdminWorkspaceContext = createContext<{
   refreshing: boolean
   themeCapabilities: ThemeCapabilities | null
   capabilitiesError: string | null
+  extensionPages?: ExtensionPageDescriptor[]
 } | null>(null)
 
 export function useWorkspaceSaved() {

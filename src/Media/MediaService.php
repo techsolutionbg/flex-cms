@@ -30,6 +30,22 @@ final readonly class MediaService
         return max(1, $limit);
     }
 
+    public function maxImageMegapixels(): int
+    {
+        return max(1, min(100, (int) ($this->settings?->all('media')['max_image_megapixels'] ?? $this->config->get('filesystems.media.max_image_megapixels', 48))));
+    }
+
+    private function canGenerateThumbnail(int $pixels, int $fileBytes): bool
+    {
+        // GD decodes the full original. Keep a conservative budget even when PHP has no limit.
+        $limit = trim((string) ini_get('memory_limit'));
+        $bytes = (int) $limit * match (strtolower(substr($limit, -1))) {
+            'g' => 1073741824, 'm' => 1048576, 'k' => 1024, default => 1,
+        };
+        $budget = $bytes > 0 ? min($bytes, 256 * 1024 * 1024) : 256 * 1024 * 1024;
+        return memory_get_usage(true) + $pixels * 8 + $fileBytes * 2 + 16 * 1024 * 1024 < $budget;
+    }
+
     /** @return list<string> */
     public function allowedTypes(): array
     {
@@ -95,8 +111,11 @@ final readonly class MediaService
             $width = $height = null;
             if (str_starts_with($mime, 'image/')) {
                 $dimensions = @getimagesize($temporary);
-                if ($dimensions === false || $dimensions[0] * $dimensions[1] > 16000000) {
-                    throw new MediaException('Изображението е повредено или надвишава 16 мегапиксела.', 422);
+                if ($dimensions === false) {
+                    throw new MediaException('Изображението е повредено или размерите му не могат да бъдат прочетени.', 422);
+                }
+                if ($dimensions[0] * $dimensions[1] > $this->maxImageMegapixels() * 1000000) {
+                    throw new MediaException(sprintf('Изображението е %d × %d px и надвишава разрешените %d мегапиксела. Лимитът се променя в Настройки → Медийна библиотека.', $dimensions[0], $dimensions[1], $this->maxImageMegapixels()), 422);
                 }
                 [$width, $height] = $dimensions;
             }
@@ -111,7 +130,7 @@ final readonly class MediaService
             }
             $created[] = $root . '/' . $path;
             $thumbnail = null;
-            if ($width !== null && ($policy['generate_thumbnails'] ?? '1') === '1' && function_exists('imagecreatefromstring')) {
+            if ($width !== null && ($policy['generate_thumbnails'] ?? '1') === '1' && function_exists('imagecreatefromstring') && $this->canGenerateThumbnail($width * $height, $size)) {
                 $image = @imagecreatefromstring((string) file_get_contents($root . '/' . $path));
                 if ($image === false) {
                     throw new MediaException('Изображението не може да бъде обработено.', 422);

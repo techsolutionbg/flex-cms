@@ -79,7 +79,7 @@ final readonly class FrontendExtensionAssets
     {
         $segments = array_map(static fn(string $segment): string => rawurlencode($segment), explode('/', $asset));
 
-        return '/extensions/' . rawurlencode($id) . '/assets/' . implode('/', $segments);
+        return '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $id))) . '/assets/' . implode('/', $segments);
     }
 
     /** @return list<string> */

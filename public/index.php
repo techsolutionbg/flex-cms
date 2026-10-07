@@ -28,7 +28,8 @@ if ($installation->requiresInstallation()) {
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $isThemePreview = preg_match('#^/admin/themes/[^/]+/preview$#', $path) === 1;
-if (!$isThemePreview && in_array($method, ['GET', 'HEAD'], true)
+$isPluginEndpoint = preg_match('#^/admin/plugins/[a-z0-9._-]+/[a-z0-9._-]+/#', $path) === 1;
+if (!$isThemePreview && !$isPluginEndpoint && in_array($method, ['GET', 'HEAD'], true)
     && ($path === '/admin' || str_starts_with($path, '/admin/') || $path === '/login')) {
     $adminEntry = $basePath . '/public/build/react-admin/index.html';
     if (!is_file($adminEntry)) {

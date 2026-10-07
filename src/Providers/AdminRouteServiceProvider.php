@@ -24,6 +24,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r = $container->get(RouteRegistryInterface::class);
         $auth = [RequireAuthenticationMiddleware::class,RequireSuperAdminMiddleware::class];
         $write = [CsrfMiddleware::class,...$auth];
+        $r->add('GET', '/api/admin/extensions', \Flex\Http\Controller\Admin\AdminExtensionsController::class, 'api.admin.extensions', $auth);
         $media = \Flex\Http\Controller\Admin\AdminMediaController::class;
         $mediaAuth = [RequireAuthenticationMiddleware::class];
         $mediaWrite = [CsrfMiddleware::class, ...$mediaAuth];

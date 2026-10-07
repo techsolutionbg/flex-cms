@@ -12,6 +12,7 @@ type Task = {
 }
 export function MediaUploader({
   maxBytes,
+  maxImageMegapixels,
   onUploaded,
   imagesOnly = false,
   allowedTypes = [
@@ -30,6 +31,7 @@ export function MediaUploader({
   onBusyChange,
 }: {
   maxBytes: number
+  maxImageMegapixels?: number
   onUploaded: (record: MediaRecord) => void
   imagesOnly?: boolean
   allowedTypes?: string[]
@@ -160,6 +162,9 @@ export function MediaUploader({
         До {mediaSize(maxBytes)} на файл. Разрешени типове:{" "}
         {acceptedLabels.length ? acceptedLabels.join(", ") : "няма"}. SVG не се поддържа.
       </p>
+      {maxImageMegapixels !== undefined && (
+        <p>Максимална резолюция на изображенията: {maxImageMegapixels} мегапиксела.</p>
+      )}
       {error && (
         <p role="alert" className="react-form-error">
           {error}

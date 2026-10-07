@@ -73,9 +73,21 @@ final class MediaServiceTest extends TestCase
         rmdir($this->directory);
     }
 
-    private function image(): UploadedFile
+    private function image(int $width = 800, int $height = 600): UploadedFile
     {
-        $image = imagecreatetruecolor(800, 600);
+        if ($width * $height > 16000000) {
+            // Build a valid large PNG row by row without decoding a full bitmap in the test process.
+            $chunk = static fn(string $type, string $data): string => pack('N', strlen($data)) . $type . $data . pack('N', crc32($type . $data));
+            $compression = deflate_init(ZLIB_ENCODING_DEFLATE);
+            $compressed = '';
+            $row = "\0" . str_repeat("\0", $width * 3);
+            for ($y = 0; $y < $height; $y++) {
+                $compressed .= deflate_add($compression, $row, $y === $height - 1 ? ZLIB_FINISH : ZLIB_NO_FLUSH);
+            }
+            $bytes = "\x89PNG\r\n\x1a\n" . $chunk('IHDR', pack('NNCCCCC', $width, $height, 8, 2, 0, 0, 0)) . $chunk('IDAT', $compressed) . $chunk('IEND', '');
+            return new UploadedFile(Stream::create($bytes), strlen($bytes), UPLOAD_ERR_OK, 'large.png', 'image/png');
+        }
+        $image = imagecreatetruecolor($width, $height);
         ob_start();
         imagepng($image);
         $bytes = (string) ob_get_clean();
@@ -108,6 +120,38 @@ final class MediaServiceTest extends TestCase
         try { $settings->save('media', array_replace($values, ['allow_images' => '0', 'allow_documents' => '0', 'allow_audio' => '0', 'allow_video' => '0'])); self::fail('All categories disabled'); }
         catch (\InvalidArgumentException $error) { self::assertSame(422, $error->getCode()); }
         self::assertSame(1048576, $media->maxBytes());
+    }
+
+    public function testResolutionSettingAcceptsLargeOriginalAndRejectsAboveConfiguredLimit(): void
+    {
+        $this->database->schema()->create('settings', static function (Blueprint $table): void {
+            $table->string('key')->primary(); $table->text('value'); $table->string('type'); $table->string('group'); $table->boolean('autoload'); $table->timestamps();
+        });
+        $settings = new \Flex\Settings\SectionSettings($this->database, $this->config);
+        $values = $settings->all('media');
+        self::assertSame('48', $values['max_image_megapixels']);
+        $media = new MediaService($this->database, new ProjectPaths($this->directory, $this->config), $this->config, $settings);
+        $settings->save('media', array_replace($values, ['max_image_megapixels' => '48']));
+        $record = $media->upload($this->image(6000, 6000), 7);
+        self::assertSame(6000, $record['width']);
+        self::assertNull($record['thumbnail_path']);
+        self::assertFileExists($this->directory . '/media/' . $record['path']);
+        $settings->save('media', array_replace($values, ['max_image_megapixels' => '16']));
+        self::assertSame(16, $media->maxImageMegapixels());
+        try {
+            $media->upload($this->image(5000, 4000), 7);
+            self::fail('Accepted an image above the configured resolution');
+        } catch (MediaException $error) {
+            self::assertSame(422, $error->getCode());
+            self::assertStringContainsString('16 мегапиксела', $error->getMessage());
+            self::assertStringContainsString('5000 × 4000', $error->getMessage());
+        }
+        foreach (['0', '101', '1.5', '-1'] as $invalid) {
+            try { $settings->save('media', array_replace($values, ['max_image_megapixels' => $invalid])); self::fail('Accepted invalid resolution'); }
+            catch (\InvalidArgumentException $error) { self::assertSame(422, $error->getCode()); }
+        }
+        self::assertCount(1, $media->index('active'));
+        self::assertSame([], glob($this->directory . '/media/.upload-*'));
     }
 
     public function testUploadUsesContentTypeAndMakesThumbnailWithoutChangingOriginal(): void

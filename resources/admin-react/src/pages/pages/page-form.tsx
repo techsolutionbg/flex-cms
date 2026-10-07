@@ -306,10 +306,10 @@ export function PageForm({
           </small>
         </CollapsibleSection>
         <CollapsibleSection title="Съдържание" icon={FileText} className="content-editor-section">
-          <label>
-            Съдържание
+          <div className="react-form-field">
+            <span>Съдържание</span>
             <RichTextEditor value={content} onChange={setContent} />
-          </label>
+          </div>
         </CollapsibleSection>
         {Object.entries(groupedFields).map(([plugin, fields]) => (
           <CollapsibleSection

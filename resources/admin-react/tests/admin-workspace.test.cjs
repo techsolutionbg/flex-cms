@@ -47,6 +47,7 @@ function harness(initial = "/", restored = null) {
     "@/lib/admin-routes": { adminRoute: () => path, adminUrl: (value) => value },
     "./admin-shell": { AdminShell: "AdminShell" },
     "./confirm-dialog": { ConfirmDialog: "ConfirmDialog" },
+    "./extension-page": { ExtensionPage: "ExtensionPage" },
     "./admin-workspace-context": { AdminWorkspaceContext: { Provider: "Provider" } },
   }
   const storageExports = {}

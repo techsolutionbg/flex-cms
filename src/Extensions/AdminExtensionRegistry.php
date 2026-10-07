@@ -12,6 +12,9 @@ final class AdminExtensionRegistry
     /** @var array<string, array{id: string, label: string, href: string, priority: int}> */
     private array $sidebarItems = [];
 
+    /** @var array<string, array{id: string, label: string, href: string, module: string, embeddable: bool}> */
+    private array $pages = [];
+
     /** @var array<string, list<array{kind: string, title: string, text: string, href: string|null, priority: int}>> */
     private array $slots = [];
 
@@ -36,9 +39,15 @@ final class AdminExtensionRegistry
             $this->addSlot($name, $kind, $title, $text, $href, $priority);
         };
 
-        return new class($permissions, $addSidebarItem, $addSlot) implements AdminExtensionRegistrarInterface {
+        return new class($permissions, $addSidebarItem, $addSlot, $this, $pluginId) implements AdminExtensionRegistrarInterface {
             /** @param list<string> $permissions */
-            public function __construct(private array $permissions, private \Closure $addSidebarItem, private \Closure $addSlot) {}
+            public function __construct(private array $permissions, private \Closure $addSidebarItem, private \Closure $addSlot, private AdminExtensionRegistry $registry, private string $pluginId) {}
+
+            public function page(string $id, string $label, string $module, bool $embeddable = false): void
+            {
+                $this->assertPermission();
+                $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable);
+            }
 
             public function sidebarItem(string $id, string $label, string $href, int $priority = 50): void
             {
@@ -61,7 +70,7 @@ final class AdminExtensionRegistry
         };
     }
 
-    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>} */
+    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>, pages: list<array{id: string, label: string, href: string, module: string, embeddable: bool}>} */
     public function bootstrap(): array
     {
         $sidebar = array_values($this->sidebarItems);
@@ -76,7 +85,20 @@ final class AdminExtensionRegistry
             ], $items);
         }
 
-        return ['sidebar' => $sidebar, 'slots' => $slots];
+        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages)];
+    }
+
+    public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable): void
+    {
+        if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $id) || trim($label) === '' ||
+            !preg_match('/^[a-zA-Z0-9_\/.\-]+\.js$/D', $module) || str_contains($module, '..') || str_starts_with($module, '/')) {
+            throw new \InvalidArgumentException('Invalid admin page ID, label or module path.');
+        }
+        $key = str_replace('/', '-', $pluginId) . '-' . $id;
+        $href = '/extension-pages/' . $key;
+        $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
+            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module, 'embeddable' => $embeddable];
+        $this->addSidebarItem($key, trim($label), $href, 50);
     }
 
     private function addSidebarItem(string $id, string $label, string $href, int $priority): void

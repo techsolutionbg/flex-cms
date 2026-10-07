@@ -4974,7 +4974,9 @@ textarea.react-ui-textarea {
   color: var(--control-text);
   font: inherit;
   font-weight: 400;
-  transition: border-color 150ms, background-color 150ms;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
 }
 textarea.react-ui-textarea {
   line-height: 1.55;
@@ -5054,4 +5056,42 @@ button.react-action-button svg {
 }
 .react-loading-button[aria-busy="true"] svg:not(.react-button-spinner) {
   display: none;
+}
+.rich-text-insert-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.rich-text-insert-toolbar > span,
+.rich-text-embedded-items > span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.rich-text-insert-toolbar > button,
+.rich-text-embedded-item > button {
+  flex: none;
+  width: auto;
+  font-weight: 400;
+}
+.rich-text-embedded-items {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.rich-text-embedded-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.5rem;
+  background: var(--surface-subtle);
+}
+.rich-text-embedded-item code {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }

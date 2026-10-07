@@ -99,6 +99,12 @@ export function AdminSidebar({
         }
       : group,
   )
+  const extensionPages = workspace?.extensionPages ?? []
+  if (extensionPages.length)
+    visibleGroups.push({
+      label: "Разширения",
+      items: extensionPages.map((page) => ({ label: page.label, icon: Puzzle })),
+    })
 
   function navigateFromSidebar(label: string) {
     if (label === "Профил") {
@@ -154,7 +160,11 @@ export function AdminSidebar({
                   <li key={label}>
                     <a
                       className={`sidebar-link-react${activeItem === label ? " is-active" : ""}`}
-                      href={adminUrl(sidebarPaths[label] ?? "/")}
+                      href={adminUrl(
+                        extensionPages.find((page) => page.label === label)?.href ??
+                          sidebarPaths[label] ??
+                          "/",
+                      )}
                       title={label}
                       onClick={(event) => {
                         if (

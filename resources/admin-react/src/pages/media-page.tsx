@@ -121,6 +121,7 @@ export function MediaPage({
               <CollapsibleSection title="Качване на нови файлове" icon={Upload}>
                 <MediaUploader
                   maxBytes={uploadIndex.max_bytes}
+                  maxImageMegapixels={uploadIndex.max_image_megapixels}
                   allowedTypes={uploadIndex.allowed_types}
                   onBusyChange={(uploading) => (uploading ? changed?.() : markSaved?.())}
                   onUploaded={(item) => setUploaded((current) => [item, ...current])}

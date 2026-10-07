@@ -19,7 +19,8 @@ final readonly class ExtensionFrontendAssetController
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
-        $asset = $this->assets->resolve((string) ($arguments['id'] ?? ''), (string) ($arguments['asset'] ?? ''));
+        $id = isset($arguments['vendor'], $arguments['plugin']) ? $arguments['vendor'] . '/' . $arguments['plugin'] : (string) ($arguments['id'] ?? '');
+        $asset = $this->assets->resolve($id, (string) ($arguments['asset'] ?? ''));
         if ($asset === null) {
             return $this->responses->text('Ресурсът не е намерен.', 404);
         }

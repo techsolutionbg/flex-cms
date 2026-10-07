@@ -21,10 +21,12 @@ export function MediaBrowser({
   onSelect,
   picker = false,
   imagesOnly = false,
+  selectedIds,
 }: {
   onSelect: (record: MediaRecord) => void
   picker?: boolean
   imagesOnly?: boolean
+  selectedIds?: ReadonlySet<number>
 }) {
   const [index, setIndex] = useState<MediaIndex | null>(null)
   const [view, setView] = useState("active")
@@ -267,6 +269,7 @@ export function MediaBrowser({
       {picker && view === "active" && index?.permissions.upload && (
         <MediaUploader
           maxBytes={index.max_bytes}
+          maxImageMegapixels={index.max_image_megapixels}
           allowedTypes={index.allowed_types}
           imagesOnly={imagesOnly}
           onUploaded={(record) =>
@@ -287,6 +290,16 @@ export function MediaBrowser({
           columns={columns}
           rowKey={(record) => record.id}
           loading={loading}
+          selectable={!!selectedIds}
+          selectedKeys={selectedIds}
+          onSelectionChange={
+            selectedIds
+              ? (keys) => {
+                  for (const record of data)
+                    if (keys.has(record.id) !== selectedIds.has(record.id)) onSelect(record)
+                }
+              : undefined
+          }
           toolbar={filters}
           filterStorageKey={picker ? "media-picker" : "media"}
         />
@@ -303,10 +316,14 @@ export function MediaBrowser({
                     <button
                       type="button"
                       className="media-card-preview"
+                      aria-pressed={selectedIds ? selectedIds.has(record.id) : undefined}
                       onClick={() => onSelect(record)}
                     >
                       <MediaPreview record={record} />
                       <span>{record.title || record.original_name}</span>
+                      {selectedIds && (
+                        <span>{selectedIds.has(record.id) ? "✓ Избрано" : "Избери"}</span>
+                      )}
                     </button>
                     <div className="media-card-footer">
                       <span>{mediaSize(record.size)}</span>

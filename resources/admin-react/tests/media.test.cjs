@@ -5,6 +5,34 @@ const path = require("node:path")
 const vm = require("node:vm")
 const ts = require("typescript")
 
+test("page editor clicks cannot activate an extension button through a wrapping label", () => {
+  const source = ts.createSourceFile(
+    "page-form.tsx",
+    fs.readFileSync(path.join(__dirname, "../src/pages/pages/page-form.tsx"), "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  let editors = 0
+  function visit(node) {
+    if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(source) === "RichTextEditor") {
+      editors++
+      for (let ancestor = node.parent; ancestor; ancestor = ancestor.parent) {
+        if (ts.isJsxElement(ancestor)) {
+          assert.notEqual(
+            ancestor.openingElement.tagName.getText(source),
+            "label",
+            "A label forwards clicks in the editor to its first button",
+          )
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(source)
+  assert.equal(editors, 1)
+})
+
 function api() {
   const requests = []
   class XHR {
@@ -111,6 +139,7 @@ test("an image-only page keeps its HTML and inserts media from the library", () 
       this.options = options
       this.root = {
         innerHTML: "",
+        setAttribute() {},
         querySelector: () => (this.root.innerHTML.includes("<img") ? {} : null),
       }
       this.clipboard = { dangerouslyPasteHTML() {} }
@@ -134,6 +163,7 @@ test("an image-only page keeps its HTML and inserts media from the library", () 
   const jsx = (type, props) => ({ type, props })
   const modules = {
     react: {
+      useContext: () => null,
       useState: () => [false, () => {}],
       useRef: (value) => {
         const ref = { current: refs.length === 0 ? {} : value }
@@ -145,6 +175,8 @@ test("an image-only page keeps its HTML and inserts media from the library", () 
     "react/jsx-runtime": { jsx, jsxs: jsx },
     quill: { __esModule: true, default: Quill },
     "./media-picker": { MediaPicker: "MediaPicker" },
+    "./extension-page": { ExtensionModule: "ExtensionModule" },
+    "./ui/button": { Button: "Button" },
     "./admin-workspace-context": { useWorkspaceChanged: () => () => {} },
     "quill/dist/quill.snow.css": {},
   }
@@ -162,7 +194,7 @@ test("an image-only page keeps its HTML and inserts media from the library", () 
   vm.runInNewContext(source, { exports, require: (id) => modules[id] })
   const tree = exports.RichTextEditor({ value: "", onChange: (value) => changes.push(value) })
   effects.forEach((effect) => effect())
-  const picker = tree.props.children.find((child) => child.type === "MediaPicker")
+  const picker = tree.props.children.find((child) => child?.type === "MediaPicker")
   picker.props.onSelect({ id: 7, url: "/media-files/7/original", alt: "Снимка" })
   assert.equal(changes.at(-1), '<p><img src="/media-files/7/original"></p>')
   assert.equal(typeof editor.options.modules.toolbar.handlers.image, "function")

@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef } from "react"
+import { useEffect, useId, useRef, useState } from "react"
+import { Button } from "./ui/button"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { MediaBrowser } from "./media-browser"
@@ -9,15 +10,21 @@ export function MediaPicker({
   onSelect,
   onClose,
   imagesOnly = false,
+  multiple = false,
+  onSelectMany,
 }: {
   open: boolean
-  onSelect: (record: MediaRecord) => void
+  onSelect?: (record: MediaRecord) => void
   onClose: () => void
   imagesOnly?: boolean
+  multiple?: boolean
+  onSelectMany?: (records: MediaRecord[]) => void
 }) {
+  const [selected, setSelected] = useState<MediaRecord[]>([])
   const dialog = useRef<HTMLDialogElement>(null)
   const title = useId()
   useEffect(() => {
+    setSelected([])
     if (open) dialog.current?.showModal()
     else dialog.current?.close()
   }, [open])
@@ -59,11 +66,34 @@ export function MediaPicker({
         <MediaBrowser
           picker
           imagesOnly={imagesOnly}
+          selectedIds={multiple ? new Set(selected.map((record) => record.id)) : undefined}
           onSelect={(record) => {
-            onSelect(record)
-            onClose()
+            if (multiple)
+              setSelected((current) =>
+                current.some((item) => item.id === record.id)
+                  ? current.filter((item) => item.id !== record.id)
+                  : [...current, record],
+              )
+            else {
+              onSelect?.(record)
+              onClose()
+            }
           }}
         />
+      )}
+      {multiple && (
+        <div className="react-form-actions">
+          <Button
+            type="button"
+            disabled={!selected.length}
+            onClick={() => {
+              onSelectMany?.(selected)
+              onClose()
+            }}
+          >
+            Добави избраните ({selected.length})
+          </Button>
+        </div>
       )}
     </dialog>,
     document.body,

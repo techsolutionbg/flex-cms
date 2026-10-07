@@ -22,7 +22,7 @@ final class CoreServiceProvider implements ServiceProviderInterface
 {
     public function definitions(): array
     {
-        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), ThemeManager::class => autowire(), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
+        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), ThemeManager::class => autowire()->constructorParameter('extensionApi', \DI\get(\Flex\Extension\V1\ExtensionApiInterface::class)), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
     }
     public function boot(ContainerInterface $container): void {}
 }
