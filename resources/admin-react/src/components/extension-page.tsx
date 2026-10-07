@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner"
 import { AdminShell } from "./admin-shell"
 import { Breadcrumbs } from "./breadcrumbs"
+import { CheckboxField } from "./checkbox-field"
 import { CollapsibleSection } from "./collapsible-section"
 import { ConfirmDialog } from "./confirm-dialog"
 import { DataTable } from "./data-table"
@@ -25,6 +26,7 @@ import { LoadingButton } from "./loading-button"
 import { MediaPicker } from "./media-picker"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
+import { RichTextEditor } from "./rich-text-editor"
 import { Button } from "./ui/button"
 import { useWorkspaceChanged, useWorkspaceSaved } from "./admin-workspace-context"
 import { mediaRequest } from "@/lib/media-api"
@@ -100,6 +102,7 @@ const host = {
   useWorkspaceSaved,
   components: {
     Breadcrumbs,
+    CheckboxField,
     CollapsibleSection,
     ConfirmDialog,
     DataTable,
@@ -111,6 +114,7 @@ const host = {
     MediaPicker,
     Input,
     Textarea,
+    RichTextEditor,
     Button,
     Dialog,
   },
@@ -137,7 +141,11 @@ class ExtensionBoundary extends React.Component<
   }
 }
 function loadModule(url: string) {
-  if (!url.startsWith("/extensions/") || !url.endsWith(".js") || url.includes(".."))
+  if (
+    !url.startsWith("/extensions/") ||
+    !/^\/extensions\/[a-zA-Z0-9_/.\-]+\.js(?:\?v=[a-f0-9]{16})?$/.test(url) ||
+    url.includes("..")
+  )
     return Promise.reject(new Error("Невалиден модул на разширение."))
   if (!modules.has(url))
     modules.set(

@@ -1,3 +1,4 @@
+import { adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -91,17 +92,28 @@ export function MenusPage({
     if (busy || menu.status === status || view !== "active") return
     setBusy(true)
     try {
-      const result = await menuRequest<{ menu: MenuSummary }>(`/api/admin/menus/${menu.id}`, "PUT", {
-        name: menu.name,
-        slug: menu.slug,
-        status,
-        version: menu.version,
-      })
-      setData((current) => current
-        ? { ...current, menus: current.menus.map((item) => item.id === menu.id
-          ? { ...item, status: result.menu.status, version: result.menu.version }
-          : item) }
-        : current)
+      const result = await menuRequest<{ menu: MenuSummary }>(
+        `/api/admin/menus/${menu.id}`,
+        "PUT",
+        {
+          name: menu.name,
+          slug: menu.slug,
+          status,
+          version: menu.version,
+        },
+      )
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              menus: current.menus.map((item) =>
+                item.id === menu.id
+                  ? { ...item, status: result.menu.status, version: result.menu.version }
+                  : item,
+              ),
+            }
+          : current,
+      )
       setFailure("")
       toast.success(`Статусът на менюто е сменен на „${menuStatusLabels[status]}“.`)
     } catch (error) {
@@ -134,14 +146,24 @@ export function MenusPage({
         view === "trash" ? (
           menu.name
         ) : (
-          <button
-            className="react-table-link"
-            type="button"
-            disabled={busy}
-            onClick={() => onEdit(menu)}
+          <a
+            className="react-page-link"
+            href={adminUrl(`/menus/${menu.id}/edit`)}
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return
+              event.preventDefault()
+              if (!busy) onEdit(menu)
+            }}
           >
             {menu.name}
-          </button>
+          </a>
         ),
     },
     { key: "slug", label: "Идентификатор", sortable: true },
@@ -164,18 +186,20 @@ export function MenusPage({
       key: "assignments",
       label: "Локация",
       render: (menu) =>
-        menu.assignments.length
-          ? menu.assignments.map((assignment) => (
-              <span
-                className="react-table-location"
-                key={`${assignment.theme}:${assignment.location}`}
-              >
-                {assignment.theme === data?.theme
-                  ? (data.menu_locations[assignment.location] ?? assignment.location)
-                  : `${assignment.theme}: ${assignment.location}`}
-              </span>
-            ))
-          : <span className="react-table-location-empty">Не е присвоено към локация</span>,
+        menu.assignments.length ? (
+          menu.assignments.map((assignment) => (
+            <span
+              className="react-table-location"
+              key={`${assignment.theme}:${assignment.location}`}
+            >
+              {assignment.theme === data?.theme
+                ? (data.menu_locations[assignment.location] ?? assignment.location)
+                : `${assignment.theme}: ${assignment.location}`}
+            </span>
+          ))
+        ) : (
+          <span className="react-table-location-empty">Не е присвоено към локация</span>
+        ),
     },
     {
       key: "actions",

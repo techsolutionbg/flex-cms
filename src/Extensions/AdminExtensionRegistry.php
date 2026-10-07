@@ -30,7 +30,7 @@ final class AdminExtensionRegistry
     ];
 
     /** @param list<string> $permissions */
-    public function registrar(string $pluginId, array $permissions): AdminExtensionRegistrarInterface
+    public function registrar(string $pluginId, array $permissions, ?string $pluginPath = null): AdminExtensionRegistrarInterface
     {
         $addSidebarItem = function (string $id, string $label, string $href, int $priority): void {
             $this->addSidebarItem($id, $label, $href, $priority);
@@ -39,14 +39,14 @@ final class AdminExtensionRegistry
             $this->addSlot($name, $kind, $title, $text, $href, $priority);
         };
 
-        return new class($permissions, $addSidebarItem, $addSlot, $this, $pluginId) implements AdminExtensionRegistrarInterface {
+        return new class($permissions, $addSidebarItem, $addSlot, $this, $pluginId, $pluginPath) implements AdminExtensionRegistrarInterface {
             /** @param list<string> $permissions */
-            public function __construct(private array $permissions, private \Closure $addSidebarItem, private \Closure $addSlot, private AdminExtensionRegistry $registry, private string $pluginId) {}
+            public function __construct(private array $permissions, private \Closure $addSidebarItem, private \Closure $addSlot, private AdminExtensionRegistry $registry, private string $pluginId, private ?string $pluginPath) {}
 
             public function page(string $id, string $label, string $module, bool $embeddable = false, array $navigation = []): void
             {
                 $this->assertPermission();
-                $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable, $navigation);
+                $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable, $navigation, $this->pluginPath);
             }
 
             public function sidebarItem(string $id, string $label, string $href, int $priority = 50): void
@@ -88,7 +88,7 @@ final class AdminExtensionRegistry
         return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages)];
     }
 
-    public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = []): void
+    public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = [], ?string $pluginPath = null): void
     {
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $id) || trim($label) === '' ||
             !preg_match('/^[a-zA-Z0-9_\/.\-]+\.js$/D', $module) || str_contains($module, '..') || str_starts_with($module, '/')) {
@@ -102,8 +102,10 @@ final class AdminExtensionRegistry
         }
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
         $href = '/extension-pages/' . $key;
+        $assetHash = $pluginPath === null ? false : @hash_file('sha256', $pluginPath . '/' . $module);
+        $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
-            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module, 'embeddable' => $embeddable, 'navigation' => ['group' => $group, 'icon' => $icon]];
+            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => ['group' => $group, 'icon' => $icon]];
         $this->addSidebarItem($key, trim($label), $href, 50);
     }
 

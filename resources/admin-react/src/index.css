@@ -5125,3 +5125,84 @@ button.react-action-button svg {
   overflow-wrap: anywhere;
   min-width: 0;
 }
+
+/* Shared Material-style switch; retains native keyboard and form behavior. */
+.react-checkbox-field {
+  align-items: center;
+  column-gap: 0.75rem !important;
+  font-weight: 400;
+}
+.react-switch-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 52px;
+  height: 44px;
+}
+.react-checkbox-field .react-switch-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.react-switch-track {
+  display: flex;
+  align-items: center;
+  width: 52px;
+  height: 32px;
+  padding: 2px;
+  box-sizing: border-box;
+  border: 2px solid var(--control-border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+.react-switch-thumb {
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition:
+    transform 0.18s ease,
+    width 0.18s ease,
+    height 0.18s ease,
+    background-color 0.18s ease;
+}
+.react-switch-control input:checked + .react-switch-track {
+  border-color: var(--primary-bg);
+  background: var(--primary-bg);
+}
+.react-switch-control input:checked + .react-switch-track .react-switch-thumb {
+  width: 24px;
+  height: 24px;
+  margin-left: 0;
+  transform: translateX(20px);
+  background: var(--primary-text);
+}
+.react-switch-control input:focus-visible + .react-switch-track {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.react-switch-control input:hover:not(:disabled) + .react-switch-track {
+  box-shadow: 0 0 0 4px var(--surface-hover);
+}
+.react-switch-control input:disabled {
+  cursor: not-allowed;
+}
+.react-switch-control input:disabled + .react-switch-track {
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-switch-track,
+  .react-switch-thumb {
+    transition: none;
+  }
+}

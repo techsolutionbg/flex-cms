@@ -1,3 +1,4 @@
+import { adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
@@ -141,9 +142,24 @@ export function PluginsPage({
       sortable: true,
       render: (plugin) => (
         <>
-          <button className="react-table-link" type="button" onClick={() => onView(plugin)}>
+          <a
+            className="react-page-link"
+            href={adminUrl(`/plugins/${encodeURIComponent(plugin.id)}`)}
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return
+              event.preventDefault()
+              onView(plugin)
+            }}
+          >
             {plugin.name}
-          </button>
+          </a>
           <small className="react-table-subtext">{plugin.id}</small>
         </>
       ),

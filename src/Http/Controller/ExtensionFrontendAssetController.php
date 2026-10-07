@@ -31,11 +31,17 @@ final readonly class ExtensionFrontendAssetController
         }
 
         $mime = $asset['type'] === 'style' ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8';
-
-        return $this->responses->text($contents, 200, [
+        $etag = '"' . hash('sha256', $contents) . '"';
+        $headers = [
             'Content-Type' => $mime,
-            'Cache-Control' => 'public, max-age=31536000, immutable',
+            'Cache-Control' => 'public, no-cache',
+            'ETag' => $etag,
             'X-Content-Type-Options' => 'nosniff',
-        ]);
+        ];
+        if ($request->getHeaderLine('If-None-Match') === $etag) {
+            return $this->responses->text('', 304, $headers);
+        }
+
+        return $this->responses->text($contents, 200, $headers);
     }
 }

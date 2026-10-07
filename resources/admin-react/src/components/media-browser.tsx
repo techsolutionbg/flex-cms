@@ -248,7 +248,7 @@ export function MediaBrowser({
       label: "Файл",
       sortable: true,
       render: (record) => (
-        <button type="button" className="react-table-title-button" onClick={() => onSelect(record)}>
+        <button type="button" className="react-table-link" onClick={() => onSelect(record)}>
           {record.title || record.original_name}
         </button>
       ),
