@@ -167,6 +167,44 @@ final class MediaServiceTest extends TestCase
         self::assertSame('/media-files/1/original', $record['url']);
     }
 
+    public function testOptimizedPreviewsAreRegeneratedWithoutChangingOriginal(): void
+    {
+        $record = $this->media->upload($this->image(), 1);
+        $file = $this->directory . '/media/' . $record['path'];
+        $hash = hash_file('sha256', $file);
+        $old = $this->directory . '/media/' . $record['thumbnail_path'];
+        $results = iterator_to_array($this->media->regenerateThumbnails(true));
+        self::assertSame('generated', $results[0]['status']);
+        self::assertSame($hash, hash_file('sha256', $file));
+        self::assertFileDoesNotExist($old);
+        self::assertNotSame($record['thumbnail_url'], $this->media->get(1)['thumbnail_url']);
+        self::assertSame('skipped', iterator_to_array($this->media->regenerateThumbnails())[0]['status']);
+        $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+        $controller = new \Flex\Http\Controller\PublicMediaController($this->media, new ProjectPaths($this->directory, $this->config), $factory, $factory);
+        $record = $this->media->get(1);
+        parse_str((string) parse_url($record['thumbnail_url'], PHP_URL_QUERY), $query);
+        $request = (new \Nyholm\Psr7\ServerRequest('GET', $record['thumbnail_url']))->withQueryParams($query);
+        $response = $controller($request, ['id' => '1', 'variant' => 'thumbnail']);
+        self::assertSame(function_exists('imagewebp') ? 'image/webp' : 'image/png', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('immutable', $response->getHeaderLine('Cache-Control'));
+        $cached = $controller($request->withHeader('If-None-Match', $response->getHeaderLine('ETag')), ['id' => '1', 'variant' => 'thumbnail']);
+        self::assertSame(304, $cached->getStatusCode());
+        self::assertSame('', (string) $cached->getBody());
+        self::assertSame(304, $controller($request->withHeader('If-Modified-Since', $response->getHeaderLine('Last-Modified')), ['id' => '1', 'variant' => 'thumbnail'])->getStatusCode());
+        self::assertSame(200, $controller($request->withHeader('If-None-Match', '"different"')->withHeader('If-Modified-Since', $response->getHeaderLine('Last-Modified')), ['id' => '1', 'variant' => 'thumbnail'])->getStatusCode());
+    }
+
+    public function testThumbnailBatchContinuesAfterMissingOriginalAndResumesById(): void
+    {
+        $first = $this->media->upload($this->image(), 1);
+        $second = $this->media->upload($this->image(), 1);
+        unlink($this->directory . '/media/' . $first['path']);
+        $results = iterator_to_array($this->media->regenerateThumbnails(true, 0, 2));
+        self::assertSame(['failed', 'generated'], array_column($results, 'status'));
+        self::assertFileExists($this->directory . '/media/' . $first['thumbnail_path']);
+        self::assertSame([], iterator_to_array($this->media->regenerateThumbnails(true, $second['id'], 2)));
+    }
+
     public function testDetailsIncludeUploaderEmailAndHandleMissingUser(): void
     {
         $this->database->connection()->table('users')->insert(['id' => 7, 'email' => 'uploader@example.com']);

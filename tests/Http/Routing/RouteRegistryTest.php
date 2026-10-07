@@ -60,6 +60,35 @@ final class RouteRegistryTest extends TestCase
         self::assertSame('plugin.acme_forms.health', $registry->all()[0]->name);
     }
 
+    public function testPluginPublicRoutesCanUseTheSiteRootAndPrecedeThePageFallback(): void
+    {
+        $registry = new RouteRegistry();
+        $registry->get('/{slug:.+}', static fn() => new \Nyholm\Psr7\Response(200, [], 'page'), 'public.page');
+        $registrar = new PluginRouteRegistrar($registry, 'flex/commerce', ['routes.public']);
+        $registrar->publicRoute('GET', '/product/{slug}', static fn() => new \Nyholm\Psr7\Response(200, [], 'product'), 'product');
+
+        $route = $registry->all()[1];
+        self::assertSame('/product/{slug}', $route->path);
+        self::assertSame('plugin.public.flex_commerce.product', $route->name);
+
+        $router = (new \Flex\Http\Routing\RouterFactory(new \DI\Container(), $registry))->create();
+        self::assertSame('product', (string) $router->handle(new \Nyholm\Psr7\ServerRequest('GET', '/product/example'))->getBody());
+    }
+
+    public function testPluginRootPublicRoutesStillRequireThePublicRoutesPermission(): void
+    {
+        $this->expectException(\Flex\Extensions\Exception\PluginPermissionDenied::class);
+
+        (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms'))->publicRoute('GET', '/health', static fn() => null);
+    }
+
+    public function testPluginPublicRoutesRejectTraversalPaths(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new PluginRouteRegistrar(new RouteRegistry(), 'acme/forms', ['routes.public']))->publicRoute('GET', '/../escape', static fn() => null);
+    }
+
     public function testPluginRoutesRejectTraversalPaths(): void
     {
         $this->expectException(\InvalidArgumentException::class);

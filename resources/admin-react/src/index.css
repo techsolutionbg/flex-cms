@@ -524,6 +524,7 @@ body {
   min-height: 100vh;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--sidebar-bg);
   color: white;
   box-shadow: 4px 0 18px rgb(23 33 24 / 8%);
@@ -573,6 +574,9 @@ body {
   opacity: 1;
 }
 .admin-sidebar-react nav {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   padding: 1.1rem 0;
 }
 .sidebar-group-react {
@@ -611,15 +615,22 @@ body {
 }
 .sidebar-group-react ul {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
   gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.sidebar-group-react li {
+  min-width: 0;
+}
 .sidebar-link-react {
   position: relative;
   display: flex;
   width: 100%;
+  min-width: 0;
   min-height: 3.5rem;
   align-items: center;
   gap: 0.8rem;
@@ -655,10 +666,12 @@ body {
   padding-left: 0.5rem;
 }
 .sidebar-label-react {
-  display: inline-block;
-  max-width: 9rem;
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   opacity: 1;
+  text-overflow: ellipsis;
   white-space: nowrap;
   transition:
     max-width 150ms ease,
@@ -3017,7 +3030,9 @@ body {
   }
   .admin-shell-react.is-sidebar-collapsed .sidebar-label-react {
     display: inline;
-    max-width: 9rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
     opacity: 1;
   }
   .admin-shell-react.is-sidebar-collapsed .sidebar-link-react {
@@ -4773,23 +4788,61 @@ select:focus-visible,
   cursor: pointer;
   text-align: start;
 }
-.media-card-preview img,
-.media-card-preview > svg {
+.media-card.is-selected {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success-text) 26%, transparent);
+}
+.media-card.is-selected .media-card-preview {
+  background: var(--success-bg);
+}
+.media-card-image-wrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.media-card-image-wrap > img,
+.media-card-image-wrap > svg {
   width: 100%;
   height: 10rem;
   object-fit: contain;
   background: var(--surface-subtle);
 }
-.media-card-preview > svg {
+.media-card-image-wrap > svg {
   padding: 3rem;
   color: var(--text-secondary);
 }
-.media-card-preview span {
+.media-card-preview .media-card-title {
   padding: 0.75rem;
   overflow-wrap: anywhere;
 }
+.media-selection-badge {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+}
+.media-selection-badge.is-selected {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+  color: var(--success-text);
+}
 .media-card-preview:hover {
   background: var(--surface-hover);
+}
+.media-card.is-selected .media-card-preview:hover {
+  background: var(--success-bg);
 }
 .media-card-preview:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -4875,6 +4928,39 @@ select:focus-visible,
   padding: 1.25rem;
   color: var(--text-primary);
   background: var(--surface);
+}
+.media-picker-actions {
+  position: sticky;
+  bottom: -1.25rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem -1.25rem -1.25rem;
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 1.25rem 1.25rem;
+  background: var(--surface);
+  box-shadow: 0 -0.6rem 1.1rem color-mix(in srgb, var(--surface) 78%, transparent);
+}
+.media-picker-selection-count {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+.media-picker-action-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+@media (max-width: 520px) {
+  .media-picker-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .media-picker-action-buttons {
+    justify-content: flex-end;
+  }
 }
 .media-picker-dialog::backdrop {
   background: var(--overlay-backdrop, rgb(0 0 0 / 0.6));
@@ -5205,4 +5291,43 @@ button.react-action-button svg {
   .react-switch-thumb {
     transition: none;
   }
+}
+
+/* Grouped administration navigation. */
+.sidebar-group-toggle-react {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 48px;
+  padding: 12px 20px; border: 0; background: transparent; color: inherit;
+  font: inherit; font-weight: 500; text-align: left; cursor: pointer;
+}
+.sidebar-group-toggle-react:hover, .sidebar-group-toggle-react:focus-visible, .sidebar-group-toggle-react.has-active-child {
+  background: rgba(128,160,136,.1);
+}
+.sidebar-group-chevron { margin-left: auto; flex-shrink: 0; transition: transform .18s ease; }
+.sidebar-group-chevron.is-expanded { transform: rotate(180deg); }
+.sidebar-submenu-transition {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows .24s ease, opacity .2s ease, visibility .24s;
+}
+.sidebar-submenu-transition.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.sidebar-submenu-transition > ul { min-height: 0; overflow: hidden; }
+.sidebar-group-toggle-react { transition: background-color .18s ease, color .18s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-submenu-transition, .sidebar-group-chevron, .sidebar-group-toggle-react { transition: none; }
+}
+.sidebar-submenu-react .sidebar-link-react { min-height: 42px; padding-block: 10px; padding-left: 34px; font-weight: 400; }
+.sidebar-submenu-react .sidebar-icon-react { width: 18px; height: 18px; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-group-toggle-react { justify-content: center; padding-inline: 0; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-group-chevron { display: none; }
+.admin-shell-react.is-sidebar-collapsed .sidebar-submenu-react .sidebar-link-react { padding-left: 0; }
+@media (max-width: 899px) {
+  .admin-shell-react.is-sidebar-collapsed .sidebar-group-toggle-react { justify-content: flex-start; padding-inline: 20px; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-group-chevron { display: block; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-submenu-react .sidebar-link-react { padding-left: 34px; }
 }

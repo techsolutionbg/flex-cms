@@ -1,4 +1,5 @@
 import {
+  ChevronDown,
   FileText,
   Images,
   ListTree,
@@ -14,7 +15,7 @@ import {
   Settings,
   ShoppingBag,
 } from "lucide-react"
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { LoadingButton } from "./loading-button"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import { adminUrl } from "@/lib/admin-routes"
@@ -99,6 +100,13 @@ export function AdminSidebar({
   collapsed?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    try { const stored = JSON.parse(localStorage.getItem("flex-admin-navigation-groups") ?? "{}"); return stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {} }
+    catch { return {} }
+  })
+  useEffect(() => {
+    try { localStorage.setItem("flex-admin-navigation-groups", JSON.stringify(expandedGroups)) } catch { /* Storage may be unavailable. */ }
+  }, [expandedGroups])
   const workspace = useContext(AdminWorkspaceContext)
   const extensionPages = workspace?.extensionPages ?? []
   const visibleGroups = groups
@@ -119,6 +127,11 @@ export function AdminSidebar({
       return { ...group, items }
     })
     .filter((group) => group.items.length > 0)
+
+  useEffect(() => {
+    const group = visibleGroups.find((entry) => entry.items.some((item) => item.label === activeItem))
+    if (group) setExpandedGroups((current) => current[group.id] ? current : { ...current, [group.id]: true })
+  }, [activeItem, extensionPages])
 
   function navigateFromSidebar(label: string) {
     if (label === "Профил") {
@@ -166,10 +179,25 @@ export function AdminSidebar({
         </div>
 
         <nav aria-label="Основна навигация">
-          {visibleGroups.map((group) => (
+          {visibleGroups.map((group) => {
+            const expandable = group.id !== "overview" && group.id !== "account"
+            const active = group.items.some((item) => item.label === activeItem)
+            const expanded = collapsed || expandedGroups[group.id] === true
+            const GroupIcon = group.id === "commerce" ? ShoppingBag : group.items[0].icon
+            return (
             <div className="sidebar-group-react" key={group.label}>
-              <p className="sidebar-group-label-react">{group.label}</p>
-              <ul>
+              {expandable ? (
+                <button type="button" className={"sidebar-group-toggle-react" + (active ? " has-active-child" : "")}
+                  aria-expanded={expanded} aria-controls={"sidebar-submenu-" + group.id} title={group.label}
+                  onClick={() => setExpandedGroups((current) => ({ ...current, [group.id]: !expanded }))}>
+                  <GroupIcon className="sidebar-icon-react" aria-hidden="true" />
+                  <span className="sidebar-label-react">{group.label}</span>
+                  <ChevronDown className={"sidebar-group-chevron" + (expanded ? " is-expanded" : "")} size={16} aria-hidden="true" />
+                </button>
+              ) : <p className="sidebar-group-label-react">{group.label}</p>}
+              <div className={"sidebar-submenu-transition" + (!expandable || expanded ? " is-expanded" : "")}
+                aria-hidden={expandable && !expanded} inert={expandable && !expanded}>
+              <ul id={"sidebar-submenu-" + group.id} className={expandable ? "sidebar-submenu-react" : undefined}>
                 {group.items.map(({ label, icon: Icon }) => (
                   <li key={label}>
                     <a
@@ -179,6 +207,7 @@ export function AdminSidebar({
                           sidebarPaths[label] ??
                           "/",
                       )}
+                      aria-current={activeItem === label ? "page" : undefined}
                       title={label}
                       onClick={(event) => {
                         if (
@@ -199,8 +228,9 @@ export function AdminSidebar({
                   </li>
                 ))}
               </ul>
+              </div>
             </div>
-          ))}
+          )})}
         </nav>
 
         <LoadingButton

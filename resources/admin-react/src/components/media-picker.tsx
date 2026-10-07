@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { Button } from "./ui/button"
 import { createPortal } from "react-dom"
-import { X } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { MediaBrowser } from "./media-browser"
 import type { MediaRecord } from "@/lib/media-api"
 
@@ -82,17 +82,26 @@ export function MediaPicker({
         />
       )}
       {multiple && (
-        <div className="react-form-actions">
-          <Button
-            type="button"
-            disabled={!selected.length}
-            onClick={() => {
-              onSelectMany?.(selected)
-              onClose()
-            }}
-          >
-            Добави избраните ({selected.length})
-          </Button>
+        <div className="media-picker-actions" role="group" aria-label="Действия за избраните файлове">
+          <span className="media-picker-selection-count" role="status" aria-live="polite">
+            {selected.length === 1 ? "Избран е 1 файл" : `Избрани са ${selected.length} файла`}
+          </span>
+          <div className="media-picker-action-buttons">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Отказ
+            </Button>
+            <Button
+              type="button"
+              disabled={!selected.length}
+              onClick={() => {
+                onSelectMany?.(selected)
+                onClose()
+              }}
+            >
+              <Check size={17} aria-hidden="true" />
+              Добави избраните ({selected.length})
+            </Button>
+          </div>
         </div>
       )}
     </dialog>,

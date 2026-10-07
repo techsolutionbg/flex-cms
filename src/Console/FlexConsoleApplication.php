@@ -76,6 +76,7 @@ final class FlexConsoleApplication extends Application
         PluginRollback $pluginRollback,
         PluginManager $pluginManager,
         PluginRegistry $pluginRegistry,
+        \Flex\Media\MediaService $media,
     ) {
         parent::__construct('Flex CMS', $registry->current()->value);
 
@@ -85,6 +86,7 @@ final class FlexConsoleApplication extends Application
             new ConfigCacheCommand($configurationCache),
             new ConfigClearCommand($configurationCache),
             new DatabaseStatusCommand($database),
+            new \Flex\Console\Command\MediaThumbnailsCommand($media),
             new CreateFirstSuperAdminCommand($users, $userService),
             new PlatformVersionCommand($registry),
             new PlatformInspectCommand($inspector),

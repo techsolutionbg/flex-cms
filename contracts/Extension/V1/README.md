@@ -38,8 +38,11 @@ callbacks during their lifecycle and use `applyFilters()` or `doAction()` withou
 on internal framework services. Active plugins that implement `BootablePluginInterface` are
 booted once per application request before routing starts.
 During boot, `PluginContext::$routes` can register namespaced routes. A route such as
-`/hello` is exposed as `/plugins/{plugin-id}/hello`; route names are automatically
-namespaced and plugin middleware can be supplied when needed.
+`/hello` registered with `get()` is exposed as `/plugins/{plugin-id}/hello`. Plugins can
+also use `publicRoute()` for intentionally short site-root paths such as `/cart`; these
+routes still require the approved `routes.public` permission. Route names remain scoped to
+the plugin, and middleware can be supplied when needed. Public plugin routes are ordered
+before the CMS page fallback.
 Core events are exposed through `EventNames` and immutable event objects such as
 `PluginEvent` and `PageEvent`. Listeners are ordered by priority and receive only the
 validated public payload.

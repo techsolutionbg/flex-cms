@@ -13,10 +13,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
-- приложение: `http://localhost:8080`
-- health check: `http://localhost:8080/health`
+- сайт: `http://localhost:8090`
+- административен панел: `http://localhost:8090/admin`
+- инсталатор: `http://localhost:8090/install`
+- health check: `http://localhost:8090/health`
 - phpMyAdmin: `http://localhost:8081`
-- Vite dev server: `http://localhost:5173`
+
 
 MySQL host-ът вътре в Docker мрежата е `mysql`, а стандартната база и потребител са `flex_cms`. Локалните стойности могат да се променят в `.env`.
 
@@ -26,9 +28,9 @@ MySQL host-ът вътре в Docker мрежата е `mysql`, а станда�
 
 | Услуга | Docker service | Host порт | Container порт | Предназначение |
 | --- | --- | ---: | ---: | --- |
-| Приложение | `app` | `8080` и `8088` | `80` | Основно приложение, installer и публична PHP част |
-| React админ панел | `frontend-react` | `8090` | `8090` | Административен интерфейс |
-| Vite dev server | `frontend` | `5173` | `5173` | Development frontend server |
+| PHP приложение | `app` | — | `80` | Вътрешен PHP backend; достъпен през единния dev вход на 8090 |
+| Единен dev вход | `frontend-react` | `8090` | `8090` | Сайт, административен панел и инсталатор; React HMR и PHP proxy |
+
 | MySQL | `mysql` | `3306` | `3306` | База данни |
 | phpMyAdmin | `phpmyadmin` | `8081` | `80` | Управление на MySQL през браузър |
 | Mailpit SMTP | `mailpit` | `1025` | `1025` | Локално приемане на изпратени имейли |
@@ -37,14 +39,15 @@ MySQL host-ът вътре в Docker мрежата е `mysql`, а станда�
 
 Основните адреси са:
 
-- публична и installer част: `http://localhost:8080`
-- алтернативен app порт: `http://localhost:8088`
-- React административен панел: `http://localhost:8090`
+- публична част: `http://localhost:8090`
+- инсталатор: `http://localhost:8090/install`
+
+- React административен панел: `http://localhost:8090/admin`
 - Vite dev server: `http://localhost:5173`
 - phpMyAdmin: `http://localhost:8081`
 - Mailpit: `http://localhost:8025`
 
-Ако портът `8080` вече се използва, задайте например `APP_PORT=8182` в `.env`. За React панела използвайте `VITE_REACT_FORWARD_PORT`, а за MySQL — `DB_FORWARD_PORT`.
+За единния dev порт използвайте `VITE_REACT_FORWARD_PORT`, а за MySQL — `DB_FORWARD_PORT`. PHP backend-ът няма публикуван host порт.
 
 ## Административен панел и проверки
 
@@ -128,3 +131,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish_update
 - препоръчителен `memory_limit` поне 256 MB.
 
 Никога не насочвайте document root към project root и не качвайте development `.env`, `node_modules`, тестове или frontend source в production.
+
+### Optimized media previews
+
+In DEV, generate WebP previews for existing images in bounded, resumable batches:
+
+```sh
+php -d memory_limit=512M bin/flex media:thumbnails --limit=100
+php -d memory_limit=512M bin/flex media:thumbnails --after-id=100 --limit=100
+```
+
+Use the last ID printed by the previous batch. Add `--force` after changing preview size. Originals remain unchanged. Failed files are reported individually; the command returns a nonzero exit code when a file fails. PNG is retained as a fallback on servers without GD WebP support. The preview size follows Settings → Media library. Missing previews use a lightweight placeholder in the media browser until generated. Media responses support HTTP validators and versioned preview caching. No release or hosting deployment is performed by this command.

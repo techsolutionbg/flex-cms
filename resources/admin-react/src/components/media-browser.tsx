@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { File, Grid2X2, List } from "lucide-react"
+import { Check, File, Grid2X2, List } from "lucide-react"
 import { DataTable, type DataTableColumn } from "./data-table"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "./dropdown-menu"
 import { TableActionsMenu } from "./table-actions-menu"
@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { mediaRequest, mediaSize, type MediaIndex, type MediaRecord } from "@/lib/media-api"
 
 export function MediaPreview({ record }: { record: MediaRecord }) {
-  return record.mime.startsWith("image/") ? (
-    <img src={record.thumbnail_url ?? record.url} alt={record.alt || record.title} loading="lazy" />
+  return record.mime.startsWith("image/") && record.thumbnail_url ? (
+    <img src={record.thumbnail_url} decoding="async" alt={record.alt || record.title} loading="lazy" />
   ) : (
     <File size={42} aria-hidden="true" />
   )
@@ -312,18 +312,33 @@ export function MediaBrowser({
             <>
               <div className="media-grid">
                 {data.slice((activePage - 1) * 24, activePage * 24).map((record) => (
-                  <article className="media-card" key={record.id}>
+                  <article
+                    className={`media-card${selectedIds?.has(record.id) ? " is-selected" : ""}`}
+                    key={record.id}
+                  >
                     <button
                       type="button"
                       className="media-card-preview"
                       aria-pressed={selectedIds ? selectedIds.has(record.id) : undefined}
+                      aria-label={
+                        selectedIds
+                          ? `${selectedIds.has(record.id) ? "Премахни от избраните" : "Избери"}: ${record.title || record.original_name}`
+                          : `Избери: ${record.title || record.original_name}`
+                      }
                       onClick={() => onSelect(record)}
                     >
-                      <MediaPreview record={record} />
-                      <span>{record.title || record.original_name}</span>
-                      {selectedIds && (
-                        <span>{selectedIds.has(record.id) ? "✓ Избрано" : "Избери"}</span>
-                      )}
+                      <span className="media-card-image-wrap">
+                        <MediaPreview record={record} />
+                        {selectedIds && (
+                          <span
+                            className={`media-selection-badge${selectedIds.has(record.id) ? " is-selected" : ""}`}
+                          >
+                            {selectedIds.has(record.id) && <Check size={14} aria-hidden="true" />}
+                            {selectedIds.has(record.id) ? "Избрано" : "Избери"}
+                          </span>
+                        )}
+                      </span>
+                      <span className="media-card-title">{record.title || record.original_name}</span>
                     </button>
                     <div className="media-card-footer">
                       <span>{mediaSize(record.size)}</span>

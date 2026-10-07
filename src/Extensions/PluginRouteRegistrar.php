@@ -50,6 +50,20 @@ final readonly class PluginRouteRegistrar implements PluginRouteRegistrarInterfa
         $this->add('POST', $path, $handler, $name, $middleware);
     }
 
+    public function publicRoute(string|array $methods, string $path, callable|array|string|RequestHandlerInterface $handler, ?string $name = null, array $middleware = []): void
+    {
+        if (!PluginPermissions::allows($this->permissions, PluginPermissions::ROUTES_PUBLIC)) {
+            throw new PluginPermissionDenied(sprintf('Plugin "%s" requires the "%s" permission to register public routes.', $this->pluginId, PluginPermissions::ROUTES_PUBLIC));
+        }
+        if ($path === '' || !str_starts_with($path, '/') || str_contains($path, '..') || str_starts_with($path, '//')) {
+            throw new \InvalidArgumentException('Plugin public route paths must be rooted paths without traversal segments.');
+        }
+
+        $routeName = $name === null ? null : 'plugin.public.' . str_replace(['/', '.'], '_', $this->pluginId) . '.' . ltrim($name, '.');
+        /** @var callable|array{class-string, string}|class-string|RequestHandlerInterface $handler */
+        $this->routes->add($methods, $path, $handler, $routeName, $middleware);
+    }
+
     public function admin(string|array $methods, string $path, callable|array|string|RequestHandlerInterface $handler, ?string $name = null, array $middleware = []): void
     {
         if (!PluginPermissions::allows($this->permissions, PluginPermissions::ROUTES_ADMIN)) {

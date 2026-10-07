@@ -18,7 +18,7 @@ final readonly class AuthenticationContextMiddleware implements MiddlewareInterf
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getUri()->getPath() === '/health') {
+        if ($request->getUri()->getPath() === '/health' || preg_match('#^/media-files/[0-9]+/(original|thumbnail)$#D', $request->getUri()->getPath()) === 1) {
             return $handler->handle($request);
         }
 

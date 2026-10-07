@@ -19,7 +19,7 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
 
 FROM php:8.3-apache AS base
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends curl git libsodium-dev libfreetype6-dev libicu-dev libjpeg62-turbo-dev libonig-dev libpng-dev libzip-dev unzip && docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install -j"$(nproc)" gd intl mbstring opcache pdo_mysql sodium zip && a2enmod rewrite headers expires && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl git libsodium-dev libfreetype6-dev libicu-dev libjpeg62-turbo-dev libonig-dev libpng-dev libwebp-dev libzip-dev unzip && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install -j"$(nproc)" gd intl mbstring opcache pdo_mysql sodium zip && a2enmod rewrite headers expires && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY docker/php/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/flex-cms.ini

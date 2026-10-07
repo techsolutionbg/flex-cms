@@ -35,14 +35,14 @@ final readonly class MediaService
         return max(1, min(100, (int) ($this->settings?->all('media')['max_image_megapixels'] ?? $this->config->get('filesystems.media.max_image_megapixels', 48))));
     }
 
-    private function canGenerateThumbnail(int $pixels, int $fileBytes): bool
+    private function canGenerateThumbnail(int $pixels, int $fileBytes, int $ceiling = 256): bool
     {
         // GD decodes the full original. Keep a conservative budget even when PHP has no limit.
         $limit = trim((string) ini_get('memory_limit'));
         $bytes = (int) $limit * match (strtolower(substr($limit, -1))) {
             'g' => 1073741824, 'm' => 1048576, 'k' => 1024, default => 1,
         };
-        $budget = $bytes > 0 ? min($bytes, 256 * 1024 * 1024) : 256 * 1024 * 1024;
+        $budget = $bytes > 0 ? min($bytes, $ceiling * 1024 * 1024) : $ceiling * 1024 * 1024;
         return memory_get_usage(true) + $pixels * 8 + $fileBytes * 2 + 16 * 1024 * 1024 < $budget;
     }
 
@@ -129,26 +129,9 @@ final readonly class MediaService
                 throw new MediaException('Файлът не може да бъде записан.', 503);
             }
             $created[] = $root . '/' . $path;
-            $thumbnail = null;
-            if ($width !== null && ($policy['generate_thumbnails'] ?? '1') === '1' && function_exists('imagecreatefromstring') && $this->canGenerateThumbnail($width * $height, $size)) {
-                $image = @imagecreatefromstring((string) file_get_contents($root . '/' . $path));
-                if ($image === false) {
-                    throw new MediaException('Изображението не може да бъде обработено.', 422);
-                }
-                $scale = min(1, (int) ($policy['thumbnail_edge'] ?? 400) / max($width, $height));
-                $preview = imagecreatetruecolor(max(1, (int) ($width * $scale)), max(1, (int) ($height * $scale)));
-                imagealphablending($preview, false);
-                imagesavealpha($preview, true);
-                imagecopyresampled($preview, $image, 0, 0, 0, 0, imagesx($preview), imagesy($preview), $width, $height);
-                $thumbnail = $directory . '/' . $key . '-preview.png';
-                $created[] = $root . '/' . $thumbnail;
-                $written = imagepng($preview, $root . '/' . $thumbnail);
-                imagedestroy($image);
-                imagedestroy($preview);
-                if (!$written) {
-                    throw new MediaException('Миниатюрата не може да бъде записана.', 503);
-                }
-            }
+            $thumbnail = $width !== null && ($policy['generate_thumbnails'] ?? '1') === '1'
+                ? $this->makeThumbnail($path, $width, $height, $size) : null;
+            if ($thumbnail !== null) $created[] = $root . '/' . $thumbnail;
             $name = mb_substr(basename(str_replace('\\', '/', $upload->getClientFilename() ?? 'file')), 0, 255);
             $now = gmdate('Y-m-d H:i:s');
             $id = $this->database->connection()->table('media')->insertGetId(['original_name' => $name, 'path' => $path, 'thumbnail_path' => $thumbnail, 'mime' => $mime, 'size' => $size, 'width' => $width, 'height' => $height, 'uploaded_by' => $userId, 'title' => $name, 'alt' => '', 'caption' => '', 'description' => '', 'created_at' => $now, 'updated_at' => $now]);
@@ -160,6 +143,66 @@ final readonly class MediaService
                 }
             }
             throw $error;
+        }
+    }
+
+    private function makeThumbnail(string $path, int $width, int $height, int $size, int $ceiling = 256): ?string
+    {
+        if (!function_exists('imagecreatefromstring') || !$this->canGenerateThumbnail($width * $height, $size, $ceiling)) return null;
+        $image = @imagecreatefromstring((string) file_get_contents($this->paths->publicMedia($path)));
+        if ($image === false) throw new MediaException('Изображението не може да бъде обработено.', 422);
+        $preview = null;
+        $target = null;
+        try {
+            $edge = (int) ($this->settings?->all('media')['thumbnail_edge'] ?? 400);
+            $scale = min(1, $edge / max($width, $height));
+            $preview = imagecreatetruecolor(max(1, (int) ($width * $scale)), max(1, (int) ($height * $scale)));
+            imagealphablending($preview, false);
+            imagesavealpha($preview, true);
+            imagecopyresampled($preview, $image, 0, 0, 0, 0, imagesx($preview), imagesy($preview), $width, $height);
+            $webp = function_exists('imagewebp');
+            // A new filename also gives each regenerated preview a new cache version.
+            $target = dirname($path) . '/' . bin2hex(random_bytes(16)) . '-preview-v2.' . ($webp ? 'webp' : 'png');
+            $written = $webp ? imagewebp($preview, $this->paths->publicMedia($target), 78) : imagepng($preview, $this->paths->publicMedia($target));
+            if (!$written || !is_file($this->paths->publicMedia($target)) || filesize($this->paths->publicMedia($target)) === 0) {
+                throw new MediaException('Миниатюрата не може да бъде записана.', 503);
+            }
+            return $target;
+        } catch (\Throwable $error) {
+            if ($target !== null && is_file($this->paths->publicMedia($target))) unlink($this->paths->publicMedia($target));
+            throw $error;
+        } finally {
+            imagedestroy($image);
+            if ($preview !== null) imagedestroy($preview);
+        }
+    }
+
+    /** @return \Generator<int, array{id: int, status: string, message: string}> */
+    public function regenerateThumbnails(bool $force = false, int $afterId = 0, int $limit = 100): \Generator
+    {
+        $rows = $this->database->connection()->table('media')->where('id', '>', $afterId)
+            ->where('mime', 'like', 'image/%')->whereNull('deleted_at')->orderBy('id')->limit($limit)->get();
+        foreach ($rows as $row) {
+            $old = $row->thumbnail_path;
+            if (!$force && is_string($old) && (str_ends_with($old, '.webp') || str_ends_with($old, '-preview-v2.png')) && is_file($this->paths->publicMedia($old))) {
+                yield ['id' => (int) $row->id, 'status' => 'skipped', 'message' => 'Миниатюрата вече е оптимизирана.'];
+                continue;
+            }
+            $thumbnail = null;
+            try {
+                $original = $this->paths->publicMedia($row->path);
+                $dimensions = is_file($original) ? @getimagesize($original) : false;
+                if ($dimensions === false) throw new MediaException('Липсващ или невалиден оригинал.', 422);
+                $thumbnail = $this->makeThumbnail($row->path, $dimensions[0], $dimensions[1], (int) filesize($original), PHP_SAPI === 'cli' ? 512 : 256);
+                if ($thumbnail === null) throw new MediaException('Недостатъчна памет или липсва GD.', 503);
+                $this->database->connection()->table('media')->where('id', $row->id)->update(['thumbnail_path' => $thumbnail]);
+            } catch (\Throwable $error) {
+                if ($thumbnail !== null && is_file($this->paths->publicMedia($thumbnail))) unlink($this->paths->publicMedia($thumbnail));
+                yield ['id' => (int) $row->id, 'status' => 'failed', 'message' => $error->getMessage()];
+                continue;
+            }
+            if (is_string($old) && is_file($this->paths->publicMedia($old))) unlink($this->paths->publicMedia($old));
+            yield ['id' => (int) $row->id, 'status' => 'generated', 'message' => 'Оптимизирана миниатюра.'];
         }
     }
 
@@ -250,7 +293,7 @@ final readonly class MediaService
         $record['id'] = (int) $record['id'];
         $record['size'] = (int) $record['size'];
         $record['url'] = '/media-files/' . $record['id'] . '/original';
-        $record['thumbnail_url'] = $record['thumbnail_path'] ? '/media-files/' . $record['id'] . '/thumbnail' : null;
+        $record['thumbnail_url'] = $record['thumbnail_path'] ? '/media-files/' . $record['id'] . '/thumbnail?v=' . substr(hash('sha256', (string) $record['thumbnail_path']), 0, 16) : null;
         return $record;
     }
 }

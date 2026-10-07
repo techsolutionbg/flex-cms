@@ -28,9 +28,22 @@ final readonly class PublicMediaController
         if (!is_string($path) || !is_file($this->paths->publicMedia($path))) {
             return $this->responses->createResponse(404);
         }
+        $file = $this->paths->publicMedia($path);
+        $modified = (int) filemtime($file);
+        $etag = '"' . hash('sha256', $path . ':' . $modified . ':' . filesize($file)) . '"';
+        $version = substr(hash('sha256', $path), 0, 16);
+        $cache = $thumbnail && ($request->getQueryParams()['v'] ?? '') === $version
+            ? 'public, max-age=31536000, immutable' : 'public, max-age=3600, must-revalidate';
+        $response = $this->responses->createResponse(200)->withHeader('Cache-Control', $cache)
+            ->withHeader('ETag', $etag)->withHeader('Last-Modified', gmdate('D, d M Y H:i:s', $modified) . ' GMT');
+        $matches = $request->getHeaderLine('If-None-Match');
+        $since = $request->getHeaderLine('If-Modified-Since');
+        if (($matches !== '' && ($matches === '*' || in_array($etag, array_map(static fn(string $value): string => preg_replace('/^W\//', '', trim($value)), explode(',', $matches)), true)))
+            || ($matches === '' && $since !== '' && strtotime($since) !== false && strtotime($since) >= $modified)) {
+            return $response->withStatus(304);
+        }
         $stream = $this->streams->createStreamFromFile($this->paths->publicMedia($path), 'r');
         $size = (int) $stream->getSize();
-        $response = $this->responses->createResponse(200);
         $length = $size;
         $range = $request->getHeaderLine('Range');
         if ($range !== '' && $request->getHeaderLine('If-Range') === '') {
@@ -70,7 +83,7 @@ final readonly class PublicMediaController
             $stream = $this->streams->createStream();
         }
         return $response->withBody($stream)
-            ->withHeader('Content-Type', $thumbnail ? 'image/png' : (string) $record['mime'])
+            ->withHeader('Content-Type', $thumbnail ? (str_ends_with($path, '.webp') ? 'image/webp' : 'image/png') : (string) $record['mime'])
             ->withHeader('Content-Length', (string) $length)
             ->withHeader('Accept-Ranges', 'bytes')
             ->withHeader('X-Content-Type-Options', 'nosniff')
