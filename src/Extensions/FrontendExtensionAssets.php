@@ -58,13 +58,21 @@ final readonly class FrontendExtensionAssets
             if (!PluginPermissions::allows($this->approvedPermissions($plugin, $validated), PluginPermissions::FRONTEND_ASSETS)) {
                 return null;
             }
-            $allowedType = in_array($asset, $validated->frontend['styles'] ?? [], true) ? 'style' : (in_array($asset, $validated->frontend['scripts'] ?? [], true) ? 'script' : null);
+
+            $root = realpath((string) $plugin->getAttribute('path'));
+            if ($root === false) {
+                return null;
+            }
+
+            // Merge the stored allowlist with on-disk plugin.json so local asset edits
+            // (and newly added modules) work without reinstalling the plugin.
+            $frontend = $this->frontendAllowlist($root, $validated->frontend);
+            $allowedType = in_array($asset, $frontend['styles'], true) ? 'style' : (in_array($asset, $frontend['scripts'], true) ? 'script' : null);
             if ($allowedType === null) {
                 return null;
             }
 
-            $root = realpath((string) $plugin->getAttribute('path'));
-            $path = $root === false ? false : realpath($root . DIRECTORY_SEPARATOR . $asset);
+            $path = realpath($root . DIRECTORY_SEPARATOR . $asset);
             if ($path === false || !is_file($path) || !str_starts_with($path, $root . DIRECTORY_SEPARATOR)) {
                 return null;
             }
@@ -73,6 +81,30 @@ final readonly class FrontendExtensionAssets
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @param array{scripts?: list<string>, styles?: list<string>} $stored
+     * @return array{scripts: list<string>, styles: list<string>}
+     */
+    private function frontendAllowlist(string $root, array $stored): array
+    {
+        $scripts = array_values(array_unique($stored['scripts'] ?? []));
+        $styles = array_values(array_unique($stored['styles'] ?? []));
+        $diskPath = $root . DIRECTORY_SEPARATOR . 'plugin.json';
+        if (!is_file($diskPath)) {
+            return ['scripts' => $scripts, 'styles' => $styles];
+        }
+
+        try {
+            $disk = PluginManifest::fromFile($diskPath)->frontend;
+            $scripts = array_values(array_unique([...$scripts, ...($disk['scripts'] ?? [])]));
+            $styles = array_values(array_unique([...$styles, ...($disk['styles'] ?? [])]));
+        } catch (\Throwable) {
+            // Keep the stored allowlist if the on-disk manifest is temporarily invalid.
+        }
+
+        return ['scripts' => $scripts, 'styles' => $styles];
     }
 
     private function url(string $id, string $asset): string
