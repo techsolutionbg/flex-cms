@@ -34,6 +34,12 @@ export function useWorkspaceChanged() {
   return useContext(AdminWorkspaceContext)?.changed
 }
 
+/** True only for the visible workspace panel; hidden keep-alive tabs stay false. */
+export function useWorkspacePanelActive() {
+  const workspace = useContext(AdminWorkspaceContext)
+  return Boolean(workspace && workspace.panel === workspace.active)
+}
+
 export function AdminWorkspaceTabs() {
   const workspace = useContext(AdminWorkspaceContext)
   if (!workspace || workspace.panel !== workspace.active) return null

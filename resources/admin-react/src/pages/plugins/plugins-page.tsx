@@ -2,6 +2,7 @@ import { adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
+import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { LoadingButton } from "@/components/loading-button"
@@ -35,6 +36,7 @@ export function PluginsPage({
   loggingOut,
 }: PluginsPageProps) {
   const query = new URLSearchParams(window.location.search)
+  const isActivePanel = useWorkspacePanelActive()
   const [plugins, setPlugins] = useState<PluginRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState(query.get("search") ?? "")
@@ -69,11 +71,16 @@ export function PluginsPage({
   }, [])
 
   useEffect(() => {
+    if (!isActivePanel) return
     const params = new URLSearchParams()
     if (search) params.set("search", search)
     if (statusFilter !== "all") params.set("status", statusFilter)
-    window.history.replaceState(null, "", `/plugins${params.toString() ? `?${params}` : ""}`)
-  }, [search, statusFilter])
+    window.history.replaceState(
+      null,
+      "",
+      `${adminUrl("/plugins")}${params.toString() ? `?${params}` : ""}`,
+    )
+  }, [isActivePanel, search, statusFilter])
 
   const filteredPlugins = plugins.filter(
     (plugin) =>

@@ -9,6 +9,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { TableActionsMenu } from "@/components/table-actions-menu"
 import type { PageRecord } from "@/lib/admin-types"
 import { adminUrl } from "@/lib/admin-routes"
+import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { publicPagePath } from "./page-utils"
 export function PagesPage({
   onLogout,
@@ -28,6 +29,7 @@ export function PagesPage({
   const [pages, setPages] = useState<PageRecord[]>([])
   const [loading, setLoading] = useState(true)
   const query = new URLSearchParams(window.location.search)
+  const isActivePanel = useWorkspacePanelActive()
   const [search, setSearch] = useState(query.get("search") ?? "")
   const [statusFilter, setStatusFilter] = useState(query.get("status") ?? "all")
   const [structureFilter, setStructureFilter] = useState(query.get("structure") ?? "all")
@@ -73,6 +75,7 @@ export function PagesPage({
   }, [pages])
 
   useEffect(() => {
+    if (!isActivePanel) return
     const params = new URLSearchParams(window.location.search)
     const values: Array<[string, string, string]> = [
       ["search", search, ""],
@@ -89,7 +92,7 @@ export function PagesPage({
       "",
       `${adminUrl("/pages")}${queryString ? `?${queryString}` : ""}`,
     )
-  }, [search, statusFilter, structureFilter, viewFilter])
+  }, [isActivePanel, search, statusFilter, structureFilter, viewFilter])
 
   const depthCache = new Map<number, number>()
   function depthOf(page: PageRecord, trail = new Set<number>()): number {

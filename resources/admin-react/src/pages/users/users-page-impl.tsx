@@ -8,6 +8,7 @@ import { AdminShell } from "@/components/admin-shell"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
 import { adminUrl } from "@/lib/admin-routes"
+import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { toast } from "sonner"
 
 const roleLabels: Record<string, string> = {
@@ -27,6 +28,7 @@ type UsersPageProps = {
 
 export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }: UsersPageProps) {
   const query = new URLSearchParams(window.location.search)
+  const isActivePanel = useWorkspacePanelActive()
   const [view, setView] = useState<"active" | "trash">(
     query.get("view") === "trash" ? "trash" : "active",
   )
@@ -70,6 +72,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
   }, [view])
 
   useEffect(() => {
+    if (!isActivePanel) return
     const params = new URLSearchParams()
     if (view === "trash") params.set("view", "trash")
     if (search) params.set("search", search)
@@ -80,7 +83,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
       "",
       `${adminUrl("/users")}${params.toString() ? `?${params}` : ""}`,
     )
-  }, [roleFilter, search, statusFilter, view])
+  }, [isActivePanel, roleFilter, search, statusFilter, view])
 
   const filteredUsers = users.filter(
     (user) =>
