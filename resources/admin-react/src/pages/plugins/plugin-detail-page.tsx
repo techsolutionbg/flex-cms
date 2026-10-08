@@ -54,6 +54,9 @@ export function PluginDetailPage({
             onHomeClick={() => onNavigate("Табло")}
             items={[{ label: "Разширения", onClick: onBack }, { label: plugin.name }]}
           />
+          <p className="plugin-detail-description">
+            {plugin.description || "Няма описание за това разширение."}
+          </p>
         </div>
         <button type="button" onClick={onBack}>
           <ArrowLeft aria-hidden="true" />
@@ -102,9 +105,6 @@ export function PluginDetailPage({
               <dd>{plugin.source === "catalog" ? "Каталог" : "Локален пакет"}</dd>
             </div>
           </dl>
-          <p className="plugin-detail-description">
-            {plugin.description || "Няма описание за това разширение."}
-          </p>
           {plugin.last_error && (
             <div className="react-inline-error">
               <CircleAlert aria-hidden="true" />

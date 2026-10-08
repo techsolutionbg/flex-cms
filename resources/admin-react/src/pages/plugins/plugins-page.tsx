@@ -180,14 +180,7 @@ export function PluginsPage({
         <>
           {plugin.version}
           {plugin.update_available && (
-            <>
-              <small className="react-table-update">Нова: {plugin.available_version}</small>
-              {plugin.available_release_notes && (
-                <small className="react-table-release-notes">
-                  Какво ново: {plugin.available_release_notes}
-                </small>
-              )}
-            </>
+            <small className="react-table-update">Нова: {plugin.available_version}</small>
           )}
         </>
       ),
