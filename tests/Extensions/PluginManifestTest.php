@@ -65,11 +65,20 @@ final class PluginManifestTest extends TestCase
             'name' => 'Forms',
             'version' => '1.0.0',
             'entrypoint' => 'Acme\\Forms\\Plugin',
-            'frontend' => ['scripts' => ['assets/forms.js'], 'styles' => ['assets/forms.css']],
+            'frontend' => [
+                'scripts' => ['assets/admin.js', 'assets/forms.js'],
+                'styles' => ['assets/forms.css'],
+                'public' => [
+                    'scripts' => ['assets/forms.js'],
+                    'styles' => ['assets/forms.css'],
+                ],
+            ],
         ]);
 
-        self::assertSame(['assets/forms.js'], $manifest->frontend['scripts'] ?? []);
+        self::assertSame(['assets/admin.js', 'assets/forms.js'], $manifest->frontend['scripts'] ?? []);
         self::assertSame(['assets/forms.css'], $manifest->frontend['styles'] ?? []);
+        self::assertSame(['assets/forms.js'], $manifest->frontend['public']['scripts'] ?? []);
+        self::assertSame(['assets/forms.css'], $manifest->frontend['public']['styles'] ?? []);
     }
 
     public function testItRejectsUnsafeFrontendAssets(): void

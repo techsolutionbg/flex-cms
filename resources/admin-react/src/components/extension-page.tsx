@@ -36,7 +36,7 @@ export type ExtensionPageDescriptor = {
   label: string
   href: string
   module: string
-  navigation?: { group: string; icon: string }
+  navigation?: { group: string; icon: string; section?: string; order?: number }
   embeddable: boolean
 }
 
@@ -222,7 +222,7 @@ export function ExtensionPage({
   onNavigate: (label: string) => void
 }) {
   return (
-    <AdminShell {...shell} title={descriptor.label} activeItem={descriptor.label}>
+    <AdminShell {...shell} title={descriptor.label} activeItem={descriptor.href}>
       <ExtensionModule descriptor={descriptor} path={path} navigate={navigate} />
     </AdminShell>
   )

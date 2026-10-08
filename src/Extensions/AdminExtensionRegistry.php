@@ -100,12 +100,25 @@ final class AdminExtensionRegistry
             !in_array($icon, ['puzzle', 'images', 'shopping-bag', 'file-text', 'settings', 'users', 'palette'], true)) {
             throw new \InvalidArgumentException('Invalid admin navigation group or icon.');
         }
+        $section = $navigation['section'] ?? null;
+        if ($section !== null && (!is_string($section) || !in_array($section, ['catalog', 'sales', 'customers', 'settings'], true))) {
+            throw new \InvalidArgumentException('Invalid admin navigation section.');
+        }
+        $order = $navigation['order'] ?? 0;
+        if (!is_int($order) || $order < 0) {
+            throw new \InvalidArgumentException('Invalid admin navigation order.');
+        }
+        $placement = ['group' => $group, 'icon' => $icon];
+        if (is_string($section)) {
+            $placement['section'] = $section;
+            $placement['order'] = $order;
+        }
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
         $href = '/extension-pages/' . $key;
         $assetHash = $pluginPath === null ? false : @hash_file('sha256', $pluginPath . '/' . $module);
         $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
-            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => ['group' => $group, 'icon' => $icon]];
+            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => $placement];
         $this->addSidebarItem($key, trim($label), $href, 50);
     }
 

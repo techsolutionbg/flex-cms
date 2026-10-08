@@ -12,7 +12,7 @@ final readonly class PluginManifest
      * @param array<string, string> $autoload
      * @param list<string> $permissions
      * @param array<string, string> $dependencies
-     * @param array{scripts?: list<string>, styles?: list<string>} $frontend
+     * @param array{scripts?: list<string>, styles?: list<string>, public?: array{scripts?: list<string>, styles?: list<string>}} $frontend
      * @param array<string, mixed> $metadata
      */
     public function __construct(
@@ -195,27 +195,53 @@ final readonly class PluginManifest
         return $result;
     }
 
-    /** @return array{scripts: list<string>, styles: list<string>} */
+    /** @return array{scripts: list<string>, styles: list<string>, public: array{scripts: list<string>, styles: list<string>}} */
     private static function frontend(mixed $value): array
     {
         if (!is_array($value)) {
             throw new InvalidPluginManifest('Manifest field "frontend" must be an object.');
         }
 
-        $result = ['scripts' => [], 'styles' => []];
+        $result = ['scripts' => [], 'styles' => [], 'public' => ['scripts' => [], 'styles' => []]];
         foreach (['scripts', 'styles'] as $type) {
             $assets = $value[$type] ?? [];
             if (!is_array($assets)) {
                 throw new InvalidPluginManifest(sprintf('Manifest field "frontend.%s" must be an array of paths.', $type));
             }
             foreach ($assets as $asset) {
-                if (!is_string($asset) || $asset === '' || str_starts_with($asset, '/') || str_contains($asset, '..') || preg_match('/\A[A-Za-z0-9_\/.\-]+\z/D', $asset) !== 1) {
-                    throw new InvalidPluginManifest(sprintf('Manifest field "frontend.%s" contains an unsafe asset path.', $type));
+                $result[$type][] = self::frontendAssetPath($asset, $type);
+            }
+        }
+
+        $public = $value['public'] ?? null;
+        if ($public !== null) {
+            if (!is_array($public)) {
+                throw new InvalidPluginManifest('Manifest field "frontend.public" must be an object.');
+            }
+            foreach (['scripts', 'styles'] as $type) {
+                $assets = $public[$type] ?? [];
+                if (!is_array($assets)) {
+                    throw new InvalidPluginManifest(sprintf('Manifest field "frontend.public.%s" must be an array of paths.', $type));
                 }
-                $result[$type][] = $asset;
+                foreach ($assets as $asset) {
+                    $path = self::frontendAssetPath($asset, 'public.' . $type);
+                    $result['public'][$type][] = $path;
+                    if (!in_array($path, $result[$type], true)) {
+                        $result[$type][] = $path;
+                    }
+                }
             }
         }
 
         return $result;
+    }
+
+    private static function frontendAssetPath(mixed $asset, string $field): string
+    {
+        if (!is_string($asset) || $asset === '' || str_starts_with($asset, '/') || str_contains($asset, '..') || preg_match('/\A[A-Za-z0-9_\/.\-]+\z/D', $asset) !== 1) {
+            throw new InvalidPluginManifest(sprintf('Manifest field "frontend.%s" contains an unsafe asset path.', $field));
+        }
+
+        return $asset;
     }
 }

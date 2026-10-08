@@ -6,6 +6,7 @@ namespace Flex\Themes;
 
 use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
+use Flex\Extensions\FrontendExtensionAssets;
 use Flex\Settings\Setting;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -19,7 +20,13 @@ final class ThemeManager
     private ?PublicMenuApi $menuApi = null;
     private ?\Flex\Media\PublicMediaApi $mediaApi = null;
 
-    public function __construct(private readonly ProjectPaths $paths, private readonly ConfigRepositoryInterface $configuration, private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null, private readonly ?\Flex\Extension\V1\ExtensionApiInterface $extensionApi = null) {}
+    public function __construct(
+        private readonly ProjectPaths $paths,
+        private readonly ConfigRepositoryInterface $configuration,
+        private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null,
+        private readonly ?\Flex\Extension\V1\ExtensionApiInterface $extensionApi = null,
+        private readonly ?FrontendExtensionAssets $frontendAssets = null,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function render(string $template, array $data = []): string
@@ -65,7 +72,15 @@ final class ThemeManager
                 $flexMenu = static fn(string $slug): array => $menuApi?->get($slug) ?? [];
                 $flexMenuHtml = static fn(string $slug): string => $menuApi?->html($slug) ?? '';
                 $flexMedia = static fn(int $id): array => $mediaApi?->get($id) ?? [];
-                extract($data + ['theme' => $theme, 'theme_asset' => $themeAsset, 'flex_menu' => $flexMenu, 'flex_menu_html' => $flexMenuHtml, 'flex_media' => $flexMedia], EXTR_SKIP);
+                extract($data + [
+                    'theme' => $theme,
+                    'theme_asset' => $themeAsset,
+                    'flex_menu' => $flexMenu,
+                    'flex_menu_html' => $flexMenuHtml,
+                    'flex_media' => $flexMedia,
+                    'frontend_extension_tags' => $this->frontendAssets?->publicTags() ?? '',
+                    'head_tags' => is_string($data['head_tags'] ?? null) ? $data['head_tags'] : '',
+                ], EXTR_SKIP);
                 include $phpTemplate;
                 return (string) ob_get_clean();
             } catch (\Throwable $exception) {

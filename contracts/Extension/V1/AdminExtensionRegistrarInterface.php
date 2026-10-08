@@ -10,7 +10,7 @@ interface AdminExtensionRegistrarInterface
 
     /**
      * Register an ES module exporting createPage(host) and optionally createEmbedPicker(host).
-     * @param array{group?: string, icon?: string} $navigation Optional sidebar placement and icon.
+     * @param array{group?: string, icon?: string, section?: string, order?: int} $navigation Optional sidebar placement, icon, and shop subgroup.
      */
     public function page(string $id, string $label, string $module, bool $embeddable = false, array $navigation = []): void;
 

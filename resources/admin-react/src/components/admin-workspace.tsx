@@ -342,12 +342,13 @@ export function AdminWorkspace({
     }
   }, [])
 
-  function navigate(label: string) {
-    open(
-      extensionPages.find((page) => page.label === label)?.href ??
-        Object.entries(sections).find(([, title]) => title === label)?.[0] ??
-        "/",
-    )
+  function navigate(target: string) {
+    if (target.startsWith("/")) {
+      open(target)
+      return
+    }
+    const section = Object.entries(sections).find(([, title]) => title === target)?.[0]
+    open(section ?? extensionPages.find((page) => page.label === target)?.href ?? "/")
   }
   function saved(tab: Tab, data: Partial<Tab> = {}) {
     patch(tab.id, { ...data, dirty: false })

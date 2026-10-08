@@ -62,6 +62,19 @@ final class AdminExtensionRegistryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $registrar->page('invalid', 'Невалидно', 'admin.js', false, ['group' => 'unknown']);
     }
+
+    public function testPagesCanDeclareAShopSectionAndOrder(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('flex/commerce', ['admin.ui']);
+        $registrar->page('products', 'Продукти', 'admin.js', false, ['group' => 'commerce', 'icon' => 'shopping-bag', 'section' => 'catalog', 'order' => 1]);
+        self::assertSame(
+            ['group' => 'commerce', 'icon' => 'shopping-bag', 'section' => 'catalog', 'order' => 1],
+            $registry->bootstrap()['pages'][0]['navigation'],
+        );
+        $this->expectException(\InvalidArgumentException::class);
+        $registrar->page('other', 'Друго', 'admin.js', false, ['group' => 'commerce', 'section' => 'warehouse']);
+    }
     public function testModuleUrlChangesWhenItsContentsChange(): void
     {
         $directory = sys_get_temp_dir() . '/flex-admin-assets-' . bin2hex(random_bytes(8));

@@ -5321,13 +5321,28 @@ button.react-action-button svg {
 @media (prefers-reduced-motion: reduce) {
   .sidebar-submenu-transition, .sidebar-group-chevron, .sidebar-group-toggle-react { transition: none; }
 }
-.sidebar-submenu-react .sidebar-link-react { min-height: 42px; padding-block: 10px; padding-left: 34px; font-weight: 400; }
+.sidebar-submenu-react .sidebar-link-react { min-height: 42px; padding-block: 10px; padding-left: 2.4rem; font-weight: 400; }
 .sidebar-submenu-react .sidebar-icon-react { width: 18px; height: 18px; }
+.sidebar-subsection-toggle-react {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 48px;
+  padding: 12px 20px 12px 2.4rem; border: 0; background: transparent; color: inherit;
+  font: inherit; font-weight: 500; text-align: left; cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
+}
+.sidebar-subsection-toggle-react:hover, .sidebar-subsection-toggle-react:focus-visible, .sidebar-subsection-toggle-react.has-active-child {
+  background: rgba(128,160,136,.1);
+}
+.sidebar-submenu-react .sidebar-subsection-toggle-react .sidebar-icon-react {
+  width: 1.55rem; height: 1.55rem; flex: 0 0 1.55rem;
+}
+.sidebar-subsection-react .sidebar-link-react { padding-left: 3.6rem; }
 .admin-shell-react.is-sidebar-collapsed .sidebar-group-toggle-react { justify-content: center; padding-inline: 0; }
 .admin-shell-react.is-sidebar-collapsed .sidebar-group-chevron { display: none; }
 .admin-shell-react.is-sidebar-collapsed .sidebar-submenu-react .sidebar-link-react { padding-left: 0; }
 @media (max-width: 899px) {
   .admin-shell-react.is-sidebar-collapsed .sidebar-group-toggle-react { justify-content: flex-start; padding-inline: 20px; }
   .admin-shell-react.is-sidebar-collapsed .sidebar-group-chevron { display: block; }
-  .admin-shell-react.is-sidebar-collapsed .sidebar-submenu-react .sidebar-link-react { padding-left: 34px; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-submenu-react .sidebar-link-react { padding-left: 2.4rem; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-react .sidebar-link-react { padding-left: 3.6rem; }
+  .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-toggle-react { padding-left: 2.4rem; }
 }
