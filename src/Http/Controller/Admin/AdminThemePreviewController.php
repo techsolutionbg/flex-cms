@@ -57,6 +57,7 @@ final readonly class AdminThemePreviewController
             'slug' => $publicPages->publicPath($item),
         ], $publicPages->publishedNavigation());
         $headTags = $this->extensionApi->applyFilters('public.head', '', ['page' => $page->toPublicArray(), 'request' => $request]);
+        $documentTitle = $this->extensionApi->applyFilters('public.title', (string) $page->getAttribute('title'), ['page' => $page->toPublicArray(), 'request' => $request]);
 
         $menuData = $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations']);
         $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
@@ -66,6 +67,7 @@ final readonly class AdminThemePreviewController
             'page_public_path' => $publicPages->publicPath($page),
             'page_settings' => $settings,
             'head_tags' => is_string($headTags) ? $headTags : '',
+            'document_title' => is_string($documentTitle) && trim($documentTitle) !== '' ? $documentTitle : (string) $page->getAttribute('title'),
             'navigation' => $navigation,
             'preview' => true,
         ] + $menuData));

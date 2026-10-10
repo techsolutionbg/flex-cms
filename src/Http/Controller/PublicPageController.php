@@ -54,13 +54,18 @@ final readonly class PublicPageController
             'request' => $request,
         ]);
         $headTags = is_string($headTags) ? $headTags : '';
+        $documentTitle = $this->extensionApi->applyFilters('public.title', (string) $page->getAttribute('title'), [
+            'page' => $page->toPublicArray(),
+            'request' => $request,
+        ]);
+        $documentTitle = is_string($documentTitle) && trim($documentTitle) !== '' ? $documentTitle : (string) $page->getAttribute('title');
 
         $capabilities = $this->themes->capabilities();
         $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
         $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
         $menuData['__flex_media_api'] = $this->media;
         $menuData['featured_media'] = $this->media?->get((int) $page->getAttribute('featured_media_id')) ?? [];
-        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'navigation' => $navigation] + $menuData));
+        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'document_title' => $documentTitle, 'navigation' => $navigation] + $menuData));
     }
 
     private function homePage(PublicPageSet $publicPages): ?Page
