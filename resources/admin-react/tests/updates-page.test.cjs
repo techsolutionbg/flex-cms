@@ -58,6 +58,7 @@ function harness(jobs, initialJob = { id: "job-1", type: "platform", status: "pe
     "@/components/confirm-dialog": { ConfirmDialog: "ConfirmDialog" },
     "@/components/loading-button": { LoadingButton: "LoadingButton" },
     "@/lib/admin-api": { getCsrfToken: async () => "csrf" },
+    "@/components/date-time": { DateTime: "DateTime" },
     sonner: {
       toast: { error: (value) => errors.push(value), success: (value) => successes.push(value) },
     },

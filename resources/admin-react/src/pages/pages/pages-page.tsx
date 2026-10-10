@@ -11,6 +11,8 @@ import type { PageRecord } from "@/lib/admin-types"
 import { adminUrl } from "@/lib/admin-routes"
 import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { publicPagePath } from "./page-utils"
+import { DateTime } from "@/components/date-time"
+import { parse } from "@/lib/flex-time"
 export function PagesPage({
   onLogout,
   onNavigate,
@@ -269,9 +271,8 @@ export function PagesPage({
       key: "updated_at",
       label: "Последна промяна",
       sortable: true,
-      render: (page: PageRecord) =>
-        page.updated_at ? new Date(page.updated_at).toLocaleDateString("bg-BG") : "—",
-      sortValue: (page: PageRecord) => page.updated_at ?? "",
+      render: (page: PageRecord) => <DateTime value={page.updated_at} style="date" />,
+      sortValue: (page: PageRecord) => parse(page.updated_at)?.valueOf() ?? 0,
     },
     {
       key: "actions",

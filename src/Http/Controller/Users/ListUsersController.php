@@ -24,7 +24,7 @@ final readonly class ListUsersController
             'view' => $view,
             'users' => $users->map(static fn(User $user): array => [
                 ...$user->identity()->toArray(),
-                'deleted_at' => $user->getAttribute('deleted_at')?->toIso8601String(),
+                'deleted_at' => \Flex\Extension\V1\Time::iso($user->getAttribute('deleted_at')),
             ])->all(),
         ]);
     }

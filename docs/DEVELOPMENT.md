@@ -30,6 +30,14 @@ npm --prefix resources/admin-react run build:installer
 
 Production build-овете са minified и без source maps. Admin SPA се публикува в `/admin`, а инсталаторът — на `/install`. Генерираните файлове са в `public/build/react-admin/` и `public/build/installer/`.
 
+## Време и дати
+
+- Сървърът работи в UTC (PHP и MySQL сесията). В базата се пише UTC; низ без зона винаги е UTC.
+- Към браузъра се подава UTC, за предпочитане ISO 8601 със `Z` (`Flex\Extension\V1\Time::iso()`).
+- Датите се показват само чрез модула за време (Day.js): `<DateTime>` в админа, `host.components.DateTime` в плъгините, `flex_time()` в Twig и `/assets/flex-time.js` на публичните страници. Не се използват `toLocaleString()`, Twig `|date` или рязане на низове.
+- `public/assets/flex-time.js` се генерира с `npm --prefix resources/admin-react run build:time` и се commit-ва.
+- Подробности: раздел „Time“ в `contracts/Extension/V1/README.md`.
+
 ## Dependency policy
 
 - PHP runtime packages са в `require`, анализаторите и тестовите инструменти — в `require-dev`.

@@ -30,6 +30,17 @@ import { RichTextEditor } from "./rich-text-editor"
 import { Button } from "./ui/button"
 import { useWorkspaceChanged, useWorkspaceSaved } from "./admin-workspace-context"
 import { mediaRequest } from "@/lib/media-api"
+import { DateTime } from "./date-time"
+import {
+  dayjs,
+  formatExact,
+  formatFull,
+  formatRelative,
+  isoUtc,
+  parse,
+  subscribe,
+  zoneName,
+} from "@/lib/flex-time"
 
 export type ExtensionPageDescriptor = {
   id: string
@@ -98,6 +109,8 @@ const host = {
   },
   toast,
   request: mediaRequest,
+  // The platform time standard; plugins show times with components.DateTime or these helpers.
+  time: { dayjs, formatExact, formatFull, formatRelative, isoUtc, parse, subscribe, zoneName },
   useWorkspaceChanged,
   useWorkspaceSaved,
   components: {
@@ -117,6 +130,7 @@ const host = {
     RichTextEditor,
     Button,
     Dialog,
+    DateTime,
   },
 }
 type Module = {

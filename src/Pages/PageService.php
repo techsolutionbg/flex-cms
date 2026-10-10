@@ -31,7 +31,7 @@ final readonly class PageService
     {
         $data = $this->validate($attributes);
         $data['author_id'] = $authorId;
-        $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable() : null;
+        $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable('now', new \DateTimeZone('UTC')) : null;
 
         $page = $this->pages->create($data);
         $fields = $this->pluginFieldsForEvent($attributes['plugin_fields'] ?? null, $attributes['plugin_settings'] ?? null);
@@ -52,7 +52,7 @@ final readonly class PageService
         $wasPublished = $page->getAttribute('status') === 'published';
         $page->fill($data);
         if ($data['status'] === 'published' && !$wasPublished) {
-            $page->setAttribute('published_at', new \DateTimeImmutable());
+            $page->setAttribute('published_at', new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         } elseif ($data['status'] === 'draft') {
             $page->setAttribute('published_at', null);
         }
@@ -76,7 +76,7 @@ final readonly class PageService
         $wasPublished = $page->getAttribute('status') === 'published';
         $page->setAttribute('status', $status);
         if ($status === 'published' && !$wasPublished) {
-            $page->setAttribute('published_at', new \DateTimeImmutable());
+            $page->setAttribute('published_at', new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         } elseif ($status === 'draft') {
             $page->setAttribute('published_at', null);
         }

@@ -16,6 +16,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import { updateMonitorError, updateProgress } from "@/lib/update-progress"
+import { DateTime } from "@/components/date-time"
 import type {
   PlatformRelease,
   PlatformUpdateHistory,
@@ -33,12 +34,6 @@ type UpdateAction = "update_remote" | "rollback"
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB"
   return (bytes / (1024 * 1024)).toFixed(1) + " MB"
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "—"
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("bg-BG")
 }
 
 export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPageProps) {
@@ -370,7 +365,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                       {remote.available.release_notes || "Няма допълнителни бележки за релийза."}
                     </p>
                     <small>
-                      Публикувана: {formatDate(remote.available.published_at)} ·{" "}
+                      Публикувана: <DateTime value={remote.available.published_at} /> ·{" "}
                       {formatBytes(remote.available.size)}
                     </small>
                     <div className="updates-actions">
@@ -415,7 +410,9 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                           ? "Rollback"
                           : "Обновяване " + (record.from ?? "—") + " → " + (record.to ?? "—")}
                       </strong>
-                      <small>{formatDate(record.updated_at ?? record.rolled_back_at)}</small>
+                      <small>
+                        <DateTime value={record.updated_at ?? record.rolled_back_at} />
+                      </small>
                     </div>
                     {record.type === "platform" && record.id && record.to === version && (
                       <LoadingButton
@@ -454,7 +451,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                         )}
                       </div>
                       <small>
-                        {formatDate(release.published_at)} · {formatBytes(release.size)}
+                        <DateTime value={release.published_at} /> · {formatBytes(release.size)}
                       </small>
                       {release.release_notes && <p>{release.release_notes}</p>}
                       {release.blocked_reason && (

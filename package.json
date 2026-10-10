@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "frontend:dev": "npm --prefix resources/admin-react run dev",
-    "build": "npm --prefix resources/admin-react run build:admin && npm --prefix resources/admin-react run build:installer",
+    "build": "npm --prefix resources/admin-react run build:admin && npm --prefix resources/admin-react run build:installer && npm --prefix resources/admin-react run build:time",
     "test:all": "composer test",
     "check:frontend": "npm --prefix resources/admin-react run typecheck && npm run build",
     "check": "npm run check:frontend && composer check"

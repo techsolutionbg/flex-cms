@@ -10,6 +10,9 @@ use Flex\Http\SitePath;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+// Set before the installer branch, which runs without Bootstrap::boot().
+date_default_timezone_set('UTC');
+
 $basePath = dirname(__DIR__);
 $path = SitePath::requestPath();
 $installation = new InstallationState($basePath);

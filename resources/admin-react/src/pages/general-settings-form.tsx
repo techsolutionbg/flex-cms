@@ -6,6 +6,7 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { DropdownMenu, DropdownOption, DropdownChevron } from "@/components/dropdown-menu"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
+import { applyTimeSettings } from "@/lib/time-settings"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 
 type Values = {
@@ -73,6 +74,7 @@ export function GeneralSettingsForm() {
       if (!response.ok)
         throw new Error(body.error?.message ?? "Настройките не можаха да бъдат записани.")
       setValues(body.settings)
+      applyTimeSettings(body.settings)
       saved?.()
       toast.success("Общите настройки са запазени.")
     } catch (error) {
@@ -98,7 +100,7 @@ export function GeneralSettingsForm() {
           key: "timezone",
           label: "Часова зона",
           choices: Object.fromEntries(options.timezones.map((zone) => [zone, zone])),
-          hint: "Използва се при форматиране на датите. Датите в базата остават в UTC.",
+          hint: "Използва се в имейлите и в текста без JavaScript. Датите се пазят в UTC, а в панела и на сайта се показват в часовата зона на браузъра.",
         },
         {
           key: "date_format",
@@ -109,7 +111,7 @@ export function GeneralSettingsForm() {
             "d/m/Y": "06/10/2026",
             "m/d/Y": "10/06/2026",
           },
-          hint: "Предпочитан формат за показване на дата.",
+          hint: "Формат на датата в панела, на сайта и в плъгините.",
         },
         {
           key: "time_format",

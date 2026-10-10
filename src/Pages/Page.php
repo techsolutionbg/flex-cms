@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Pages;
 
+use Flex\Extension\V1\Time;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -43,10 +44,10 @@ final class Page extends Model
             'slug' => (string) $this->getAttribute('slug'),
             'content' => (string) ($this->getAttribute('content') ?? ''),
             'status' => (string) $this->getAttribute('status'),
-            'published_at' => $this->getAttribute('published_at')?->toIso8601String(),
-            'created_at' => $this->getAttribute('created_at')?->toIso8601String(),
-            'updated_at' => $this->getAttribute('updated_at')?->toIso8601String(),
-            'deleted_at' => $this->getAttribute('deleted_at')?->toIso8601String(),
+            'published_at' => Time::iso($this->getAttribute('published_at')),
+            'created_at' => Time::iso($this->getAttribute('created_at')),
+            'updated_at' => Time::iso($this->getAttribute('updated_at')),
+            'deleted_at' => Time::iso($this->getAttribute('deleted_at')),
             'settings' => is_array($this->getAttribute('settings')) ? $this->getAttribute('settings') : [],
             'blocks' => is_array($this->getAttribute('blocks')) ? $this->getAttribute('blocks') : [],
         ];

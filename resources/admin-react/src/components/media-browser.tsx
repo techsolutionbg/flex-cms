@@ -8,10 +8,17 @@ import { ConfirmDialog } from "./confirm-dialog"
 import { MediaUploader } from "./media-uploader"
 import { Button } from "@/components/ui/button"
 import { mediaRequest, mediaSize, type MediaIndex, type MediaRecord } from "@/lib/media-api"
+import { DateTime } from "@/components/date-time"
+import { parse } from "@/lib/flex-time"
 
 export function MediaPreview({ record }: { record: MediaRecord }) {
   return record.mime.startsWith("image/") && record.thumbnail_url ? (
-    <img src={record.thumbnail_url} decoding="async" alt={record.alt || record.title} loading="lazy" />
+    <img
+      src={record.thumbnail_url}
+      decoding="async"
+      alt={record.alt || record.title}
+      loading="lazy"
+    />
   ) : (
     <File size={42} aria-hidden="true" />
   )
@@ -259,8 +266,8 @@ export function MediaBrowser({
       key: "created_at",
       label: "Качен на",
       sortable: true,
-      render: (record) =>
-        new Date(record.created_at.replace(" ", "T") + "Z").toLocaleDateString("bg"),
+      render: (record) => <DateTime value={record.created_at} style="date" />,
+      sortValue: (record) => parse(record.created_at)?.valueOf() ?? 0,
     },
     { key: "actions", label: "Действия", render: actions },
   ]
@@ -338,7 +345,9 @@ export function MediaBrowser({
                           </span>
                         )}
                       </span>
-                      <span className="media-card-title">{record.title || record.original_name}</span>
+                      <span className="media-card-title">
+                        {record.title || record.original_name}
+                      </span>
                     </button>
                     <div className="media-card-footer">
                       <span>{mediaSize(record.size)}</span>

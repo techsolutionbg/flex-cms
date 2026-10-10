@@ -4,6 +4,9 @@
          bootstrap="vendor/autoload.php"
          cacheDirectory=".phpunit.cache"
          colors="true">
+    <php>
+        <ini name="date.timezone" value="UTC"/>
+    </php>
     <testsuites>
         <testsuite name="Flex CMS">
             <directory>tests</directory>

@@ -6,6 +6,7 @@ namespace Flex\Themes;
 
 use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
+use Flex\Extension\V1\Time;
 use Flex\Extensions\FrontendExtensionAssets;
 use Flex\Settings\Setting;
 use Twig\Environment;
@@ -78,6 +79,7 @@ final class ThemeManager
                     'flex_menu' => $flexMenu,
                     'flex_menu_html' => $flexMenuHtml,
                     'flex_media' => $flexMedia,
+                    'flex_time' => static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style),
                     'frontend_extension_tags' => $this->frontendAssets?->publicTags() ?? '',
                     'head_tags' => is_string($data['head_tags'] ?? null) ? $data['head_tags'] : '',
                 ], EXTR_SKIP);
@@ -97,6 +99,7 @@ final class ThemeManager
             $this->twig->addFunction(new TwigFunction('flex_menu', fn(string $slug): array => $this->menuApi?->get($slug) ?? []));
             $this->twig->addFunction(new TwigFunction('site_format_date', fn(\DateTimeInterface $date): string => $this->generalSettings?->formatDate($date) ?? $date->format('d.m.Y H:i')));
             $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
+            $this->twig->addFunction(new TwigFunction('flex_time', static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style), ['is_safe' => ['html']]));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
             $this->loadedTheme = $theme;
         }

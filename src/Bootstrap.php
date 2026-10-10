@@ -19,6 +19,8 @@ final readonly class Bootstrap
 
     public static function boot(string $basePath): self
     {
+        // The platform stores and processes every time value in UTC; browsers convert for display.
+        date_default_timezone_set('UTC');
         (new EnvironmentLoader())->load($basePath);
         $useCache = filter_var($_ENV['APP_CONFIG_CACHE'] ?? false, FILTER_VALIDATE_BOOL);
         $configuration = (new ConfigurationLoader())->load($basePath, $useCache);

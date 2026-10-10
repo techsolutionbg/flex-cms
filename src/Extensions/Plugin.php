@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Extensions;
 
+use Flex\Extension\V1\Time;
 use Illuminate\Database\Eloquent\Model;
 
 final class Plugin extends Model
@@ -45,8 +46,8 @@ final class Plugin extends Model
             'requested_permissions' => $this->requestedPermissions(),
             'approved_permissions' => $this->approvedPermissions(),
             'last_error' => $this->getAttribute('last_error'),
-            'installed_at' => $this->getAttribute('installed_at')?->toIso8601String(),
-            'activated_at' => $this->getAttribute('activated_at')?->toIso8601String(),
+            'installed_at' => Time::iso($this->getAttribute('installed_at')),
+            'activated_at' => Time::iso($this->getAttribute('activated_at')),
         ];
     }
 

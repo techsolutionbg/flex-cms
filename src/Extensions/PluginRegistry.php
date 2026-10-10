@@ -93,7 +93,7 @@ final readonly class PluginRegistry
                 'path' => $entry['path'],
                 'manifest' => $manifest->toArray(),
                 'status' => $plugin->exists ? $plugin->getAttribute('status') : 'inactive',
-                'installed_at' => $plugin->exists ? $plugin->getAttribute('installed_at') : new \DateTimeImmutable(),
+                'installed_at' => $plugin->exists ? $plugin->getAttribute('installed_at') : new \DateTimeImmutable('now', new \DateTimeZone('UTC')),
             ]);
             $plugin->saveOrFail();
             $plugins[] = $plugin;

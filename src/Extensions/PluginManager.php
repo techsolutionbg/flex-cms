@@ -56,7 +56,7 @@ final readonly class PluginManager
             'status' => $status,
             'manifest' => $manifest->toArray(),
             'last_error' => null,
-            'installed_at' => $plugin->exists ? $plugin->getAttribute('installed_at') : new \DateTimeImmutable(),
+            'installed_at' => $plugin->exists ? $plugin->getAttribute('installed_at') : new \DateTimeImmutable('now', new \DateTimeZone('UTC')),
         ]);
         $this->storePermissions($plugin, $manifest->permissions);
         $plugin->saveOrFail();
@@ -109,7 +109,7 @@ final readonly class PluginManager
 
         $plugin->fill([
             'status' => self::STATUS_ACTIVE,
-            'activated_at' => new \DateTimeImmutable(),
+            'activated_at' => new \DateTimeImmutable('now', new \DateTimeZone('UTC')),
             'last_error' => null,
         ]);
         $plugin->saveOrFail();

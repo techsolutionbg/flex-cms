@@ -12,6 +12,7 @@ import { adminUrl } from "@/lib/admin-routes"
 import { Button } from "@/components/ui/button"
 import { MediaUploader } from "@/components/media-uploader"
 import type { MediaIndex } from "@/lib/media-api"
+import { DateTime } from "@/components/date-time"
 
 export function MediaPage({
   onLogout,
@@ -204,7 +205,7 @@ export function MediaPage({
                   </dd>
                   <dt>Качен на</dt>
                   <dd>
-                    {new Date(record.created_at.replace(" ", "T") + "Z").toLocaleString("bg")}
+                    <DateTime value={record.created_at} />
                   </dd>
                   <dt>Качил</dt>
                   <dd>

@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
+import { DateTime } from "@/components/date-time"
 
 type Release = {
   version: string
@@ -331,7 +332,9 @@ export function ThemeDetailPage({
                 <dl className="theme-detail-info">
                   <div>
                     <dt>Публикувана</dt>
-                    <dd>{new Date(release.published_at).toLocaleString("bg-BG")}</dd>
+                    <dd>
+                      <DateTime value={release.published_at} />
+                    </dd>
                   </div>
                   <div>
                     <dt>Размер</dt>

@@ -19,6 +19,8 @@ return [
             'prefix_indexes' => true,
             'strict' => filter_var($_ENV['DB_STRICT'] ?? true, FILTER_VALIDATE_BOOL),
             'engine' => null,
+            // TIMESTAMP columns are converted by MySQL using the session time zone; keep it UTC.
+            'timezone' => '+00:00',
             'options' => [
                 PDO::ATTR_TIMEOUT => (int) ($_ENV['DB_TIMEOUT'] ?? 5),
                 PDO::ATTR_PERSISTENT => filter_var($_ENV['DB_PERSISTENT'] ?? false, FILTER_VALIDATE_BOOL),

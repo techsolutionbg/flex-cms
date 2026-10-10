@@ -84,7 +84,8 @@
             "@check",
             "npm --prefix resources/admin-react run typecheck",
             "npm --prefix resources/admin-react run build:admin",
-            "npm --prefix resources/admin-react run build:installer"
+            "npm --prefix resources/admin-react run build:installer",
+            "npm --prefix resources/admin-react run build:time"
         ],
         "test": "phpunit"
     }

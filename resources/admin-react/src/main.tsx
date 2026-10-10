@@ -7,6 +7,7 @@ import { InstallerPage } from "@/pages/installer-page"
 import { AdminWorkspace } from "@/components/admin-workspace"
 import { adminRedirectTarget, adminRoute, adminUrl } from "@/lib/admin-routes"
 import { getAdminTheme, setAdminTheme, loadAdminSettings } from "@/lib/admin-theme"
+import { loadTimeSettings } from "@/lib/time-settings"
 import "./index.css"
 import { installRequestTracking } from "@/lib/request-tracker"
 import { GlobalLoadingBar } from "@/components/global-loading-bar"
@@ -77,7 +78,7 @@ function App() {
           if (response.ok) {
             if (body.user?.role === "super_admin") {
               try {
-                await loadAdminSettings()
+                await Promise.all([loadAdminSettings(), loadTimeSettings()])
               } catch (error) {
                 if (!cancelled) toast.error((error as Error).message)
               }

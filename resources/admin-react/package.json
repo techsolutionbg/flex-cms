@@ -11,12 +11,14 @@
     "build": "tsc -b && vite build",
     "build:admin": "tsc -b && vite build --config vite.admin.config.ts",
     "build:installer": "tsc -b && vite build --config vite.installer.config.ts",
+    "build:time": "vite build --config vite.time.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dayjs": "1.11.13",
     "lucide-react": "^0.468.0",
     "quill": "2.0.2",
     "react": "^19.1.1",
