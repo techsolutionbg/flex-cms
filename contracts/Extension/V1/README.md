@@ -57,6 +57,10 @@ Core events are exposed through `EventNames` and immutable event objects such as
 `PluginEvent` and `PageEvent`. Listeners are ordered by priority and receive only the
 validated public payload.
 
+### Admin panels
+
+`AdminExtensionRegistrarInterface::panel($location, $id, $label, $module, $options)` places a React panel inside a platform screen: `page.editor`, `page.settings`, `pages.list.column`, `settings.tab`, `commerce.product.editor` or `commerce.category.editor`. Panels receive the unsaved record values and save after the record through `registerSave`. See `docs/admin-extension-pages.md`.
+
 ### Administrative navigation
 
 React pages can declare an optional navigation descriptor:

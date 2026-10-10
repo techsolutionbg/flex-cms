@@ -1,7 +1,7 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useState, type SyntheticEvent } from "react"
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
 import { LayoutTemplate, Navigation, Puzzle, Search } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -10,6 +10,7 @@ import { CheckboxField } from "@/components/checkbox-field"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import type { PagePluginField, PageRecord, PageSettings } from "@/lib/admin-types"
+import { ExtensionPanels, usePanelSaves } from "@/components/extension-page"
 
 type PageSettingsFormProps = {
   page: PageRecord
@@ -43,6 +44,11 @@ export function PageSettingsForm({
     Record<string, Record<string, string | boolean>>
   >(page.plugin_settings ?? {})
   const [saving, setSaving] = useState(false)
+  const saves = usePanelSaves()
+  const panelContext = useMemo(
+    () => ({ type: "page", id: page.id, page, settings }),
+    [page, settings],
+  )
 
   useEffect(() => {
     setPluginSettings(page.plugin_settings ?? {})
@@ -93,6 +99,7 @@ export function PageSettingsForm({
             ? body.error
             : (body.error?.message ?? "Настройките не можаха да бъдат запазени."),
         )
+      await saves.run({ id: page.id })
       toast.success("Настройките са запазени.")
       if (body.page) onSaved({ ...body.page, plugin_settings: pluginSettings })
     } catch (reason) {
@@ -230,6 +237,7 @@ export function PageSettingsForm({
             </label>
           </div>
         </CollapsibleSection>
+        <ExtensionPanels location="page.settings" context={panelContext} saves={saves} />
         {Object.entries(groupedFields).map(([plugin, fields]) => (
           <CollapsibleSection
             key={plugin}

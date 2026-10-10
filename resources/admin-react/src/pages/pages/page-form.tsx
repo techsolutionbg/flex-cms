@@ -1,7 +1,7 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useState, type SyntheticEvent } from "react"
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
 import { CircleAlert, FileText, FolderTree, Puzzle, Settings2 } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -13,6 +13,7 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { MediaPicker } from "@/components/media-picker"
 import { MediaPreview } from "@/components/media-browser"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
+import { ExtensionPanels, usePanelSaves } from "@/components/extension-page"
 import { mediaRequest, type MediaRecord } from "@/lib/media-api"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
@@ -52,6 +53,16 @@ export function PageForm({
   const [featured, setFeatured] = useState<MediaRecord | null>(null)
   const [mediaOpen, setMediaOpen] = useState(false)
   const changed = useWorkspaceChanged()
+  const saves = usePanelSaves()
+  // Panels of active plugins (for example Flex SEO) see the unsaved values while the user types.
+  const panelContext = useMemo(
+    () => ({
+      type: "page",
+      id: page?.id ?? null,
+      values: { title, slug, content, featured_media_id: featuredId, status, parent_id: parentId },
+    }),
+    [page?.id, title, slug, content, featuredId, status, parentId],
+  )
   useEffect(() => {
     setFeatured(null)
     if (!featuredId) return
@@ -149,8 +160,20 @@ export function PageForm({
             ? body.error
             : (body.error?.message ?? "Страницата не можа да бъде запазена."),
         )
-      toast.success(page ? "Страницата е обновена." : "Страницата е създадена.")
+      let panelFailure = ""
+      try {
+        await saves.run({ id: body.page?.id ?? page?.id ?? null })
+      } catch (reason) {
+        panelFailure = reason instanceof Error ? reason.message : String(reason)
+      }
+      if (panelFailure === "")
+        toast.success(page ? "Страницата е обновена." : "Страницата е създадена.")
+      else {
+        setError(panelFailure)
+        toast.error("Страницата е запазена, но разширение не записа данните си: " + panelFailure)
+      }
       if (body.page) onSaved({ ...body.page, plugin_fields: pluginFields })
+      if (panelFailure !== "") changed?.()
     } catch (reason) {
       const message =
         reason instanceof Error ? reason.message : "Страницата не можа да бъде запазена."
@@ -311,6 +334,7 @@ export function PageForm({
             <RichTextEditor value={content} onChange={setContent} />
           </div>
         </CollapsibleSection>
+        <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
         {Object.entries(groupedFields).map(([plugin, fields]) => (
           <CollapsibleSection
             key={plugin}

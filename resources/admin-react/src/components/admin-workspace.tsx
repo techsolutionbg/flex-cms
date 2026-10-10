@@ -20,7 +20,11 @@ import { MenusPage } from "@/pages/menus-page"
 import { MenuEditor } from "@/pages/menu-editor"
 import { MenuStructurePage } from "@/pages/menu-structure-page"
 import { MediaPage } from "@/pages/media-page"
-import { ExtensionPage, type ExtensionPageDescriptor } from "./extension-page"
+import {
+  ExtensionPage,
+  type ExtensionPageDescriptor,
+  type ExtensionPanelDescriptor,
+} from "./extension-page"
 
 type Tab = {
   id: string
@@ -65,6 +69,7 @@ export function AdminWorkspace({
   const [active, setActive] = useState("")
   const [confirmCloseAll, setConfirmCloseAll] = useState(false)
   const [extensionPages, setExtensionPages] = useState<ExtensionPageDescriptor[]>([])
+  const [extensionPanels, setExtensionPanels] = useState<ExtensionPanelDescriptor[]>([])
   const [extensionsError, setExtensionsError] = useState("")
   const [themeCapabilities, setThemeCapabilities] = useState<ThemeCapabilities | null>(null)
   const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null)
@@ -293,6 +298,8 @@ export function AdminWorkspace({
       if (!response.ok) throw new Error("Интерфейсите на разширенията не можаха да бъдат заредени.")
       const body = await response.json()
       setExtensionPages(body.pages ?? [])
+      setExtensionPanels(body.panels ?? [])
+      setExtensionPanels(body.panels ?? [])
       setExtensionsError("")
     } catch (error) {
       setExtensionsError((error as Error).message)
@@ -554,9 +561,11 @@ export function AdminWorkspace({
             changed: () => patch(tab.id, { dirty: true }),
             refresh: () => void refresh(tab.id),
             refreshing: Boolean(tab.loading),
+            open: (path: string) => open(path),
             themeCapabilities,
             capabilitiesError,
             extensionPages,
+            extensionPanels,
           }}
         >
           <div

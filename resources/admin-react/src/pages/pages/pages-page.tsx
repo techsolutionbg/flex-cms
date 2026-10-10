@@ -13,6 +13,7 @@ import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { publicPagePath } from "./page-utils"
 import { DateTime } from "@/components/date-time"
 import { parse } from "@/lib/flex-time"
+import { useExtensionColumns } from "@/components/extension-page"
 export function PagesPage({
   onLogout,
   onNavigate,
@@ -29,6 +30,8 @@ export function PagesPage({
   loggingOut: boolean
 }) {
   const [pages, setPages] = useState<PageRecord[]>([])
+  // Columns from active plugins, for example the SEO rating from Flex SEO.
+  const extensionColumns = useExtensionColumns<PageRecord>("pages.list.column", pages)
   const [loading, setLoading] = useState(true)
   const query = new URLSearchParams(window.location.search)
   const isActivePanel = useWorkspacePanelActive()
@@ -274,6 +277,7 @@ export function PagesPage({
       render: (page: PageRecord) => <DateTime value={page.updated_at} style="date" />,
       sortValue: (page: PageRecord) => parse(page.updated_at)?.valueOf() ?? 0,
     },
+    ...extensionColumns,
     {
       key: "actions",
       label: "Действия",

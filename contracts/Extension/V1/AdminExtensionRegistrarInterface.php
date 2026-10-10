@@ -14,6 +14,14 @@ interface AdminExtensionRegistrarInterface
      */
     public function page(string $id, string $label, string $module, bool $embeddable = false, array $navigation = []): void;
 
+    /**
+     * Register a React panel shown inside a platform screen. The ES module exports createPanel(host, info)
+     * (or the function named by options.export), and createColumn(host, info) for the pages.list.column location.
+     * Locations: page.editor, page.settings, pages.list.column, settings.tab, commerce.product.editor, commerce.category.editor.
+     * @param array{order?: int, icon?: string, default_open?: bool, export?: string} $options
+     */
+    public function panel(string $location, string $id, string $label, string $module, array $options = []): void;
+
     /** @param 'notice'|'card'|'link' $kind */
     public function slot(string $name, string $kind, string $title, string $text = '', ?string $href = null, int $priority = 50): void;
 }

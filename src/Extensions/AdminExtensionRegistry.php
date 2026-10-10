@@ -18,6 +18,12 @@ final class AdminExtensionRegistry
     /** @var array<string, list<array{kind: string, title: string, text: string, href: string|null, priority: int}>> */
     private array $slots = [];
 
+    /** @var array<string, array{id: string, plugin: string, location: string, label: string, module: string, export: string, icon: string, default_open: bool, order: int}> */
+    private array $panels = [];
+
+    /** Platform screens that render extension panels. The commerce locations are rendered by Flex Commerce. */
+    public const PANEL_LOCATIONS = ['page.editor', 'page.settings', 'pages.list.column', 'settings.tab', 'commerce.product.editor', 'commerce.category.editor'];
+
     /** @var list<string> */
     private const SLOTS = [
         'admin.dashboard.before', 'admin.dashboard.after',
@@ -49,6 +55,12 @@ final class AdminExtensionRegistry
                 $this->registry->addPage($this->pluginId, $id, $label, $module, $embeddable, $navigation, $this->pluginPath);
             }
 
+            public function panel(string $location, string $id, string $label, string $module, array $options = []): void
+            {
+                $this->assertPermission();
+                $this->registry->addPanel($this->pluginId, $location, $id, $label, $module, $options, $this->pluginPath);
+            }
+
             public function sidebarItem(string $id, string $label, string $href, int $priority = 50): void
             {
                 $this->assertPermission();
@@ -70,7 +82,7 @@ final class AdminExtensionRegistry
         };
     }
 
-    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>, pages: list<array{id: string, label: string, href: string, module: string, embeddable: bool}>} */
+    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>, pages: list<array{id: string, label: string, href: string, module: string, embeddable: bool}>, panels: list<array<string, mixed>>} */
     public function bootstrap(): array
     {
         $sidebar = array_values($this->sidebarItems);
@@ -85,7 +97,10 @@ final class AdminExtensionRegistry
             ], $items);
         }
 
-        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages)];
+        $panels = array_values($this->panels);
+        usort($panels, static fn(array $left, array $right): int => [$left['order'], $left['id']] <=> [$right['order'], $right['id']]);
+
+        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages), 'panels' => $panels];
     }
 
     public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = [], ?string $pluginPath = null): void
@@ -120,6 +135,41 @@ final class AdminExtensionRegistry
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
             'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => $placement];
         $this->addSidebarItem($key, trim($label), $href, 50);
+    }
+
+    /** @param array{order?: mixed, icon?: mixed, default_open?: mixed, export?: mixed} $options */
+    public function addPanel(string $pluginId, string $location, string $id, string $label, string $module, array $options = [], ?string $pluginPath = null): void
+    {
+        if (!in_array($location, self::PANEL_LOCATIONS, true)) {
+            throw new \InvalidArgumentException(sprintf('Unknown admin panel location "%s".', $location));
+        }
+        if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $id) || trim($label) === '' ||
+            !preg_match('/^[a-zA-Z0-9_\/.\-]+\.js$/D', $module) || str_contains($module, '..') || str_starts_with($module, '/')) {
+            throw new \InvalidArgumentException('Invalid admin panel ID, label or module path.');
+        }
+        $order = $options['order'] ?? 50;
+        $icon = $options['icon'] ?? 'puzzle';
+        $export = $options['export'] ?? ($location === 'pages.list.column' ? 'createColumn' : 'createPanel');
+        $defaultOpen = $options['default_open'] ?? true;
+        if (!is_int($order) || $order < 0 || !is_bool($defaultOpen) ||
+            !in_array($icon, ['puzzle', 'images', 'shopping-bag', 'file-text', 'settings', 'users', 'palette'], true) ||
+            !is_string($export) || !preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/D', $export)) {
+            throw new \InvalidArgumentException('Invalid admin panel options.');
+        }
+        $key = str_replace('/', '-', $pluginId) . '-' . $id;
+        $assetHash = $pluginPath === null ? false : @hash_file('sha256', $pluginPath . '/' . $module);
+        $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
+        $this->panels[$location . ':' . $key] = [
+            'id' => $key,
+            'plugin' => $pluginId,
+            'location' => $location,
+            'label' => trim($label),
+            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion,
+            'export' => $export,
+            'icon' => $icon,
+            'default_open' => $defaultOpen,
+            'order' => $order,
+        ];
     }
 
     private function addSidebarItem(string $id, string $label, string $href, int $priority): void
