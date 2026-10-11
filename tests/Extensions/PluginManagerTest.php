@@ -11,6 +11,9 @@ use Flex\Extensions\PluginManager;
 use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\ExtensionApi;
+use Flex\Extensions\Exception\PluginPermissionDenied;
+use Flex\Extensions\FrontendExtensionAssets;
+use Flex\Extensions\PublicAssetQueue;
 use Flex\Extensions\PluginRuntime;
 use PHPUnit\Framework\TestCase;
 
@@ -165,4 +168,83 @@ PHP);
         self::assertSame(PluginManager::STATUS_ACTIVE, $this->manager->activate('acme/forms')->getAttribute('status'));
     }
 
+    public function testPublicAssetTagsAreVersionedFromTheFileWithoutReadingIt(): void
+    {
+        mkdir($this->directory . '/plugins/acme/forms/assets');
+        file_put_contents($this->directory . '/plugins/acme/forms/assets/forms.css', 'a{}');
+        file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Flex\\Tests\\PluginLifecycle\\Plugin',
+            'autoload' => ['Flex\\Tests\\PluginLifecycle\\' => 'src'],
+            'permissions' => ['frontend.assets'],
+            'frontend' => ['styles' => ['assets/forms.css'], 'public' => ['styles' => ['assets/forms.css']]],
+        ], JSON_THROW_ON_ERROR));
+        $this->manager->install('acme/forms');
+        $this->manager->activate('acme/forms');
+        $paths = new ProjectPaths($this->directory, new ConfigurationRepository(['paths' => ['plugins' => 'plugins']]));
+        $assets = new FrontendExtensionAssets(new PluginRegistry($paths));
+
+        $tags = $assets->publicTags();
+        self::assertMatchesRegularExpression('~^<link rel="stylesheet" href="/extensions/acme/forms/assets/assets/forms\.css\?v=[a-f0-9]{12}">$~', $tags);
+        self::assertSame($tags, $assets->publicTags());
+        file_put_contents($this->directory . '/plugins/acme/forms/assets/forms.css', 'a{color:red}');
+        clearstatcache();
+        self::assertNotSame($tags, $assets->publicTags(), 'a changed file gets a new version');
+    }
+
+    public function testPublicAssetGroupsAreLoadedOnlyWhenThePluginAsksForThem(): void
+    {
+        mkdir($this->directory . '/plugins/acme/forms/assets');
+        foreach (['badge.js', 'forms.js', 'forms.css', 'bar.js'] as $file) {
+            file_put_contents($this->directory . '/plugins/acme/forms/assets/' . $file, '/* ' . $file . ' */');
+        }
+        file_put_contents($this->directory . '/plugins/acme/forms/plugin.json', json_encode([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Flex\\Tests\\PluginLifecycle\\Plugin',
+            'autoload' => ['Flex\\Tests\\PluginLifecycle\\' => 'src'],
+            'permissions' => ['frontend.assets'],
+            'frontend' => ['public' => [
+                'scripts' => ['assets/badge.js'],
+                'groups' => [
+                    'form' => ['scripts' => ['assets/forms.js', 'assets/badge.js'], 'styles' => ['assets/forms.css']],
+                    'bar' => ['scripts' => ['assets/bar.js']],
+                ],
+            ]],
+        ], JSON_THROW_ON_ERROR));
+        $this->manager->install('acme/forms');
+        $this->manager->activate('acme/forms');
+        $paths = new ProjectPaths($this->directory, new ConfigurationRepository(['paths' => ['plugins' => 'plugins']]));
+        $files = static fn(string $tags): array => preg_match_all('~assets/assets/([a-z]+\.(?:js|css))\?v=~', $tags, $m) ? $m[1] : [];
+
+        // A page that asks for nothing gets only the files for every page.
+        $queue = new PublicAssetQueue();
+        $assets = new FrontendExtensionAssets(new PluginRegistry($paths), $queue);
+        self::assertSame(['badge.js'], $files($assets->publicTags()));
+
+        // A page that asks for a group gets it once, with files already on the page left out.
+        $checked = 0;
+        $registrar = $queue->registrar('acme/forms', ['frontend.assets']);
+        $registrar->enqueueWhen('bar', static function () use (&$checked): bool {
+            $checked++;
+
+            return false;
+        });
+        self::assertSame(0, $checked, 'conditions wait for the page tags');
+        $registrar->enqueue('form');
+        $registrar->enqueue('form');
+        self::assertSame(['forms.css', 'badge.js', 'forms.js'], $files($assets->publicTags()));
+        self::assertSame(1, $checked);
+
+        $queue = new PublicAssetQueue();
+        $queue->registrar('acme/forms', ['frontend.assets'])->enqueueWhen('bar', static fn(): bool => true);
+        $queue->registrar('acme/forms', ['frontend.assets'])->enqueueWhen('missing', static fn(): bool => throw new \RuntimeException('broken'));
+        self::assertSame(['badge.js', 'bar.js'], $files((new FrontendExtensionAssets(new PluginRegistry($paths), $queue))->publicTags()), 'a failing condition only leaves its group out');
+
+        $this->expectException(PluginPermissionDenied::class);
+        $queue->registrar('acme/forms', ['routes.public'])->enqueue('form');
+    }
 }

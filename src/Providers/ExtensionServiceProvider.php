@@ -17,6 +17,7 @@ use Flex\Extensions\PluginManager;
 use Flex\Extensions\PluginEntrypointLoader;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\PluginRuntime;
+use Flex\Extensions\PublicAssetQueue;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Pages\PageService;
 use Psr\Container\ContainerInterface;
@@ -43,7 +44,8 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
                 ->constructorParameter('adminExtensions', get(AdminExtensionRegistry::class))
                 ->constructorParameter('pageFields', get(PageFieldRegistry::class))
                 ->constructorParameter('pageSettings', get(PageSettingsRegistry::class))
-                ->constructorParameter('routes', get(RouteRegistryInterface::class)),
+                ->constructorParameter('routes', get(RouteRegistryInterface::class))
+                ->constructorParameter('publicAssets', get(PublicAssetQueue::class)),
             PageService::class => autowire()
                 ->constructorParameter('media', get(\Flex\Media\MediaService::class))
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
@@ -53,7 +55,9 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
             AdminExtensionRegistry::class => autowire(),
             PageFieldRegistry::class => autowire(),
             PageSettingsRegistry::class => autowire(),
-            FrontendExtensionAssets::class => autowire(),
+            PublicAssetQueue::class => autowire(),
+            FrontendExtensionAssets::class => autowire()
+                ->constructorParameter('queue', get(PublicAssetQueue::class)),
             PluginRouteRegistrar::class => autowire(),
         ];
     }

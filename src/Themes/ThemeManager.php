@@ -8,6 +8,7 @@ use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Extension\V1\Time;
 use Flex\Extensions\FrontendExtensionAssets;
+use Flex\Http\AssetVersion;
 use Flex\Settings\Setting;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -65,9 +66,16 @@ final class ThemeManager
         $this->mediaApi = $mediaApi;
         $phpTemplate = $this->phpTemplate($theme, $template);
         if ($phpTemplate !== null) {
-            $themeAsset = fn(string $asset): string => ltrim($asset, '/') === 'style.css'
-                ? '/themes/' . rawurlencode($theme) . '/style.css'
-                : '/themes/' . rawurlencode($theme) . '/assets/' . ltrim($asset, '/');
+            // Versioned URLs (?v=…), so browsers keep theme files until they change.
+            $themeAsset = function (string $asset) use ($theme): string {
+                $asset = ltrim($asset, '/');
+                [$url, $file] = $asset === 'style.css'
+                    ? ['/themes/' . rawurlencode($theme) . '/style.css', $this->paths->themes($theme . '/style.css')]
+                    : ['/themes/' . rawurlencode($theme) . '/assets/' . $asset, $this->paths->themes($theme . '/assets/' . $asset)];
+                $version = str_contains($asset, '?') ? null : AssetVersion::of($file);
+
+                return $version === null ? $url : $url . '?v=' . $version;
+            };
             ob_start();
             try {
                 $flexMenu = static fn(string $slug): array => $menuApi?->get($slug) ?? [];
@@ -80,7 +88,8 @@ final class ThemeManager
                     'flex_menu_html' => $flexMenuHtml,
                     'flex_media' => $flexMedia,
                     'flex_time' => static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style),
-                    'frontend_extension_tags' => $this->frontendAssets?->publicTags() ?? '',
+                    // Built when the theme prints it, after groups asked for while the template runs.
+                    'frontend_extension_tags' => $this->frontendAssets === null ? '' : new DeferredHtml(fn(): string => $this->frontendAssets->publicTags()),
                     'head_tags' => is_string($data['head_tags'] ?? null) ? $data['head_tags'] : '',
                 ], EXTR_SKIP);
                 include $phpTemplate;
@@ -101,6 +110,8 @@ final class ThemeManager
             $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
             $this->twig->addFunction(new TwigFunction('flex_time', static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style), ['is_safe' => ['html']]));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
+            // The public files of plugins for this page, as in PHP themes (Flex CMS 0.1.62+).
+            $this->twig->addFunction(new TwigFunction('frontend_extension_tags', fn(): string => $this->frontendAssets?->publicTags() ?? '', ['is_safe' => ['html']]));
             $this->loadedTheme = $theme;
         }
 

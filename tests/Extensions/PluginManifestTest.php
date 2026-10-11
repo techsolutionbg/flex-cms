@@ -81,6 +81,51 @@ final class PluginManifestTest extends TestCase
         self::assertSame(['assets/forms.css'], $manifest->frontend['public']['styles'] ?? []);
     }
 
+    public function testItParsesPublicAssetGroupsAndAllowsTheirFiles(): void
+    {
+        $manifest = PluginManifest::fromArray([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Acme\\Forms\\Plugin',
+            'frontend' => [
+                'public' => [
+                    'scripts' => ['assets/badge.js'],
+                    'groups' => ['form-page' => ['scripts' => ['assets/forms.js'], 'styles' => ['assets/forms.css']]],
+                ],
+            ],
+        ]);
+
+        self::assertSame(['assets/badge.js'], $manifest->frontend['public']['scripts']);
+        self::assertSame(['scripts' => ['assets/forms.js'], 'styles' => ['assets/forms.css']], $manifest->frontend['public']['groups']['form-page']);
+        self::assertSame(['assets/badge.js', 'assets/forms.js'], $manifest->frontend['scripts'], 'group files are served like the other public files');
+        self::assertSame(['assets/forms.css'], $manifest->frontend['styles']);
+        self::assertSame($manifest->frontend, PluginManifest::fromArray($manifest->toArray())->frontend);
+    }
+
+    /** @return iterable<string, array{mixed}> */
+    public static function invalidGroups(): iterable
+    {
+        yield 'list' => [[['scripts' => ['assets/a.js']]]];
+        yield 'bad name' => [['Forms' => ['scripts' => ['assets/a.js']]]];
+        yield 'unsafe path' => [['forms' => ['scripts' => ['../a.js']]]];
+        yield 'not a list of paths' => [['forms' => ['scripts' => 'assets/a.js']]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidGroups')]
+    public function testItRejectsInvalidPublicAssetGroups(mixed $groups): void
+    {
+        $this->expectException(InvalidPluginManifest::class);
+
+        PluginManifest::fromArray([
+            'id' => 'acme/forms',
+            'name' => 'Forms',
+            'version' => '1.0.0',
+            'entrypoint' => 'Acme\\Forms\\Plugin',
+            'frontend' => ['public' => ['groups' => $groups]],
+        ]);
+    }
+
     public function testItRejectsUnsafeFrontendAssets(): void
     {
         $this->expectException(InvalidPluginManifest::class);

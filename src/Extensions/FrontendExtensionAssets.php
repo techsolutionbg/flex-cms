@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace Flex\Extensions;
 
+use Flex\Http\AssetVersion;
+
 final readonly class FrontendExtensionAssets
 {
-    public function __construct(private PluginRegistry $plugins) {}
+    public function __construct(private PluginRegistry $plugins, private ?PublicAssetQueue $queue = null) {}
 
     public function tags(): string
     {
         return $this->collectTags(false);
     }
 
-    /** Storefront-safe assets declared under frontend.public (excludes admin modules). */
+    /**
+     * Storefront-safe assets declared under frontend.public (excludes admin modules): the files for every page,
+     * then the groups the plugin asked for on this page (frontend.public.groups).
+     */
     public function publicTags(): string
     {
         return $this->collectTags(true);
@@ -40,7 +45,7 @@ final readonly class FrontendExtensionAssets
                 }
                 $root = realpath((string) $plugin->getAttribute('path')) ?: '';
                 $frontend = $publicOnly
-                    ? $this->publicAssetLists($root, $validated->frontend)
+                    ? $this->withRequestedGroups($validated->id, $this->publicAssetLists($root, $validated->frontend))
                     : [
                         'styles' => $validated->frontend['styles'] ?? [],
                         'scripts' => $validated->frontend['scripts'] ?? [],
@@ -109,20 +114,38 @@ final readonly class FrontendExtensionAssets
     {
         $scripts = array_values(array_unique($stored['public']['scripts'] ?? []));
         $styles = array_values(array_unique($stored['public']['styles'] ?? []));
+        $groups = $stored['public']['groups'] ?? [];
         $diskPath = $root . DIRECTORY_SEPARATOR . 'plugin.json';
         if ($root === '' || !is_file($diskPath)) {
-            return ['scripts' => $scripts, 'styles' => $styles];
+            return ['scripts' => $scripts, 'styles' => $styles, 'groups' => $groups];
         }
 
         try {
             $disk = PluginManifest::fromFile($diskPath)->frontend;
             $scripts = array_values(array_unique([...$scripts, ...($disk['public']['scripts'] ?? [])]));
             $styles = array_values(array_unique([...$styles, ...($disk['public']['styles'] ?? [])]));
+            $groups = [...$groups, ...($disk['public']['groups'] ?? [])];
         } catch (\Throwable) {
             // Keep the stored public list if the on-disk manifest is temporarily invalid.
         }
 
-        return ['scripts' => $scripts, 'styles' => $styles];
+        return ['scripts' => $scripts, 'styles' => $styles, 'groups' => $groups];
+    }
+
+    /**
+     * @param array{scripts: list<string>, styles: list<string>, groups: array<string, array{scripts?: list<string>, styles?: list<string>}>} $lists
+     * @return array{scripts: list<string>, styles: list<string>}
+     */
+    private function withRequestedGroups(string $pluginId, array $lists): array
+    {
+        $scripts = $lists['scripts'];
+        $styles = $lists['styles'];
+        foreach ($this->queue?->groupsFor($pluginId) ?? [] as $group) {
+            $scripts = [...$scripts, ...($lists['groups'][$group]['scripts'] ?? [])];
+            $styles = [...$styles, ...($lists['groups'][$group]['styles'] ?? [])];
+        }
+
+        return ['scripts' => array_values(array_unique($scripts)), 'styles' => array_values(array_unique($styles))];
     }
 
     /**
@@ -167,15 +190,11 @@ final readonly class FrontendExtensionAssets
     {
         $segments = array_map(static fn(string $segment): string => rawurlencode($segment), explode('/', $asset));
         $href = '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $id))) . '/assets/' . implode('/', $segments);
-        if ($root !== '') {
-            $path = realpath($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $asset));
-            if (is_string($path) && is_file($path)) {
-                $href .= '?v=' . substr(hash_file('sha256', $path) ?: (string) filemtime($path), 0, 12);
-            }
-        }
+        $version = $root === '' ? null : AssetVersion::forUrl($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $asset));
 
-        return $href;
+        return $version === null ? $href : $href . '?v=' . $version;
     }
+
 
     /** @return list<string> */
     private function approvedPermissions(Plugin $plugin, PluginManifest $manifest): array

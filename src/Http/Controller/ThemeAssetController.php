@@ -6,6 +6,7 @@ namespace Flex\Http\Controller;
 
 use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Http\AssetVersion;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -44,6 +45,9 @@ final readonly class ThemeAssetController
             default => 'application/octet-stream',
         };
 
-        return $this->responses->text((string) file_get_contents($path), 200, ['Content-Type' => $mime, 'Cache-Control' => 'public, max-age=3600']);
+        // theme_asset() links files with ?v= of their current version; such a URL is kept for good.
+        $cache = AssetVersion::matches($path, $request->getQueryParams()['v'] ?? null) ? AssetVersion::IMMUTABLE : 'public, max-age=3600';
+
+        return $this->responses->text((string) file_get_contents($path), 200, ['Content-Type' => $mime, 'Cache-Control' => $cache]);
     }
 }

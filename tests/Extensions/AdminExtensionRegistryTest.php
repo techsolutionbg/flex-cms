@@ -89,6 +89,27 @@ final class AdminExtensionRegistryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $registrar->page('other', 'Друго', 'admin.js', false, ['group' => 'commerce', 'section' => 'warehouse']);
     }
+    public function testModulesAreVersionedOnlyWhenTheAdminAsksForThem(): void
+    {
+        $directory = sys_get_temp_dir() . '/flex-admin-assets-' . bin2hex(random_bytes(8));
+        mkdir($directory);
+        try {
+            // Plugins register on every request; the module file is read only by bootstrap().
+            $registry = new AdminExtensionRegistry();
+            $registrar = $registry->registrar('acme/forms', ['admin.ui'], $directory);
+            $registrar->page('forms', 'Forms', 'admin.js');
+            $registrar->extend('pages.list', 'table.row-action', 'open', 'admin.js');
+            file_put_contents($directory . '/admin.js', 'export const version = 1;');
+            $bootstrap = $registry->bootstrap();
+            $version = '?v=' . substr((string) hash_file('sha256', $directory . '/admin.js'), 0, 16);
+            self::assertSame('/extensions/acme/forms/assets/admin.js' . $version, $bootstrap['pages'][0]['module']);
+            self::assertSame('/extensions/acme/forms/assets/admin.js' . $version, $bootstrap['extensions'][0]['module']);
+        } finally {
+            @unlink($directory . '/admin.js');
+            rmdir($directory);
+        }
+    }
+
     public function testModuleUrlChangesWhenItsContentsChange(): void
     {
         $directory = sys_get_temp_dir() . '/flex-admin-assets-' . bin2hex(random_bytes(8));

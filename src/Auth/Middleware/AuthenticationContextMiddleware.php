@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Flex\Auth\Middleware;
 
 use Flex\Contracts\Auth\AuthenticationInterface;
+use Flex\Http\StatelessPaths;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -18,7 +19,7 @@ final readonly class AuthenticationContextMiddleware implements MiddlewareInterf
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getUri()->getPath() === '/health' || preg_match('#^/media-files/[0-9]+/(original|thumbnail)$#D', $request->getUri()->getPath()) === 1) {
+        if (StatelessPaths::matches($request->getUri()->getPath())) {
             return $handler->handle($request);
         }
 

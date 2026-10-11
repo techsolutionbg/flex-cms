@@ -27,6 +27,26 @@ The header of every screen has a **Помощ** (help) button. It opens a dialog
 
 Plugins can transform public HTML using `public.content`. The filter receives the content string and a context with `page`, and is applied to a copy of the Page before rendering PHP or Twig themes. It also applies to theme previews. Output is never persisted back to page content. Plugins are responsible for escaping generated HTML and validating URLs.
 
+
+## Public assets per page
+
+Files listed under `frontend.public.scripts` and `frontend.public.styles` load on every public page. Since Flex CMS 0.1.62 a plugin can instead list files in named groups and load a group only on the pages that use it:
+
+```json
+"frontend": {"public": {
+  "scripts": ["assets/header.js"],
+  "groups": {"gallery": {"scripts": ["assets/gallery.js"], "styles": ["assets/gallery.css"]}}
+}}
+```
+
+```php
+// While rendering, for example in a controller or a public.content filter:
+$context->assets?->enqueue('gallery');
+// At boot, for a group whose need is known only later; the condition runs when the page's tags are built:
+$context->assets?->enqueueWhen('bar', static fn(): bool => (new BarSettings())->enabled());
+```
+
+Group names use lowercase letters, digits and hyphens. A group is printed once per page, after the files for every page; files already on the page are left out. Both methods require the `frontend.assets` permission. All public file URLs carry `?v=` with the file's version (for modules, including the modules they import) and are cached by browsers until the file changes; relative imports inside modules are given the same versions. Twig themes print the tags with `{{ frontend_extension_tags() }}`, PHP themes with `$frontend_extension_tags`.
 Admin API routes registered with `$context->routes->admin(...)` remain namespaced under `/admin/plugins/vendor/plugin/...` and guarded by authentication, superadmin and CSRF middleware. Asset URLs use `/extensions/vendor/plugin/assets/relative/path.js`; no Apache encoded-slash exception is required.
 
 Flex Galleries in `plugins/flex/galleries` is a reference implementation. Its files are a separate extension package, excluded from core releases by the existing project layout.

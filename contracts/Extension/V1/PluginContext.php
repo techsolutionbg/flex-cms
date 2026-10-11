@@ -22,6 +22,8 @@ final readonly class PluginContext
         public ?AdminExtensionRegistrarInterface $admin = null,
         public ?PageFieldRegistrarInterface $pageFields = null,
         public ?PageFieldRegistrarInterface $pageSettings = null,
+        // Public file groups for the pages that need them (Flex CMS 0.1.62+).
+        public ?PublicAssetRegistrarInterface $assets = null,
     ) {}
 
     public function can(string $permission): bool

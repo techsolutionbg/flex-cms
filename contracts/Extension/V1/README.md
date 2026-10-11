@@ -5,7 +5,7 @@ Version 1 exposes the minimum plugin lifecycle contract. A plugin entrypoint mus
 deactivated. The context contains the plugin id, version, installation path and validated
 manifest data and declared permissions. Permission checks use a default-deny policy:
 `routes.public` is required for plugin routes and `frontend.assets` is required for
-frontend CSS/JavaScript assets. An optional `UninstallablePluginInterface` can be implemented when a plugin
+frontend CSS/JavaScript assets; with it, `PluginContext::$assets` (Flex CMS 0.1.62+) loads groups of public files only on the pages that need them (`enqueue()`, `enqueueWhen()`, see `docs/admin-extension-pages.md`). An optional `UninstallablePluginInterface` can be implemented when a plugin
 needs to remove its own versioned data. Internal platform services are deliberately not
 exposed through this API. An optional `UpdatablePluginInterface` can run plugin-specific
 migrations when a discovered package has a newer version than the installed one.

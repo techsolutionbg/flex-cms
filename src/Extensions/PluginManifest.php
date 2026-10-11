@@ -12,7 +12,7 @@ final readonly class PluginManifest
      * @param array<string, string> $autoload
      * @param list<string> $permissions
      * @param array<string, string> $dependencies
-     * @param array{scripts?: list<string>, styles?: list<string>, public?: array{scripts?: list<string>, styles?: list<string>}} $frontend
+     * @param array{scripts?: list<string>, styles?: list<string>, public?: array{scripts?: list<string>, styles?: list<string>, groups?: array<string, array{scripts: list<string>, styles: list<string>}>}} $frontend
      * @param array<string, mixed> $metadata
      */
     public function __construct(
@@ -195,7 +195,7 @@ final readonly class PluginManifest
         return $result;
     }
 
-    /** @return array{scripts: list<string>, styles: list<string>, public: array{scripts: list<string>, styles: list<string>}} */
+    /** @return array{scripts: list<string>, styles: list<string>, public: array{scripts: list<string>, styles: list<string>, groups?: array<string, array{scripts: list<string>, styles: list<string>}>}} */
     private static function frontend(mixed $value): array
     {
         if (!is_array($value)) {
@@ -228,6 +228,32 @@ final readonly class PluginManifest
                     $result['public'][$type][] = $path;
                     if (!in_array($path, $result[$type], true)) {
                         $result[$type][] = $path;
+                    }
+                }
+            }
+            // Groups are loaded only on pages that ask for them ($context->assets->enqueue()), Flex CMS 0.1.62+.
+            $groups = $public['groups'] ?? null;
+            if ($groups !== null) {
+                if (!is_array($groups) || array_is_list($groups) && $groups !== []) {
+                    throw new InvalidPluginManifest('Manifest field "frontend.public.groups" must be an object.');
+                }
+                foreach ($groups as $name => $group) {
+                    if (!is_string($name) || preg_match('/\A[a-z][a-z0-9-]{0,40}\z/D', $name) !== 1 || !is_array($group)) {
+                        throw new InvalidPluginManifest('Manifest field "frontend.public.groups" contains an invalid group.');
+                    }
+                    $result['public']['groups'][$name] = ['scripts' => [], 'styles' => []];
+                    foreach (['scripts', 'styles'] as $type) {
+                        $assets = $group[$type] ?? [];
+                        if (!is_array($assets)) {
+                            throw new InvalidPluginManifest(sprintf('Manifest field "frontend.public.groups.%s.%s" must be an array of paths.', $name, $type));
+                        }
+                        foreach ($assets as $asset) {
+                            $path = self::frontendAssetPath($asset, 'public.groups.' . $name . '.' . $type);
+                            $result['public']['groups'][$name][$type][] = $path;
+                            if (!in_array($path, $result[$type], true)) {
+                                $result[$type][] = $path;
+                            }
+                        }
                     }
                 }
             }

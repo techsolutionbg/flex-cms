@@ -53,6 +53,9 @@ final class AdminExtensionRegistry
     /** @var array<string, array{id: string, plugin: string, point: string, slot: string, label: string, module: string, export: string, icon: string, default_open: bool, order: int}> */
     private array $extensions = [];
 
+    /** @var array<string, string> Module URL (without version) => file, versioned only when the admin asks for the list. */
+    private array $moduleFiles = [];
+
     /** @var list<string> */
     private const SLOTS = [
         'admin.dashboard.before', 'admin.dashboard.after',
@@ -138,7 +141,15 @@ final class AdminExtensionRegistry
         $extensions = array_values($this->extensions);
         usort($extensions, $byOrder);
 
-        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_values($this->pages), 'panels' => $panels, 'extensions' => $extensions];
+        // Each module file is hashed once per call, however many pages and extensions use it.
+        $versions = [];
+        $versioned = function (array $item) use (&$versions): array {
+            $item['module'] = $this->versioned($item['module'], $versions);
+
+            return $item;
+        };
+
+        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_map($versioned, array_values($this->pages)), 'panels' => array_map($versioned, $panels), 'extensions' => array_map($versioned, $extensions)];
     }
 
     public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = [], ?string $pluginPath = null): void
@@ -172,10 +183,9 @@ final class AdminExtensionRegistry
         }
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
         $href = '/extension-pages/' . $key;
-        $assetHash = $pluginPath === null ? false : @hash_file('sha256', $pluginPath . '/' . $module);
-        $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
+        $this->rememberModule($pluginId, $module, $pluginPath);
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
-            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => $placement];
+            'module' => $this->moduleUrl($pluginId, $module), 'embeddable' => $embeddable, 'navigation' => $placement];
         if ($hidden) {
             // Opened only by its address, for example from a row action; not listed in the sidebar.
             $this->pages[$key]['navigation']['hidden'] = true;
@@ -210,6 +220,37 @@ final class AdminExtensionRegistry
         ];
     }
 
+    private function rememberModule(string $pluginId, string $module, ?string $pluginPath): void
+    {
+        if ($pluginPath !== null) {
+            $this->moduleFiles[$this->moduleUrl($pluginId, $module)] = $pluginPath . '/' . $module;
+        }
+    }
+
+    private function moduleUrl(string $pluginId, string $module): string
+    {
+        return '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module;
+    }
+
+    /**
+     * The module URL with a version from its contents, so browsers load a changed module. Hashing is left to
+     * this point: plugins register on every request, public ones included, but only the admin needs the list.
+     * @param array<string, string> $versions File => "?v=…", shared by the modules of one bootstrap() call.
+     */
+    private function versioned(string $url, array &$versions): string
+    {
+        $file = $this->moduleFiles[$url] ?? null;
+        if ($file === null) {
+            return $url;
+        }
+        if (!isset($versions[$file])) {
+            $hash = @hash_file('sha256', $file);
+            $versions[$file] = $hash === false ? '' : '?v=' . substr($hash, 0, 16);
+        }
+
+        return $url . $versions[$file];
+    }
+
     /**
      * @param array{label?: mixed, order?: mixed, icon?: mixed, default_open?: mixed, export?: mixed} $options
      * @return array{id: string, plugin: string, point: string, slot: string, label: string, module: string, export: string, icon: string, default_open: bool, order: int}
@@ -239,15 +280,14 @@ final class AdminExtensionRegistry
             throw new \InvalidArgumentException('Invalid admin extension label or options.');
         }
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
-        $assetHash = $pluginPath === null ? false : @hash_file('sha256', $pluginPath . '/' . $module);
-        $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
+        $this->rememberModule($pluginId, $module, $pluginPath);
         $extension = [
             'id' => $key,
             'plugin' => $pluginId,
             'point' => $point,
             'slot' => $slot,
             'label' => trim($label),
-            'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion,
+            'module' => $this->moduleUrl($pluginId, $module),
             'export' => $export,
             'icon' => $icon,
             'default_open' => $defaultOpen,
