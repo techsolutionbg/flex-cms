@@ -1007,6 +1007,17 @@ body {
   cursor: not-allowed;
   opacity: 0.5;
 }
+.react-bulk-toolbar {
+  flex-wrap: wrap;
+}
+.react-bulk-toolbar button.is-danger {
+  color: var(--danger-action-bg, #a83325);
+  border-color: currentColor;
+}
+.react-bulk-toolbar button.is-danger:hover:not(:disabled) {
+  background: var(--danger-action-bg, #a83325);
+  color: var(--danger-action-text, #fff);
+}
 .react-loading-button {
   display: inline-flex;
   align-items: center;

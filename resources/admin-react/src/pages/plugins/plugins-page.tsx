@@ -10,6 +10,7 @@ import { TableActionsMenu } from "@/components/table-actions-menu"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { PluginRecord } from "@/lib/admin-types"
+import { bulkTargets, type PluginBulkAction } from "@/lib/plugin-bulk"
 import { toast } from "sonner"
 
 const statusLabels: Record<string, string> = {
@@ -19,7 +20,14 @@ const statusLabels: Record<string, string> = {
   error: "Грешка",
   discovered: "Неинсталирано",
 }
-type PluginAction = "install" | "activate" | "deactivate" | "update_remote" | "uninstall"
+type PluginAction = PluginBulkAction
+const bulkLabels: Record<PluginAction, { label: string; running: string; done: string }> = {
+  install: { label: "Инсталирай", running: "Инсталиране", done: "инсталирани" },
+  activate: { label: "Активирай", running: "Активиране", done: "активирани" },
+  deactivate: { label: "Деактивирай", running: "Деактивиране", done: "деактивирани" },
+  update_remote: { label: "Обнови", running: "Обновяване", done: "обновени" },
+  uninstall: { label: "Премахни", running: "Премахване", done: "премахнати" },
+}
 type PluginsPageProps = {
   onLogout: () => void
   onNavigate: (label: string) => void
@@ -43,6 +51,9 @@ export function PluginsPage({
   const [statusFilter, setStatusFilter] = useState(query.get("status") ?? "all")
   const [busyId, setBusyId] = useState<string | null>(null)
   const [pendingRemoval, setPendingRemoval] = useState<PluginRecord | null>(null)
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string | number>>(new Set())
+  const [bulk, setBulk] = useState<{ action: PluginAction; done: number; total: number } | null>(null)
+  const [pendingBulkRemoval, setPendingBulkRemoval] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -95,33 +106,38 @@ export function PluginsPage({
     setStatusFilter("all")
   }
 
+  /** Runs one action on the server and puts the result into the list. */
+  async function performAction(plugin: PluginRecord, action: PluginAction) {
+    const token = await getCsrfToken()
+    const response = await fetch("/api/plugins/action", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-CSRF-Token": token,
+      },
+      body: JSON.stringify({ id: plugin.id, action }),
+    })
+    const body = (await response.json().catch(() => ({}))) as {
+      plugin?: PluginRecord
+      error?: { message?: string }
+    }
+    if (!response.ok)
+      throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
+    if (action === "uninstall")
+      setPlugins((current) => current.filter((item) => item.id !== plugin.id))
+    else if (body.plugin)
+      setPlugins((current) =>
+        current.map((item) => (item.id === plugin.id ? body.plugin! : item)),
+      )
+  }
+
   async function runAction(plugin: PluginRecord, action: PluginAction) {
-    if (busyId !== null) return
+    if (busyId !== null || bulk !== null) return
     setBusyId(plugin.id)
     try {
-      const token = await getCsrfToken()
-      const response = await fetch("/api/plugins/action", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "X-CSRF-Token": token,
-        },
-        body: JSON.stringify({ id: plugin.id, action }),
-      })
-      const body = (await response.json().catch(() => ({}))) as {
-        plugin?: PluginRecord
-        error?: { message?: string }
-      }
-      if (!response.ok)
-        throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
-      if (action === "uninstall")
-        setPlugins((current) => current.filter((item) => item.id !== plugin.id))
-      else if (body.plugin)
-        setPlugins((current) =>
-          current.map((item) => (item.id === plugin.id ? body.plugin! : item)),
-        )
+      await performAction(plugin, action)
       toast.success(
         action === "install"
           ? "Разширението е инсталирано."
@@ -141,6 +157,46 @@ export function PluginsPage({
       setBusyId(null)
     }
   }
+
+  // Selected plugins that are visible with the current filters.
+  const selectedPlugins = filteredPlugins.filter((plugin) => selectedIds.has(plugin.id))
+
+  /**
+   * Runs the action on every selected plugin it applies to, one after another, so each one installs, migrates
+   * and boots as on its own. Plugins others require are handled first (last when deactivating or removing).
+   */
+  async function runBulk(action: PluginAction) {
+    if (busyId !== null || bulk !== null) return
+    const targets = bulkTargets(action, selectedPlugins)
+    if (targets.length === 0) return
+    const failures: { id: string; name: string; message: string }[] = []
+    setBulk({ action, done: 0, total: targets.length })
+    for (const [index, plugin] of targets.entries()) {
+      setBusyId(plugin.id)
+      try {
+        await performAction(plugin, action)
+      } catch (reason) {
+        failures.push({
+          id: plugin.id,
+          name: plugin.name,
+          message: reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.",
+        })
+      }
+      setBulk({ action, done: index + 1, total: targets.length })
+    }
+    setBusyId(null)
+    setBulk(null)
+    const succeeded = targets.length - failures.length
+    // Plugins that failed stay selected, so the action can be tried again after fixing the cause.
+    const failedIds = new Set(failures.map((failure) => failure.id))
+    setSelectedIds(failedIds)
+    if (succeeded > 0) toast.success(`${succeeded} ${succeeded === 1 ? "разширение" : "разширения"}: ${bulkLabels[action].done}.`)
+    if (failures.length > 0)
+      toast.error(`${failures.length} ${failures.length === 1 ? "разширение не беше" : "разширения не бяха"} ${bulkLabels[action].done}.`, {
+        description: failures.map((failure) => `${failure.name}: ${failure.message}`).join("\n"),
+      })
+  }
+  const bulkCount = (action: PluginAction) => bulkTargets(action, selectedPlugins).length
 
   const columns: DataTableColumn<PluginRecord>[] = [
     {
@@ -290,6 +346,39 @@ export function PluginsPage({
         columns={columns}
         rowKey={(plugin) => plugin.id}
         loading={loading}
+        selectable
+        selectedKeys={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={
+          <>
+            <strong>
+              {bulk
+                ? `${bulkLabels[bulk.action].running} ${bulk.done + 1 > bulk.total ? bulk.total : bulk.done + 1} от ${bulk.total}…`
+                : `${selectedPlugins.length} избрани`}
+            </strong>
+            {(["install", "activate", "deactivate", "update_remote"] as const).map((action) => (
+              <LoadingButton
+                key={action}
+                type="button"
+                loading={bulk?.action === action}
+                disabled={bulk !== null || busyId !== null || bulkCount(action) === 0}
+                onClick={() => void runBulk(action)}
+              >
+                {bulkLabels[action].label}
+                {bulkCount(action) > 0 ? ` (${bulkCount(action)})` : ""}
+              </LoadingButton>
+            ))}
+            <LoadingButton
+              type="button"
+              className="is-danger"
+              loading={bulk?.action === "uninstall"}
+              disabled={bulk !== null || busyId !== null || bulkCount("uninstall") === 0}
+              onClick={() => setPendingBulkRemoval(true)}
+            >
+              Премахни{bulkCount("uninstall") > 0 ? ` (${bulkCount("uninstall")})` : ""}
+            </LoadingButton>
+          </>
+        }
         emptyMessage={
           plugins.length === 0
             ? "Няма открити разширения."
@@ -370,6 +459,23 @@ export function PluginsPage({
             setPendingRemoval(null)
             void runAction(plugin, "uninstall")
           }
+        }}
+      />
+      <ConfirmDialog
+        open={pendingBulkRemoval}
+        title="Премахване на разширения"
+        message={`${bulkTargets("uninstall", selectedPlugins)
+          .map((plugin) => `„${plugin.name}“`)
+          .join(", ")} ще бъдат премахнати окончателно. Активните първо ще бъдат деактивирани.`}
+        confirmLabel="Премахни"
+        danger={true}
+        busy={bulk?.action === "uninstall"}
+        onCancel={() => {
+          if (bulk === null) setPendingBulkRemoval(false)
+        }}
+        onConfirm={() => {
+          setPendingBulkRemoval(false)
+          void runBulk("uninstall")
         }}
       />
     </AdminShell>
