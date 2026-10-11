@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import { ChevronDown } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
+import { ExtensionComponent, ExtensionSlot, panelIcon, useExtensions } from "./extension-runtime"
 
 type CollapsibleSectionProps = {
   title: string
@@ -9,6 +10,8 @@ type CollapsibleSectionProps = {
   defaultOpen?: boolean
   storageKey?: string
   className?: string
+  /** Name of this section for plugin content, e.g. "page.editor.publishing" (slots section.start, section.end, section.nested). */
+  extensionPoint?: string
 }
 
 export function CollapsibleSection({
@@ -18,7 +21,9 @@ export function CollapsibleSection({
   defaultOpen = true,
   storageKey,
   className = "",
+  extensionPoint,
 }: CollapsibleSectionProps) {
+  const nested = useExtensions(extensionPoint, "section.nested")
   const persistenceKey = `flex-admin-collapsible:${storageKey ?? title}`
   const [open, setOpen] = useState(() => {
     try {
@@ -62,7 +67,23 @@ export function CollapsibleSection({
         <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
       </button>
       <div className="collapsible-section-body" inert={!open}>
-        <div className="collapsible-section-body-inner">{children}</div>
+        <div className="collapsible-section-body-inner">
+          <ExtensionSlot point={extensionPoint} slot="section.start" />
+          {children}
+          <ExtensionSlot point={extensionPoint} slot="section.end" />
+          {nested.map((extension) => (
+            <CollapsibleSection
+              key={extension.id}
+              title={extension.label}
+              icon={panelIcon(extension.icon)}
+              defaultOpen={extension.default_open}
+              storageKey={`nested:${extensionPoint}:${extension.id}`}
+              className={`extension-nested-section extension-panel-${extension.id}`}
+            >
+              <ExtensionComponent descriptor={extension} />
+            </CollapsibleSection>
+          ))}
+        </div>
       </div>
     </section>
   )

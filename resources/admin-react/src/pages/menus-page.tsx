@@ -268,6 +268,7 @@ export function MenusPage({
         <p>Активната тема не поддържа управление на менюта.</p>
       ) : (
         <DataTable
+          extensionPoint="menus.list"
           filterStorageKey="menus"
           data={filteredMenus}
           columns={columns}

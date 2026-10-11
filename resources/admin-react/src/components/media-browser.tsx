@@ -293,6 +293,7 @@ export function MediaBrowser({
       )}
       {layout === "table" ? (
         <DataTable
+          extensionPoint="media.list"
           data={data}
           columns={columns}
           rowKey={(record) => record.id}

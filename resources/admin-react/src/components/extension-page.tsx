@@ -6,18 +6,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  FileText,
   GripVertical,
   Image,
   Images,
-  Palette,
-  Puzzle,
+  KeyRound,
+  ListChecks,
   Save,
+  Search,
   Settings,
-  ShoppingBag,
-  Users,
+  Share2,
+  SlidersHorizontal,
   X,
-  type LucideIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "./admin-shell"
@@ -34,12 +33,21 @@ import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { RichTextEditor } from "./rich-text-editor"
 import { Button } from "./ui/button"
+import { useWorkspaceChanged, useWorkspaceSaved } from "./admin-workspace-context"
 import {
-  AdminWorkspaceContext,
-  useWorkspaceChanged,
-  useWorkspaceSaved,
-} from "./admin-workspace-context"
-import type { DataTableColumn } from "./data-table"
+  ExtensionBoundary,
+  ExtensionComponent,
+  ExtensionScope,
+  ExtensionSlot,
+  loadModule,
+  panelIcon,
+  setExtensionHost,
+  useExtensions,
+  useExtensionScope,
+  usePanelSaves,
+  type ExtensionDescriptor,
+  type PanelSaves,
+} from "./extension-runtime"
 import { mediaRequest } from "@/lib/media-api"
 import { openSettingsTab } from "@/lib/settings-tabs"
 import { DateTime } from "./date-time"
@@ -63,17 +71,20 @@ export type ExtensionPageDescriptor = {
   embeddable: boolean
 }
 
-export type ExtensionPanelDescriptor = {
-  id: string
-  plugin: string
-  location: string
-  label: string
-  module: string
-  export: string
-  icon: string
-  default_open: boolean
-  order: number
+// The runtime of extension points lives in extension-runtime.tsx; these exports keep existing imports working.
+export {
+  ExtensionScope,
+  ExtensionSlot,
+  panelIcon,
+  useExtensions,
+  useExtensionScope,
+  usePanelSaves,
+  type ExtensionDescriptor,
+  type PanelSaves,
 }
+export type { PanelSaveContext } from "./extension-runtime"
+/** @deprecated Use ExtensionDescriptor. */
+export type ExtensionPanelDescriptor = ExtensionDescriptor
 
 function Dialog({
   open,
@@ -127,8 +138,13 @@ const host = {
     GripVertical,
     Image,
     Images,
+    KeyRound,
+    ListChecks,
     Save,
+    Search,
     Settings,
+    Share2,
+    SlidersHorizontal,
     X,
   },
   toast,
@@ -139,6 +155,8 @@ const host = {
   useWorkspaceSaved,
   // Lets a plugin screen (for example the Flex Commerce product editor) host panels of other plugins.
   usePanelSaves,
+  // Plugin screens share their record with extensions inside them, like the platform screens.
+  useExtensionScope,
   // Opens a settings tab registered with the settings.tab panel location.
   openSettingsTab,
   components: {
@@ -160,47 +178,10 @@ const host = {
     Dialog,
     DateTime,
     ExtensionPanels,
+    ExtensionScope,
+    ExtensionSlot,
   },
 }
-type Module = Record<string, unknown> & {
-  createPage?: (hostApi: typeof host) => React.ComponentType<Record<string, unknown>>
-  createEmbedPicker?: (hostApi: typeof host) => React.ComponentType<Record<string, unknown>>
-}
-const modules = new Map<string, Promise<Module>>()
-class ExtensionBoundary extends React.Component<
-  { children: React.ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false }
-  static getDerivedStateFromError() {
-    return { failed: true }
-  }
-  render() {
-    return this.state.failed ? (
-      <p role="alert">Възникна грешка в интерфейса на разширението. Презаредете страницата.</p>
-    ) : (
-      this.props.children
-    )
-  }
-}
-function loadModule(url: string) {
-  if (
-    !url.startsWith("/extensions/") ||
-    !/^\/extensions\/[a-zA-Z0-9_/.\-]+\.js(?:\?v=[a-f0-9]{16})?$/.test(url) ||
-    url.includes("..")
-  )
-    return Promise.reject(new Error("Невалиден модул на разширение."))
-  if (!modules.has(url))
-    modules.set(
-      url,
-      import(/* @vite-ignore */ url).catch((error) => {
-        modules.delete(url)
-        throw error
-      }),
-    )
-  return modules.get(url)!
-}
-
 export function ExtensionModule({
   descriptor,
   embed = false,
@@ -221,7 +202,9 @@ export function ExtensionModule({
     setComponent(null)
     loadModule(descriptor.module)
       .then((module) => {
-        const factory = embed ? module.createEmbedPicker : module.createPage
+        const factory = (embed ? module.createEmbedPicker : module.createPage) as
+          | ((hostApi: typeof host) => React.ComponentType<Record<string, unknown>>)
+          | undefined
         if (typeof factory !== "function") throw new Error("Разширението няма съвместим интерфейс.")
         const component = factory(host)
         if (alive) setComponent(() => component)
@@ -271,148 +254,9 @@ export function ExtensionPage({
   )
 }
 
-export function panelIcon(name: string): LucideIcon {
-  return panelIcons[name] ?? Puzzle
-}
+setExtensionHost(host)
 
-const panelIcons: Record<string, LucideIcon> = {
-  "file-text": FileText,
-  images: Images,
-  palette: Palette,
-  puzzle: Puzzle,
-  settings: Settings,
-  "shopping-bag": ShoppingBag,
-  users: Users,
-}
-
-export type PanelSaveContext = { id: number | string | null }
-type PanelSaveHandler = (context: PanelSaveContext) => unknown
-
-/**
- * Collects the save handlers of the panels on one screen. The screen saves its own record first and then
- * calls run({id}) so that panels on a new record receive its ID.
- */
-export function usePanelSaves() {
-  const handlers = React.useRef(new Map<string, PanelSaveHandler>())
-  return React.useMemo(
-    () => ({
-      register(key: string, handler: PanelSaveHandler) {
-        handlers.current.set(key, handler)
-        return () => {
-          if (handlers.current.get(key) === handler) handlers.current.delete(key)
-        }
-      },
-      async run(context: PanelSaveContext) {
-        const failures: string[] = []
-        for (const handler of handlers.current.values()) {
-          try {
-            await handler(context)
-          } catch (error) {
-            failures.push(error instanceof Error ? error.message : String(error))
-          }
-        }
-        if (failures.length > 0) throw new Error(failures.join(" "))
-      },
-    }),
-    [],
-  )
-}
-export type PanelSaves = ReturnType<typeof usePanelSaves>
-
-export function useExtensionPanels(location: string): ExtensionPanelDescriptor[] {
-  const panels = React.useContext(AdminWorkspaceContext)?.extensionPanels
-  return React.useMemo(
-    () => (panels ?? []).filter((panel) => panel.location === location),
-    [panels, location],
-  )
-}
-
-const panelFactories = new Map<string, Promise<unknown>>()
-
-/** Loads a panel module export once per module version, so its component identity stays stable. */
-function loadPanelExport(descriptor: ExtensionPanelDescriptor): Promise<unknown> {
-  const key = descriptor.module + "#" + descriptor.export + "@" + descriptor.location
-  if (!panelFactories.has(key))
-    panelFactories.set(
-      key,
-      loadModule(descriptor.module)
-        .then((module) => {
-          const factory = module[descriptor.export]
-          if (typeof factory !== "function")
-            throw new Error("Разширението няма съвместим интерфейс.")
-          return factory(host, { location: descriptor.location, id: descriptor.id })
-        })
-        .catch((error) => {
-          panelFactories.delete(key)
-          throw error
-        }),
-    )
-  return panelFactories.get(key)!
-}
-
-/** Renders one extension panel component with the screen context and save coordination. */
-export function ExtensionPanel({
-  descriptor,
-  context,
-  saves,
-}: {
-  descriptor: ExtensionPanelDescriptor
-  context?: unknown
-  saves?: PanelSaves
-}) {
-  const workspace = React.useContext(AdminWorkspaceContext)
-  const changed = useWorkspaceChanged()
-  const [Component, setComponent] = React.useState<React.ComponentType<
-    Record<string, unknown>
-  > | null>(null)
-  const [failure, setFailure] = React.useState("")
-  const [attempt, setAttempt] = React.useState(0)
-  React.useEffect(() => {
-    let alive = true
-    setFailure("")
-    loadPanelExport(descriptor)
-      .then((component) => {
-        if (!alive) return
-        if (typeof component !== "function")
-          throw new Error("Разширението няма съвместим интерфейс.")
-        setComponent(() => component as React.ComponentType<Record<string, unknown>>)
-      })
-      .catch((error) => {
-        if (alive) setFailure(error instanceof Error ? error.message : String(error))
-      })
-    return () => {
-      alive = false
-    }
-  }, [descriptor, attempt])
-  const registerSave = React.useCallback(
-    (handler: PanelSaveHandler) => saves?.register(descriptor.id, handler) ?? (() => {}),
-    [saves, descriptor.id],
-  )
-  if (failure)
-    return (
-      <div role="alert">
-        <p>{failure}</p>
-        <Button variant="secondary" type="button" onClick={() => setAttempt(attempt + 1)}>
-          Опитай отново
-        </Button>
-      </div>
-    )
-  return Component ? (
-    <ExtensionBoundary key={descriptor.module}>
-      <Component
-        context={context}
-        location={descriptor.location}
-        registerSave={registerSave}
-        changed={changed}
-        navigate={workspace?.open}
-      />
-    </ExtensionBoundary>
-  ) : (
-    <p role="status">Зареждане…</p>
-  )
-}
-
-/** All panels of active plugins for a location, each in its own collapsible section. */
+/** Panels of active plugins for a screen (slot screen.section), each in its own collapsible section. */
 export function ExtensionPanels({
   location,
   context,
@@ -422,20 +266,20 @@ export function ExtensionPanels({
   context?: unknown
   saves?: PanelSaves
 }) {
-  const panels = useExtensionPanels(location)
+  const panels = useExtensions(location, "screen.section")
   return (
     <>
       {panels.map((panel) => (
         <CollapsibleSection
           key={panel.id}
           title={panel.label}
-          icon={panelIcons[panel.icon] ?? Puzzle}
+          icon={panelIcon(panel.icon)}
           defaultOpen={panel.default_open}
-          storageKey={`panel:${panel.location}:${panel.id}`}
+          storageKey={`panel:${panel.point}:${panel.id}`}
           className={`extension-panel extension-panel-${panel.id}`}
         >
           <div id={`panel-${panel.id}`}>
-            <ExtensionPanel descriptor={panel} context={context} saves={saves} />
+            <ExtensionComponent descriptor={panel} context={context} saves={saves} />
           </div>
         </CollapsibleSection>
       ))}
@@ -443,62 +287,15 @@ export function ExtensionPanels({
   )
 }
 
-/** A column contributed by a plugin: data is loaded once per row set, rendering is synchronous. */
-export type ExtensionColumn<T> = {
-  label?: string
-  load?: (rows: T[]) => Promise<unknown>
-  render: (row: T, data: unknown) => React.ReactNode
-  sortValue?: (row: T, data: unknown) => string | number
-}
-
-/** DataTable columns contributed by active plugins for a list location. */
-export function useExtensionColumns<T>(location: string, rows: T[]): DataTableColumn<T>[] {
-  const descriptors = useExtensionPanels(location)
-  const [columns, setColumns] = React.useState<
-    { descriptor: ExtensionPanelDescriptor; column: ExtensionColumn<T> }[]
-  >([])
-  const [data, setData] = React.useState<Record<string, unknown>>({})
-  React.useEffect(() => {
-    let alive = true
-    Promise.all(
-      descriptors.map((descriptor) =>
-        loadPanelExport(descriptor)
-          .then((column) => ({ descriptor, column: column as ExtensionColumn<T> }))
-          .catch(() => null),
-      ),
-    ).then((loaded) => {
-      if (alive)
-        setColumns(
-          loaded.filter((item): item is NonNullable<typeof item> =>
-            Boolean(item && typeof item.column?.render === "function"),
-          ),
-        )
-    })
-    return () => {
-      alive = false
-    }
-  }, [descriptors])
-  React.useEffect(() => {
-    let alive = true
-    columns.forEach(({ descriptor, column }) => {
-      column
-        .load?.(rows)
-        .then((value) => {
-          if (alive) setData((current) => ({ ...current, [descriptor.id]: value }))
-        })
-        .catch(() => {})
-    })
-    return () => {
-      alive = false
-    }
-  }, [columns, rows])
-  return columns.map(({ descriptor, column }) => ({
-    key: "extension:" + descriptor.id,
-    label: column.label ?? descriptor.label,
-    render: (row: T) => column.render(row, data[descriptor.id]),
-    sortable: Boolean(column.sortValue),
-    sortValue: column.sortValue
-      ? (row: T) => column.sortValue!(row, data[descriptor.id])
-      : undefined,
-  }))
+/** One extension rendered on its own, for example a settings tab. */
+export function ExtensionPanel({
+  descriptor,
+  context,
+  saves,
+}: {
+  descriptor: ExtensionDescriptor
+  context?: unknown
+  saves?: PanelSaves
+}) {
+  return <ExtensionComponent descriptor={descriptor} context={context} saves={saves} />
 }

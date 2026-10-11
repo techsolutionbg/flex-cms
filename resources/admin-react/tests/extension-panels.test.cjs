@@ -7,19 +7,19 @@ const ts = require("typescript")
 
 function load(workspace = null) {
   const source = fs.readFileSync(
-    path.join(__dirname, "../src/components/extension-page.tsx"),
+    path.join(__dirname, "../src/components/extension-runtime.tsx"),
     "utf8",
   )
   const stub = new Proxy({}, { get: (_, name) => (name === "__esModule" ? false : () => null) })
   const react = {
     Component: class {},
+    createContext: (value) => ({ Provider: "Provider", value }),
+    useContext: (context) => (context && context.value !== undefined ? context.value : workspace),
     useRef: (value) => ({ current: value }),
     useMemo: (factory) => factory(),
-    useContext: () => workspace,
-    useState: (value) => [value, () => {}],
+    useState: (value) => [typeof value === "function" ? value() : value, () => {}],
     useEffect() {},
     useCallback: (fn) => fn,
-    useId: () => "id",
     createElement: (type, props, ...children) => ({ type, props, children }),
   }
   const modules = {
@@ -32,7 +32,6 @@ function load(workspace = null) {
     "./admin-workspace-context": {
       AdminWorkspaceContext: {},
       useWorkspaceChanged: () => () => {},
-      useWorkspaceSaved: () => () => {},
     },
   }
   const exports = {}
@@ -58,7 +57,7 @@ function load(workspace = null) {
   return exports
 }
 
-test("panel saves run in registration order with the saved record ID", async () => {
+test("extension saves run in registration order with the saved record ID", async () => {
   const { usePanelSaves } = load()
   const saves = usePanelSaves()
   const calls = []
@@ -71,7 +70,7 @@ test("panel saves run in registration order with the saved record ID", async () 
   assert.deepEqual(calls, ["a:7", "b:7", "a:8"])
 })
 
-test("a failing panel does not stop the others and reports its error", async () => {
+test("a failing extension does not stop the others and reports its error", async () => {
   const { usePanelSaves } = load()
   const saves = usePanelSaves()
   const calls = []
@@ -83,16 +82,29 @@ test("a failing panel does not stop the others and reports its error", async () 
   assert.deepEqual(calls, ["ok"])
 })
 
-test("panels are filtered by location from the workspace", () => {
-  const panels = [
-    { id: "flex-seo-meta", location: "page.editor" },
-    { id: "flex-seo-score", location: "pages.list.column" },
-    { id: "acme-forms", location: "page.editor" },
+test("extensions are selected by point and slot", () => {
+  const extensions = [
+    { id: "flex-seo-meta", point: "page.editor", slot: "screen.section" },
+    { id: "flex-seo-score", point: "pages.list", slot: "table.column" },
+    { id: "flex-seo-edit", point: "pages.list", slot: "table.row-action" },
+    { id: "acme-publish", point: "page.editor.publishing", slot: "section.end" },
   ]
-  const { useExtensionPanels } = load({ extensionPanels: panels })
+  const { useExtensions } = load({ extensions })
   assert.deepEqual(
-    useExtensionPanels("page.editor").map((panel) => panel.id),
-    ["flex-seo-meta", "acme-forms"],
+    useExtensions("pages.list", "table.column").map((item) => item.id),
+    ["flex-seo-score"],
   )
-  assert.deepEqual(useExtensionPanels("settings.tab"), [])
+  assert.deepEqual(
+    useExtensions("page.editor.publishing", "section.end").map((item) => item.id),
+    ["acme-publish"],
+  )
+  assert.equal(useExtensions(undefined, "section.end").length, 0, "Unnamed sections have none.")
+  assert.equal(useExtensions("page.editor.basic", "section.end").length, 0)
+})
+
+test("icons have names for every icon option", () => {
+  const { panelIcon } = load()
+  for (const name of ["search", "key", "share", "sliders", "list-checks", "settings"]) {
+    assert.equal(typeof panelIcon(name), "function", name)
+  }
 })

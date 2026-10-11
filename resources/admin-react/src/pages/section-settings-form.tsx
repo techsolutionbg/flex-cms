@@ -1,5 +1,5 @@
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import {
   Globe,
   UsersRound,
@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownOption, DropdownChevron } from "@/components/drop
 import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
+import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 export function SectionSettingsForm({
   section,
@@ -33,6 +34,13 @@ export function SectionSettingsForm({
   const [failure, setFailure] = useState("")
   const [diagnostics, setDiagnostics] = useState<Record<string, string> | null>(null)
   const [saving, setSaving] = useState(false)
+  // Plugins add sections and fields here through extension points; they save right after this record.
+  const saves = usePanelSaves()
+  const extensionScope = useMemo(
+    () => ({ context: { type: "settings", id: section, values }, saves }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [section, values],
+  )
   const [revision, setRevision] = useState(0)
   const changed = useWorkspaceChanged()
   const saved = useWorkspaceSaved()
@@ -91,6 +99,7 @@ export function SectionSettingsForm({
       setMail(body.mail ?? null)
       if (section === "admin") applyAdminSettings(body.settings)
       saved?.()
+      await saves.run({ id: section })
       toast.success("Настройките са запазени.")
     } catch (error) {
       setFailure(error instanceof Error ? error.message : "Грешка при записване.")
@@ -171,7 +180,7 @@ export function SectionSettingsForm({
                     key: "theme",
                     label: "Цветова тема на панела",
                     choices: { system: "Според устройството", light: "Светла", dark: "Тъмна" },
-                    hint: "Прилага се при записване и при следващо влизане в панела.",
+                    hint: "Тема по подразбиране за всички администратори. Потребител, избрал тема в профила си, вижда своя избор.",
                   },
                   {
                     key: "remember_tabs",
@@ -182,251 +191,257 @@ export function SectionSettingsForm({
                 ]
               : []
   return (
-    <form onSubmit={(event) => void save(event)}>
-      <CollapsibleSection
-        title={details.title}
-        icon={details.icon}
-        storageKey={`settings:${section}`}
-      >
-        {failure && (
-          <div className="react-error-text" role="alert">
-            {failure}
-            {!values && (
-              <LoadingButton onClick={() => setRevision((value) => value + 1)}>
-                Опитай отново
-              </LoadingButton>
-            )}
-          </div>
-        )}
-        {!values && !failure && <p role="status">Зареждане…</p>}
-        {values && (
-          <div className="react-form-grid">
-            {selects.map(({ key, label, choices, hint }) => (
-              <div className="react-form-field settings-field-wide" key={key}>
-                <span>{label}</span>
-                <DropdownMenu
-                  ariaLabel={label}
-                  triggerClassName="react-form-select"
-                  trigger={
-                    <>
-                      <span>
-                        {(choices as Record<string, string>)[values[key]] ?? "Недостъпна страница"}
-                      </span>
-                      <DropdownChevron />
-                    </>
-                  }
-                >
-                  {Object.entries(choices).map(([value, label]) => (
-                    <DropdownOption
-                      key={value}
-                      selected={values[key] === value}
-                      disabled={saving}
-                      onClick={() => update(key, value)}
-                    >
-                      {label}
-                    </DropdownOption>
-                  ))}
-                </DropdownMenu>
-                <small>{hint}</small>
-              </div>
-            ))}
-            {section === "public" ? (
-              <label className="react-form-field settings-field-wide">
-                <span>Съобщение при затворен сайт</span>
-                <Textarea
-                  rows={3}
-                  required
-                  maxLength={1000}
-                  disabled={saving}
-                  value={values.closed_message}
-                  onChange={(event) => update("closed_message", event.target.value)}
-                />
-                <small>До 1000 символа. Показва се като текст, без HTML.</small>
-              </label>
-            ) : section === "users" ? (
-              <>
-                <label className="react-form-field">
-                  <span>Минимална дължина на паролата</span>
-                  <input
-                    type="number"
+    <ExtensionScope value={extensionScope}>
+      <form onSubmit={(event) => void save(event)}>
+        <CollapsibleSection
+          extensionPoint={`settings.${section}`}
+          title={details.title}
+          icon={details.icon}
+          storageKey={`settings:${section}`}
+        >
+          {failure && (
+            <div className="react-error-text" role="alert">
+              {failure}
+              {!values && (
+                <LoadingButton onClick={() => setRevision((value) => value + 1)}>
+                  Опитай отново
+                </LoadingButton>
+              )}
+            </div>
+          )}
+          {!values && !failure && <p role="status">Зареждане…</p>}
+          {values && (
+            <div className="react-form-grid">
+              {selects.map(({ key, label, choices, hint }) => (
+                <div className="react-form-field settings-field-wide" key={key}>
+                  <span>{label}</span>
+                  <DropdownMenu
+                    ariaLabel={label}
+                    triggerClassName="react-form-select"
+                    trigger={
+                      <>
+                        <span>
+                          {(choices as Record<string, string>)[values[key]] ??
+                            "Недостъпна страница"}
+                        </span>
+                        <DropdownChevron />
+                      </>
+                    }
+                  >
+                    {Object.entries(choices).map(([value, label]) => (
+                      <DropdownOption
+                        key={value}
+                        selected={values[key] === value}
+                        disabled={saving}
+                        onClick={() => update(key, value)}
+                      >
+                        {label}
+                      </DropdownOption>
+                    ))}
+                  </DropdownMenu>
+                  <small>{hint}</small>
+                </div>
+              ))}
+              {section === "public" ? (
+                <label className="react-form-field settings-field-wide">
+                  <span>Съобщение при затворен сайт</span>
+                  <Textarea
+                    rows={3}
                     required
-                    min={12}
-                    max={64}
+                    maxLength={1000}
                     disabled={saving}
-                    value={values.password_min_length}
-                    onChange={(event) => update("password_min_length", event.target.value)}
+                    value={values.closed_message}
+                    onChange={(event) => update("closed_message", event.target.value)}
                   />
-                  <small>
-                    12–64 символа. При създаване, промяна и възстановяване на парола. Максимумът
-                    остава 72 байта.
-                  </small>
+                  <small>До 1000 символа. Показва се като текст, без HTML.</small>
                 </label>
-                <label className="react-form-field">
-                  <span>Сесия без активност (минути)</span>
+              ) : section === "users" ? (
+                <>
+                  <label className="react-form-field">
+                    <span>Минимална дължина на паролата</span>
+                    <input
+                      type="number"
+                      required
+                      min={12}
+                      max={64}
+                      disabled={saving}
+                      value={values.password_min_length}
+                      onChange={(event) => update("password_min_length", event.target.value)}
+                    />
+                    <small>
+                      12–64 символа. При създаване, промяна и възстановяване на парола. Максимумът
+                      остава 72 байта.
+                    </small>
+                  </label>
+                  <label className="react-form-field">
+                    <span>Сесия без активност (минути)</span>
+                    <input
+                      type="number"
+                      required
+                      min={5}
+                      max={1440}
+                      disabled={saving}
+                      value={values.session_idle_minutes}
+                      onChange={(event) => update("session_idle_minutes", event.target.value)}
+                    />
+                    <small>5–1440 минути. След изтичане е необходимо повторно влизане.</small>
+                  </label>
+                </>
+              ) : section === "media" ? (
+                <>
+                  <label className="react-form-field">
+                    <span>Максимален размер на файл (MB)</span>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      max={1024}
+                      disabled={saving}
+                      value={values.max_upload_mb}
+                      onChange={(event) => update("max_upload_mb", event.target.value)}
+                    />
+                    <small>
+                      1–1024 MB. Реалният лимит се ограничава и от PHP конфигурацията на сървъра.
+                    </small>
+                  </label>
+                  <label className="react-form-field">
+                    <span>Максимална резолюция на изображение (мегапиксели)</span>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      max={100}
+                      step={1}
+                      disabled={saving}
+                      value={values.max_image_megapixels}
+                      onChange={(event) => update("max_image_megapixels", event.target.value)}
+                    />
+                    <small>
+                      1–100 мегапиксела. Например 6000 × 4000 px са 24 мегапиксела. При недостатъчна
+                      памет за миниатюра се запазва оригиналът без миниатюра.
+                    </small>
+                  </label>
+                  <label className="react-form-field">
+                    <span>Максимална страна на миниатюрата (px)</span>
+                    <input
+                      type="number"
+                      required
+                      min={100}
+                      max={1200}
+                      disabled={saving || values.generate_thumbnails === "0"}
+                      value={values.thumbnail_edge}
+                      onChange={(event) => update("thumbnail_edge", event.target.value)}
+                    />
+                    <small>
+                      100–1200 px. Запазва пропорциите и не увеличава малки изображения.
+                    </small>
+                  </label>
+                </>
+              ) : section === "updates" ? (
+                <label className="react-form-field settings-field-wide">
+                  <span>Изчакване на каталога (секунди)</span>
                   <input
                     type="number"
                     required
                     min={5}
-                    max={1440}
+                    max={30}
+                    value={values.catalog_timeout}
                     disabled={saving}
-                    value={values.session_idle_minutes}
-                    onChange={(event) => update("session_idle_minutes", event.target.value)}
-                  />
-                  <small>5–1440 минути. След изтичане е необходимо повторно влизане.</small>
-                </label>
-              </>
-            ) : section === "media" ? (
-              <>
-                <label className="react-form-field">
-                  <span>Максимален размер на файл (MB)</span>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    max={1024}
-                    disabled={saving}
-                    value={values.max_upload_mb}
-                    onChange={(event) => update("max_upload_mb", event.target.value)}
+                    onChange={(event) => update("catalog_timeout", event.target.value)}
                   />
                   <small>
-                    1–1024 MB. Реалният лимит се ограничава и от PHP конфигурацията на сървъра.
+                    5–30 секунди за заявка към каталога на платформата и разширенията. Проверките на
+                    подписите и съвместимостта остават задължителни.
                   </small>
                 </label>
-                <label className="react-form-field">
-                  <span>Максимална резолюция на изображение (мегапиксели)</span>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    max={100}
-                    step={1}
-                    disabled={saving}
-                    value={values.max_image_megapixels}
-                    onChange={(event) => update("max_image_megapixels", event.target.value)}
-                  />
-                  <small>
-                    1–100 мегапиксела. Например 6000 × 4000 px са 24 мегапиксела. При недостатъчна
-                    памет за миниатюра се запазва оригиналът без миниатюра.
-                  </small>
-                </label>
-                <label className="react-form-field">
-                  <span>Максимална страна на миниатюрата (px)</span>
-                  <input
-                    type="number"
-                    required
-                    min={100}
-                    max={1200}
-                    disabled={saving || values.generate_thumbnails === "0"}
-                    value={values.thumbnail_edge}
-                    onChange={(event) => update("thumbnail_edge", event.target.value)}
-                  />
-                  <small>100–1200 px. Запазва пропорциите и не увеличава малки изображения.</small>
-                </label>
-              </>
-            ) : section === "updates" ? (
-              <label className="react-form-field settings-field-wide">
-                <span>Изчакване на каталога (секунди)</span>
-                <input
-                  type="number"
-                  required
-                  min={5}
-                  max={30}
-                  value={values.catalog_timeout}
-                  disabled={saving}
-                  onChange={(event) => update("catalog_timeout", event.target.value)}
-                />
-                <small>
-                  5–30 секунди за заявка към каталога на платформата и разширенията. Проверките на
-                  подписите и съвместимостта остават задължителни.
-                </small>
-              </label>
-            ) : section === "maintenance" ? (
-              <>
-                {diagnostics &&
-                  Object.entries(diagnostics).map(([label, value]) => (
-                    <div className="react-form-field" key={label}>
-                      <span>{label}</span>
-                      <small>{value}</small>
+              ) : section === "maintenance" ? (
+                <>
+                  {diagnostics &&
+                    Object.entries(diagnostics).map(([label, value]) => (
+                      <div className="react-form-field" key={label}>
+                        <span>{label}</span>
+                        <small>{value}</small>
+                      </div>
+                    ))}
+                </>
+              ) : section === "mail" ? (
+                <>
+                  {mail && (
+                    <div className="react-form-field settings-field-wide">
+                      <span>Връзка за изпращане: {mail.transport}</span>
+                      <small>
+                        Транспортът, SMTP сървърът и данните за достъп се управляват чрез MAILER_DSN
+                        в .env. Текущ подател: {mail.from_name} &lt;{mail.from_address}&gt;.
+                      </small>
                     </div>
+                  )}
+                  {[
+                    {
+                      key: "from_name",
+                      label: "Име на подателя",
+                      type: "text",
+                      max: 150,
+                      hint: "По желание. Празно поле използва MAIL_FROM_NAME от .env.",
+                    },
+                    {
+                      key: "from_address",
+                      label: "Имейл на подателя",
+                      type: "email",
+                      max: 190,
+                      hint: "По желание. Празно поле използва MAIL_FROM_ADDRESS от .env. Адресът трябва да е разрешен от вашия SMTP доставчик.",
+                    },
+                    {
+                      key: "reply_to",
+                      label: "Адрес за отговор",
+                      type: "email",
+                      max: 190,
+                      hint: "По желание. При празно поле отговорите се връщат към подателя, освен ако разширение е задало собствен адрес за отговор.",
+                    },
+                  ].map(({ key, label, type, max, hint }) => (
+                    <label className="react-form-field settings-field-wide" key={key}>
+                      <span>{label}</span>
+                      <input
+                        type={type}
+                        maxLength={max}
+                        disabled={saving}
+                        value={values[key]}
+                        onChange={(event) => update(key, event.target.value)}
+                      />
+                      <small>{hint}</small>
+                    </label>
                   ))}
-              </>
-            ) : section === "mail" ? (
-              <>
-                {mail && (
-                  <div className="react-form-field settings-field-wide">
-                    <span>Връзка за изпращане: {mail.transport}</span>
-                    <small>
-                      Транспортът, SMTP сървърът и данните за достъп се управляват чрез MAILER_DSN в
-                      .env. Текущ подател: {mail.from_name} &lt;{mail.from_address}&gt;.
-                    </small>
-                  </div>
-                )}
-                {[
-                  {
-                    key: "from_name",
-                    label: "Име на подателя",
-                    type: "text",
-                    max: 150,
-                    hint: "По желание. Празно поле използва MAIL_FROM_NAME от .env.",
-                  },
-                  {
-                    key: "from_address",
-                    label: "Имейл на подателя",
-                    type: "email",
-                    max: 190,
-                    hint: "По желание. Празно поле използва MAIL_FROM_ADDRESS от .env. Адресът трябва да е разрешен от вашия SMTP доставчик.",
-                  },
-                  {
-                    key: "reply_to",
-                    label: "Адрес за отговор",
-                    type: "email",
-                    max: 190,
-                    hint: "По желание. При празно поле отговорите се връщат към подателя, освен ако разширение е задало собствен адрес за отговор.",
-                  },
-                ].map(({ key, label, type, max, hint }) => (
-                  <label className="react-form-field settings-field-wide" key={key}>
-                    <span>{label}</span>
-                    <input
-                      type={type}
-                      maxLength={max}
-                      disabled={saving}
-                      value={values[key]}
-                      onChange={(event) => update(key, event.target.value)}
-                    />
-                    <small>{hint}</small>
-                  </label>
-                ))}
-              </>
-            ) : null}
+                </>
+              ) : null}
+            </div>
+          )}
+        </CollapsibleSection>
+        {values && section === "maintenance" && (
+          <div className="react-form-actions">
+            <LoadingButton
+              onClick={() => {
+                setValues(null)
+                setRevision((value) => value + 1)
+              }}
+            >
+              <RefreshCw />
+              Провери отново
+            </LoadingButton>
           </div>
         )}
-      </CollapsibleSection>
-      {values && section === "maintenance" && (
-        <div className="react-form-actions">
-          <LoadingButton
-            onClick={() => {
-              setValues(null)
-              setRevision((value) => value + 1)
-            }}
-          >
-            <RefreshCw />
-            Провери отново
-          </LoadingButton>
-        </div>
-      )}
-      {values && section !== "maintenance" && (
-        <div className="react-form-actions">
-          <LoadingButton
-            type="submit"
-            loading={saving}
-            disabled={saving}
-            icon={<Save aria-hidden="true" />}
-            className="settings-save-button"
-          >
-            Запази настройките
-          </LoadingButton>
-        </div>
-      )}
-    </form>
+        {values && section !== "maintenance" && (
+          <div className="react-form-actions">
+            <LoadingButton
+              type="submit"
+              loading={saving}
+              disabled={saving}
+              icon={<Save aria-hidden="true" />}
+              className="settings-save-button"
+            >
+              Запази настройките
+            </LoadingButton>
+          </div>
+        )}
+      </form>
+    </ExtensionScope>
   )
 }

@@ -95,6 +95,7 @@ export function DashboardPage({
       <section className="dashboard-grid-react" aria-label="Обобщение на системата">
         {cards.map(({ title, path, icon: Icon, value, description, action }) => (
           <CollapsibleSection
+            extensionPoint={`dashboard${path.replace(/\//g, ".")}`}
             title={title}
             icon={Icon}
             className="dashboard-card-react"
@@ -107,7 +108,12 @@ export function DashboardPage({
             </a>
           </CollapsibleSection>
         ))}
-        <CollapsibleSection title="Бързи действия" icon={Plus} className="dashboard-card-react">
+        <CollapsibleSection
+          extensionPoint="dashboard.quick-actions"
+          title="Бързи действия"
+          icon={Plus}
+          className="dashboard-card-react"
+        >
           <div className="dashboard-actions-react">
             <a href={adminUrl("/pages/create")} onClick={(event) => follow(event, onCreatePage)}>
               <Plus />
@@ -129,7 +135,12 @@ export function DashboardPage({
             </a>
           </div>
         </CollapsibleSection>
-        <CollapsibleSection title="Обновявания" icon={RefreshCw} className="dashboard-card-react">
+        <CollapsibleSection
+          extensionPoint="dashboard.updates"
+          title="Обновявания"
+          icon={RefreshCw}
+          className="dashboard-card-react"
+        >
           <p>Проверка, инсталация и управление на platform пакети.</p>
           <a
             href={adminUrl("/updates")}
@@ -139,6 +150,7 @@ export function DashboardPage({
           </a>
         </CollapsibleSection>
         <CollapsibleSection
+          extensionPoint="dashboard.version"
           title="Версия на платформата"
           icon={RefreshCw}
           className="dashboard-card-react"

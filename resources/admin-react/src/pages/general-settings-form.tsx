@@ -1,5 +1,5 @@
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Save, Settings } from "lucide-react"
 import { toast } from "sonner"
 import { CollapsibleSection } from "@/components/collapsible-section"
@@ -8,6 +8,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import { applyTimeSettings } from "@/lib/time-settings"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
+import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 type Values = {
   name: string
@@ -28,6 +29,13 @@ export function GeneralSettingsForm() {
   const [options, setOptions] = useState<Options | null>(null)
   const [failure, setFailure] = useState("")
   const [saving, setSaving] = useState(false)
+  // Plugins add sections and fields here through extension points; they save right after this record.
+  const saves = usePanelSaves()
+  const extensionScope = useMemo(
+    () => ({ context: { type: "settings", id: "general", values }, saves }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [values],
+  )
   const [revision, setRevision] = useState(0)
   const changed = useWorkspaceChanged()
   const saved = useWorkspaceSaved()
@@ -76,6 +84,7 @@ export function GeneralSettingsForm() {
       setValues(body.settings)
       applyTimeSettings(body.settings)
       saved?.()
+      await saves.run({ id: "general" })
       toast.success("Общите настройки са запазени.")
     } catch (error) {
       setFailure(error instanceof Error ? error.message : "Грешка при записване.")
@@ -122,86 +131,93 @@ export function GeneralSettingsForm() {
       ]
     : []
   return (
-    <form onSubmit={(event) => void save(event)}>
-      <CollapsibleSection title="Общи" icon={Settings} storageKey="settings:general">
-        {failure && (
-          <p className="react-error-text" role="alert">
-            {failure}
-            {!values && (
-              <LoadingButton onClick={() => setRevision((value) => value + 1)}>
-                Опитай отново
-              </LoadingButton>
-            )}
-          </p>
-        )}
-        {!values && !failure && <p role="status">Зареждане…</p>}
+    <ExtensionScope value={extensionScope}>
+      <form onSubmit={(event) => void save(event)}>
+        <CollapsibleSection
+          extensionPoint="settings.general"
+          title="Общи"
+          icon={Settings}
+          storageKey="settings:general"
+        >
+          {failure && (
+            <p className="react-error-text" role="alert">
+              {failure}
+              {!values && (
+                <LoadingButton onClick={() => setRevision((value) => value + 1)}>
+                  Опитай отново
+                </LoadingButton>
+              )}
+            </p>
+          )}
+          {!values && !failure && <p role="status">Зареждане…</p>}
+          {values && (
+            <div className="react-form-grid">
+              <label className="react-form-field settings-field-wide">
+                <span>Име на сайта</span>
+                <input
+                  value={values.name}
+                  required
+                  maxLength={150}
+                  disabled={saving}
+                  onChange={(event) => update("name", event.target.value)}
+                />
+                <small>Публично име на сайта. До 150 символа.</small>
+              </label>
+              <label className="react-form-field settings-field-wide">
+                <span>Кратко описание</span>
+                <Textarea
+                  value={values.description}
+                  maxLength={500}
+                  rows={3}
+                  disabled={saving}
+                  onChange={(event) => update("description", event.target.value)}
+                />
+                <small>По желание. До 500 символа.</small>
+              </label>
+              {selects.map(({ key, label, choices, hint }) => (
+                <div className="react-form-field" key={key}>
+                  <span>{label}</span>
+                  <DropdownMenu
+                    ariaLabel={label}
+                    triggerClassName="react-form-select"
+                    trigger={
+                      <>
+                        <span>{choices[values[key]] ?? values[key]}</span>
+                        <DropdownChevron />
+                      </>
+                    }
+                  >
+                    {Object.entries(choices).map(([value, label]) => (
+                      <DropdownOption
+                        key={value}
+                        selected={values[key] === value}
+                        disabled={saving}
+                        onClick={() => update(key, value)}
+                      >
+                        {label}
+                      </DropdownOption>
+                    ))}
+                  </DropdownMenu>
+                  <small>{hint}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
         {values && (
-          <div className="react-form-grid">
-            <label className="react-form-field settings-field-wide">
-              <span>Име на сайта</span>
-              <input
-                value={values.name}
-                required
-                maxLength={150}
-                disabled={saving}
-                onChange={(event) => update("name", event.target.value)}
-              />
-              <small>Публично име на сайта. До 150 символа.</small>
-            </label>
-            <label className="react-form-field settings-field-wide">
-              <span>Кратко описание</span>
-              <Textarea
-                value={values.description}
-                maxLength={500}
-                rows={3}
-                disabled={saving}
-                onChange={(event) => update("description", event.target.value)}
-              />
-              <small>По желание. До 500 символа.</small>
-            </label>
-            {selects.map(({ key, label, choices, hint }) => (
-              <div className="react-form-field" key={key}>
-                <span>{label}</span>
-                <DropdownMenu
-                  ariaLabel={label}
-                  triggerClassName="react-form-select"
-                  trigger={
-                    <>
-                      <span>{choices[values[key]] ?? values[key]}</span>
-                      <DropdownChevron />
-                    </>
-                  }
-                >
-                  {Object.entries(choices).map(([value, label]) => (
-                    <DropdownOption
-                      key={value}
-                      selected={values[key] === value}
-                      disabled={saving}
-                      onClick={() => update(key, value)}
-                    >
-                      {label}
-                    </DropdownOption>
-                  ))}
-                </DropdownMenu>
-                <small>{hint}</small>
-              </div>
-            ))}
+          <div className="react-form-actions">
+            <LoadingButton
+              type="submit"
+              loading={saving}
+              disabled={saving}
+              icon={<Save aria-hidden="true" />}
+              className="settings-save-button"
+            >
+              Запази настройките
+            </LoadingButton>
           </div>
         )}
-      </CollapsibleSection>
-      {values && (
-        <div className="react-form-actions">
-          <LoadingButton
-            type="submit"
-            loading={saving}
-            disabled={saving}
-            icon={<Save aria-hidden="true" />}
-            className="settings-save-button"
-          >
-            Запази настройките
-          </LoadingButton>
-        </div>
-      )}
-    </form>
+      </form>
+    </ExtensionScope>
   )
 }

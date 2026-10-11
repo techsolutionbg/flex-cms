@@ -1,6 +1,6 @@
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { FileImage, Info, Upload } from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { MediaUploader } from "@/components/media-uploader"
 import type { MediaIndex } from "@/lib/media-api"
 import { DateTime } from "@/components/date-time"
+import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 export function MediaPage({
   onLogout,
@@ -39,6 +40,13 @@ export function MediaPage({
   const [usage, setUsage] = useState<{ id: number; title: string }[]>([])
   const [failure, setFailure] = useState("")
   const [busy, setBusy] = useState(false)
+  // Plugins add sections and fields here through extension points; they save right after this record.
+  const saves = usePanelSaves()
+  const extensionScope = useMemo(
+    () => ({ context: { type: "media", id: record?.id ?? null, values: record }, saves }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [record],
+  )
   const [saved, setSaved] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
   const changed = useWorkspaceChanged(),
@@ -119,7 +127,11 @@ export function MediaPage({
             <p role="alert">Нямате права за качване на файлове.</p>
           ) : (
             <div className="react-page-form">
-              <CollapsibleSection title="Качване на нови файлове" icon={Upload}>
+              <CollapsibleSection
+                extensionPoint="media.upload.new"
+                title="Качване на нови файлове"
+                icon={Upload}
+              >
                 <MediaUploader
                   maxBytes={uploadIndex.max_bytes}
                   maxImageMegapixels={uploadIndex.max_image_megapixels}
@@ -129,7 +141,11 @@ export function MediaPage({
                 />
               </CollapsibleSection>
               {uploaded.length > 0 && (
-                <CollapsibleSection title="Качени файлове" icon={FileImage}>
+                <CollapsibleSection
+                  extensionPoint="media.upload.done"
+                  title="Качени файлове"
+                  icon={FileImage}
+                >
                   <ul className="media-uploaded-files">
                     {uploaded.map((item) => (
                       <li key={item.id}>
@@ -154,174 +170,189 @@ export function MediaPage({
         ) : !record ? (
           !failure && <p role="status">Зареждане…</p>
         ) : (
-          <form
-            className="react-page-form"
-            onSubmit={async (event) => {
-              event.preventDefault()
-              if (busy) return
-              setBusy(true)
-              setFailure("")
-              setSaved(false)
-              try {
-                const result = await mediaRequest<{ media: MediaRecord }>(
-                  `/api/admin/media/${id}`,
-                  "PUT",
-                  record,
-                )
-                setRecord(result.media)
-                markSaved?.()
-                setSaved(true)
-              } catch (error) {
-                setFailure((error as Error).message)
-              } finally {
-                setBusy(false)
-              }
-            }}
-          >
-            <CollapsibleSection title="Преглед" icon={FileImage}>
-              <div className="media-detail-preview">
-                {record.mime.startsWith("image/") ? (
-                  <img src={record.url} alt={record.alt} />
-                ) : record.mime.startsWith("video/") ? (
-                  <video controls preload="metadata" src={record.url} />
-                ) : record.mime.startsWith("audio/") ? (
-                  <audio controls preload="metadata" src={record.url} />
-                ) : (
-                  <a href={record.url} target="_blank" rel="noopener noreferrer">
-                    Отвори PDF файла
-                  </a>
-                )}
-              </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Информация за файла" icon={Info}>
-              <div className="media-file-information">
-                <dl className="media-technical-info">
-                  <dt>Оригинално име</dt>
-                  <dd>{record.original_name}</dd>
-                  <dt>Тип и размер</dt>
-                  <dd>
-                    {record.mime} · {mediaSize(record.size)}
-                    {record.width ? ` · ${record.width} × ${record.height}` : ""}
-                  </dd>
-                  <dt>Качен на</dt>
-                  <dd>
-                    <DateTime value={record.created_at} />
-                  </dd>
-                  <dt>Качил</dt>
-                  <dd>
-                    {record.uploader ? (
-                      <a
-                        className="react-page-link"
-                        href={adminUrl(`/users/${record.uploader.id}/edit`)}
-                      >
-                        {record.uploader.email}
-                      </a>
-                    ) : (
-                      "Потребителят вече не е наличен."
-                    )}
-                  </dd>
-                  <dt>Използване в страници</dt>
-                  <dd>
-                    {usage.length
-                      ? usage.map((page) => page.title).join(", ")
-                      : "Не са намерени връзки в съдържанието."}
-                  </dd>
-                </dl>
-                <p className="react-field-hint">
-                  Показани са известните връзки в страниците. Външни сайтове и ръчни връзки в теми
-                  може също да използват файла.
-                </p>
-                <div className="react-form-actions">
-                  <a className="react-secondary-button" href={`${record.url}?download=1`}>
-                    Изтегли оригинала
-                  </a>
-                  <button
-                    className="react-secondary-button"
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(
-                          new URL(record.url, location.origin).href,
-                        )
-                        setSaved(true)
-                      } catch {
-                        setFailure("Адресът не може да бъде копиран автоматично.")
-                      }
-                    }}
-                  >
-                    Копирай адреса
-                  </button>
-                </div>
-              </div>
-            </CollapsibleSection>
-            <CollapsibleSection title="Метаданни" icon={FileImage}>
-              <div className="react-form-grid">
-                {(["title", "alt", "caption", "description"] as const).map((field) => (
-                  <div className="react-form-field" key={field}>
-                    <label htmlFor={`media-${id}-${field}`}>
-                      {
-                        {
-                          title: "Заглавие",
-                          alt: "Алтернативен текст",
-                          caption: "Надпис",
-                          description: "Описание",
-                        }[field]
-                      }
-                    </label>
-                    {field === "caption" || field === "description" ? (
-                      <Textarea
-                        id={`media-${id}-${field}`}
-                        value={record[field]}
-                        maxLength={field === "caption" ? 2000 : 10000}
-                        disabled={busy || !canEdit || !!record.deleted_at}
-                        onChange={(event) => {
-                          setRecord({ ...record, [field]: event.target.value })
-                          changed?.()
-                          setSaved(false)
-                        }}
-                      />
-                    ) : (
-                      <input
-                        id={`media-${id}-${field}`}
-                        value={record[field]}
-                        maxLength={255}
-                        disabled={busy || !canEdit || !!record.deleted_at}
-                        onChange={(event) => {
-                          setRecord({ ...record, [field]: event.target.value })
-                          changed?.()
-                          setSaved(false)
-                        }}
-                      />
-                    )}
-                    <small className="react-field-hint">
-                      {
-                        {
-                          title: "Име за намиране на файла в библиотеката.",
-                          alt: "Кратко описание на изображението за достъпност.",
-                          caption: "Надпис, който може да се показва под медията.",
-                          description: "Допълнителна информация за файла.",
-                        }[field]
-                      }
-                    </small>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
-            {saved && <p role="status">Готово.</p>}
-            <div className="react-form-actions">
-              <LoadingButton
-                loading={busy}
-                className="react-primary-button"
-                type="submit"
-                disabled={busy || !canEdit || !!record.deleted_at}
+          <ExtensionScope value={extensionScope}>
+            <form
+              className="react-page-form"
+              onSubmit={async (event) => {
+                event.preventDefault()
+                if (busy) return
+                setBusy(true)
+                setFailure("")
+                setSaved(false)
+                try {
+                  const result = await mediaRequest<{ media: MediaRecord }>(
+                    `/api/admin/media/${id}`,
+                    "PUT",
+                    record,
+                  )
+                  setRecord(result.media)
+                  await saves.run({ id: result.media.id })
+                  markSaved?.()
+                  setSaved(true)
+                } catch (error) {
+                  setFailure((error as Error).message)
+                } finally {
+                  setBusy(false)
+                }
+              }}
+            >
+              <CollapsibleSection
+                extensionPoint="media.editor.preview"
+                title="Преглед"
+                icon={FileImage}
               >
-                {busy ? "Записване…" : "Запази"}
-              </LoadingButton>
-              <button className="react-secondary-button" type="button" onClick={onBack}>
-                Към библиотеката
-              </button>
-            </div>
-          </form>
+                <div className="media-detail-preview">
+                  {record.mime.startsWith("image/") ? (
+                    <img src={record.url} alt={record.alt} />
+                  ) : record.mime.startsWith("video/") ? (
+                    <video controls preload="metadata" src={record.url} />
+                  ) : record.mime.startsWith("audio/") ? (
+                    <audio controls preload="metadata" src={record.url} />
+                  ) : (
+                    <a href={record.url} target="_blank" rel="noopener noreferrer">
+                      Отвори PDF файла
+                    </a>
+                  )}
+                </div>
+              </CollapsibleSection>
+              <CollapsibleSection
+                extensionPoint="media.editor.file"
+                title="Информация за файла"
+                icon={Info}
+              >
+                <div className="media-file-information">
+                  <dl className="media-technical-info">
+                    <dt>Оригинално име</dt>
+                    <dd>{record.original_name}</dd>
+                    <dt>Тип и размер</dt>
+                    <dd>
+                      {record.mime} · {mediaSize(record.size)}
+                      {record.width ? ` · ${record.width} × ${record.height}` : ""}
+                    </dd>
+                    <dt>Качен на</dt>
+                    <dd>
+                      <DateTime value={record.created_at} />
+                    </dd>
+                    <dt>Качил</dt>
+                    <dd>
+                      {record.uploader ? (
+                        <a
+                          className="react-page-link"
+                          href={adminUrl(`/users/${record.uploader.id}/edit`)}
+                        >
+                          {record.uploader.email}
+                        </a>
+                      ) : (
+                        "Потребителят вече не е наличен."
+                      )}
+                    </dd>
+                    <dt>Използване в страници</dt>
+                    <dd>
+                      {usage.length
+                        ? usage.map((page) => page.title).join(", ")
+                        : "Не са намерени връзки в съдържанието."}
+                    </dd>
+                  </dl>
+                  <p className="react-field-hint">
+                    Показани са известните връзки в страниците. Външни сайтове и ръчни връзки в теми
+                    може също да използват файла.
+                  </p>
+                  <div className="react-form-actions">
+                    <a className="react-secondary-button" href={`${record.url}?download=1`}>
+                      Изтегли оригинала
+                    </a>
+                    <button
+                      className="react-secondary-button"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            new URL(record.url, location.origin).href,
+                          )
+                          setSaved(true)
+                        } catch {
+                          setFailure("Адресът не може да бъде копиран автоматично.")
+                        }
+                      }}
+                    >
+                      Копирай адреса
+                    </button>
+                  </div>
+                </div>
+              </CollapsibleSection>
+              <CollapsibleSection
+                extensionPoint="media.editor.metadata"
+                title="Метаданни"
+                icon={FileImage}
+              >
+                <div className="react-form-grid">
+                  {(["title", "alt", "caption", "description"] as const).map((field) => (
+                    <div className="react-form-field" key={field}>
+                      <label htmlFor={`media-${id}-${field}`}>
+                        {
+                          {
+                            title: "Заглавие",
+                            alt: "Алтернативен текст",
+                            caption: "Надпис",
+                            description: "Описание",
+                          }[field]
+                        }
+                      </label>
+                      {field === "caption" || field === "description" ? (
+                        <Textarea
+                          id={`media-${id}-${field}`}
+                          value={record[field]}
+                          maxLength={field === "caption" ? 2000 : 10000}
+                          disabled={busy || !canEdit || !!record.deleted_at}
+                          onChange={(event) => {
+                            setRecord({ ...record, [field]: event.target.value })
+                            changed?.()
+                            setSaved(false)
+                          }}
+                        />
+                      ) : (
+                        <input
+                          id={`media-${id}-${field}`}
+                          value={record[field]}
+                          maxLength={255}
+                          disabled={busy || !canEdit || !!record.deleted_at}
+                          onChange={(event) => {
+                            setRecord({ ...record, [field]: event.target.value })
+                            changed?.()
+                            setSaved(false)
+                          }}
+                        />
+                      )}
+                      <small className="react-field-hint">
+                        {
+                          {
+                            title: "Име за намиране на файла в библиотеката.",
+                            alt: "Кратко описание на изображението за достъпност.",
+                            caption: "Надпис, който може да се показва под медията.",
+                            description: "Допълнителна информация за файла.",
+                          }[field]
+                        }
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+              {saved && <p role="status">Готово.</p>}
+              <div className="react-form-actions">
+                <LoadingButton
+                  loading={busy}
+                  className="react-primary-button"
+                  type="submit"
+                  disabled={busy || !canEdit || !!record.deleted_at}
+                >
+                  {busy ? "Записване…" : "Запази"}
+                </LoadingButton>
+                <button className="react-secondary-button" type="button" onClick={onBack}>
+                  Към библиотеката
+                </button>
+              </div>
+            </form>
+          </ExtensionScope>
         )}
       </div>
     </AdminShell>

@@ -57,6 +57,10 @@ Core events are exposed through `EventNames` and immutable event objects such as
 `PluginEvent` and `PageEvent`. Listeners are ordered by priority and receive only the
 validated public payload.
 
+### Admin extension points
+
+`AdminExtensionRegistrarInterface::extend($point, $slot, $id, $module, $options)` (0.1.60+) adds content to any named collapsible section, table or screen of the admin: section content and nested sections, screen sections and tabs, table columns, row actions, bulk actions and toolbar filters. The catalog of names and the slot contracts are in `docs/admin-extension-points.md`.
+
 ### Admin panels
 
 `AdminExtensionRegistrarInterface::panel($location, $id, $label, $module, $options)` places a React panel inside a platform screen: `page.editor`, `page.settings`, `pages.list.column`, `settings.tab`, `commerce.product.editor` or `commerce.category.editor`. Panels receive the unsaved record values and save after the record through `registerSave`. See `docs/admin-extension-pages.md`.

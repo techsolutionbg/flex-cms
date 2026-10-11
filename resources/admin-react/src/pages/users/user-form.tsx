@@ -1,6 +1,6 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
-import { useEffect, useRef, useState, type SyntheticEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { Mail, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -9,6 +9,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
+import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 const roleLabels: Record<string, string> = {
   user: "Потребител",
@@ -42,6 +43,16 @@ export function UserForm({
   const [passwordConfirmation, setPasswordConfirmation] = useState("")
   const [sendConfirmation, setSendConfirmation] = useState(!editing)
   const [saving, setSaving] = useState(false)
+  // Plugins add sections and fields here through extension points; they save right after this record.
+  const saves = usePanelSaves()
+  const extensionScope = useMemo(
+    () => ({
+      context: { type: "user", id: user?.id ?? null, values: { name, email, role, status } },
+      saves,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.id, name, email, role, status],
+  )
   const roleChanged = useRef(false)
   const [minimumPassword, setMinimumPassword] = useState(12)
   useEffect(() => {
@@ -96,6 +107,7 @@ export function UserForm({
       }
       if (!response.ok || !body.user)
         throw new Error(body.error?.message ?? "Потребителят не можа да бъде записан.")
+      await saves.run({ id: body.user.id })
       toast.success(editing ? "Потребителят е променен." : "Потребителят е създаден.")
       onSaved(body.user)
     } catch (reason) {
@@ -127,181 +139,186 @@ export function UserForm({
           />
         </div>
       </div>
-      <form className="react-user-form" onSubmit={save}>
-        <CollapsibleSection
-          title="Основна информация"
-          icon={UserRound}
-          storageKey="user-form-details"
-        >
-          <div className="react-form-grid">
-            <label className="react-form-field">
-              <span>
-                Име <b>*</b>
-              </span>
-              <input value={name} onChange={(event) => setName(event.target.value)} required />
-              <small>Името, което ще се показва в административния панел.</small>
-            </label>
-            <label className="react-form-field">
-              <span>
-                Имейл <b>*</b>
-              </span>
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-              <small>Имейл адресът се използва за вход.</small>
-            </label>
-            <label className="react-form-field">
-              <span>Роля</span>
-              <DropdownMenu
-                ariaLabel="Избор на роля"
-                triggerClassName="react-form-select"
-                trigger={
-                  <>
-                    <span>{roleLabels[role]}</span>
-                    <DropdownChevron />
-                  </>
-                }
-              >
-                <DropdownOption
-                  selected={role === "user"}
-                  disabled={isSuperAdmin}
-                  onClick={() => {
-                    roleChanged.current = true
-                    setRole("user")
-                  }}
-                >
-                  Потребител
-                </DropdownOption>
-                <DropdownOption
-                  selected={role === "editor"}
-                  disabled={isSuperAdmin}
-                  onClick={() => {
-                    roleChanged.current = true
-                    setRole("editor")
-                  }}
-                >
-                  Редактор
-                </DropdownOption>
-                <DropdownOption
-                  selected={role === "admin"}
-                  disabled={isSuperAdmin}
-                  onClick={() => {
-                    roleChanged.current = true
-                    setRole("admin")
-                  }}
-                >
-                  Администратор
-                </DropdownOption>
-                <DropdownOption
-                  selected={role === "super_admin"}
-                  disabled={isSuperAdmin}
-                  onClick={() => {
-                    roleChanged.current = true
-                    setRole("super_admin")
-                  }}
-                >
-                  Супер администратор
-                </DropdownOption>
-              </DropdownMenu>
-            </label>
-            <label className="react-form-field">
-              <span>Статус</span>
-              <DropdownMenu
-                ariaLabel="Избор на статус"
-                triggerClassName="react-form-select"
-                trigger={
-                  <>
-                    <span>{status === "active" ? "Активен" : "Деактивиран"}</span>
-                    <DropdownChevron />
-                  </>
-                }
-              >
-                <DropdownOption
-                  selected={status === "active"}
-                  disabled={isSuperAdmin}
-                  onClick={() => setStatus("active")}
-                >
-                  Активен
-                </DropdownOption>
-                <DropdownOption
-                  selected={status === "disabled"}
-                  disabled={isSuperAdmin}
-                  onClick={() => setStatus("disabled")}
-                >
-                  Деактивиран
-                </DropdownOption>
-              </DropdownMenu>
-            </label>
-          </div>
-        </CollapsibleSection>
-        <CollapsibleSection
-          title={editing ? "Смяна на паролата" : "Парола"}
-          icon={Shield}
-          storageKey={editing ? "user-form-change-password" : "user-form-password"}
-        >
-          <div className="react-form-grid">
-            <label className="react-form-field">
-              <span>
-                {editing ? "Нова парола" : "Парола"}
-                {!editing && <b> *</b>}
-              </span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required={!editing}
-              />
-              <small>Паролата трябва да съдържа поне {minimumPassword} символа.</small>
-            </label>
-            <label className="react-form-field">
-              <span>
-                {editing ? "Потвърждение на новата парола" : "Потвърждение на паролата"}
-                {!editing && <b> *</b>}
-              </span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={passwordConfirmation}
-                onChange={(event) => setPasswordConfirmation(event.target.value)}
-                required={!editing}
-              />
-            </label>
-          </div>
-        </CollapsibleSection>
-        {!editing && (
+      <ExtensionScope value={extensionScope}>
+        <form className="react-user-form" onSubmit={save}>
           <CollapsibleSection
-            title="Потвърждение на имейла"
-            icon={Mail}
-            storageKey="user-form-confirmation"
+            extensionPoint="user.editor.details"
+            title="Основна информация"
+            icon={UserRound}
+            storageKey="user-form-details"
           >
-            <label className="react-checkbox-field">
-              <input
-                type="checkbox"
-                checked={sendConfirmation}
-                onChange={(event) => setSendConfirmation(event.target.checked)}
-              />
-              <span>Изпрати код за потвърждение на имейла</span>
-            </label>
+            <div className="react-form-grid">
+              <label className="react-form-field">
+                <span>
+                  Име <b>*</b>
+                </span>
+                <input value={name} onChange={(event) => setName(event.target.value)} required />
+                <small>Името, което ще се показва в административния панел.</small>
+              </label>
+              <label className="react-form-field">
+                <span>
+                  Имейл <b>*</b>
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+                <small>Имейл адресът се използва за вход.</small>
+              </label>
+              <label className="react-form-field">
+                <span>Роля</span>
+                <DropdownMenu
+                  ariaLabel="Избор на роля"
+                  triggerClassName="react-form-select"
+                  trigger={
+                    <>
+                      <span>{roleLabels[role]}</span>
+                      <DropdownChevron />
+                    </>
+                  }
+                >
+                  <DropdownOption
+                    selected={role === "user"}
+                    disabled={isSuperAdmin}
+                    onClick={() => {
+                      roleChanged.current = true
+                      setRole("user")
+                    }}
+                  >
+                    Потребител
+                  </DropdownOption>
+                  <DropdownOption
+                    selected={role === "editor"}
+                    disabled={isSuperAdmin}
+                    onClick={() => {
+                      roleChanged.current = true
+                      setRole("editor")
+                    }}
+                  >
+                    Редактор
+                  </DropdownOption>
+                  <DropdownOption
+                    selected={role === "admin"}
+                    disabled={isSuperAdmin}
+                    onClick={() => {
+                      roleChanged.current = true
+                      setRole("admin")
+                    }}
+                  >
+                    Администратор
+                  </DropdownOption>
+                  <DropdownOption
+                    selected={role === "super_admin"}
+                    disabled={isSuperAdmin}
+                    onClick={() => {
+                      roleChanged.current = true
+                      setRole("super_admin")
+                    }}
+                  >
+                    Супер администратор
+                  </DropdownOption>
+                </DropdownMenu>
+              </label>
+              <label className="react-form-field">
+                <span>Статус</span>
+                <DropdownMenu
+                  ariaLabel="Избор на статус"
+                  triggerClassName="react-form-select"
+                  trigger={
+                    <>
+                      <span>{status === "active" ? "Активен" : "Деактивиран"}</span>
+                      <DropdownChevron />
+                    </>
+                  }
+                >
+                  <DropdownOption
+                    selected={status === "active"}
+                    disabled={isSuperAdmin}
+                    onClick={() => setStatus("active")}
+                  >
+                    Активен
+                  </DropdownOption>
+                  <DropdownOption
+                    selected={status === "disabled"}
+                    disabled={isSuperAdmin}
+                    onClick={() => setStatus("disabled")}
+                  >
+                    Деактивиран
+                  </DropdownOption>
+                </DropdownMenu>
+              </label>
+            </div>
           </CollapsibleSection>
-        )}
-        <div className="react-form-actions">
-          <LoadingButton
-            icon={<Save aria-hidden="true" />}
-            loading={saving}
-            type="submit"
-            disabled={saving}
+          <CollapsibleSection
+            extensionPoint="user.editor.password"
+            title={editing ? "Смяна на паролата" : "Парола"}
+            icon={Shield}
+            storageKey={editing ? "user-form-change-password" : "user-form-password"}
           >
-            {editing ? "Запази промените" : "Създай потребител"}
-          </LoadingButton>
-          <button type="button" onClick={onBack} disabled={saving}>
-            Отказ
-          </button>
-        </div>
-      </form>
+            <div className="react-form-grid">
+              <label className="react-form-field">
+                <span>
+                  {editing ? "Нова парола" : "Парола"}
+                  {!editing && <b> *</b>}
+                </span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required={!editing}
+                />
+                <small>Паролата трябва да съдържа поне {minimumPassword} символа.</small>
+              </label>
+              <label className="react-form-field">
+                <span>
+                  {editing ? "Потвърждение на новата парола" : "Потвърждение на паролата"}
+                  {!editing && <b> *</b>}
+                </span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordConfirmation}
+                  onChange={(event) => setPasswordConfirmation(event.target.value)}
+                  required={!editing}
+                />
+              </label>
+            </div>
+          </CollapsibleSection>
+          {!editing && (
+            <CollapsibleSection
+              extensionPoint="user.editor.confirmation"
+              title="Потвърждение на имейла"
+              icon={Mail}
+              storageKey="user-form-confirmation"
+            >
+              <label className="react-checkbox-field">
+                <input
+                  type="checkbox"
+                  checked={sendConfirmation}
+                  onChange={(event) => setSendConfirmation(event.target.checked)}
+                />
+                <span>Изпрати код за потвърждение на имейла</span>
+              </label>
+            </CollapsibleSection>
+          )}
+          <div className="react-form-actions">
+            <LoadingButton
+              icon={<Save aria-hidden="true" />}
+              loading={saving}
+              type="submit"
+              disabled={saving}
+            >
+              {editing ? "Запази промените" : "Създай потребител"}
+            </LoadingButton>
+            <button type="button" onClick={onBack} disabled={saving}>
+              Отказ
+            </button>
+          </div>
+        </form>
+      </ExtensionScope>
     </AdminShell>
   )
 }

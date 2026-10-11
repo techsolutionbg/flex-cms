@@ -14,7 +14,7 @@ import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { GeneralSettingsForm } from "./general-settings-form"
 import { SectionSettingsForm } from "./section-settings-form"
-import { ExtensionPanel, panelIcon, useExtensionPanels } from "@/components/extension-page"
+import { ExtensionPanel, panelIcon, useExtensions } from "@/components/extension-page"
 import { SETTINGS_TAB_EVENT, takeRequestedSettingsTab } from "@/lib/settings-tabs"
 
 const sections = [
@@ -78,7 +78,7 @@ export function SettingsPage({
   loggingOut: boolean
 }) {
   // Active plugins add their global settings as extra tabs (location settings.tab).
-  const extensionTabs = useExtensionPanels("settings.tab")
+  const extensionTabs = useExtensions("settings", "screen.tab")
   const tabs: { id: string; title: string; icon: LucideIcon }[] = [
     ...sections.map(({ id, title, icon }) => ({ id, title, icon })),
     ...extensionTabs.map((panel) => ({

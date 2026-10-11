@@ -64,6 +64,7 @@ export function PluginDetailPage({
         </button>
       </div>
       <CollapsibleSection
+        extensionPoint="plugin.detail.source"
         title="Код на разширението"
         icon={Code2}
         className="plugin-source-first-section"
@@ -73,6 +74,7 @@ export function PluginDetailPage({
       </CollapsibleSection>
       <div className="plugin-detail-grid">
         <CollapsibleSection
+          extensionPoint="plugin.detail.information"
           title="Информация за разширението"
           icon={PackageOpen}
           storageKey={`plugin:${plugin.id}:information`}
@@ -113,6 +115,7 @@ export function PluginDetailPage({
           )}
         </CollapsibleSection>
         <CollapsibleSection
+          extensionPoint="plugin.detail.permissions"
           title="Разрешения"
           icon={ShieldCheck}
           storageKey={`plugin:${plugin.id}:permissions`}
@@ -132,6 +135,7 @@ export function PluginDetailPage({
         </CollapsibleSection>
       </div>
       <CollapsibleSection
+        extensionPoint="plugin.detail.manifest"
         title="Manifest"
         icon={Braces}
         className="plugin-manifest-panel"

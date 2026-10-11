@@ -351,6 +351,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
         </button>
       </div>
       <DataTable
+        extensionPoint="users.list"
         filterStorageKey="users"
         data={filteredUsers}
         columns={columns}

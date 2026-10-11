@@ -280,6 +280,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
       ) : (
         <div className="updates-page-grid">
           <CollapsibleSection
+            extensionPoint="updates.status"
             title="Състояние на платформата"
             icon={Server}
             storageKey="updates-platform-status"
@@ -393,6 +394,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
             </div>
           </CollapsibleSection>
           <CollapsibleSection
+            extensionPoint="updates.history"
             title="История на обновяванията"
             icon={History}
             storageKey="updates-history"
@@ -431,6 +433,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
             )}
           </CollapsibleSection>
           <CollapsibleSection
+            extensionPoint="updates.releases"
             title="Всички налични релийзи"
             icon={Archive}
             storageKey="updates-releases"

@@ -1,6 +1,13 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 import { PaginationControls } from "./pagination-controls"
+import { TableActionsMenu } from "./table-actions-menu"
+import {
+  ExtensionComponent,
+  RowExtensionActionsContext,
+  useTableExtensions,
+  type ExtensionRowAction,
+} from "./extension-runtime"
 
 export type DataTableColumn<T> = {
   key: string
@@ -22,6 +29,8 @@ type DataTableProps<T> = {
   selectedKeys?: ReadonlySet<string | number>
   onSelectionChange?: (keys: Set<string | number>) => void
   filterStorageKey?: string
+  /** Name of this table for plugin columns, row actions, bulk actions and filters, e.g. "users.list". */
+  extensionPoint?: string
 }
 
 export function DataTable<T>({
@@ -37,7 +46,40 @@ export function DataTable<T>({
   selectedKeys = new Set(),
   onSelectionChange,
   filterStorageKey,
+  extensionPoint,
 }: DataTableProps<T>) {
+  const rowsKey = useMemo(() => data.map(rowKey).join("0000"), [data, rowKey])
+  const extensions = useTableExtensions(extensionPoint, data, rowsKey)
+  // One stable setter per toolbar extension, so plugins can depend on it in effects.
+  const toolbarFilters = useMemo(
+    () =>
+      Object.fromEntries(
+        extensions.toolbars.map((descriptor) => [
+          descriptor.id,
+          (filter: ((row: T) => boolean) | null) => extensions.setFilter(descriptor.id, filter),
+        ]),
+      ),
+    [extensions.toolbars, extensions.setFilter],
+  )
+  const visibleRows = useMemo(
+    () => (extensions.filter ? data.filter(extensions.filter) : data),
+    [data, extensions.filter],
+  )
+  const tableColumns = useMemo(() => {
+    const actionsIndex = columns.findIndex((column) => column.key === "actions")
+    const withExtensions =
+      actionsIndex < 0
+        ? [...columns, ...extensions.columns]
+        : [...columns.slice(0, actionsIndex), ...extensions.columns, ...columns.slice(actionsIndex)]
+    // Plugin row actions need the actions menu even on tables that have none of their own.
+    if (actionsIndex < 0 && extensions.rowActions.length > 0)
+      withExtensions.push({
+        key: "actions",
+        label: "Действия",
+        render: () => <TableActionsMenu>{null}</TableActionsMenu>,
+      })
+    return withExtensions
+  }, [columns, extensions.columns, extensions.rowActions.length])
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [descending, setDescending] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -53,10 +95,10 @@ export function DataTable<T>({
   })
   const filterContentId = useId()
   const sortedData = useMemo(() => {
-    if (!sortKey) return data
-    const column = columns.find((item) => item.key === sortKey)
-    if (!column) return data
-    return [...data].sort((left, right) => {
+    if (!sortKey) return visibleRows
+    const column = tableColumns.find((item) => item.key === sortKey)
+    if (!column) return visibleRows
+    return [...visibleRows].sort((left, right) => {
       const leftValue =
         column.sortValue?.(left) ?? String((left as Record<string, unknown>)[column.key] ?? "")
       const rightValue =
@@ -70,14 +112,14 @@ export function DataTable<T>({
             })
       return descending ? -result : result
     })
-  }, [columns, data, descending, sortKey])
+  }, [tableColumns, visibleRows, descending, sortKey])
   const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize))
   const activePage = Math.max(1, Math.min(currentPage, totalPages))
   const visibleData = sortedData.slice((activePage - 1) * pageSize, activePage * pageSize)
   const visibleKeys = visibleData.map(rowKey)
   const allVisibleSelected =
     visibleKeys.length > 0 && visibleKeys.every((key) => selectedKeys.has(key))
-  useEffect(() => setCurrentPage(1), [data, sortKey, descending])
+  useEffect(() => setCurrentPage(1), [visibleRows, sortKey, descending])
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages)
   }, [currentPage, totalPages])
@@ -111,10 +153,14 @@ export function DataTable<T>({
     visibleKeys.forEach((key) => (checked ? next.add(key) : next.delete(key)))
     onSelectionChange?.(next)
   }
-  const columnCount = columns.length + (selectable ? 1 : 0)
+  const columnCount = tableColumns.length + (selectable ? 1 : 0)
+  const selectedRows = data.filter((row) => selectedKeys.has(rowKey(row)))
+  const extensionBulk = selectable && selectedRows.length > 0 ? extensions.bulkActions : []
+  const hasToolbar = Boolean(toolbar) || extensions.toolbars.length > 0
+  const rowActions = extensions.rowActions as ExtensionRowAction<unknown>[]
   return (
     <div className="react-table-card">
-      {toolbar && (
+      {hasToolbar && (
         <div className={`react-table-filter-panel${toolbarOpen ? " is-open" : " is-closed"}`}>
           <div className="react-table-filter-header">
             <span>Филтри и търсене</span>
@@ -130,12 +176,38 @@ export function DataTable<T>({
           </div>
           <div className="react-table-filter-body" id={filterContentId}>
             <div className="react-table-filter-body-inner">
-              <div className="react-table-toolbar">{toolbar}</div>
+              <div className="react-table-toolbar">
+                {toolbar}
+                {extensions.toolbars.map((descriptor) => (
+                  <ExtensionComponent
+                    key={descriptor.id}
+                    descriptor={descriptor}
+                    props={{
+                      rows: data,
+                      setFilter: toolbarFilters[descriptor.id],
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       )}
-      {bulkActions && <div className="react-bulk-toolbar">{bulkActions}</div>}
+      {(bulkActions || extensionBulk.length > 0) && (
+        <div className="react-bulk-toolbar">
+          {bulkActions}
+          {extensionBulk.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={action.danger ? "react-danger-button" : "react-secondary-button"}
+              onClick={() => void action.run(selectedRows, extensions.helpers)}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="react-table-scroll">
         <table className="react-data-table">
           <thead>
@@ -150,7 +222,7 @@ export function DataTable<T>({
                   />
                 </th>
               )}
-              {columns.map((column) => (
+              {tableColumns.map((column) => (
                 <th key={column.key}>
                   <button
                     className={`react-sort-button${column.sortable ? " is-sortable" : ""}`}
@@ -200,14 +272,22 @@ export function DataTable<T>({
                       />
                     </td>
                   )}
-                  {columns.map((column) => (
+                  {tableColumns.map((column) => (
                     <td
                       key={column.key}
                       className={column.key === "actions" ? "react-actions-column" : undefined}
                     >
-                      {column.render
-                        ? column.render(row)
-                        : String((row as Record<string, unknown>)[column.key] ?? "—")}
+                      {column.key === "actions" && rowActions.length > 0 ? (
+                        <RowExtensionActionsContext.Provider
+                          value={{ row, actions: rowActions, helpers: extensions.helpers }}
+                        >
+                          {column.render?.(row)}
+                        </RowExtensionActionsContext.Provider>
+                      ) : column.render ? (
+                        column.render(row)
+                      ) : (
+                        String((row as Record<string, unknown>)[column.key] ?? "—")
+                      )}
                     </td>
                   ))}
                 </tr>

@@ -10,7 +10,7 @@ import { CheckboxField } from "@/components/checkbox-field"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import type { PagePluginField, PageRecord, PageSettings } from "@/lib/admin-types"
-import { ExtensionPanels, usePanelSaves } from "@/components/extension-page"
+import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 type PageSettingsFormProps = {
   page: PageRecord
@@ -140,162 +140,171 @@ export function PageSettingsForm({
           />
         </div>
       </div>
-      <form className="react-page-form" onSubmit={save}>
-        <CollapsibleSection
-          title="Визуализация"
-          storageKey="page-settings-appearance"
-          icon={LayoutTemplate}
-        >
-          <label>
-            Шаблон
-            <DropdownMenu
-              ariaLabel="Избор на шаблон"
-              triggerClassName="react-form-dropdown"
-              trigger={
-                <>
-                  <span>
-                    {settings.template === "full_width"
-                      ? "Пълна ширина"
-                      : settings.template === "landing"
-                        ? "Landing page"
-                        : "Стандартен"}
-                  </span>
-                  <DropdownChevron />
-                </>
-              }
-            >
-              <DropdownOption
-                selected={settings.template === "default"}
-                onClick={() => setSettings({ ...settings, template: "default" })}
-              >
-                Стандартен
-              </DropdownOption>
-              <DropdownOption
-                selected={settings.template === "full_width"}
-                onClick={() => setSettings({ ...settings, template: "full_width" })}
-              >
-                Пълна ширина
-              </DropdownOption>
-              <DropdownOption
-                selected={settings.template === "landing"}
-                onClick={() => setSettings({ ...settings, template: "landing" })}
-              >
-                Landing page
-              </DropdownOption>
-            </DropdownMenu>
-          </label>
-        </CollapsibleSection>
-        <CollapsibleSection
-          title="Навигация"
-          storageKey="page-settings-navigation"
-          icon={Navigation}
-        >
-          <div className="react-checkbox-grid">
-            <label>
-              <input
-                type="checkbox"
-                checked={settings.show_in_navigation ?? true}
-                onChange={(event) =>
-                  setSettings({ ...settings, show_in_navigation: event.target.checked })
-                }
-              />{" "}
-              Показвай страницата в навигацията
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={settings.use_parent_slugs ?? false}
-                onChange={(event) =>
-                  setSettings({ ...settings, use_parent_slugs: event.target.checked })
-                }
-              />{" "}
-              Използвай slug-овете на родителските страници в URL адреса
-            </label>
-          </div>
-          <label className="react-navigation-order-field">
-            Позиция в навигацията
-            <input
-              type="number"
-              min={0}
-              value={settings.menu_order ?? 0}
-              onChange={(event) =>
-                setSettings({ ...settings, menu_order: Number(event.target.value) })
-              }
-            />
-            <small>По-малките числа се показват по-напред.</small>
-          </label>
-        </CollapsibleSection>
-        <CollapsibleSection title="Индексация" storageKey="page-settings-indexing" icon={Search}>
-          <div className="react-checkbox-grid">
-            <label>
-              <input
-                type="checkbox"
-                checked={settings.no_index ?? false}
-                onChange={(event) => setSettings({ ...settings, no_index: event.target.checked })}
-              />{" "}
-              Не индексирай страницата
-            </label>
-          </div>
-        </CollapsibleSection>
-        <ExtensionPanels location="page.settings" context={panelContext} saves={saves} />
-        {Object.entries(groupedFields).map(([plugin, fields]) => (
+      <ExtensionScope value={{ context: panelContext, saves }}>
+        <form className="react-page-form" onSubmit={save}>
           <CollapsibleSection
-            key={plugin}
-            title={`Настройки от ${fields[0].plugin_name}`}
-            icon={Puzzle}
+            extensionPoint="page.settings.appearance"
+            title="Визуализация"
+            storageKey="page-settings-appearance"
+            icon={LayoutTemplate}
           >
-            <p className="react-plugin-provider">
-              Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
-            </p>
-            <div className="react-plugin-fields-inner">
-              {fields.map((field) => {
-                const current = pluginSettings[field.plugin]?.[field.id] ?? field.default
-                return field.type === "checkbox" ? (
-                  <CheckboxField
-                    key={`${field.plugin}.${field.id}`}
-                    checked={Boolean(current)}
-                    label={field.label}
-                    description={field.hint}
-                    onChange={(event) => setPluginSetting(field, event.target.checked)}
-                  />
-                ) : (
-                  <label key={`${field.plugin}.${field.id}`}>
-                    {field.label}
-                    {field.type === "textarea" ? (
-                      <Textarea
-                        value={String(current ?? "")}
-                        maxLength={field.max_length ?? 10000}
-                        onChange={(event) => setPluginSetting(field, event.target.value)}
-                      />
-                    ) : (
-                      <input
-                        value={String(current ?? "")}
-                        maxLength={field.max_length}
-                        onChange={(event) => setPluginSetting(field, event.target.value)}
-                      />
-                    )}
-                    {field.hint && <small>{field.hint}</small>}
-                  </label>
-                )
-              })}
+            <label>
+              Шаблон
+              <DropdownMenu
+                ariaLabel="Избор на шаблон"
+                triggerClassName="react-form-dropdown"
+                trigger={
+                  <>
+                    <span>
+                      {settings.template === "full_width"
+                        ? "Пълна ширина"
+                        : settings.template === "landing"
+                          ? "Landing page"
+                          : "Стандартен"}
+                    </span>
+                    <DropdownChevron />
+                  </>
+                }
+              >
+                <DropdownOption
+                  selected={settings.template === "default"}
+                  onClick={() => setSettings({ ...settings, template: "default" })}
+                >
+                  Стандартен
+                </DropdownOption>
+                <DropdownOption
+                  selected={settings.template === "full_width"}
+                  onClick={() => setSettings({ ...settings, template: "full_width" })}
+                >
+                  Пълна ширина
+                </DropdownOption>
+                <DropdownOption
+                  selected={settings.template === "landing"}
+                  onClick={() => setSettings({ ...settings, template: "landing" })}
+                >
+                  Landing page
+                </DropdownOption>
+              </DropdownMenu>
+            </label>
+          </CollapsibleSection>
+          <CollapsibleSection
+            extensionPoint="page.settings.navigation"
+            title="Навигация"
+            storageKey="page-settings-navigation"
+            icon={Navigation}
+          >
+            <div className="react-checkbox-grid">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.show_in_navigation ?? true}
+                  onChange={(event) =>
+                    setSettings({ ...settings, show_in_navigation: event.target.checked })
+                  }
+                />{" "}
+                Показвай страницата в навигацията
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.use_parent_slugs ?? false}
+                  onChange={(event) =>
+                    setSettings({ ...settings, use_parent_slugs: event.target.checked })
+                  }
+                />{" "}
+                Използвай slug-овете на родителските страници в URL адреса
+              </label>
+            </div>
+            <label className="react-navigation-order-field">
+              Позиция в навигацията
+              <input
+                type="number"
+                min={0}
+                value={settings.menu_order ?? 0}
+                onChange={(event) =>
+                  setSettings({ ...settings, menu_order: Number(event.target.value) })
+                }
+              />
+              <small>По-малките числа се показват по-напред.</small>
+            </label>
+          </CollapsibleSection>
+          <CollapsibleSection
+            extensionPoint="page.settings.indexing"
+            title="Индексация"
+            storageKey="page-settings-indexing"
+            icon={Search}
+          >
+            <div className="react-checkbox-grid">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.no_index ?? false}
+                  onChange={(event) => setSettings({ ...settings, no_index: event.target.checked })}
+                />{" "}
+                Не индексирай страницата
+              </label>
             </div>
           </CollapsibleSection>
-        ))}
-        <div className="react-form-actions">
-          <LoadingButton
-            icon={<Save aria-hidden="true" />}
-            loading={saving}
-            className="react-primary-button"
-            type="submit"
-            disabled={saving}
-          >
-            {saving ? "Записване…" : "Запази настройките"}
-          </LoadingButton>
-          <button type="button" onClick={onBack}>
-            Отказ
-          </button>
-        </div>
-      </form>
+          <ExtensionPanels location="page.settings" context={panelContext} saves={saves} />
+          {Object.entries(groupedFields).map(([plugin, fields]) => (
+            <CollapsibleSection
+              key={plugin}
+              title={`Настройки от ${fields[0].plugin_name}`}
+              icon={Puzzle}
+            >
+              <p className="react-plugin-provider">
+                Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
+              </p>
+              <div className="react-plugin-fields-inner">
+                {fields.map((field) => {
+                  const current = pluginSettings[field.plugin]?.[field.id] ?? field.default
+                  return field.type === "checkbox" ? (
+                    <CheckboxField
+                      key={`${field.plugin}.${field.id}`}
+                      checked={Boolean(current)}
+                      label={field.label}
+                      description={field.hint}
+                      onChange={(event) => setPluginSetting(field, event.target.checked)}
+                    />
+                  ) : (
+                    <label key={`${field.plugin}.${field.id}`}>
+                      {field.label}
+                      {field.type === "textarea" ? (
+                        <Textarea
+                          value={String(current ?? "")}
+                          maxLength={field.max_length ?? 10000}
+                          onChange={(event) => setPluginSetting(field, event.target.value)}
+                        />
+                      ) : (
+                        <input
+                          value={String(current ?? "")}
+                          maxLength={field.max_length}
+                          onChange={(event) => setPluginSetting(field, event.target.value)}
+                        />
+                      )}
+                      {field.hint && <small>{field.hint}</small>}
+                    </label>
+                  )
+                })}
+              </div>
+            </CollapsibleSection>
+          ))}
+          <div className="react-form-actions">
+            <LoadingButton
+              icon={<Save aria-hidden="true" />}
+              loading={saving}
+              className="react-primary-button"
+              type="submit"
+              disabled={saving}
+            >
+              {saving ? "Записване…" : "Запази настройките"}
+            </LoadingButton>
+            <button type="button" onClick={onBack}>
+              Отказ
+            </button>
+          </div>
+        </form>
+      </ExtensionScope>
     </AdminShell>
   )
 }

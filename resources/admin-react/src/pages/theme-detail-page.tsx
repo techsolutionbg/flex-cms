@@ -165,6 +165,7 @@ export function ThemeDetailPage({
           {theme.catalog_error && <p role="status">{theme.catalog_error}</p>}
           {theme.error && <p className="react-error-text">{theme.error}</p>}
           <CollapsibleSection
+            extensionPoint="theme.detail.overview"
             title="Преглед и статус"
             className="theme-detail-overview"
             icon={Palette}
@@ -241,6 +242,7 @@ export function ThemeDetailPage({
             )}
           </CollapsibleSection>
           <CollapsibleSection
+            extensionPoint="theme.detail.information"
             title="Основна информация"
             icon={Info}
             storageKey={`theme:${id}:info`}
@@ -270,6 +272,7 @@ export function ThemeDetailPage({
             )}
           </CollapsibleSection>
           <CollapsibleSection
+            extensionPoint="theme.detail.features"
             title="Възможности и менюта"
             icon={ListTree}
             storageKey={`theme:${id}:features`}
@@ -309,6 +312,7 @@ export function ThemeDetailPage({
             )}
           </CollapsibleSection>
           <CollapsibleSection
+            extensionPoint="theme.detail.releases"
             title="Версии и промени"
             icon={History}
             storageKey={`theme:${id}:releases`}

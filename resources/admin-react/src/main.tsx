@@ -6,7 +6,12 @@ import { LoginPage } from "@/pages/login-page"
 import { InstallerPage } from "@/pages/installer-page"
 import { AdminWorkspace } from "@/components/admin-workspace"
 import { adminRedirectTarget, adminRoute, adminUrl } from "@/lib/admin-routes"
-import { getAdminTheme, setAdminTheme, loadAdminSettings } from "@/lib/admin-theme"
+import {
+  getAdminTheme,
+  setAdminTheme,
+  setAdminThemeUser,
+  loadAdminSettings,
+} from "@/lib/admin-theme"
 import { loadTimeSettings } from "@/lib/time-settings"
 import "./index.css"
 import { installRequestTracking } from "@/lib/request-tracker"
@@ -76,6 +81,8 @@ function App() {
           }
 
           if (response.ok) {
+            // Known before the panel settings load, so the user's own theme wins over the default.
+            setAdminThemeUser(body.user?.id ?? 0)
             if (body.user?.role === "super_admin") {
               try {
                 await Promise.all([loadAdminSettings(), loadTimeSettings()])

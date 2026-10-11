@@ -284,6 +284,7 @@ export function PluginsPage({
         </button>
       </div>
       <DataTable
+        extensionPoint="plugins.list"
         filterStorageKey="plugins"
         data={filteredPlugins}
         columns={columns}

@@ -13,7 +13,7 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { MediaPicker } from "@/components/media-picker"
 import { MediaPreview } from "@/components/media-browser"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
-import { ExtensionPanels, usePanelSaves } from "@/components/extension-page"
+import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { mediaRequest, type MediaRecord } from "@/lib/media-api"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
@@ -230,194 +230,211 @@ export function PageForm({
           changed?.()
         }}
       />
-      <form className="react-page-form" onSubmit={save}>
-        <CollapsibleSection title="Основна информация" icon={FolderTree}>
-          <div className="react-form-grid">
-            <label>
-              Заглавие *
-              <input
-                value={title}
-                maxLength={190}
-                onChange={(event) => {
-                  setTitle(event.target.value)
-                  if (!slugEdited) setSlug(slugify(event.target.value))
-                }}
-                required
-              />
-            </label>
-            <label>
-              URL адрес (slug) *
-              <input
-                value={slug}
-                maxLength={190}
-                onChange={(event) => {
-                  setSlug(event.target.value)
-                  setSlugEdited(true)
-                }}
-                required
-              />
-            </label>
-            <label>
-              Родителска страница
-              <DropdownMenu
-                ariaLabel="Избор на родителска страница"
-                triggerClassName="react-form-dropdown"
-                trigger={
-                  <>
-                    <span>
-                      {parentId
-                        ? (parents.find((item) => item.id === parentId)?.title ?? "Избери страница")
-                        : "Няма родителска страница"}
-                    </span>
-                    <DropdownChevron />
-                  </>
-                }
-              >
-                <DropdownOption selected={!parentId} onClick={() => setParentId(null)}>
-                  Няма родителска страница
-                </DropdownOption>
-                {parents.map((item) => (
-                  <DropdownOption
-                    key={item.id}
-                    selected={parentId === item.id}
-                    onClick={() => setParentId(item.id)}
-                  >
-                    {item.title}
+      <ExtensionScope value={{ context: panelContext, saves }}>
+        <form className="react-page-form" onSubmit={save}>
+          <CollapsibleSection
+            extensionPoint="page.editor.basic"
+            title="Основна информация"
+            icon={FolderTree}
+          >
+            <div className="react-form-grid">
+              <label>
+                Заглавие *
+                <input
+                  value={title}
+                  maxLength={190}
+                  onChange={(event) => {
+                    setTitle(event.target.value)
+                    if (!slugEdited) setSlug(slugify(event.target.value))
+                  }}
+                  required
+                />
+              </label>
+              <label>
+                URL адрес (slug) *
+                <input
+                  value={slug}
+                  maxLength={190}
+                  onChange={(event) => {
+                    setSlug(event.target.value)
+                    setSlugEdited(true)
+                  }}
+                  required
+                />
+              </label>
+              <label>
+                Родителска страница
+                <DropdownMenu
+                  ariaLabel="Избор на родителска страница"
+                  triggerClassName="react-form-dropdown"
+                  trigger={
+                    <>
+                      <span>
+                        {parentId
+                          ? (parents.find((item) => item.id === parentId)?.title ??
+                            "Избери страница")
+                          : "Няма родителска страница"}
+                      </span>
+                      <DropdownChevron />
+                    </>
+                  }
+                >
+                  <DropdownOption selected={!parentId} onClick={() => setParentId(null)}>
+                    Няма родителска страница
                   </DropdownOption>
-                ))}
-              </DropdownMenu>
-            </label>
-          </div>
-        </CollapsibleSection>
-        <CollapsibleSection
-          title="Основно изображение"
-          storageKey="page-featured-media"
-          icon={FileText}
-          className="page-featured-media-section"
-        >
-          {featured && (
-            <div className="media-featured-preview">
-              <MediaPreview record={featured} />
-              <p>{featured.title}</p>
+                  {parents.map((item) => (
+                    <DropdownOption
+                      key={item.id}
+                      selected={parentId === item.id}
+                      onClick={() => setParentId(item.id)}
+                    >
+                      {item.title}
+                    </DropdownOption>
+                  ))}
+                </DropdownMenu>
+              </label>
             </div>
-          )}
-          <div className="react-form-actions">
-            <button
-              className="react-secondary-button"
-              type="button"
-              disabled={saving}
-              onClick={() => setMediaOpen(true)}
-            >
-              {featuredId ? "Смени изображението" : "Избери изображение"}
-            </button>
-            {featuredId && (
+          </CollapsibleSection>
+          <CollapsibleSection
+            extensionPoint="page.editor.featured-image"
+            title="Основно изображение"
+            storageKey="page-featured-media"
+            icon={FileText}
+            className="page-featured-media-section"
+          >
+            {featured && (
+              <div className="media-featured-preview">
+                <MediaPreview record={featured} />
+                <p>{featured.title}</p>
+              </div>
+            )}
+            <div className="react-form-actions">
               <button
                 className="react-secondary-button"
                 type="button"
                 disabled={saving}
-                onClick={() => {
-                  setFeaturedId(null)
-                  changed?.()
-                }}
+                onClick={() => setMediaOpen(true)}
               >
-                Премахни изображението
+                {featuredId ? "Смени изображението" : "Избери изображение"}
               </button>
-            )}
-          </div>
-          <small className="react-field-hint">
-            Темата може да използва това изображение като водещо за страницата.
-          </small>
-        </CollapsibleSection>
-        <CollapsibleSection title="Съдържание" icon={FileText} className="content-editor-section">
-          <div className="react-form-field">
-            <span>Съдържание</span>
-            <RichTextEditor value={content} onChange={setContent} />
-          </div>
-        </CollapsibleSection>
-        <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
-        {Object.entries(groupedFields).map(([plugin, fields]) => (
+              {featuredId && (
+                <button
+                  className="react-secondary-button"
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    setFeaturedId(null)
+                    changed?.()
+                  }}
+                >
+                  Премахни изображението
+                </button>
+              )}
+            </div>
+            <small className="react-field-hint">
+              Темата може да използва това изображение като водещо за страницата.
+            </small>
+          </CollapsibleSection>
           <CollapsibleSection
-            key={plugin}
-            title={`Полета от ${fields[0].plugin_name}`}
-            icon={Puzzle}
+            extensionPoint="page.editor.content"
+            title="Съдържание"
+            icon={FileText}
+            className="content-editor-section"
           >
-            <p className="react-plugin-provider">
-              Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
-            </p>
-            <div className="react-plugin-fields-inner">
-              {fields.map((field) => {
-                const current = pluginFields[field.plugin]?.[field.id] ?? field.default
-                return field.type === "checkbox" ? (
-                  <CheckboxField
-                    key={`${field.plugin}.${field.id}`}
-                    checked={Boolean(current)}
-                    label={field.label}
-                    description={field.hint}
-                    onChange={(event) => setPluginField(field, event.target.checked)}
-                  />
-                ) : (
-                  <label key={`${field.plugin}.${field.id}`}>
-                    {field.label}
-                    {field.type === "textarea" ? (
-                      <Textarea
-                        value={String(current ?? "")}
-                        maxLength={field.max_length ?? 10000}
-                        onChange={(event) => setPluginField(field, event.target.value)}
-                      />
-                    ) : (
-                      <input
-                        value={String(current ?? "")}
-                        maxLength={field.max_length}
-                        onChange={(event) => setPluginField(field, event.target.value)}
-                      />
-                    )}
-                    {field.hint && <small>{field.hint}</small>}
-                  </label>
-                )
-              })}
+            <div className="react-form-field">
+              <span>Съдържание</span>
+              <RichTextEditor value={content} onChange={setContent} />
             </div>
           </CollapsibleSection>
-        ))}
-        <CollapsibleSection title="Публикуване" icon={Settings2}>
-          <label>
-            Статус
-            <DropdownMenu
-              ariaLabel="Избор на статус"
-              triggerClassName="react-form-dropdown"
-              trigger={
-                <>
-                  <span>{status === "published" ? "Публикувана" : "Чернова"}</span>
-                  <DropdownChevron />
-                </>
-              }
+          <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
+          {Object.entries(groupedFields).map(([plugin, fields]) => (
+            <CollapsibleSection
+              key={plugin}
+              title={`Полета от ${fields[0].plugin_name}`}
+              icon={Puzzle}
             >
-              <DropdownOption selected={status === "draft"} onClick={() => setStatus("draft")}>
-                Чернова
-              </DropdownOption>
-              <DropdownOption
-                selected={status === "published"}
-                onClick={() => setStatus("published")}
-              >
-                Публикувана
-              </DropdownOption>
-            </DropdownMenu>
-          </label>
-        </CollapsibleSection>
-        <div className="react-form-actions">
-          <LoadingButton
-            icon={<Save aria-hidden="true" />}
-            loading={saving}
-            className="react-primary-button"
-            type="submit"
-            disabled={saving}
+              <p className="react-plugin-provider">
+                Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
+              </p>
+              <div className="react-plugin-fields-inner">
+                {fields.map((field) => {
+                  const current = pluginFields[field.plugin]?.[field.id] ?? field.default
+                  return field.type === "checkbox" ? (
+                    <CheckboxField
+                      key={`${field.plugin}.${field.id}`}
+                      checked={Boolean(current)}
+                      label={field.label}
+                      description={field.hint}
+                      onChange={(event) => setPluginField(field, event.target.checked)}
+                    />
+                  ) : (
+                    <label key={`${field.plugin}.${field.id}`}>
+                      {field.label}
+                      {field.type === "textarea" ? (
+                        <Textarea
+                          value={String(current ?? "")}
+                          maxLength={field.max_length ?? 10000}
+                          onChange={(event) => setPluginField(field, event.target.value)}
+                        />
+                      ) : (
+                        <input
+                          value={String(current ?? "")}
+                          maxLength={field.max_length}
+                          onChange={(event) => setPluginField(field, event.target.value)}
+                        />
+                      )}
+                      {field.hint && <small>{field.hint}</small>}
+                    </label>
+                  )
+                })}
+              </div>
+            </CollapsibleSection>
+          ))}
+          <CollapsibleSection
+            extensionPoint="page.editor.publishing"
+            title="Публикуване"
+            icon={Settings2}
           >
-            {saving ? "Записване…" : "Запази страницата"}
-          </LoadingButton>
-          <button type="button" onClick={onBack}>
-            Отказ
-          </button>
-        </div>
-      </form>
+            <label>
+              Статус
+              <DropdownMenu
+                ariaLabel="Избор на статус"
+                triggerClassName="react-form-dropdown"
+                trigger={
+                  <>
+                    <span>{status === "published" ? "Публикувана" : "Чернова"}</span>
+                    <DropdownChevron />
+                  </>
+                }
+              >
+                <DropdownOption selected={status === "draft"} onClick={() => setStatus("draft")}>
+                  Чернова
+                </DropdownOption>
+                <DropdownOption
+                  selected={status === "published"}
+                  onClick={() => setStatus("published")}
+                >
+                  Публикувана
+                </DropdownOption>
+              </DropdownMenu>
+            </label>
+          </CollapsibleSection>
+          <div className="react-form-actions">
+            <LoadingButton
+              icon={<Save aria-hidden="true" />}
+              loading={saving}
+              className="react-primary-button"
+              type="submit"
+              disabled={saving}
+            >
+              {saving ? "Записване…" : "Запази страницата"}
+            </LoadingButton>
+            <button type="button" onClick={onBack}>
+              Отказ
+            </button>
+          </div>
+        </form>
+      </ExtensionScope>
     </AdminShell>
   )
 }

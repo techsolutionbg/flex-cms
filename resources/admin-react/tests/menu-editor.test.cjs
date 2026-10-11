@@ -15,6 +15,7 @@ function editor(id, capabilities) {
     dirty = 0
   const jsx = (type, props) => ({ type, props })
   const react = {
+    useMemo: (factory) => factory(),
     useState(initial) {
       const i = cursor++
       if (!(i in hooks)) hooks[i] = typeof initial === "function" ? initial() : initial
@@ -80,6 +81,10 @@ function editor(id, capabilities) {
       DropdownChevron: "DropdownChevron",
     },
     "@/components/admin-workspace-context": { useWorkspaceChanged: () => () => dirty++ },
+    "@/components/extension-page": {
+      ExtensionScope: "ExtensionScope",
+      usePanelSaves: () => ({ register: () => () => {}, run: async () => {} }),
+    },
     "@/lib/menu-api": api,
   }
   const exports = {}

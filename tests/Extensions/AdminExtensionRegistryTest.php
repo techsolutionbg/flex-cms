@@ -144,4 +144,78 @@ final class AdminExtensionRegistryTest extends TestCase
         $this->expectException(PluginPermissionDenied::class);
         $registry->registrar('acme/seo', [])->panel('page.editor', 'meta', 'SEO', 'panels.js');
     }
+
+    public function testExtensionsTargetNamedPointsAndSlots(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('acme/seo', ['admin.ui']);
+        $registrar->extend('page.editor.publishing', 'section.end', 'score', 'assets/panels.js', ['order' => 5]);
+        $registrar->extend('users.list', 'table.row-action', 'reset', 'assets/panels.js');
+        $registrar->extend('commerce.product.editor.pricing', 'section.nested', 'vat', 'assets/panels.js', ['label' => 'ДДС', 'icon' => 'sliders', 'default_open' => false]);
+        $registrar->extend('media.list', 'table.toolbar', 'type', 'assets/panels.js', ['export' => 'mediaFilter']);
+
+        $extensions = $registry->bootstrap()['extensions'];
+        self::assertSame(['acme-seo-score', 'acme-seo-reset', 'acme-seo-type', 'acme-seo-vat'], array_column($extensions, 'id'));
+        self::assertSame([
+            'id' => 'acme-seo-score',
+            'plugin' => 'acme/seo',
+            'point' => 'page.editor.publishing',
+            'slot' => 'section.end',
+            'label' => '',
+            'module' => '/extensions/acme/seo/assets/assets/panels.js',
+            'export' => 'createPanel',
+            'icon' => 'puzzle',
+            'default_open' => true,
+            'order' => 5,
+        ], $extensions[0]);
+        self::assertSame('createRowAction', $extensions[1]['export'], 'Each slot has its default export.');
+        self::assertSame('mediaFilter', $extensions[2]['export']);
+        self::assertSame(['ДДС', 'sliders', false], [$extensions[3]['label'], $extensions[3]['icon'], $extensions[3]['default_open']]);
+    }
+
+    public function testPanelsAreShorthandForExtensions(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('acme/seo', ['admin.ui']);
+        $registrar->panel('page.editor', 'meta', 'SEO', 'assets/panels.js');
+        $registrar->panel('pages.list.column', 'score', 'SEO', 'assets/panels.js');
+        $registrar->panel('settings.tab', 'settings', 'SEO', 'assets/panels.js');
+        $registrar->panel('commerce.product.editor', 'product', 'SEO', 'assets/panels.js');
+
+        $bootstrap = $registry->bootstrap();
+        self::assertCount(4, $bootstrap['panels'], 'The panels list is kept for existing clients.');
+        $targets = array_map(static fn(array $extension): string => $extension['point'] . ' ' . $extension['slot'] . ' ' . $extension['export'], $bootstrap['extensions']);
+        sort($targets);
+        self::assertSame([
+            'commerce.product.editor screen.section createPanel',
+            'page.editor screen.section createPanel',
+            'pages.list table.column createColumn',
+            'settings screen.tab createPanel',
+        ], $targets);
+    }
+
+    public function testInvalidExtensionsAreRejected(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        foreach ([
+            ['Page.Editor', 'section.end', 'x', 'p.js', []],
+            ['page..editor', 'section.end', 'x', 'p.js', []],
+            ['page.editor', 'section.middle', 'x', 'p.js', []],
+            ['page.editor', 'section.end', 'Bad', 'p.js', []],
+            ['page.editor', 'section.end', 'x', '../p.js', []],
+            ['page.editor', 'screen.section', 'x', 'p.js', []],
+            ['page.editor', 'section.end', 'x', 'p.js', ['icon' => 'rocket']],
+            ['page.editor', 'section.end', 'x', 'p.js', ['export' => 'bad-name']],
+            ['page.editor', 'section.end', 'x', 'p.js', ['order' => -1]],
+        ] as [$point, $slot, $id, $module, $options]) {
+            try {
+                $registry->registrar('acme/seo', ['admin.ui'])->extend($point, $slot, $id, $module, $options);
+                self::fail('Expected an invalid extension to be rejected: ' . json_encode([$point, $slot, $id, $module, $options]));
+            } catch (\InvalidArgumentException) {
+                self::assertSame([], $registry->bootstrap()['extensions']);
+            }
+        }
+        $this->expectException(PluginPermissionDenied::class);
+        $registry->registrar('acme/seo', [])->extend('page.editor', 'section.end', 'x', 'p.js');
+    }
 }

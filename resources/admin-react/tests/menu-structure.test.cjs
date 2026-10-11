@@ -25,6 +25,7 @@ function structure({
   const modules = {
     "@/components/loading-button": { LoadingButton: "button" },
     react: {
+      useMemo: (factory) => factory(),
       useState(initial) {
         const index = cursor++
         if (!(index in hooks)) hooks[index] = initial
@@ -58,6 +59,10 @@ function structure({
     "@/components/admin-shell": { AdminShell: "AdminShell" },
     "@/components/breadcrumbs": { Breadcrumbs: "Breadcrumbs" },
     "@/components/collapsible-section": { CollapsibleSection: "CollapsibleSection" },
+    "@/components/extension-page": {
+      ExtensionScope: "ExtensionScope",
+      usePanelSaves: () => ({ register: () => () => {}, run: async () => {} }),
+    },
     "@/lib/menu-api": {
       menuRequest: async (url, method = "GET", body) => {
         calls.push(url)

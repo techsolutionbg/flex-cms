@@ -22,6 +22,8 @@ Flex Galleries in `plugins/flex/galleries` is a reference implementation. Its fi
 
 ## Panels inside platform screens
 
+> Since Flex CMS 0.1.60 panels are part of the general extension points: every named section and table accepts plugin content through `$context->admin->extend()`. See [admin-extension-points.md](admin-extension-points.md) for the slots and the catalog of names; `panel()` below remains as shorthand.
+
 A plugin can also place a React panel directly inside a platform screen, so administrators work with its features where they edit content instead of on a separate page:
 
 ```php

@@ -1,8 +1,14 @@
 import { MoreHorizontal } from "lucide-react"
-import type { ReactNode } from "react"
-import { DropdownMenu } from "./dropdown-menu"
+import { useContext, type ReactNode } from "react"
+import { DropdownMenu, DropdownOption } from "./dropdown-menu"
+import { RowExtensionActionsContext } from "./extension-runtime"
 
 export function TableActionsMenu({ children }: { children: ReactNode }) {
+  // Row actions that plugins add to this table (slot table.row-action), after the screen's own options.
+  const extension = useContext(RowExtensionActionsContext)
+  const actions = (extension?.actions ?? []).filter(
+    (action) => !action.visible || action.visible(extension!.row),
+  )
   return (
     <DropdownMenu
       ariaLabel="Действия"
@@ -10,6 +16,15 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
       trigger={<MoreHorizontal aria-hidden="true" />}
     >
       {children}
+      {actions.map((action) => (
+        <DropdownOption
+          key={action.label}
+          danger={action.danger}
+          onClick={() => void action.onSelect(extension!.row, extension!.helpers)}
+        >
+          {action.label}
+        </DropdownOption>
+      ))}
     </DropdownMenu>
   )
 }
