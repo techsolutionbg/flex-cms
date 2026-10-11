@@ -8,9 +8,20 @@ $context->admin?->page('items', 'Items', 'assets/admin.js', true);
 
 The module must also be listed in `frontend.scripts` with the `frontend.assets` permission. It is served only while the plugin is active. The generated page URL is `/extension-pages/vendor-plugin-items`; create and edit routes may append `/create` or `/{id}/edit`.
 
+A page that should not appear in the sidebar, for example an editor opened only from a row action, passes `'hidden' => true` in the navigation options (Flex CMS 0.1.61+). It keeps its address and opens only by it:
+
+```php
+$context->admin?->page('editor', 'Editor', 'assets/admin.js', false, ['hidden' => true]);
+// opened at /extension-pages/vendor-plugin-editor/{id}/edit
+```
+
+The admin workspace opens plugin pages only at the page address, `/create` and `/{id}/edit`; other sub-paths fall back to the dashboard.
+
 Modules export `createPage(host)`, returning a React component that receives `path` and `navigate(path)`. Embeddable modules additionally export `createEmbedPicker(host)`; the editor passes `onInsert(text)` and `onClose()`. The core provides its existing React instance, selected icons, universal UI components, `request(url, method, body, signal)` with credentials/CSRF/timeouts, toast notifications, and hooks `useWorkspaceChanged()` and `useWorkspaceSaved()`.
 
-`host.components` includes Breadcrumbs, CollapsibleSection, ConfirmDialog, DataTable, DropdownMenu, DropdownOption, DropdownChevron, TableActionsMenu, LoadingButton, MediaPicker, Input, Textarea, Button and Dialog. Page components render inside AdminShell, sharing navigation, reload, workspace tabs, local persistence and theme tokens. Plugins must mark edits and successful saves using the provided hooks.
+`host.components` includes Breadcrumbs, CollapsibleSection, ConfirmDialog, DataTable, DropdownMenu, DropdownOption, DropdownChevron, TableActionsMenu, LoadingButton, MediaPicker, Input, Textarea, Button, Dialog and Hint. Page components render inside AdminShell, sharing navigation, reload, workspace tabs, local persistence and theme tokens. Plugins must mark edits and successful saves using the provided hooks.
+
+The header of every screen has a **Помощ** (help) button. It opens a dialog with the guidance of the current screen and a switch that shows or hides inline guidance for the user (stored in the browser). Plugins add guidance with `host.usePageHelp({title, content})`, called in their page component on every render; the entry is shown while the component is mounted. Short inline guidance uses `host.components.Hint` (`{children}`): it is hidden when the user turns guidance off, and its close button does the same. Status messages that the user must see, such as errors or conflicts, should not use `Hint`.
 
 `MediaPicker` supports `multiple: true` and `onSelectMany(records)` in addition to its existing single-image mode. Original media metadata must not be changed by gallery-specific fields.
 

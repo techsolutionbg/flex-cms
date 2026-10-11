@@ -127,6 +127,7 @@ export function AdminSidebar({
         items.unshift({ label: "Менюта", icon: ListTree, href: "/menus" })
       }
       for (const page of extensionPages) {
+        if (page.navigation?.hidden) continue
         const requested = page.navigation?.group ?? "extensions"
         const groupId = groups.some((entry) => entry.id === requested) ? requested : "extensions"
         if (groupId === group.id)

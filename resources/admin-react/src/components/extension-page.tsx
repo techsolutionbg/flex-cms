@@ -29,6 +29,7 @@ import { DropdownMenu, DropdownOption, DropdownChevron } from "./dropdown-menu"
 import { TableActionsMenu } from "./table-actions-menu"
 import { LoadingButton } from "./loading-button"
 import { MediaPicker } from "./media-picker"
+import { Hint, usePageHelp } from "./page-help"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { RichTextEditor } from "./rich-text-editor"
@@ -67,7 +68,7 @@ export type ExtensionPageDescriptor = {
   label: string
   href: string
   module: string
-  navigation?: { group: string; icon: string; section?: string; order?: number }
+  navigation?: { group: string; icon: string; section?: string; order?: number; hidden?: boolean }
   embeddable: boolean
 }
 
@@ -157,6 +158,8 @@ const host = {
   usePanelSaves,
   // Plugin screens share their record with extensions inside them, like the platform screens.
   useExtensionScope,
+  // Adds guidance for the current screen to the header's help dialog; components.Hint shows inline guidance.
+  usePageHelp,
   // Opens a settings tab registered with the settings.tab panel location.
   openSettingsTab,
   components: {
@@ -180,6 +183,7 @@ const host = {
     ExtensionPanels,
     ExtensionScope,
     ExtensionSlot,
+    Hint,
   },
 }
 export function ExtensionModule({

@@ -63,6 +63,20 @@ final class AdminExtensionRegistryTest extends TestCase
         $registrar->page('invalid', 'Невалидно', 'admin.js', false, ['group' => 'unknown']);
     }
 
+    public function testHiddenPagesAreLeftOutOfTheSidebar(): void
+    {
+        $registry = new AdminExtensionRegistry();
+        $registrar = $registry->registrar('acme/editor', ['admin.ui']);
+        $registrar->page('page', 'Редактор', 'admin.js', false, ['group' => 'content', 'hidden' => true]);
+        $registrar->page('list', 'Списък', 'admin.js');
+        $bootstrap = $registry->bootstrap();
+        self::assertSame(['group' => 'content', 'icon' => 'puzzle', 'hidden' => true], $bootstrap['pages'][0]['navigation']);
+        self::assertSame('/extension-pages/acme-editor-page', $bootstrap['pages'][0]['href']);
+        self::assertSame(['/extension-pages/acme-editor-list'], array_column($bootstrap['sidebar'], 'href'));
+        $this->expectException(\InvalidArgumentException::class);
+        $registrar->page('other', 'Друго', 'admin.js', false, ['hidden' => 'yes']);
+    }
+
     public function testPagesCanDeclareAShopSectionAndOrder(): void
     {
         $registry = new AdminExtensionRegistry();

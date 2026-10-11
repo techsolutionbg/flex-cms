@@ -96,6 +96,82 @@
   }
 }
 
+/* Page help: the header dialog and inline guidance (components/page-help.tsx). */
+.page-help-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+}
+.page-help-body {
+  display: grid;
+  gap: 1.25rem;
+}
+.page-help-entry h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+.page-help-content {
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.page-help-content > :first-child {
+  margin-top: 0;
+}
+.page-help-content > :last-child {
+  margin-bottom: 0;
+}
+.page-help-content ul {
+  padding-left: 1.25rem;
+}
+.page-help-empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.page-help-settings {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.admin-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.75rem 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--section-expanded-border);
+  border-radius: 0.5rem;
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.admin-hint > svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--text-secondary);
+}
+.admin-hint-text {
+  flex: 1;
+  min-width: 0;
+}
+.admin-hint-close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.admin-hint-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.admin-hint-close:focus-visible {
+  outline: 2px solid var(--control-accent);
+  outline-offset: 1px;
+}
+
 .admin-workspace-tabs {
   display: flex;
   flex-shrink: 0;

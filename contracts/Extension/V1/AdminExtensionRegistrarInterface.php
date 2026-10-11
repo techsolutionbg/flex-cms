@@ -10,7 +10,7 @@ interface AdminExtensionRegistrarInterface
 
     /**
      * Register an ES module exporting createPage(host) and optionally createEmbedPicker(host).
-     * @param array{group?: string, icon?: string, section?: string, order?: int} $navigation Optional sidebar placement, icon, and shop subgroup.
+     * @param array{group?: string, icon?: string, section?: string, order?: int, hidden?: bool} $navigation Optional sidebar placement, icon, and shop subgroup; hidden pages are left out of the sidebar and opened only by their address (/extension-pages/{plugin}-{id}, /create or /{id}/edit).
      */
     public function page(string $id, string $label, string $module, bool $embeddable = false, array $navigation = []): void;
 

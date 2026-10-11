@@ -4,6 +4,7 @@ import { LoadingButton } from "./loading-button"
 import { useContext, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
 import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-context"
+import { PageHelpButton, PageHelpProvider, usePageHelpRegistry } from "./page-help"
 
 type AdminShellProps = {
   children: ReactNode
@@ -23,6 +24,7 @@ export function AdminShell({
   loggingOut,
 }: AdminShellProps) {
   const workspace = useContext(AdminWorkspaceContext)
+  const help = usePageHelpRegistry()
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     try {
       const stored = Number(window.localStorage.getItem("flex-admin-sidebar-width"))
@@ -123,6 +125,7 @@ export function AdminShell({
             <Menu size={21} aria-hidden="true" />
           </button>
           <span className="admin-topbar-title-react">{title}</span>
+          <PageHelpButton entries={help.entries} />
           {workspace && (
             <LoadingButton
               className="admin-page-refresh"
@@ -148,7 +151,9 @@ export function AdminShell({
           </LoadingButton>
         </header>
         <AdminWorkspaceTabs />
-        <main className="admin-content-react">{children}</main>
+        <main className="admin-content-react">
+          <PageHelpProvider registry={help.registry}>{children}</PageHelpProvider>
+        </main>
       </div>
     </div>
   )

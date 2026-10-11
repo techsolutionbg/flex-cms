@@ -161,6 +161,10 @@ final class AdminExtensionRegistry
         if (!is_int($order) || $order < 0) {
             throw new \InvalidArgumentException('Invalid admin navigation order.');
         }
+        $hidden = $navigation['hidden'] ?? false;
+        if (!is_bool($hidden)) {
+            throw new \InvalidArgumentException('Invalid admin navigation visibility.');
+        }
         $placement = ['group' => $group, 'icon' => $icon];
         if (is_string($section)) {
             $placement['section'] = $section;
@@ -172,7 +176,12 @@ final class AdminExtensionRegistry
         $assetVersion = $assetHash === false ? '' : '?v=' . substr($assetHash, 0, 16);
         $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
             'module' => '/extensions/' . implode('/', array_map('rawurlencode', explode('/', $pluginId))) . '/assets/' . $module . $assetVersion, 'embeddable' => $embeddable, 'navigation' => $placement];
-        $this->addSidebarItem($key, trim($label), $href, 50);
+        if ($hidden) {
+            // Opened only by its address, for example from a row action; not listed in the sidebar.
+            $this->pages[$key]['navigation']['hidden'] = true;
+        } else {
+            $this->addSidebarItem($key, trim($label), $href, 50);
+        }
     }
 
     /** @param array{order?: mixed, icon?: mixed, default_open?: mixed, export?: mixed} $options */
