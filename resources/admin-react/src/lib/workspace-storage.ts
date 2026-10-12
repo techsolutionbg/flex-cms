@@ -2,7 +2,6 @@ const simplePaths = new Set([
   "/",
   "/pages",
   "/media",
-  "/media/upload",
   "/menus",
   "/menus/create",
   "/users",
@@ -24,7 +23,9 @@ export function isWorkspacePath(value: unknown): value is string {
     (simplePaths.has(value) ||
       /^\/pages\/\d+\/(edit|settings)$/.test(value) ||
       /^\/media\/\d+\/edit$/.test(value) ||
-      /^\/extension-pages\/[a-z][a-z0-9_-]*(?:\/(?:create|\d+\/edit))?$/.test(value) ||
+      /^\/extension-pages\/[a-z][a-z0-9_-]*(?:\/(?:create|[a-z0-9][a-z0-9_-]*\/edit|inbox(?:\/submissions\/[0-9]{14}-[a-f0-9]{16})?))?$/.test(
+        value,
+      ) ||
       /^\/themes\/[a-z0-9][a-z0-9._-]*$/.test(value) ||
       /^\/users\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/edit$/.test(value) ||
@@ -39,8 +40,18 @@ export function readWorkspace(key: string): { paths: string[]; active: string | 
       return { paths: [], active: null }
     const saved = JSON.parse(window.localStorage.getItem(key) ?? "null")
     if (saved?.version !== 1 || !Array.isArray(saved.paths)) return { paths: [], active: null }
-    const paths = [...new Set<string>(saved.paths.filter(isWorkspacePath))].slice(0, 30)
-    return { paths, active: paths.includes(saved.active) ? saved.active : null }
+    const normalizePath = (value: string) => (value === "/media/upload" ? "/media" : value)
+    const paths = [
+      ...new Set<string>(
+        saved.paths
+          .filter((value): value is string => typeof value === "string")
+          .map(normalizePath)
+          .filter(isWorkspacePath),
+      ),
+    ].slice(0, 30)
+    const active =
+      typeof saved.active === "string" ? normalizePath(saved.active) : null
+    return { paths, active: active && paths.includes(active) ? active : null }
   } catch {
     return { paths: [], active: null }
   }

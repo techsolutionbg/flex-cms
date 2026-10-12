@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
 import { mediaSize, uploadMedia, type MediaRecord } from "@/lib/media-api"
@@ -29,6 +29,7 @@ export function MediaUploader({
     "video/webm",
   ],
   onBusyChange,
+  variant = "inline",
 }: {
   maxBytes: number
   maxImageMegapixels?: number
@@ -36,6 +37,7 @@ export function MediaUploader({
   imagesOnly?: boolean
   allowedTypes?: string[]
   onBusyChange?: (busy: boolean) => void
+  variant?: "inline" | "dialog"
 }) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [busy, setBusy] = useState(false)
@@ -68,6 +70,15 @@ export function MediaUploader({
   function patch(id: string, values: Partial<Task>) {
     setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...values } : task)))
   }
+  function taskProgress(task: Task): number {
+    if (task.status === "done" || task.status === "error") return 100
+    if (task.status === "uploading") return task.progress
+    return 0
+  }
+  const overallProgress = useMemo(() => {
+    if (tasks.length === 0) return 0
+    return Math.round(tasks.reduce((sum, task) => sum + taskProgress(task), 0) / tasks.length)
+  }, [tasks])
   async function upload(files: File[]) {
     if (controller.current || files.length === 0) return
     if (files.length > 20) {
@@ -108,7 +119,7 @@ export function MediaUploader({
         const record = await uploadMedia(file, (progress) => patch(id, { progress }), abort.signal)
         patch(id, { status: "done", progress: 100 })
         onUploaded(record)
-        window.dispatchEvent(new Event("flex-media-uploaded"))
+        if (variant !== "dialog") window.dispatchEvent(new Event("flex-media-uploaded"))
       } catch (failure) {
         patch(id, {
           status: "error",
@@ -123,7 +134,7 @@ export function MediaUploader({
   }
   return (
     <section
-      className={`media-upload${dragging && !busy ? " is-dragging" : ""}`}
+      className={`media-upload${variant === "dialog" ? " media-upload--dialog" : ""}${dragging && !busy ? " is-dragging" : ""}`}
       aria-label="Качване на медия"
       onDragOver={(event) => {
         event.preventDefault()
@@ -171,25 +182,60 @@ export function MediaUploader({
         </p>
       )}
       {tasks.length > 0 && (
-        <ul className="media-upload-tasks" aria-live="polite">
-          {tasks.map((task) => (
-            <li key={task.id}>
-              <span>{task.name}</span>
-              <progress max={100} value={task.progress} aria-label={`Качване на ${task.name}`} />
-              <span>
-                {task.status === "done"
-                  ? "Готово"
-                  : task.status === "error"
-                    ? task.error
-                    : task.status === "waiting"
-                      ? "Изчаква"
-                      : task.progress === 100
-                        ? "Обработка…"
-                        : `${task.progress}%`}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="media-upload-progress-panel" aria-live="polite">
+          <div
+            className="media-upload-overall"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={overallProgress}
+            aria-label="Общ напредък на качването"
+          >
+            <div className="media-upload-overall-ring-wrap">
+              <svg className="media-upload-overall-ring" viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="media-upload-overall-track" cx="22" cy="22" r="18" />
+                <circle
+                  className="media-upload-overall-fill"
+                  cx="22"
+                  cy="22"
+                  r="18"
+                  pathLength={100}
+                  strokeDasharray={`${overallProgress} ${100 - overallProgress}`}
+                />
+              </svg>
+              <span className="media-upload-overall-value">{overallProgress}%</span>
+            </div>
+            <span className="media-upload-overall-label">
+              {tasks.filter((task) => task.status === "done").length} / {tasks.length} файла
+            </span>
+          </div>
+          <ul className="media-upload-tasks">
+            {tasks.map((task) => (
+              <li key={task.id}>
+                <div className="media-upload-task-head">
+                  <span className="media-upload-task-name">{task.name}</span>
+                  <span className="media-upload-task-status">
+                    {task.status === "done"
+                      ? "Готово"
+                      : task.status === "error"
+                        ? task.error
+                        : task.status === "waiting"
+                          ? "Изчаква"
+                          : task.progress === 100
+                            ? "Обработка…"
+                            : `${task.progress}%`}
+                  </span>
+                </div>
+                <progress
+                  className="media-upload-task-bar"
+                  max={100}
+                  value={taskProgress(task)}
+                  aria-label={`Качване на ${task.name}`}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {busy && (
         <Button variant="secondary" type="button" onClick={() => controller.current?.abort()}>

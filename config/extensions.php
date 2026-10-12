@@ -5,6 +5,10 @@ declare(strict_types=1);
 return [
     'plugins_path' => $_ENV['PLUGINS_PATH'] ?? 'plugins',
     'themes_path' => $_ENV['THEMES_PATH'] ?? 'themes',
+    'admin' => [
+        // Seconds to reuse the assembled admin plugins list without rescanning and remote version checks.
+        'plugins_snapshot_ttl' => (int) ($_ENV['ADMIN_PLUGINS_SNAPSHOT_TTL'] ?? 180),
+    ],
     'updates' => [
         'channel' => $_ENV['UPDATE_CHANNEL'] ?? 'stable',
         'enabled' => filter_var($_ENV['UPDATE_CHECK_ENABLED'] ?? true, FILTER_VALIDATE_BOOL),

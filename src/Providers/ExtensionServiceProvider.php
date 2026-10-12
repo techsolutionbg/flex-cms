@@ -15,6 +15,8 @@ use Flex\Extensions\PageSettingsRegistry;
 use Flex\Extensions\PluginRouteRegistrar;
 use Flex\Extensions\PluginManager;
 use Flex\Extensions\PluginEntrypointLoader;
+use Flex\Admin\AdminPluginsSnapshotCache;
+use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\PluginRuntime;
 use Flex\Extensions\PublicAssetQueue;
@@ -23,6 +25,7 @@ use Flex\Pages\PageService;
 use Psr\Container\ContainerInterface;
 
 use function DI\autowire;
+use function DI\create;
 use function DI\get;
 
 final class ExtensionServiceProvider implements ServiceProviderInterface
@@ -31,15 +34,19 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
     {
         return [
             PluginRegistry::class => autowire(),
+            AdminPluginsSnapshotCache::class => create()->constructor(get('base_path'), get(ConfigRepositoryInterface::class)),
             PluginEntrypointLoader::class => autowire(),
+            \Flex\Extensions\PluginServicesFactory::class => autowire(),
             ExtensionApi::class => autowire(),
             ExtensionApiInterface::class => get(ExtensionApi::class),
             PluginManager::class => autowire()
+                ->constructorParameter('services', get(\Flex\Extensions\PluginServicesFactory::class))
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
                 ->constructorParameter('adminExtensions', get(AdminExtensionRegistry::class))
                 ->constructorParameter('pageFields', get(PageFieldRegistry::class))
                 ->constructorParameter('pageSettings', get(PageSettingsRegistry::class)),
             PluginRuntime::class => autowire()
+                ->constructorParameter('services', get(\Flex\Extensions\PluginServicesFactory::class))
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
                 ->constructorParameter('adminExtensions', get(AdminExtensionRegistry::class))
                 ->constructorParameter('pageFields', get(PageFieldRegistry::class))

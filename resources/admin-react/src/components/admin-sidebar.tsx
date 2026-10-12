@@ -21,6 +21,7 @@ import { useContext, useEffect, useState } from "react"
 import { LoadingButton } from "./loading-button"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import { adminUrl } from "@/lib/admin-routes"
+import { BrandLogo } from "./brand-logo"
 
 type SidebarItem = {
   label: string
@@ -219,7 +220,7 @@ export function AdminSidebar({
         className={`admin-sidebar-react${open ? " is-open" : ""}${collapsed ? " is-collapsed" : ""}`}
       >
         <div className="sidebar-brand-react">
-          <img src="/assets/brand/logo.png" alt="Flex CMS" />
+          <BrandLogo />
         </div>
 
         <nav aria-label="Основна навигация">

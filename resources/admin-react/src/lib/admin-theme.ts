@@ -82,6 +82,26 @@ export function getAdminTheme(): AdminThemeMode {
   return "system"
 }
 
+export type AdminColorScheme = "light" | "dark"
+
+export function readAdminColorScheme(): AdminColorScheme {
+  if (typeof document === "undefined") return "light"
+  return document.documentElement.dataset.adminTheme === "dark" ? "dark" : "light"
+}
+
+/** Notifies when the resolved light/dark appearance of the panel changes. */
+export function subscribeAdminColorScheme(onChange: () => void): () => void {
+  const root = document.documentElement
+  const media = window.matchMedia?.("(prefers-color-scheme: dark)")
+  const observer = new MutationObserver(onChange)
+  observer.observe(root, { attributes: true, attributeFilter: ["data-admin-theme"] })
+  media?.addEventListener("change", onChange)
+  return () => {
+    observer.disconnect()
+    media?.removeEventListener("change", onChange)
+  }
+}
+
 export function setAdminTheme(theme: AdminThemeMode): void {
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches === true
   document.documentElement.dataset.adminThemeMode = theme

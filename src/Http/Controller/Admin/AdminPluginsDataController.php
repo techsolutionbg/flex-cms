@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Flex\Http\Controller\Admin;
 
+use Flex\Admin\AdminPluginsSnapshotCache;
 use Flex\Auth\AuthenticatedUser;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
+use Flex\Extensions\Plugin;
 use Flex\Extensions\PluginRegistry;
 use Flex\Updates\Remote\RemoteCatalogClient;
 use Psr\Http\Message\ResponseInterface;
@@ -19,6 +21,7 @@ final readonly class AdminPluginsDataController
         private AuthenticationInterface $authentication,
         private PluginRegistry $plugins,
         private RemoteCatalogClient $remoteCatalog,
+        private AdminPluginsSnapshotCache $snapshot,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -30,27 +33,43 @@ final readonly class AdminPluginsDataController
             return $this->responses->json(['error' => ['status' => 403, 'message' => 'Достъпът е забранен.']], 403);
         }
 
-        $availableVersions = [];
-        try {
-            $index = $this->remoteCatalog->pluginIndex();
-            foreach (array_keys($index->manifests) as $pluginId) {
-                $releases = $this->remoteCatalog->pluginManifest($pluginId)->releases;
-                usort($releases, static fn($left, $right): int => version_compare($right->version->value, $left->version->value));
-                if ($releases !== []) {
-                    $availableVersions[$pluginId] = [
-                        'version' => $releases[0]->version->value,
-                        'release_notes' => $releases[0]->releaseNotes,
-                    ];
-                }
-            }
-        } catch (\Throwable) {
-            // The update action remains disabled when the remote catalog is unavailable.
+        $hardRefresh = $this->snapshot->wantsHardRefresh($request);
+        if ($hardRefresh) {
+            $this->snapshot->forget();
+        } elseif (($cached = $this->snapshot->read()) !== null) {
+            return $this->responses->json(['plugins' => $cached], 200, [
+                'Cache-Control' => 'private, max-age=30',
+                'X-Flex-Cache' => 'HIT',
+            ]);
         }
 
+        $extensions = $this->buildExtensions();
+        $this->snapshot->write($extensions);
+
+        return $this->responses->json(['plugins' => $extensions], 200, [
+            'Cache-Control' => 'private, max-age=30',
+            'X-Flex-Cache' => $hardRefresh ? 'REFRESH' : 'MISS',
+        ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function buildExtensions(): array
+    {
+        $discovered = $this->plugins->discover();
+        /** @var array<string, Plugin> $registered */
+        $registered = [];
+        foreach ($this->plugins->all() as $plugin) {
+            $registered[(string) $plugin->getAttribute('id')] = $plugin;
+        }
+
+        $availableVersions = $this->availableVersionsFor(
+            array_map(static fn(array $entry): string => $entry['manifest']->id, $discovered),
+        );
+
         $extensions = [];
-        foreach ($this->plugins->discover() as $entry) {
-            $registered = $this->plugins->find($entry['manifest']->id);
-            $plugin = $registered?->toPublicArray() ?? [
+        foreach ($discovered as $entry) {
+            $registeredPlugin = $registered[$entry['manifest']->id] ?? null;
+            $plugin = $registeredPlugin?->toPublicArray() ?? [
                 'id' => $entry['manifest']->id,
                 'name' => $entry['manifest']->name,
                 'version' => $entry['manifest']->version,
@@ -75,6 +94,41 @@ final readonly class AdminPluginsDataController
             $extensions[] = $plugin;
         }
 
-        return $this->responses->json(['plugins' => $extensions]);
+        return $extensions;
+    }
+
+    /**
+     * @param list<string> $pluginIds
+     *
+     * @return array<string, array{version: string, release_notes: string|null}>
+     */
+    private function availableVersionsFor(array $pluginIds): array
+    {
+        $availableVersions = [];
+        try {
+            $index = $this->remoteCatalog->pluginIndex();
+            foreach ($pluginIds as $pluginId) {
+                if (!isset($index->manifests[$pluginId])) {
+                    continue;
+                }
+                try {
+                    $releases = $this->remoteCatalog->pluginManifest($pluginId)->releases;
+                } catch (\Throwable) {
+                    continue;
+                }
+                usort($releases, static fn($left, $right): int => version_compare($right->version->value, $left->version->value));
+                if ($releases === []) {
+                    continue;
+                }
+                $availableVersions[$pluginId] = [
+                    'version' => $releases[0]->version->value,
+                    'release_notes' => $releases[0]->releaseNotes,
+                ];
+            }
+        } catch (\Throwable) {
+            // The update action remains disabled when the remote catalog is unavailable.
+        }
+
+        return $availableVersions;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Http\Controller\Admin;
 
+use Flex\Admin\AdminPluginsSnapshotCache;
 use Flex\Auth\AuthenticatedUser;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
@@ -17,6 +18,7 @@ final readonly class AdminPluginUploadController
     public function __construct(
         private AuthenticationInterface $authentication,
         private PluginPackageInstaller $installer,
+        private AdminPluginsSnapshotCache $pluginSnapshot,
         private ResponseFactoryInterface $responses,
     ) {}
 
@@ -33,6 +35,7 @@ final readonly class AdminPluginUploadController
                 throw new \RuntimeException('Изберете ZIP пакет на разширение.');
             }
             $id = $this->installer->installUpload($uploaded);
+            $this->pluginSnapshot->forget();
 
             return $this->responses->json(['plugin_id' => $id, 'message' => 'Разширението е качено и инсталирано.']);
         } catch (\Throwable $exception) {

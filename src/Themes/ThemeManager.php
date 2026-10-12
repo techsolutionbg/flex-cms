@@ -88,6 +88,7 @@ final class ThemeManager
                     'flex_menu_html' => $flexMenuHtml,
                     'flex_media' => $flexMedia,
                     'flex_time' => static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style),
+                    'flex_extension' => fn(string $extension, string $id): string => (string) $this->extensionApi?->applyFilters('public.extension.render', '', ['extension' => $extension, 'id' => $id]),
                     // Built when the theme prints it, after groups asked for while the template runs.
                     'frontend_extension_tags' => $this->frontendAssets === null ? '' : new DeferredHtml(fn(): string => $this->frontendAssets->publicTags()),
                     'head_tags' => is_string($data['head_tags'] ?? null) ? $data['head_tags'] : '',
@@ -109,6 +110,7 @@ final class ThemeManager
             $this->twig->addFunction(new TwigFunction('site_format_date', fn(\DateTimeInterface $date): string => $this->generalSettings?->formatDate($date) ?? $date->format('d.m.Y H:i')));
             $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
             $this->twig->addFunction(new TwigFunction('flex_time', static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style), ['is_safe' => ['html']]));
+            $this->twig->addFunction(new TwigFunction('flex_extension', fn(string $extension, string $id): string => (string) $this->extensionApi?->applyFilters('public.extension.render', '', ['extension' => $extension, 'id' => $id]), ['is_safe' => ['html']]));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
             // The public files of plugins for this page, as in PHP themes (Flex CMS 0.1.62+).
             $this->twig->addFunction(new TwigFunction('frontend_extension_tags', fn(): string => $this->frontendAssets?->publicTags() ?? '', ['is_safe' => ['html']]));

@@ -77,6 +77,8 @@ final class FlexConsoleApplication extends Application
         PluginManager $pluginManager,
         PluginRegistry $pluginRegistry,
         \Flex\Media\MediaService $media,
+        \Flex\Extensions\PluginRuntime $pluginRuntime,
+        \Flex\Extension\V1\ExtensionApiInterface $extensionApi,
     ) {
         parent::__construct('Flex CMS', $registry->current()->value);
 
@@ -86,6 +88,7 @@ final class FlexConsoleApplication extends Application
             new ConfigCacheCommand($configurationCache),
             new ConfigClearCommand($configurationCache),
             new DatabaseStatusCommand($database),
+            new \Flex\Console\Command\ExtensionsMaintainCommand($pluginRuntime, $extensionApi),
             new \Flex\Console\Command\MediaThumbnailsCommand($media),
             new CreateFirstSuperAdminCommand($users, $userService),
             new PlatformVersionCommand($registry),

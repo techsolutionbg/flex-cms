@@ -13,6 +13,11 @@ final class RemoteCatalogClient
 {
     private const CACHE_TTL = 300;
 
+    private ?RemotePluginIndex $pluginIndexCache = null;
+
+    /** @var array<string, RemoteCatalog> */
+    private array $pluginManifestCache = [];
+
     public function __construct(
         private readonly ConfigRepositoryInterface $configuration,
         private readonly RemoteCatalogTransportInterface $transport,
@@ -34,19 +39,25 @@ final class RemoteCatalogClient
 
     public function pluginIndex(): RemotePluginIndex
     {
+        if ($this->pluginIndexCache !== null) {
+            return $this->pluginIndexCache;
+        }
         $data = $this->json($this->get('/plugins/index.json'), 'plugin catalog');
 
-        return RemotePluginIndex::fromArray($data);
+        return $this->pluginIndexCache = RemotePluginIndex::fromArray($data);
     }
 
     public function pluginManifest(string $id): RemoteCatalog
     {
+        if (isset($this->pluginManifestCache[$id])) {
+            return $this->pluginManifestCache[$id];
+        }
         $url = $this->pluginIndex()->manifests[$id] ?? null;
         if ($url === null) {
             throw new RemoteCatalogException(sprintf('Plugin "%s" is not listed in the update catalog.', $id));
         }
 
-        return RemoteCatalog::fromArray($this->json($this->getAbsolute($url), 'plugin catalog'), 'plugin');
+        return $this->pluginManifestCache[$id] = RemoteCatalog::fromArray($this->json($this->getAbsolute($url), 'plugin catalog'), 'plugin');
     }
 
     /** @return array<string, mixed> */

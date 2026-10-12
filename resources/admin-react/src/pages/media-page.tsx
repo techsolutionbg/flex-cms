@@ -2,15 +2,22 @@ import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useMemo, useState } from "react"
 import { FileImage, Info, Upload } from "lucide-react"
+import { MediaUploadDialog } from "@/components/media-upload-dialog"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { MediaBrowser } from "@/components/media-browser"
+import { MediaDetailSkeleton } from "@/components/media-detail-skeleton"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
-import { mediaRequest, mediaSize, type MediaRecord } from "@/lib/media-api"
+import {
+  mediaDownloadUrl,
+  mediaRequest,
+  mediaSize,
+  openMediaInNewWindow,
+  type MediaRecord,
+} from "@/lib/media-api"
 import { adminUrl } from "@/lib/admin-routes"
 import { Button } from "@/components/ui/button"
-import { MediaUploader } from "@/components/media-uploader"
 import type { MediaIndex } from "@/lib/media-api"
 import { DateTime } from "@/components/date-time"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
@@ -22,8 +29,6 @@ export function MediaPage({
   id,
   onOpen,
   onBack,
-  upload = false,
-  onUpload,
 }: {
   onLogout: () => void
   onNavigate: (label: string) => void
@@ -31,11 +36,10 @@ export function MediaPage({
   id?: number
   onOpen: (record: MediaRecord) => void
   onBack: () => void
-  upload?: boolean
-  onUpload: () => void
 }) {
   const [uploadIndex, setUploadIndex] = useState<MediaIndex | null>(null)
-  const [uploaded, setUploaded] = useState<MediaRecord[]>([])
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadBusy, setUploadBusy] = useState(false)
   const [record, setRecord] = useState<MediaRecord | null>(null)
   const [usage, setUsage] = useState<{ id: number; title: string }[]>([])
   const [failure, setFailure] = useState("")
@@ -51,6 +55,11 @@ export function MediaPage({
   const [canEdit, setCanEdit] = useState(false)
   const changed = useWorkspaceChanged(),
     markSaved = useWorkspaceSaved()
+  useEffect(() => {
+    const openUpload = () => setUploadOpen(true)
+    window.addEventListener("flex-media-open-upload", openUpload)
+    return () => window.removeEventListener("flex-media-open-upload", openUpload)
+  }, [])
   useEffect(() => {
     if (id) return
     const abort = new AbortController()
@@ -91,84 +100,47 @@ export function MediaPage({
       <div className="media-page-content">
         <div className="react-page-heading">
           <div>
-            <h1>{upload ? "Качване на файлове" : id ? "Детайли на файл" : "Медийна библиотека"}</h1>
+            <h1>{id ? "Детайли на файл" : "Медийна библиотека"}</h1>
             <Breadcrumbs
               onHomeClick={() => onNavigate("Табло")}
               items={
-                upload
+                id
                   ? [
                       { label: "Медийна библиотека", onClick: onBack },
-                      { label: "Качване на файлове" },
+                      { label: record?.title ?? "Файл" },
                     ]
-                  : id
-                    ? [
-                        { label: "Медийна библиотека", onClick: onBack },
-                        { label: record?.title ?? "Файл" },
-                      ]
-                    : [{ label: "Медийна библиотека" }]
+                  : [{ label: "Медийна библиотека" }]
               }
             />
           </div>
-          {!id && !upload && uploadIndex?.permissions.upload && (
-            <Button variant="secondary" type="button" onClick={onUpload}>
+          {!id && uploadIndex?.permissions.upload && (
+            <Button variant="secondary" type="button" onClick={() => setUploadOpen(true)}>
               <Upload size={18} /> Качи файлове
             </Button>
           )}
         </div>
+        <MediaUploadDialog
+          open={uploadOpen}
+          busy={uploadBusy}
+          index={uploadIndex}
+          onBusyChange={(uploading) => {
+            setUploadBusy(uploading)
+            if (uploading) changed?.()
+            else markSaved?.()
+          }}
+          onClose={() => {
+            if (!uploadBusy) setUploadOpen(false)
+          }}
+        />
         {failure && (
           <p role="alert" className="react-form-error">
             {failure}
           </p>
         )}
-        {upload ? (
-          !uploadIndex ? (
-            !failure && <p role="status">Зареждане…</p>
-          ) : !uploadIndex.permissions.upload ? (
-            <p role="alert">Нямате права за качване на файлове.</p>
-          ) : (
-            <div className="react-page-form">
-              <CollapsibleSection
-                extensionPoint="media.upload.new"
-                title="Качване на нови файлове"
-                icon={Upload}
-              >
-                <MediaUploader
-                  maxBytes={uploadIndex.max_bytes}
-                  maxImageMegapixels={uploadIndex.max_image_megapixels}
-                  allowedTypes={uploadIndex.allowed_types}
-                  onBusyChange={(uploading) => (uploading ? changed?.() : markSaved?.())}
-                  onUploaded={(item) => setUploaded((current) => [item, ...current])}
-                />
-              </CollapsibleSection>
-              {uploaded.length > 0 && (
-                <CollapsibleSection
-                  extensionPoint="media.upload.done"
-                  title="Качени файлове"
-                  icon={FileImage}
-                >
-                  <ul className="media-uploaded-files">
-                    {uploaded.map((item) => (
-                      <li key={item.id}>
-                        <Button variant="secondary" type="button" onClick={() => onOpen(item)}>
-                          {item.original_name}
-                        </Button>
-                        <span>{mediaSize(item.size)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CollapsibleSection>
-              )}
-              <div className="react-form-actions">
-                <Button variant="secondary" type="button" onClick={onBack}>
-                  Към библиотеката
-                </Button>
-              </div>
-            </div>
-          )
-        ) : !id ? (
+        {!id ? (
           <MediaBrowser onSelect={onOpen} />
         ) : !record ? (
-          !failure && <p role="status">Зареждане…</p>
+          !failure && <MediaDetailSkeleton />
         ) : (
           <ExtensionScope value={extensionScope}>
             <form
@@ -258,7 +230,14 @@ export function MediaPage({
                     може също да използват файла.
                   </p>
                   <div className="react-form-actions">
-                    <a className="react-secondary-button" href={`${record.url}?download=1`}>
+                    <button
+                      className="react-secondary-button"
+                      type="button"
+                      onClick={() => openMediaInNewWindow(record)}
+                    >
+                      Преглед в нов прозорец
+                    </button>
+                    <a className="react-secondary-button" href={mediaDownloadUrl(record.url)}>
                       Изтегли оригинала
                     </a>
                     <button

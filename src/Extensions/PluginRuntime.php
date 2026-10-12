@@ -21,6 +21,7 @@ final readonly class PluginRuntime
         private ?PageSettingsRegistry $pageSettings = null,
         private ?RouteRegistryInterface $routes = null,
         private ?PublicAssetQueue $publicAssets = null,
+        private ?PluginServicesFactory $services = null,
     ) {}
 
     public function bootActive(): void
@@ -55,6 +56,7 @@ final readonly class PluginRuntime
                 $this->pageFields?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
                 $this->pageSettings?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
                 $this->publicAssets?->registrar($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
+                $this->services?->forPlugin($validatedManifest->id, $this->approvedPermissions($plugin, $validatedManifest)),
             ));
         }
     }

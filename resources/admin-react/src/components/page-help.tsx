@@ -13,6 +13,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 import { CheckboxField } from "./checkbox-field"
+import { LoadingButton } from "./loading-button"
 import { Button } from "./ui/button"
 
 /** Guidance for the current screen, shown in the header's help dialog. Screens and plugins add their own. */
@@ -128,16 +129,16 @@ export function PageHelpButton({ entries }: { entries: () => PageHelpEntry[] }) 
   const list = open ? entries() : []
   return (
     <>
-      <button
-        className="admin-page-refresh admin-page-help"
+      <LoadingButton
+        className="admin-page-refresh"
         type="button"
         title="Насоки за работа с тази страница"
         aria-haspopup="dialog"
+        icon={<CircleHelp size={18} aria-hidden="true" />}
         onClick={() => setOpen(true)}
       >
-        <CircleHelp size={18} aria-hidden="true" />
         <span>Помощ</span>
-      </button>
+      </LoadingButton>
       {createPortal(
         <dialog
           ref={ref}

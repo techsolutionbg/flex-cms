@@ -10,6 +10,12 @@ import { TableActionsMenu } from "@/components/table-actions-menu"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { PluginRecord } from "@/lib/admin-types"
+import {
+  fetchAdminPlugins,
+  invalidateAdminPluginsCache,
+  readCachedAdminPlugins,
+  writeCachedAdminPlugins,
+} from "@/lib/admin-plugins-api"
 import { bulkTargets, type PluginBulkAction } from "@/lib/plugin-bulk"
 import { toast } from "sonner"
 
@@ -54,30 +60,45 @@ export function PluginsPage({
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string | number>>(new Set())
   const [bulk, setBulk] = useState<{ action: PluginAction; done: number; total: number } | null>(null)
   const [pendingBulkRemoval, setPendingBulkRemoval] = useState(false)
+  const [hardRefreshing, setHardRefreshing] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
-    fetch("/api/admin/plugins", { credentials: "include", headers: { Accept: "application/json" } })
-      .then(async (response) => {
-        const body = (await response.json().catch(() => ({}))) as {
-          plugins?: PluginRecord[]
-          error?: { message?: string }
-        }
-        if (!response.ok)
-          throw new Error(body.error?.message ?? "Разширенията не можаха да бъдат заредени.")
-        if (!cancelled) setPlugins(body.plugins ?? [])
+    const abort = new AbortController()
+    const cached = readCachedAdminPlugins()
+    if (cached) {
+      setPlugins(cached)
+      setLoading(false)
+    }
+    fetchAdminPlugins({ signal: abort.signal, force: !!cached })
+      .then((plugins) => {
+        if (!abort.signal.aborted) setPlugins(plugins)
       })
       .catch((reason) => {
-        if (!cancelled)
+        if (abort.signal.aborted) return
+        if (!cached)
           toast.error(
             reason instanceof Error ? reason.message : "Разширенията не можаха да бъдат заредени.",
           )
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!abort.signal.aborted) setLoading(false)
       })
+    const reload = () => {
+      invalidateAdminPluginsCache()
+      setLoading(true)
+      fetchAdminPlugins({ force: true, refresh: true })
+        .then(setPlugins)
+        .catch((reason) =>
+          toast.error(
+            reason instanceof Error ? reason.message : "Разширенията не можаха да бъдат заредени.",
+          ),
+        )
+        .finally(() => setLoading(false))
+    }
+    window.addEventListener("flex-admin-plugins-changed", reload)
     return () => {
-      cancelled = true
+      abort.abort()
+      window.removeEventListener("flex-admin-plugins-changed", reload)
     }
   }, [])
 
@@ -106,6 +127,24 @@ export function PluginsPage({
     setStatusFilter("all")
   }
 
+  async function hardRefreshFromServer() {
+    if (hardRefreshing || bulk !== null || busyId !== null) return
+    setHardRefreshing(true)
+    invalidateAdminPluginsCache()
+    setLoading(true)
+    try {
+      setPlugins(await fetchAdminPlugins({ force: true, refresh: true }))
+      toast.success("Списъкът е презареден от сървъра.")
+    } catch (reason) {
+      toast.error(
+        reason instanceof Error ? reason.message : "Разширенията не можаха да бъдат презаредени.",
+      )
+    } finally {
+      setHardRefreshing(false)
+      setLoading(false)
+    }
+  }
+
   /** Runs one action on the server and puts the result into the list. */
   async function performAction(plugin: PluginRecord, action: PluginAction) {
     const token = await getCsrfToken()
@@ -125,12 +164,16 @@ export function PluginsPage({
     }
     if (!response.ok)
       throw new Error(body.error?.message ?? "Действието не можа да бъде изпълнено.")
-    if (action === "uninstall")
-      setPlugins((current) => current.filter((item) => item.id !== plugin.id))
-    else if (body.plugin)
-      setPlugins((current) =>
-        current.map((item) => (item.id === plugin.id ? body.plugin! : item)),
-      )
+    setPlugins((current) => {
+      const next =
+        action === "uninstall"
+          ? current.filter((item) => item.id !== plugin.id)
+          : body.plugin
+            ? current.map((item) => (item.id === plugin.id ? body.plugin! : item))
+            : current
+      writeCachedAdminPlugins(next)
+      return next
+    })
   }
 
   async function runAction(plugin: PluginRecord, action: PluginAction) {
@@ -335,9 +378,19 @@ export function PluginsPage({
           <h1>Разширения</h1>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Разширения" }]} />
         </div>
-        <button type="button" onClick={onCatalog}>
-          Каталог с разширения
-        </button>
+        <div className="react-page-heading-actions">
+          <LoadingButton
+            type="button"
+            loading={hardRefreshing}
+            disabled={loading && !hardRefreshing}
+            onClick={() => void hardRefreshFromServer()}
+          >
+            Презареди
+          </LoadingButton>
+          <button type="button" onClick={onCatalog}>
+            Каталог с разширения
+          </button>
+        </div>
       </div>
       <DataTable
         extensionPoint="plugins.list"

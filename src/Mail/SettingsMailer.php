@@ -19,7 +19,7 @@ final readonly class SettingsMailer implements MailerInterface
             $message = clone $message;
             $defaults = $this->settings->mailDefaults();
             $message->from(new Address($defaults['from_address'], $defaults['from_name']));
-            if ($defaults['reply_to'] !== '') $message->replyTo($defaults['reply_to']);
+            if ($defaults['reply_to'] !== '' && $message->getReplyTo() === []) $message->replyTo($defaults['reply_to']);
         }
         $this->mailer->send($message, $envelope);
     }

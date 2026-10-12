@@ -25,6 +25,7 @@ import { CheckboxField } from "./checkbox-field"
 import { CollapsibleSection } from "./collapsible-section"
 import { ConfirmDialog } from "./confirm-dialog"
 import { DataTable } from "./data-table"
+import { TableSkeleton } from "./table-skeleton"
 import { DropdownMenu, DropdownOption, DropdownChevron } from "./dropdown-menu"
 import { TableActionsMenu } from "./table-actions-menu"
 import { LoadingButton } from "./loading-button"
@@ -34,7 +35,11 @@ import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { RichTextEditor } from "./rich-text-editor"
 import { Button } from "./ui/button"
-import { useWorkspaceChanged, useWorkspaceSaved } from "./admin-workspace-context"
+import {
+  useWorkspaceChanged,
+  useWorkspacePanelActive,
+  useWorkspaceSaved,
+} from "./admin-workspace-context"
 import {
   ExtensionBoundary,
   ExtensionComponent,
@@ -153,6 +158,7 @@ const host = {
   // The platform time standard; plugins show times with components.DateTime or these helpers.
   time: { dayjs, formatExact, formatFull, formatRelative, isoUtc, parse, subscribe, zoneName },
   useWorkspaceChanged,
+  useWorkspacePanelActive,
   useWorkspaceSaved,
   // Lets a plugin screen (for example the Flex Commerce product editor) host panels of other plugins.
   usePanelSaves,
@@ -168,6 +174,7 @@ const host = {
     CollapsibleSection,
     ConfirmDialog,
     DataTable,
+    TableSkeleton,
     DropdownMenu,
     DropdownOption,
     DropdownChevron,

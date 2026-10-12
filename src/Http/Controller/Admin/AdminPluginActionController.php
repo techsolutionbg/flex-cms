@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flex\Http\Controller\Admin;
 
+use Flex\Admin\AdminPluginsSnapshotCache;
 use Flex\Auth\AuthenticatedUser;
 use Flex\Contracts\Auth\AuthenticationInterface;
 use Flex\Extensions\PluginManager;
@@ -26,6 +27,7 @@ final readonly class AdminPluginActionController
         private RemotePluginInstaller $remoteInstaller,
         private RemotePluginUpdater $remoteUpdater,
         private PluginRollback $pluginRollback,
+        private AdminPluginsSnapshotCache $pluginSnapshot,
         private RequestInput $input,
         private ResponseFactoryInterface $responses,
     ) {}
@@ -83,11 +85,15 @@ final readonly class AdminPluginActionController
                 $plugin = $this->plugins->deactivate($id);
             } else {
                 $this->plugins->uninstall($id);
+                $this->pluginSnapshot->forget();
+
                 return $this->responses->json(['message' => 'Разширението е премахнато.']);
             }
         } catch (\Throwable $exception) {
             return $this->responses->json(ApiError::payload(422, 'plugin_action_failed', $exception->getMessage()), 422);
         }
+
+        $this->pluginSnapshot->forget();
 
         return $this->responses->json(['plugin' => $plugin->toPublicArray()]);
     }

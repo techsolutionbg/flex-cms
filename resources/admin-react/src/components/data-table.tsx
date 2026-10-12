@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 import { PaginationControls } from "./pagination-controls"
+import { TableSkeletonRows } from "./table-skeleton"
 import { TableActionsMenu } from "./table-actions-menu"
 import {
   ExtensionComponent,
@@ -248,11 +249,11 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td className="react-table-empty" colSpan={columnCount}>
-                  Зареждане…
-                </td>
-              </tr>
+              <TableSkeletonRows
+                columns={tableColumns}
+                columnCount={columnCount}
+                selectable={selectable}
+              />
             ) : sortedData.length === 0 ? (
               <tr>
                 <td className="react-table-empty" colSpan={columnCount}>

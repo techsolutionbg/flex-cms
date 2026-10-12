@@ -368,17 +368,12 @@ test("media library and independent detail tabs persist without generic hydratio
   assert.equal(restored.page().props.id, 7)
 })
 
-test("media upload opens in its own persisted tab and returns to the library", () => {
-  const h = harness("/media")
-  h.page().props.onUpload()
-  assert.equal(h.page().props.upload, true)
-  assert.equal(h.page().props.id, undefined)
-  assert.equal(h.stored().active, "/media/upload")
+test("legacy media upload URL maps to the media library tab", () => {
   const restored = harness("/media/upload")
-  assert.equal(restored.page().props.upload, true)
-  restored.page().props.onBack()
-  assert.equal(restored.page().props.upload, false)
-  assert.equal(restored.stored().active, "/media")
+  assert.equal(restored.page().type, "MediaPage")
+  assert.equal(restored.page().props.id, undefined)
+  assert.equal(restored.workspace().tabs.some((tab) => tab.path === "/media/upload"), false)
+  assert.equal(restored.workspace().tabs.some((tab) => tab.path === "/media"), true)
 })
 
 test("search and filters in a media picker do not mark the page form dirty", () => {

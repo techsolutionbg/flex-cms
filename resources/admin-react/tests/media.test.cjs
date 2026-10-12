@@ -199,3 +199,26 @@ test("an image-only page keeps its HTML and inserts media from the library", () 
   assert.equal(changes.at(-1), '<p><img src="/media-files/7/original"></p>')
   assert.equal(typeof editor.options.modules.toolbar.handlers.image, "function")
 })
+
+test("media download links request attachment delivery", () => {
+  const exports = {}
+  vm.runInNewContext(
+    ts.transpileModule(
+      fs.readFileSync(path.join(__dirname, "../src/lib/media-api.ts"), "utf8"),
+      { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+    ).outputText,
+    {
+      exports,
+      require: () => ({ getCsrfToken: async () => "csrf-test" }),
+      window: { location: { origin: "https://cms.test" } },
+    },
+  )
+  assert.equal(
+    exports.mediaDownloadUrl("/media-files/12/original"),
+    "https://cms.test/media-files/12/original?download=1",
+  )
+  assert.equal(
+    exports.mediaAbsoluteUrl("/media-files/12/original"),
+    "https://cms.test/media-files/12/original",
+  )
+})

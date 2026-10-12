@@ -1,5 +1,15 @@
 # Extension API v1
 
+### Optional services (Flex CMS 0.1.64+)
+
+`PluginContext::$services` is an optional `PluginServicesInterface`. Older context construction remains compatible. Services provide session CSRF, plugin-scoped JSON document storage (`storage.documents`), platform mail with an explicit visitor Reply-To (`mail.send`), and active-theme descriptors/templates (`theme.extensions`). The last three capabilities require approved permissions. Storage transactions serialize new-key checks/writes within the plugin and the site's database. Apply the `extension_documents` migration before using storage.
+
+Themes may declare `extensions: {"vendor/plugin": "relative/descriptor.json"}` in theme.json. Descriptor contract version must be 1. The descriptor and template entrypoint are resolved inside the active theme with traversal and symlink containment checks. Extension-specific schemas are validated by the owning plugin, on both GET and POST. PHP templates and autoescaped Twig templates receive only the supplied view model.
+
+PHP themes receive `$flex_extension($extension, $id)`; Twig themes use `{{ flex_extension(extension, id) }}`. Both apply `public.extension.render` with `extension` and `id`. An inactive/absent plugin returns empty output. Custom renderers can apply the same hook, and must print platform frontend asset tags.
+
+`http.response` receives the PSR response after routing; it can set response policy (for example private/no-store on a page containing session-specific form tokens). Callbacks must return a ResponseInterface. `php bin/flex extensions:maintain` boots active plugins and dispatches `extensions.maintenance`; configure it periodically on the host for outbox/retention tasks. No contact-form-specific logic is built into this command.
+
 Version 1 exposes the minimum plugin lifecycle contract. A plugin entrypoint must implement
 `PluginInterface` and receive a read-only `PluginContext` when it is installed, activated or
 deactivated. The context contains the plugin id, version, installation path and validated

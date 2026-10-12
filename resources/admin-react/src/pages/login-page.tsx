@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { BrandLogo } from "@/components/brand-logo"
 import { PasswordRecoveryPage } from "./password-recovery-page"
 export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [email, setEmail] = useState("")
@@ -61,7 +62,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center">
           <div className="react-login-brand mx-auto w-52">
-            <img className="h-auto w-full" src="/assets/brand/logo.png" alt="Flex CMS" />
+            <BrandLogo className="h-auto w-full" />
           </div>
           <p className="react-login-description mt-5">Влезте, за да управлявате сайта.</p>
         </div>

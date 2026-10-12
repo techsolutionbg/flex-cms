@@ -1,6 +1,7 @@
 import { useEffect, useState, type SyntheticEvent } from "react"
 import { ArrowLeft, LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/brand-logo"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -93,7 +94,7 @@ export function PasswordRecoveryPage({
       <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="text-center">
           <div className="react-login-brand mx-auto w-52">
-            <img className="h-auto w-full" src="/assets/brand/logo.png" alt="Flex CMS" />
+            <BrandLogo className="h-auto w-full" />
           </div>
           <h1 className="mt-5 text-xl">Възстановяване на парола</h1>
           <p className="react-login-description mt-3">

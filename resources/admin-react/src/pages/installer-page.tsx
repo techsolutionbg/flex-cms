@@ -13,6 +13,7 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/loading-button"
+import { BrandLogo } from "@/components/brand-logo"
 import { adminUrl } from "@/lib/admin-routes"
 
 type InstallerField = {
@@ -135,7 +136,7 @@ export function InstallerPage() {
     <main className="installer-react-page">
       <div className="installer-react-shell">
         <header className="installer-react-header">
-          <img src="/assets/brand/logo.png" alt="Flex CMS" />
+          <BrandLogo />
         </header>
         <div className="installer-react-intro">
           <span className="installer-react-kicker">Flex CMS</span>

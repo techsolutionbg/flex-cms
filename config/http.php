@@ -19,5 +19,6 @@ return [
         MaintenanceModeMiddleware::class,
         SessionMiddleware::class,
         AuthenticationContextMiddleware::class,
+        \Flex\Http\Middleware\ExtensionResponseMiddleware::class,
     ],
 ];

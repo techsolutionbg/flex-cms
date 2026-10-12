@@ -32,6 +32,7 @@ final readonly class PluginManager
         private ?PageFieldRegistry $pageFields = null,
         private ?PageSettingsRegistry $pageSettings = null,
         private ?LoggerInterface $logger = null,
+        private ?PluginServicesFactory $services = null,
     ) {}
 
     public function install(string $id): Plugin
@@ -245,7 +246,7 @@ final readonly class PluginManager
     {
         $effectivePermissions = $permissions ?? $manifest->permissions;
 
-        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions), $this->adminExtensions?->registrar($manifest->id, $effectivePermissions, $path), $this->pageFields?->registrar($manifest->id, $effectivePermissions), $this->pageSettings?->registrar($manifest->id, $effectivePermissions));
+        return new PluginContext($manifest->id, $manifest->version, $path, $manifest->toArray(), new ScopedExtensionApi($this->extensionApi, $manifest->id, $effectivePermissions), null, $effectivePermissions, $this->contentBlocks?->registrar($manifest->id, $effectivePermissions), $this->adminExtensions?->registrar($manifest->id, $effectivePermissions, $path), $this->pageFields?->registrar($manifest->id, $effectivePermissions), $this->pageSettings?->registrar($manifest->id, $effectivePermissions), services: $this->services?->forPlugin($manifest->id, $effectivePermissions));
     }
 
     /** @param list<string> $requested */

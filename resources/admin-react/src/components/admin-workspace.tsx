@@ -39,7 +39,6 @@ const sections: Record<string, string> = {
   "/": "Табло",
   "/pages": "Страници",
   "/media": "Медийна библиотека",
-  "/media/upload": "Качване на файлове",
   "/menus": "Менюта",
   "/users": "Потребители",
   "/profile": "Профил",
@@ -135,10 +134,20 @@ export function AdminWorkspace({
     }
   }
   function open(path: string, data: Partial<Tab> = {}, history = true) {
+    let openUploadDialog = false
+    if (path === "/media/upload") {
+      path = "/media"
+      openUploadDialog = true
+      if (history) {
+        window.history.replaceState(null, "", adminUrl("/media"))
+        history = false
+      }
+    }
     if (!isWorkspacePath(path)) path = "/"
     const existing = tabsRef.current.find((tab) => tab.path === path)
     if (existing) {
       activate(existing.id, history)
+      if (openUploadDialog) window.dispatchEvent(new Event("flex-media-open-upload"))
       return
     }
     const tab: Tab = {
@@ -177,6 +186,7 @@ export function AdminWorkspace({
     if (history) window.history.pushState(null, "", adminUrl(path))
     requestAnimationFrame(() => window.scrollTo(0, 0))
     if (needsData) void hydrate(tab)
+    if (openUploadDialog) window.dispatchEvent(new Event("flex-media-open-upload"))
   }
   function close(id: string) {
     const tab = tabsRef.current.find((item) => item.id === id)
@@ -386,17 +396,11 @@ export function AdminWorkspace({
         </AdminShell>
       )
     }
-    if (
-      tab.path === "/media" ||
-      tab.path === "/media/upload" ||
-      /^\/media\/\d+\/edit$/.test(tab.path)
-    )
+    if (tab.path === "/media" || /^\/media\/\d+\/edit$/.test(tab.path))
       return (
         <MediaPage
           {...common}
           id={/^\/media\/\d+\/edit$/.test(tab.path) ? Number(tab.path.split("/")[2]) : undefined}
-          upload={tab.path === "/media/upload"}
-          onUpload={() => open("/media/upload")}
           onOpen={(record) => open(`/media/${record.id}/edit`, { title: record.title })}
           onBack={() => open("/media")}
         />

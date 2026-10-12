@@ -114,3 +114,26 @@ export async function uploadMedia(
 export function mediaSize(bytes: number): string {
   return bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`
 }
+
+export function mediaAbsoluteUrl(url: string): string {
+  return new URL(url, window.location.origin).href
+}
+
+export function mediaDownloadUrl(url: string): string {
+  const absolute = mediaAbsoluteUrl(url)
+  return `${absolute}${absolute.includes("?") ? "&" : "?"}download=1`
+}
+
+export function openMediaInNewWindow(record: Pick<MediaRecord, "url">): void {
+  window.open(mediaAbsoluteUrl(record.url), "_blank", "noopener,noreferrer")
+}
+
+export function downloadMedia(record: Pick<MediaRecord, "url" | "original_name">): void {
+  const link = document.createElement("a")
+  link.href = mediaDownloadUrl(record.url)
+  link.download = record.original_name
+  link.rel = "noopener"
+  document.body.append(link)
+  link.click()
+  link.remove()
+}
