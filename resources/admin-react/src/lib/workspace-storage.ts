@@ -44,7 +44,7 @@ export function readWorkspace(key: string): { paths: string[]; active: string | 
     const paths = [
       ...new Set<string>(
         saved.paths
-          .filter((value): value is string => typeof value === "string")
+          .filter((value: unknown): value is string => typeof value === "string")
           .map(normalizePath)
           .filter(isWorkspacePath),
       ),
