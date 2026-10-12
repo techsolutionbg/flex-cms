@@ -12,6 +12,12 @@ import { ThemeDetailPage } from "@/pages/theme-detail-page"
 import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
 import { UpdatesPage } from "@/pages/updates-page"
 import { SettingsPage } from "@/pages/settings-page"
+import {
+  isSettingsWorkspacePath,
+  normalizeSettingsWorkspacePath,
+  settingsSectionFromPath,
+  settingsPathForSection,
+} from "@/lib/settings-tabs"
 import { AdminShell } from "./admin-shell"
 import { ConfirmDialog } from "./confirm-dialog"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
@@ -143,6 +149,24 @@ export function AdminWorkspace({
         history = false
       }
     }
+    if (path === "/settings" || path.startsWith("/settings/")) {
+      path = normalizeSettingsWorkspacePath(path)
+      const settingsTab = tabsRef.current.find((tab) => isSettingsWorkspacePath(tab.path))
+      if (settingsTab) {
+        scroll.current.set(activeRef.current, window.scrollY)
+        tabsRef.current = tabsRef.current.map((tab) =>
+          tab.id === settingsTab.id ? { ...tab, path } : tab,
+        )
+        setTabs(tabsRef.current)
+        setActive(settingsTab.id)
+        if (history && adminRoute() !== path)
+          window.history.pushState(null, "", adminUrl(path))
+        requestAnimationFrame(() =>
+          window.scrollTo(0, scroll.current.get(settingsTab.id) ?? 0),
+        )
+        return
+      }
+    }
     if (!isWorkspacePath(path)) path = "/"
     const existing = tabsRef.current.find((tab) => tab.path === path)
     if (existing) {
@@ -156,7 +180,7 @@ export function AdminWorkspace({
       title:
         extensionPages.find((page) => path === page.href || path.startsWith(page.href + "/"))
           ?.label ??
-        sections[path] ??
+        (isSettingsWorkspacePath(path) ? "Настройки" : sections[path]) ??
         (path.startsWith("/themes/") ? `Тема: ${path.split("/")[2]}` : undefined) ??
         (path === "/pages/create"
           ? "Нова страница"
@@ -360,6 +384,10 @@ export function AdminWorkspace({
       open(target)
       return
     }
+    if (target === "Настройки") {
+      open(settingsPathForSection("general"))
+      return
+    }
     const section = Object.entries(sections).find(([, title]) => title === target)?.[0]
     open(section ?? extensionPages.find((page) => page.label === target)?.href ?? "/")
   }
@@ -477,8 +505,22 @@ export function AdminWorkspace({
         )
       case "/updates":
         return <UpdatesPage {...common} />
-      case "/settings":
-        return <SettingsPage {...common} />
+      default:
+        if (isSettingsWorkspacePath(tab.path)) {
+          return (
+            <SettingsPage
+              {...common}
+              section={settingsSectionFromPath(tab.path)}
+              onSectionChange={(sectionId) => {
+                const next = settingsPathForSection(sectionId)
+                patch(tab.id, { path: next })
+                if (activeRef.current === tab.id)
+                  window.history.replaceState(null, "", adminUrl(next))
+              }}
+            />
+          )
+        }
+        break
     }
     const themeMatch = tab.path.match(/^\/themes\/([a-z0-9][a-z0-9._-]*)$/)
     if (themeMatch)

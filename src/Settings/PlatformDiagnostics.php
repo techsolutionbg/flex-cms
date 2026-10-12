@@ -14,9 +14,16 @@ final readonly class PlatformDiagnostics
     {
         try { $this->database->connection()->select('SELECT 1'); $database = 'Достъпна'; }
         catch (\Throwable) { $database = 'Недостъпна'; }
-        $results = ['Версия на платформата' => $this->versions->current()->value, 'PHP версия' => PHP_VERSION, 'База данни' => $database];
+        try {
+            $platformVersion = $this->versions->current()->value;
+        } catch (\Throwable) {
+            $platformVersion = 'Непозната';
+        }
+        $results = ['Версия на платформата' => $platformVersion, 'PHP версия' => PHP_VERSION, 'База данни' => $database];
         foreach (['curl', 'openssl', 'pdo', 'mbstring', 'fileinfo', 'gd', 'zip'] as $extension) $results['PHP: ' . $extension] = extension_loaded($extension) ? 'Налично' : 'Липсва';
         foreach (['cache', 'sessions', 'logs'] as $directory) $results['Запис: ' . $directory] = is_writable($this->paths->storage($directory)) ? 'Разрешен' : 'Недостъпна директория или запис';
+        $operationLog = $this->paths->storage('logs/operation-errors.jsonl');
+        $results['Дневник на операционни грешки'] = is_writable(dirname($operationLog)) ? (is_file($operationLog) ? 'Активен' : 'Готов за запис') : 'Недостъпен';
         $results['Проверено на (UTC)'] = gmdate('Y-m-d H:i:s');
         return $results;
     }

@@ -21,6 +21,7 @@ use Flex\Extensions\PluginRegistry;
 use Flex\Extensions\PluginRuntime;
 use Flex\Extensions\PublicAssetQueue;
 use Flex\Contracts\Http\RouteRegistryInterface;
+use Flex\Logging\OperationErrorJournal;
 use Flex\Pages\PageService;
 use Psr\Container\ContainerInterface;
 
@@ -44,7 +45,8 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
                 ->constructorParameter('adminExtensions', get(AdminExtensionRegistry::class))
                 ->constructorParameter('pageFields', get(PageFieldRegistry::class))
-                ->constructorParameter('pageSettings', get(PageSettingsRegistry::class)),
+                ->constructorParameter('pageSettings', get(PageSettingsRegistry::class))
+                ->constructorParameter('operationErrors', get(\Flex\Logging\OperationErrorJournal::class)),
             PluginRuntime::class => autowire()
                 ->constructorParameter('services', get(\Flex\Extensions\PluginServicesFactory::class))
                 ->constructorParameter('contentBlocks', get(ContentBlockRegistry::class))
@@ -69,5 +71,23 @@ final class ExtensionServiceProvider implements ServiceProviderInterface
         ];
     }
 
-    public function boot(ContainerInterface $container): void {}
+    public function boot(ContainerInterface $container): void
+    {
+        $journal = $container->get(OperationErrorJournal::class);
+        $container->get(ExtensionApiInterface::class)->addAction(
+            'operation.error.report',
+            static function (array $context) use ($journal): void {
+                $message = is_string($context['message'] ?? null) ? trim($context['message']) : '';
+                if ($message === '') {
+                    return;
+                }
+                $scope = is_string($context['scope'] ?? null) ? $context['scope'] : 'extension';
+                $component = is_string($context['component'] ?? null) ? $context['component'] : 'extension';
+                $operation = is_string($context['operation'] ?? null) ? $context['operation'] : 'operation.error.report';
+                $exception = ($context['exception'] ?? null) instanceof \Throwable ? $context['exception'] : null;
+                $details = is_array($context['context'] ?? null) ? $context['context'] : [];
+                $journal->record($scope, $component, $operation, $message, $exception, $details);
+            },
+        );
+    }
 }

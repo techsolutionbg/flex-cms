@@ -15,7 +15,9 @@ use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Contracts\Http\ViewRendererInterface;
 use Flex\Http\ApplicationKernelFactory;
+use Flex\Http\Middleware\ErrorHandlerMiddleware;
 use Flex\Http\ResponseFactory;
+use Flex\Logging\OperationErrorJournal;
 use Flex\Http\Routing\RouteRegistry;
 use Flex\Http\Routing\RouterFactory;
 use Flex\Http\View\TwigViewRenderer;
@@ -49,6 +51,8 @@ final class HttpServiceProvider implements ServiceProviderInterface
             RouterFactory::class => autowire(),
             ApplicationKernelFactory::class => autowire(),
             KernelInterface::class => factory([ApplicationKernelFactory::class, 'create']),
+            ErrorHandlerMiddleware::class => autowire()
+                ->constructorParameter('operationErrors', get(OperationErrorJournal::class)),
         ];
     }
 

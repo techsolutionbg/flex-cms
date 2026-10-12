@@ -16,6 +16,7 @@ use Flex\Contracts\Updates\PlatformMigrationRunnerInterface;
 use Flex\Contracts\Updates\PlatformVersionInstallerInterface;
 use Flex\Contracts\Updates\RemoteCatalogTransportInterface;
 use Flex\Contracts\Updates\RemotePackageTransportInterface;
+use Flex\Settings\PlatformDiagnostics;
 use Flex\Updates\Platform\{MySqlPlatformDatabaseBackup, PhinxPlatformMigrationRunner, PlatformHealthChecker, PlatformHistory, PlatformPackageBuilder, PlatformPackageInspector, PlatformPackageInspectorFactory, PlatformPackageUpload, PlatformPreflightChecker, PlatformRollback, PlatformUpdateRecovery, PlatformUpdateStateStore, PlatformVersionInstaller, PlatformVersionRegistry};
 use Flex\Updates\Remote\{CurlRemoteCatalogTransport, CurlRemotePackageTransport, PluginPackageInstaller, PluginRollback, PluginUpdateHistory, RemoteCatalogClient, RemotePackageDownloader, RemotePlatformUpdater, RemotePluginInstaller, RemotePluginUpdater, RemoteThemeInstaller, RemoteThemePackageDownloader, ThemeCatalogClient, ThemePackageInstaller};
 use Flex\Updates\Jobs\{UpdateJobProcessor, UpdateJobStore};
@@ -27,6 +28,7 @@ final class UpdateServiceProvider implements ServiceProviderInterface
     {
         return [
             PlatformVersionRegistry::class => create()->constructor(get('base_path')),
+            PlatformDiagnostics::class => autowire(),
             RemoteCatalogTransportInterface::class => autowire(CurlRemoteCatalogTransport::class),
             RemoteCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path'), get(\Flex\Settings\SectionSettings::class)),
             ThemeCatalogClient::class => create()->constructor(get(ConfigRepositoryInterface::class), get(RemoteCatalogTransportInterface::class), get('base_path')),

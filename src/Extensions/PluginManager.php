@@ -14,6 +14,7 @@ use Flex\Extensions\Exception\PluginLifecycleException;
 use Flex\Extensions\Exception\PluginNotFound;
 use Flex\Extensions\Exception\PluginPermissionDenied;
 use Illuminate\Database\Connection;
+use Flex\Logging\OperationErrorJournal;
 use Psr\Log\LoggerInterface;
 
 final readonly class PluginManager
@@ -33,6 +34,7 @@ final readonly class PluginManager
         private ?PageSettingsRegistry $pageSettings = null,
         private ?LoggerInterface $logger = null,
         private ?PluginServicesFactory $services = null,
+        private ?OperationErrorJournal $operationErrors = null,
     ) {}
 
     public function install(string $id): Plugin
@@ -77,7 +79,7 @@ final readonly class PluginManager
                 $entrypoint->install($this->context($manifest, $entry['path'], $this->approvedPermissions($plugin, $manifest)));
             }
         } catch (\Throwable $exception) {
-            $this->recordFailure($plugin, $exception);
+            $this->recordFailure($plugin, $exception, 'plugin.install');
             throw new PluginLifecycleException(sprintf('Installing plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
         }
 
@@ -104,7 +106,7 @@ final readonly class PluginManager
         try {
             $this->entrypointLoader->load($manifest, $path)->activate($this->context($manifest, $path, $this->approvedPermissions($plugin, $manifest)));
         } catch (\Throwable $exception) {
-            $this->recordFailure($plugin, $exception);
+            $this->recordFailure($plugin, $exception, 'plugin.activate');
             throw new PluginLifecycleException(sprintf('Activating plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
         }
 
@@ -157,7 +159,7 @@ final readonly class PluginManager
         try {
             $this->entrypointLoader->load($manifest, $path)->deactivate($this->context($manifest, $path, $this->approvedPermissions($plugin, $manifest)));
         } catch (\Throwable $exception) {
-            $this->recordFailure($plugin, $exception);
+            $this->recordFailure($plugin, $exception, 'plugin.deactivate');
             throw new PluginLifecycleException(sprintf('Deactivating plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
         }
 
@@ -190,7 +192,7 @@ final readonly class PluginManager
                 $entrypoint->uninstall($this->context($manifest, $pluginPath, $this->approvedPermissions($plugin, $manifest)));
             }
         } catch (\Throwable $exception) {
-            $this->recordFailure($plugin, $exception);
+            $this->recordFailure($plugin, $exception, 'plugin.uninstall');
             throw new PluginLifecycleException(sprintf('Uninstalling plugin "%s" failed: %s', $id, $exception->getMessage()), previous: $exception);
         }
 
@@ -307,10 +309,11 @@ final readonly class PluginManager
         $this->logger?->info('Plugin audit event.', ['plugin_id' => $pluginId, 'action' => $action] + $context);
     }
 
-    private function recordFailure(Plugin $plugin, \Throwable $exception): void
+    private function recordFailure(Plugin $plugin, \Throwable $exception, string $operation): void
     {
         $plugin->fill(['status' => self::STATUS_ERROR, 'last_error' => $exception->getMessage()]);
         $plugin->saveOrFail();
+        $this->operationErrors?->recordThrowable($exception, 'plugin', (string) $plugin->getAttribute('id'), $operation);
     }
 
     private function deleteDirectory(string $path): void

@@ -93,7 +93,7 @@ Forms share the record being edited with every extension inside them through `Ex
 | Page settings | `page.settings` (screen), `page.settings.appearance`, `page.settings.navigation`, `page.settings.indexing` |
 | Pages list | `pages.list` |
 | Profile | `profile.information`, `profile.security`, `profile.appearance` |
-| Settings | `settings` (tabs), `settings.general`, `settings.public`, `settings.users`, `settings.media`, `settings.mail`, `settings.updates`, `settings.admin`, `settings.maintenance` |
+| Settings | `settings` (tabs), `settings.general`, `settings.public`, `settings.users`, `settings.media`, `settings.mail`, `settings.updates`, `settings.admin`, `settings.maintenance` (includes the operation error journal UI) |
 | Users | `users.list`, `user.editor.details`, `user.editor.password`, `user.editor.confirmation` |
 | Media | `media.list`, `media.upload.new`, `media.upload.done`, `media.editor.preview`, `media.editor.file`, `media.editor.metadata` |
 | Menus | `menus.list`, `menu.editor.settings`, `menu.structure.pages`, `menu.structure.items` |

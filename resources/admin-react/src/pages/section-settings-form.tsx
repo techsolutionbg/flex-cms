@@ -18,6 +18,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { getCsrfToken } from "@/lib/admin-api"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { OperationErrorsLog } from "@/components/operation-errors-log"
 
 export function SectionSettingsForm({
   section,
@@ -56,6 +57,8 @@ export function SectionSettingsForm({
   useEffect(() => {
     const abort = new AbortController()
     setFailure("")
+    setValues(null)
+    setDiagnostics(null)
     fetch(`/api/admin/settings/${section}`, {
       credentials: "include",
       signal: AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
@@ -64,7 +67,12 @@ export function SectionSettingsForm({
         const body = await response.json()
         if (!response.ok) throw new Error(body.error?.message ?? "Грешка при зареждане.")
         if (!abort.signal.aborted) {
-          setValues(body.settings)
+          const settings = body.settings
+          setValues(
+            settings && typeof settings === "object" && !Array.isArray(settings)
+              ? settings
+              : {},
+          )
           setPages(body.pages)
           setMail(body.mail ?? null)
           setDiagnostics(body.diagnostics ?? null)
@@ -356,6 +364,14 @@ export function SectionSettingsForm({
                 </label>
               ) : section === "maintenance" ? (
                 <>
+                  <div className="react-form-field settings-field-wide operation-errors-log-field">
+                    <span>Дневник на операционни грешки</span>
+                    <small>
+                      Append-only JSON Lines файл на диска. Всяка грешка от платформата, плъгин или
+                      тема се записва като нов ред.
+                    </small>
+                    <OperationErrorsLog revision={revision} />
+                  </div>
                   {diagnostics &&
                     Object.entries(diagnostics).map(([label, value]) => (
                       <div className="react-form-field" key={label}>

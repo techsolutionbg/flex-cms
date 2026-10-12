@@ -28,6 +28,7 @@ final class ThemeManager
         private readonly ?\Flex\Settings\GeneralSettings $generalSettings = null,
         private readonly ?\Flex\Extension\V1\ExtensionApiInterface $extensionApi = null,
         private readonly ?FrontendExtensionAssets $frontendAssets = null,
+        private readonly ?\Flex\Logging\OperationErrorJournal $operationErrors = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -38,7 +39,14 @@ final class ThemeManager
             return $this->renderNoTheme();
         }
 
-        return $this->renderForTheme($theme, $template, $data);
+        try {
+            return $this->renderForTheme($theme, $template, $data);
+        } catch (\Throwable $exception) {
+            $this->operationErrors?->recordThrowable($exception, 'theme', $theme, 'theme.render', [
+                'template' => $template,
+            ]);
+            throw $exception;
+        }
     }
 
     /** @param array<string, mixed> $data */

@@ -57,6 +57,16 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/themes/catalog', AdminThemeCatalogDataController::class, 'api.admin.themes.catalog', $auth);
         $r->add('GET', '/api/admin/themes/{id}', \Flex\Http\Controller\Admin\AdminThemeDetailController::class, 'api.admin.themes.detail', $auth);
         $r->add('GET', '/api/admin/updates', AdminUpdatesDataController::class, 'api.admin.updates', $auth);
+        $errors = \Flex\Http\Controller\Admin\AdminOperationErrorsController::class;
+        $r->add('GET', '/api/admin/operation-errors', $errors, 'api.admin.operation-errors', $auth);
+        $r->add('DELETE', '/api/admin/operation-errors', $errors, 'api.admin.operation-errors.clear', $write);
+        $r->add(
+            'POST',
+            '/api/admin/operation-errors/test',
+            \Flex\Http\Controller\Admin\AdminOperationErrorsTestController::class,
+            'api.admin.operation-errors.test',
+            $write,
+        );
         $r->add('GET', '/admin/themes/{id}/preview', AdminThemePreviewController::class, 'admin.themes.preview', $auth);
         $r->add('POST', '/api/themes/action', AdminThemeActionController::class, 'api.themes.action', $write);
         $r->add('POST', '/api/plugins/action', AdminPluginActionController::class, 'api.plugins.action', $write);

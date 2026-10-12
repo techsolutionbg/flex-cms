@@ -7,4 +7,7 @@ return [
     'level' => $_ENV['LOG_LEVEL'] ?? 'warning',
     'max_files' => (int) ($_ENV['LOG_MAX_FILES'] ?? 14),
     'path' => dirname(__DIR__) . '/storage/logs/flex-cms.log',
+    'operation_errors' => [
+        'max_entries' => (int) ($_ENV['OPERATION_ERROR_LOG_MAX_ENTRIES'] ?? 500),
+    ],
 ];

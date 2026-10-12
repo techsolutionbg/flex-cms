@@ -1,3 +1,5 @@
+import { isSettingsWorkspacePath, settingsPathForSection } from "./settings-tabs"
+
 const simplePaths = new Set([
   "/",
   "/pages",
@@ -11,7 +13,6 @@ const simplePaths = new Set([
   "/plugins",
   "/plugins/catalog",
   "/updates",
-  "/settings",
   "/pages/create",
   "/users/create",
 ])
@@ -21,6 +22,7 @@ export function isWorkspacePath(value: unknown): value is string {
     typeof value === "string" &&
     value.length <= 240 &&
     (simplePaths.has(value) ||
+      isSettingsWorkspacePath(value) ||
       /^\/pages\/\d+\/(edit|settings)$/.test(value) ||
       /^\/media\/\d+\/edit$/.test(value) ||
       /^\/extension-pages\/[a-z][a-z0-9_-]*(?:\/(?:create|[a-z0-9][a-z0-9_-]*\/edit|inbox(?:\/submissions\/[0-9]{14}-[a-f0-9]{16})?))?$/.test(
@@ -40,7 +42,11 @@ export function readWorkspace(key: string): { paths: string[]; active: string | 
       return { paths: [], active: null }
     const saved = JSON.parse(window.localStorage.getItem(key) ?? "null")
     if (saved?.version !== 1 || !Array.isArray(saved.paths)) return { paths: [], active: null }
-    const normalizePath = (value: string) => (value === "/media/upload" ? "/media" : value)
+    const normalizePath = (value: string) => {
+      if (value === "/media/upload") return "/media"
+      if (value === "/settings") return settingsPathForSection("general")
+      return value
+    }
     const paths = [
       ...new Set<string>(
         saved.paths

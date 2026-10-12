@@ -68,7 +68,7 @@ const groups: SidebarGroup[] = [
     id: "system",
     label: "Система",
     items: [
-      { label: "Настройки", icon: Settings, href: "/settings" },
+      { label: "Настройки", icon: Settings, href: "/settings/general" },
       { label: "Обновявания", icon: RefreshCw, href: "/updates" },
     ],
   },

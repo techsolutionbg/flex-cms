@@ -20,6 +20,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Flex\Logging\OperationErrorJournal;
 use Psr\Log\LoggerInterface;
 
 final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
@@ -30,6 +31,7 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
         private LoggerInterface $logger,
         private ViewRendererInterface $views,
         private ViteAssetManager $assets,
+        private ?OperationErrorJournal $operationErrors = null,
     ) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -58,6 +60,14 @@ final readonly class ErrorHandlerMiddleware implements MiddlewareInterface
                 'request_id' => $request->getAttribute('request_id'),
                 'status' => $status,
             ]);
+            if ($status >= 500) {
+                $this->operationErrors?->recordThrowable($exception, 'platform', 'core', 'http.request', [
+                    'method' => $request->getMethod(),
+                    'uri' => (string) $request->getUri(),
+                    'request_id' => $request->getAttribute('request_id'),
+                    'status' => $status,
+                ]);
+            }
 
             if (RequestFormat::expectsJson($request)) {
                 $code = match ($status) {

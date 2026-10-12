@@ -10,6 +10,8 @@ PHP themes receive `$flex_extension($extension, $id)`; Twig themes use `{{ flex_
 
 `http.response` receives the PSR response after routing; it can set response policy (for example private/no-store on a page containing session-specific form tokens). Callbacks must return a ResponseInterface. `php bin/flex extensions:maintain` boots active plugins and dispatches `extensions.maintenance`; configure it periodically on the host for outbox/retention tasks. No contact-form-specific logic is built into this command.
 
+To report a handled server-side failure to the platform operation error journal (shown under Settings → Maintenance), dispatch `operation.error.report` with `message`, optional `scope` (`plugin`, `theme`, `extension`), `component`, `operation`, optional `exception` (`\Throwable`), and optional `context` array. Do not pass secrets in `context`.
+
 Version 1 exposes the minimum plugin lifecycle contract. A plugin entrypoint must implement
 `PluginInterface` and receive a read-only `PluginContext` when it is installed, activated or
 deactivated. The context contains the plugin id, version, installation path and validated

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   Settings,
@@ -72,10 +72,14 @@ export function SettingsPage({
   onLogout,
   onNavigate,
   loggingOut,
+  section,
+  onSectionChange,
 }: {
   onLogout: () => void
   onNavigate: (label: string) => void
   loggingOut: boolean
+  section: string
+  onSectionChange: (sectionId: string) => void
 }) {
   // Active plugins add their global settings as extra tabs (location settings.tab).
   const extensionTabs = useExtensions("settings", "screen.tab")
@@ -87,18 +91,24 @@ export function SettingsPage({
       icon: panelIcon(panel.icon),
     })),
   ]
-  const [selected, setSelected] = useState<string>(() => takeRequestedSettingsTab() ?? "general")
   useEffect(() => {
-    // Plugins open their tab with openSettingsTab() before navigating to /settings.
+    const requested = takeRequestedSettingsTab()
+    if (requested) onSectionChange(requested)
+  }, [onSectionChange])
+  useEffect(() => {
     const open = (event: Event) => {
       const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab
-      if (typeof tab === "string") setSelected(tab)
-      takeRequestedSettingsTab()
+      if (typeof tab === "string") onSectionChange(tab)
     }
     window.addEventListener(SETTINGS_TAB_EVENT, open)
     return () => window.removeEventListener(SETTINGS_TAB_EVENT, open)
-  }, [])
-  const current = tabs.some((tab) => tab.id === selected) ? selected : "general"
+  }, [onSectionChange])
+  const current = tabs.some((tab) => tab.id === section) ? section : "general"
+
+  function selectSection(id: string) {
+    if (id === current) return
+    onSectionChange(id)
+  }
   return (
     <AdminShell
       title="Настройки"
@@ -127,7 +137,7 @@ export function SettingsPage({
               : event.key === "End"
                 ? tabs.length - 1
                 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length
-          setSelected(tabs[next].id)
+          selectSection(tabs[next].id)
           event.currentTarget
             .querySelector<HTMLButtonElement>(`#settings-tab-${tabs[next].id}`)
             ?.focus()
@@ -143,7 +153,7 @@ export function SettingsPage({
             aria-selected={current === id}
             aria-controls={`settings-panel-${id}`}
             tabIndex={current === id ? 0 : -1}
-            onClick={() => setSelected(id)}
+            onClick={() => selectSection(id)}
           >
             <Icon aria-hidden="true" />
             {title}

@@ -14,6 +14,7 @@ use Flex\Configuration\EnvironmentValidator;
 use Flex\Console\FlexConsoleApplication;
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Logging\LoggerFactory;
+use Flex\Logging\OperationErrorJournal;
 use Flex\Themes\ThemeManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -22,9 +23,10 @@ final class CoreServiceProvider implements ServiceProviderInterface
 {
     public function definitions(): array
     {
-        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), ThemeManager::class => autowire()
+        return [EnvironmentValidator::class => create(), ConfigurationRedactor::class => create(), LoggerFactory::class => autowire(), OperationErrorJournal::class => autowire(), LoggerInterface::class => factory([LoggerFactory::class, 'create']), ThemeManager::class => autowire()
             ->constructorParameter('extensionApi', \DI\get(\Flex\Extension\V1\ExtensionApiInterface::class))
-            ->constructorParameter('frontendAssets', \DI\get(\Flex\Extensions\FrontendExtensionAssets::class)), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
+            ->constructorParameter('frontendAssets', \DI\get(\Flex\Extensions\FrontendExtensionAssets::class))
+            ->constructorParameter('operationErrors', \DI\get(OperationErrorJournal::class)), Application::class => autowire(), FlexConsoleApplication::class => autowire()];
     }
     public function boot(ContainerInterface $container): void {}
 }

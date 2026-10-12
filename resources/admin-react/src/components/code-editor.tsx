@@ -10,6 +10,7 @@ type CodeEditorProps = {
   height?: string
   copyLabel?: string
   toolbarContent?: ReactNode
+  enableFormat?: boolean
 }
 
 export function CodeEditor({
@@ -19,6 +20,7 @@ export function CodeEditor({
   height = "460px",
   copyLabel = "Копирай",
   toolbarContent,
+  enableFormat = true,
 }: CodeEditorProps) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
   const [wrapped, setWrapped] = useState(true)
@@ -99,10 +101,12 @@ export function CodeEditor({
         <span className="code-editor-language">{language.toUpperCase()}</span>
         {toolbarContent}
         <div className="code-editor-actions">
-          <button type="button" onClick={formatCode} title="Форматирай JSON">
-            <Braces aria-hidden="true" />
-            Форматирай
-          </button>
+          {enableFormat && (
+            <button type="button" onClick={formatCode} title="Форматирай JSON">
+              <Braces aria-hidden="true" />
+              Форматирай
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setWrapped((current) => !current)}

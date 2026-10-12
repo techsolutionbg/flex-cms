@@ -5,6 +5,7 @@ import { useContext, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
 import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-context"
 import { PageHelpButton, PageHelpProvider, usePageHelpRegistry } from "./page-help"
+import { AdminPanelSearch } from "./admin-panel-search"
 
 type AdminShellProps = {
   children: ReactNode
@@ -115,40 +116,45 @@ export function AdminShell({
       )}
       <div className="admin-main-react">
         <header className="admin-topbar-react">
-          <button
-            className="react-sidebar-collapse-toggle"
-            type="button"
-            aria-label={sidebarCollapsed ? "Разгъни страничната лента" : "Свий страничната лента"}
-            aria-expanded={!sidebarCollapsed}
-            onClick={toggleSidebar}
-          >
-            <Menu size={21} aria-hidden="true" />
-          </button>
-          <span className="admin-topbar-title-react">{title}</span>
-          <PageHelpButton entries={help.entries} />
-          {workspace && (
-            <LoadingButton
-              className="admin-page-refresh"
+          <div className="admin-topbar-start">
+            <button
+              className="react-sidebar-collapse-toggle"
               type="button"
-              aria-label="Презареди данните в страницата"
-              title="Презареди данните в страницата"
-              disabled={workspace.refreshing}
-              loading={workspace.refreshing}
-              icon={<RefreshCw size={18} aria-hidden="true" />}
-              onClick={workspace.refresh}
+              aria-label={sidebarCollapsed ? "Разгъни страничната лента" : "Свий страничната лента"}
+              aria-expanded={!sidebarCollapsed}
+              onClick={toggleSidebar}
             >
-              <span>Презареди</span>
+              <Menu size={21} aria-hidden="true" />
+            </button>
+            <h1 className="admin-topbar-title-react">{title}</h1>
+          </div>
+          <AdminPanelSearch />
+          <div className="admin-topbar-end">
+            <PageHelpButton entries={help.entries} />
+            {workspace && (
+              <LoadingButton
+                className="admin-page-refresh"
+                type="button"
+                aria-label="Презареди данните в страницата"
+                title="Презареди данните в страницата"
+                disabled={workspace.refreshing}
+                loading={workspace.refreshing}
+                icon={<RefreshCw size={18} aria-hidden="true" />}
+                onClick={workspace.refresh}
+              >
+                <span>Презареди</span>
+              </LoadingButton>
+            )}
+            <LoadingButton
+              className="admin-logout-react"
+              type="button"
+              onClick={onLogout}
+              disabled={loggingOut}
+              loading={loggingOut}
+            >
+              {loggingOut ? "Излизане…" : "Изход"}
             </LoadingButton>
-          )}
-          <LoadingButton
-            className="admin-logout-react"
-            type="button"
-            onClick={onLogout}
-            disabled={loggingOut}
-            loading={loggingOut}
-          >
-            {loggingOut ? "Излизане…" : "Изход"}
-          </LoadingButton>
+          </div>
         </header>
         <AdminWorkspaceTabs />
         <main className="admin-content-react">
