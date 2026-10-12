@@ -22,12 +22,13 @@ final class AdminExtensionRegistry
     private array $panels = [];
 
     /** Platform screens that render extension panels. The commerce locations are rendered by Flex Commerce. */
-    public const PANEL_LOCATIONS = ['page.editor', 'page.settings', 'pages.list.column', 'settings.tab', 'commerce.product.editor', 'commerce.category.editor'];
+    public const PANEL_LOCATIONS = ['page.editor', 'page.settings', 'page.theme-content', 'pages.list.column', 'settings.tab', 'commerce.product.editor', 'commerce.category.editor'];
 
     /** The extension point and slot each panel location stands for; panel() is shorthand for extend(). */
     private const PANEL_TARGETS = [
         'page.editor' => ['page.editor', 'screen.section'],
         'page.settings' => ['page.settings', 'screen.section'],
+        'page.theme-content' => ['page.theme-content', 'screen.section'],
         'pages.list.column' => ['pages.list', 'table.column'],
         'settings.tab' => ['settings', 'screen.tab'],
         'commerce.product.editor' => ['commerce.product.editor', 'screen.section'],

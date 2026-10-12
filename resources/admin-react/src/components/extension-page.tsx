@@ -30,7 +30,7 @@ import { DropdownMenu, DropdownOption, DropdownChevron } from "./dropdown-menu"
 import { TableActionsMenu } from "./table-actions-menu"
 import { LoadingButton } from "./loading-button"
 import { MediaPicker } from "./media-picker"
-import { Hint, usePageHelp } from "./page-help"
+import { Hint, useHintsVisible, usePageHelp } from "./page-help"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { RichTextEditor } from "./rich-text-editor"
@@ -166,6 +166,7 @@ const host = {
   useExtensionScope,
   // Adds guidance for the current screen to the header's help dialog; components.Hint shows inline guidance.
   usePageHelp,
+  useHintsVisible,
   // Opens a settings tab registered with the settings.tab panel location.
   openSettingsTab,
   components: {

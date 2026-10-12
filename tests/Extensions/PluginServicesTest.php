@@ -106,6 +106,16 @@ final class PluginServicesTest extends TestCase
         $this->services([])->themeExtension();
     }
 
+    public function testReadActiveThemeJsonRequiresPermissionAndReadsManifest(): void
+    {
+        file_put_contents($this->directory . '/themes/plain/theme.json', '{"id":"plain","content_schema":"fields/manifest.json"}');
+        $services = $this->services(['theme.extensions']);
+        $manifest = $services->readActiveThemeManifest();
+        self::assertSame('fields/manifest.json', $manifest['content_schema']);
+        $this->expectException(PluginPermissionDenied::class);
+        $this->services([])->readActiveThemeManifest();
+    }
+
     public function testDescriptorsAndBothTemplateTypesAreResolvedInsideTheTheme(): void
     {
         file_put_contents($this->directory . '/themes/plain/theme.json', '{"extensions":{"acme/forms":"extension.json"}}');

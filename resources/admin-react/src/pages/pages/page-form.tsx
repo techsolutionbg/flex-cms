@@ -14,6 +14,7 @@ import { MediaPicker } from "@/components/media-picker"
 import { MediaPreview } from "@/components/media-browser"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useExtensions } from "@/components/extension-runtime"
 import { mediaRequest, type MediaRecord } from "@/lib/media-api"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
@@ -22,6 +23,7 @@ type PageFormProps = {
   onBack: () => void
   onSaved: (page: PageRecord) => void
   onSettings: (page: PageRecord) => void
+  onThemeContent: (page: PageRecord) => void
   onLogout: () => void
   onNavigate: (label: string) => void
   loggingOut: boolean
@@ -32,6 +34,7 @@ export function PageForm({
   onBack,
   onSaved,
   onSettings,
+  onThemeContent,
   onLogout,
   onNavigate,
   loggingOut,
@@ -54,6 +57,7 @@ export function PageForm({
   const [mediaOpen, setMediaOpen] = useState(false)
   const changed = useWorkspaceChanged()
   const saves = usePanelSaves()
+  const themeContentPanels = useExtensions("page.theme-content", "screen.section")
   const syncedPageId = useRef<number | null>(page?.id ?? null)
   // Panels of active plugins (for example Flex SEO) see the unsaved values while the user types.
   const panelContext = useMemo(
@@ -61,8 +65,9 @@ export function PageForm({
       type: "page",
       id: page?.id ?? null,
       values: { title, slug, content, featured_media_id: featuredId, status, parent_id: parentId },
+      settings: { template: page?.settings?.template ?? "default" },
     }),
-    [page?.id, title, slug, content, featuredId, status, parentId],
+    [page?.id, page?.settings?.template, title, slug, content, featuredId, status, parentId],
   )
   const extensionScope = useMemo(
     () => ({ context: panelContext, saves }),
@@ -166,14 +171,27 @@ export function PageForm({
       })
       const body = (await response.json().catch(() => ({}))) as {
         page?: PageRecord
-        error?: string | { message?: string }
+        error?:
+          | string
+          | {
+              message?: string
+              details?: { fields?: Record<string, string[]> }
+            }
       }
-      if (!response.ok)
+      if (!response.ok) {
+        const fieldErrors = body.error?.details?.fields
+        const fieldMessage =
+          fieldErrors &&
+          Object.entries(fieldErrors)
+            .flatMap(([field, messages]) => messages.map((message) => `${field}: ${message}`))
+            .join(" ")
         throw new Error(
-          typeof body.error === "string"
-            ? body.error
-            : (body.error?.message ?? "Страницата не можа да бъде запазена."),
+          fieldMessage ||
+            (typeof body.error === "string"
+              ? body.error
+              : (body.error?.message ?? "Страницата не можа да бъде запазена.")),
         )
+      }
       let panelFailure = ""
       try {
         await saves.run({ id: body.page?.id ?? page?.id ?? null })
@@ -223,9 +241,16 @@ export function PageForm({
           />
         </div>
         {page && (
-          <button type="button" onClick={() => onSettings(page)}>
-            Настройки
-          </button>
+          <div className="react-page-heading-actions">
+            {themeContentPanels.length > 0 && (
+              <button type="button" onClick={() => onThemeContent(page)}>
+                Съдържание на шаблона
+              </button>
+            )}
+            <button type="button" onClick={() => onSettings(page)}>
+              Настройки
+            </button>
+          </div>
         )}
       </div>
       {error && (

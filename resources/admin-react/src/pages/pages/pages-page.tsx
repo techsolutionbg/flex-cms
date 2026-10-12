@@ -12,6 +12,7 @@ import type { PageRecord } from "@/lib/admin-types"
 import { getCsrfToken } from "@/lib/admin-api"
 import { adminUrl } from "@/lib/admin-routes"
 import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
+import { useExtensions } from "@/components/extension-runtime"
 import { publicPagePath } from "./page-utils"
 import { DateTime } from "@/components/date-time"
 import { parse } from "@/lib/flex-time"
@@ -35,6 +36,7 @@ export function PagesPage({
   onCreate,
   onEdit,
   onSettings,
+  onThemeContent,
   loggingOut,
 }: {
   onLogout: () => void
@@ -42,8 +44,10 @@ export function PagesPage({
   onCreate: () => void
   onEdit: (page: PageRecord) => void
   onSettings: (page: PageRecord) => void
+  onThemeContent: (page: PageRecord) => void
   loggingOut: boolean
 }) {
+  const themeContentPanels = useExtensions("page.theme-content", "screen.section")
   const [pages, setPages] = useState<PageRecord[]>([])
   const [loading, setLoading] = useState(true)
   const query = new URLSearchParams(window.location.search)
@@ -416,6 +420,11 @@ export function PagesPage({
                 <button type="button" role="menuitem" onClick={() => onSettings(page)}>
                   Настройки
                 </button>
+                {themeContentPanels.length > 0 && (
+                  <button type="button" role="menuitem" onClick={() => onThemeContent(page)}>
+                    Съдържание на шаблона
+                  </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"

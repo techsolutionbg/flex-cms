@@ -55,6 +55,34 @@ final readonly class PluginServices implements PluginServicesInterface
         $this->mailer->send($email);
     }
 
+    public function readActiveThemeManifest(): array
+    {
+        $this->requirePermission('theme.extensions');
+        $root = $this->themeRoot();
+        $manifestPath = $this->resolve($root, 'theme.json');
+        /** @var array<string, mixed> $manifest */
+        $manifest = json_decode((string) file_get_contents($manifestPath), true, 32, JSON_THROW_ON_ERROR);
+
+        return $manifest;
+    }
+
+    public function readActiveThemeJson(string $relativePath): array
+    {
+        $this->requirePermission('theme.extensions');
+        $path = $this->resolve($this->themeRoot(), $relativePath);
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
+
+        return $decoded;
+    }
+
+    public function activeThemeRoot(): string
+    {
+        $this->requirePermission('theme.extensions');
+
+        return $this->themeRoot();
+    }
+
     public function themeExtension(): ?array
     {
         $this->requirePermission('theme.extensions');

@@ -7,6 +7,7 @@ namespace Flex\Http\Controller;
 use Flex\Configuration\ProjectPaths;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Http\AssetVersion;
+use Flex\Themes\ThemeAssetPaths;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -26,14 +27,11 @@ final readonly class ThemeAssetController
         $assetName = ltrim($asset, '/');
         $extension = strtolower(pathinfo($assetName, PATHINFO_EXTENSION));
         $allowed = ['css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'woff', 'woff2', 'ttf', 'otf', 'ico', 'map'];
-        $base = realpath($this->paths->themes($theme . '/assets'));
-        $path = $assetName === 'style.css'
-            ? realpath($this->paths->themes($theme . '/style.css'))
-            : realpath($this->paths->themes($theme . '/assets/' . $assetName));
-        if ($extension === '' || !in_array($extension, $allowed, true) || $path === false || !is_file($path)) {
+        $themeRoot = $this->paths->themes($theme);
+        $path = ThemeAssetPaths::resolvePublicAsset($themeRoot, $assetName);
+        if ($extension === '' || !in_array($extension, $allowed, true) || $path === null) {
             return $this->responses->text('Ресурсът не е намерен.', 404);
         }
-        if ($assetName !== 'style.css' && ($base === false || !str_starts_with($path, rtrim($base, '/') . '/'))) return $this->responses->text('Ресурсът не е намерен.', 404);
 
         $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
             'css' => 'text/css; charset=utf-8',

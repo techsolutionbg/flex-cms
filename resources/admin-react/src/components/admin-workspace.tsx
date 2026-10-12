@@ -3,7 +3,7 @@ import { adminRoute, adminUrl } from "@/lib/admin-routes"
 import { isWorkspacePath, readWorkspace, writeWorkspace } from "@/lib/workspace-storage"
 import type { PageRecord, PluginRecord, UserRecord } from "@/lib/admin-types"
 import { DashboardPage } from "@/pages/dashboard-page"
-import { PageForm, PageSettingsForm, PagesPage } from "@/pages/pages"
+import { PageForm, PageSettingsForm, PageThemeContentForm, PagesPage } from "@/pages/pages"
 import { UserForm, UsersPage } from "@/pages/users"
 import { ProfilePage } from "@/pages/profile-page"
 import { ThemesPage } from "@/pages/themes-page"
@@ -94,7 +94,7 @@ export function AdminWorkspace({
     requestAnimationFrame(() => window.scrollTo(0, scroll.current.get(id) ?? 0))
   }
   async function hydrate(tab: Tab) {
-    const pageMatch = tab.path.match(/^\/pages\/(\d+)\/(edit|settings)$/)
+    const pageMatch = tab.path.match(/^\/pages\/(\d+)\/(edit|settings|theme-content)$/)
     const userMatch = tab.path.match(/^\/users\/(\d+)\/edit$/)
     const pluginMatch = tab.path.match(/^\/plugins\/(.+)$/)
     if (!pageMatch && !userMatch && (!pluginMatch || tab.path === "/plugins/catalog")) return
@@ -118,7 +118,12 @@ export function AdminWorkspace({
         if (!page) throw new Error("Страницата не е намерена.")
         patch(tab.id, {
           page,
-          title: `${pageMatch[2] === "settings" ? "Настройки: " : ""}${page.title}`,
+          title:
+            pageMatch[2] === "settings"
+              ? `Настройки: ${page.title}`
+              : pageMatch[2] === "theme-content"
+                ? `Съдържание на шаблона: ${page.title}`
+                : page.title,
           loading: false,
         })
       } else if (userMatch) {
@@ -184,15 +189,17 @@ export function AdminWorkspace({
         (path.startsWith("/themes/") ? `Тема: ${path.split("/")[2]}` : undefined) ??
         (path === "/pages/create"
           ? "Нова страница"
-          : path === "/users/create"
-            ? "Нов потребител"
-            : path.startsWith("/menus/")
-              ? path.endsWith("/structure")
-                ? "Структура на менюто"
-                : "Меню"
-              : path.startsWith("/media/")
-                ? "Медия"
-                : "Зареждане…"),
+          : /^\/pages\/\d+\/theme-content$/.test(path)
+            ? "Съдържание на шаблона"
+            : path === "/users/create"
+              ? "Нов потребител"
+              : path.startsWith("/menus/")
+                ? path.endsWith("/structure")
+                  ? "Структура на менюто"
+                  : "Меню"
+                : path.startsWith("/media/")
+                  ? "Медия"
+                  : "Зареждане…"),
       dirty: false,
       revision: 0,
       ...data,
@@ -201,7 +208,7 @@ export function AdminWorkspace({
       !tab.page &&
       !tab.user &&
       !tab.plugin &&
-      /^\/(pages|users)\/\d+\/(edit|settings)$|^\/plugins\/(?!catalog$)/.test(path)
+      /^\/(pages|users)\/\d+\/(edit|settings|theme-content)$|^\/plugins\/(?!catalog$)/.test(path)
     tab.loading = needsData
     scroll.current.set(activeRef.current, window.scrollY)
     tabsRef.current = [...tabsRef.current, tab]
@@ -437,6 +444,11 @@ export function AdminWorkspace({
       open(`/pages/${page.id}/edit`, { page, title: page.title })
     const settings = (page: PageRecord) =>
       open(`/pages/${page.id}/settings`, { page, title: `Настройки: ${page.title}` })
+    const themeContent = (page: PageRecord) =>
+      open(`/pages/${page.id}/theme-content`, {
+        page,
+        title: `Съдържание на шаблона: ${page.title}`,
+      })
     const editUser = (user: UserRecord) =>
       open(`/users/${user.id}/edit`, { user, title: user.email })
     const plugin = (plugin: PluginRecord) =>
@@ -470,6 +482,7 @@ export function AdminWorkspace({
             onCreate={() => open("/pages/create")}
             onEdit={editPage}
             onSettings={settings}
+            onThemeContent={themeContent}
           />
         )
       case "/users":
@@ -557,11 +570,30 @@ export function AdminWorkspace({
           page={tab.page ?? null}
           onBack={() => open("/pages")}
           onSettings={settings}
+          onThemeContent={themeContent}
           onSaved={(page) =>
             saved(tab, { page, title: page.title, path: `/pages/${page.id}/edit` })
           }
         />
       )
+    if (/^\/pages\/\d+\/theme-content$/.test(tab.path)) {
+      if (!tab.page) {
+        return (
+          <AdminShell {...common} title="Съдържание на шаблона" activeItem="Страници">
+            <p role="status">{tab.loading ? "Зареждане…" : (tab.error ?? "Страницата не е налична.")}</p>
+          </AdminShell>
+        )
+      }
+      return (
+        <PageThemeContentForm
+          {...common}
+          page={tab.page}
+          onBack={() => open("/pages")}
+          onEdit={editPage}
+          onSettings={settings}
+        />
+      )
+    }
     if (tab.path.endsWith("/settings") && tab.page)
       return (
         <PageSettingsForm

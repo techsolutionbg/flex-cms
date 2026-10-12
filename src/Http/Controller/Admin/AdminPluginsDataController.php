@@ -56,26 +56,75 @@ final readonly class AdminPluginsDataController
     private function buildExtensions(): array
     {
         $installed = $this->plugins->all();
-        $pluginIds = $installed
-            ->map(static fn(Plugin $plugin): string => (string) $plugin->getAttribute('id'))
-            ->all();
+        /** @var array<string, Plugin> $installedById */
+        $installedById = [];
+        foreach ($installed as $registeredPlugin) {
+            $installedById[(string) $registeredPlugin->getAttribute('id')] = $registeredPlugin;
+        }
+
+        $pluginIds = array_keys($installedById);
+        foreach ($this->plugins->discover() as $entry) {
+            $discoveredId = $entry['manifest']->id;
+            if (!isset($installedById[$discoveredId])) {
+                $pluginIds[] = $discoveredId;
+            }
+        }
 
         $availableVersions = $this->availableVersionsFor($pluginIds);
 
         $extensions = [];
         foreach ($installed as $registeredPlugin) {
-            $plugin = $registeredPlugin->toPublicArray();
-            $id = (string) ($plugin['id'] ?? '');
-            $currentVersion = (string) ($plugin['version'] ?? '');
-            $available = $availableVersions[$id] ?? null;
-            $availableVersion = is_array($available) ? ($available['version'] ?? null) : null;
-            $plugin['available_version'] = $availableVersion;
-            $plugin['available_release_notes'] = is_array($available) ? ($available['release_notes'] ?? null) : null;
-            $plugin['update_available'] = is_string($availableVersion) && $currentVersion !== '' && version_compare($availableVersion, $currentVersion, '>');
-            $extensions[] = $plugin;
+            $extensions[] = $this->publicPluginRecord(
+                $registeredPlugin->toPublicArray(),
+                $availableVersions,
+            );
         }
 
+        foreach ($this->plugins->discover() as $entry) {
+            $manifest = $entry['manifest'];
+            if (isset($installedById[$manifest->id])) {
+                continue;
+            }
+            $extensions[] = $this->publicPluginRecord([
+                'id' => $manifest->id,
+                'name' => $manifest->name,
+                'version' => $manifest->version,
+                'description' => $manifest->description,
+                'entrypoint' => $manifest->entrypoint,
+                'path' => $entry['path'],
+                'status' => 'discovered',
+                'source' => 'local',
+                'manifest' => $manifest->toArray(),
+                'requested_permissions' => $manifest->permissions,
+                'approved_permissions' => [],
+                'last_error' => null,
+                'installed_at' => null,
+                'activated_at' => null,
+            ], $availableVersions);
+        }
+
+        usort($extensions, static fn(array $left, array $right): int => strcmp((string) ($left['name'] ?? ''), (string) ($right['name'] ?? '')));
+
         return $extensions;
+    }
+
+    /**
+     * @param array<string, mixed> $plugin
+     * @param array<string, array{version: string, release_notes: string|null}> $availableVersions
+     *
+     * @return array<string, mixed>
+     */
+    private function publicPluginRecord(array $plugin, array $availableVersions): array
+    {
+        $id = (string) ($plugin['id'] ?? '');
+        $currentVersion = (string) ($plugin['version'] ?? '');
+        $available = $availableVersions[$id] ?? null;
+        $availableVersion = is_array($available) ? ($available['version'] ?? null) : null;
+        $plugin['available_version'] = $availableVersion;
+        $plugin['available_release_notes'] = is_array($available) ? ($available['release_notes'] ?? null) : null;
+        $plugin['update_available'] = is_string($availableVersion) && $currentVersion !== '' && version_compare($availableVersion, $currentVersion, '>');
+
+        return $plugin;
     }
 
     /**

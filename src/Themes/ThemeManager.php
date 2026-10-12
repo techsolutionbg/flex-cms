@@ -72,15 +72,31 @@ final class ThemeManager
         $mediaApi = ($data['__flex_media_api'] ?? null) instanceof \Flex\Media\PublicMediaApi ? $data['__flex_media_api'] : null;
         unset($data['__flex_media_api']);
         $this->mediaApi = $mediaApi;
-        $phpTemplate = $this->phpTemplate($theme, $template);
-        if ($phpTemplate !== null) {
+        $themeRoot = $this->paths->themes($theme);
+        $themeView = ThemeRenderPaths::logicalViewFromTemplate($template);
+        $themeEntryPath = ThemeRenderPaths::resolveThemeEntryPath($themeRoot, $themeView);
+        $themeContent = function () use ($data, $theme): array {
+            $default = ['global' => ['sections' => []], 'page' => ['template' => '', 'layout' => null, 'sections' => []]];
+            if ($this->extensionApi === null) {
+                return $default;
+            }
+            $page = $data['page'] ?? null;
+            $pageArray = $page instanceof \Flex\Pages\Page
+                ? $page->toPublicArray()
+                : (is_array($page) ? $page : []);
+            $filtered = $this->extensionApi->applyFilters('public.theme.content', $default, ['page' => $pageArray, 'theme' => $theme]);
+
+            return is_array($filtered) ? $filtered : $default;
+        };
+        if ($themeEntryPath !== null) {
             // Versioned URLs (?v=…), so browsers keep theme files until they change.
-            $themeAsset = function (string $asset) use ($theme): string {
+            $themeAsset = function (string $asset) use ($theme, $themeRoot): string {
                 $asset = ltrim($asset, '/');
-                [$url, $file] = $asset === 'style.css'
-                    ? ['/themes/' . rawurlencode($theme) . '/style.css', $this->paths->themes($theme . '/style.css')]
-                    : ['/themes/' . rawurlencode($theme) . '/assets/' . $asset, $this->paths->themes($theme . '/assets/' . $asset)];
-                $version = str_contains($asset, '?') ? null : AssetVersion::of($file);
+                $file = ThemeAssetPaths::resolvePublicAsset($themeRoot, $asset === 'style.css' ? 'style.css' : $asset);
+                $url = $asset === 'style.css'
+                    ? '/themes/' . rawurlencode($theme) . '/style.css'
+                    : '/themes/' . rawurlencode($theme) . '/assets/' . $asset;
+                $version = $file !== null && !str_contains($asset, '?') ? AssetVersion::of($file) : null;
 
                 return $version === null ? $url : $url . '?v=' . $version;
             };
@@ -91,17 +107,20 @@ final class ThemeManager
                 $flexMedia = static fn(int $id): array => $mediaApi?->get($id) ?? [];
                 extract($data + [
                     'theme' => $theme,
+                    'theme_view' => $themeView,
+                    'isErrorPage' => $themeView === ThemeRenderPaths::VIEW_NOT_FOUND,
                     'theme_asset' => $themeAsset,
                     'flex_menu' => $flexMenu,
                     'flex_menu_html' => $flexMenuHtml,
                     'flex_media' => $flexMedia,
                     'flex_time' => static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style),
                     'flex_extension' => fn(string $extension, string $id): string => (string) $this->extensionApi?->applyFilters('public.extension.render', '', ['extension' => $extension, 'id' => $id]),
+                    'flex_theme_content' => $themeContent,
                     // Built when the theme prints it, after groups asked for while the template runs.
                     'frontend_extension_tags' => $this->frontendAssets === null ? '' : new DeferredHtml(fn(): string => $this->frontendAssets->publicTags()),
                     'head_tags' => is_string($data['head_tags'] ?? null) ? $data['head_tags'] : '',
                 ], EXTR_SKIP);
-                include $phpTemplate;
+                include $themeEntryPath;
                 return (string) ob_get_clean();
             } catch (\Throwable $exception) {
                 ob_end_clean();
@@ -119,6 +138,7 @@ final class ThemeManager
             $this->twig->addFunction(new TwigFunction('flex_media', fn(int $id): array => $this->mediaApi?->get($id) ?? []));
             $this->twig->addFunction(new TwigFunction('flex_time', static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style), ['is_safe' => ['html']]));
             $this->twig->addFunction(new TwigFunction('flex_extension', fn(string $extension, string $id): string => (string) $this->extensionApi?->applyFilters('public.extension.render', '', ['extension' => $extension, 'id' => $id]), ['is_safe' => ['html']]));
+            $this->twig->addFunction(new TwigFunction('flex_theme_content', static fn(): array => $themeContent(), ['is_safe' => []]));
             $this->twig->addFunction(new TwigFunction('flex_menu_html', fn(string $slug): string => $this->menuApi?->html($slug) ?? '', ['is_safe' => ['html']]));
             // The public files of plugins for this page, as in PHP themes (Flex CMS 0.1.62+).
             $this->twig->addFunction(new TwigFunction('frontend_extension_tags', fn(): string => $this->frontendAssets?->publicTags() ?? '', ['is_safe' => ['html']]));
@@ -177,6 +197,8 @@ final class ThemeManager
             if ($result['supports']['menus']) {
                 $result['menu_locations'] = $manifest->menuLocations;
             }
+            $contentSchema = is_string($data['content_schema'] ?? null) ? trim($data['content_schema']) : '';
+            $result['content_schema'] = $contentSchema !== '' ? $contentSchema : null;
         } catch (\Throwable) {
             // Missing or invalid manifests never grant access to theme capabilities.
         }
@@ -255,15 +277,14 @@ final class ThemeManager
                         : array_values(array_filter(array_map(static fn(mixed $support, mixed $enabled): string => $enabled && is_string($support) ? trim($support) : '', array_keys($supports), $supports), static fn(string $support): bool => $support !== ''));
                 }
                 $screenshot = is_string($manifest['screenshot'] ?? null) ? trim($manifest['screenshot']) : '';
-                if (str_starts_with($screenshot, 'assets/')) {
-                    $screenshot = substr($screenshot, strlen('assets/'));
-                }
-                if ($screenshot !== '' && preg_match('/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._\/-]*$/', $screenshot) === 1 && is_file($path . '/assets/' . $screenshot)) {
-                    $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $screenshot)));
+                $screenshotFile = $screenshot !== '' ? ThemeAssetPaths::resolveScreenshot($path, $screenshot) : null;
+                if ($screenshotFile !== null) {
+                    $suffix = $screenshotFile['public_suffix'];
+                    $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $suffix)));
                 }
                 $record['valid'] = self::themeHasRenderEntry($path);
                 if (!$record['valid']) {
-                    $record['error'] = 'Липсва pages/page.php, pages/index.php, index.php или папка templates с Twig шаблони.';
+                    $record['error'] = 'Липсва PHP entry (src/index.php, pages/ …) или папка templates с Twig шаблони.';
                 }
             } catch (\Throwable $exception) {
                 $record['error'] = $exception->getMessage();
@@ -348,32 +369,9 @@ final class ThemeManager
         $setting->saveOrFail();
     }
 
-    private function phpTemplate(string $theme, string $template): ?string
-    {
-        $root = $this->paths->themes($theme);
-        if (!is_dir($root)) {
-            return null;
-        }
-        $name = pathinfo($template, PATHINFO_FILENAME);
-        $candidates = ["pages/{$name}.php", "{$name}.php"];
-        if ($name === 'page') {
-            array_splice($candidates, 1, 0, ['pages/index.php', 'index.php']);
-        } elseif ($name === 'index') {
-            array_unshift($candidates, 'pages/index.php');
-        }
-        foreach (array_values(array_unique($candidates)) as $candidate) {
-            $path = $root . '/' . $candidate;
-            if (is_file($path) && is_readable($path)) {
-                return $path;
-            }
-        }
-
-        return null;
-    }
-
     public static function themeHasRenderEntry(string $themeRoot): bool
     {
-        if (is_file($themeRoot . '/pages/page.php') || is_file($themeRoot . '/pages/index.php') || is_file($themeRoot . '/index.php')) {
+        if (ThemeRenderPaths::themeHasPhpRenderEntry($themeRoot)) {
             return true;
         }
         $templates = $themeRoot . '/templates';

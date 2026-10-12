@@ -23,7 +23,7 @@ export function isWorkspacePath(value: unknown): value is string {
     value.length <= 240 &&
     (simplePaths.has(value) ||
       isSettingsWorkspacePath(value) ||
-      /^\/pages\/\d+\/(edit|settings)$/.test(value) ||
+      /^\/pages\/\d+\/(edit|settings|theme-content)$/.test(value) ||
       /^\/media\/\d+\/edit$/.test(value) ||
       /^\/extension-pages\/[a-z][a-z0-9_-]*(?:\/(?:create|[a-z0-9][a-z0-9_-]*\/edit|inbox(?:\/submissions\/[0-9]{14}-[a-f0-9]{16})?))?$/.test(
         value,

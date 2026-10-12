@@ -62,7 +62,7 @@ final readonly class ThemePackageInstaller
         if ($manifest->id !== $expectedId || $manifest->version !== $expectedVersion) throw new InvalidPlatformPackage('Манифестът на темата не съвпада с избрания release.');
         $themeRoot = dirname($manifestPath);
         if (!ThemeManager::themeHasRenderEntry($themeRoot)) {
-            throw new InvalidPlatformPackage('Пакетът на темата не съдържа pages/page.php, pages/index.php, index.php или Twig шаблони в templates/.');
+            throw new InvalidPlatformPackage('Пакетът на темата не съдържа PHP entry (src/index.php, pages/ …) или Twig шаблони в templates/.');
         }
         return dirname($manifestPath);
     }

@@ -19,6 +19,14 @@ interface PluginServicesInterface
     /** @return array{id: string, descriptor: array<string, mixed>}|null */
     public function themeExtension(): ?array;
 
+    /** @return array<string, mixed> */
+    public function readActiveThemeManifest(): array;
+
+    /** @return array<string, mixed> */
+    public function readActiveThemeJson(string $relativePath): array;
+
+    public function activeThemeRoot(): string;
+
     /** @param array<string, mixed> $data */
     public function renderThemeTemplate(string $relativePath, array $data): string;
 }

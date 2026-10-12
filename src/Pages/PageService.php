@@ -12,6 +12,7 @@ use Flex\Extensions\PageFieldRegistry;
 use Flex\Extensions\PageSettingsRegistry;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 final readonly class PageService
 {
@@ -33,7 +34,11 @@ final readonly class PageService
         $data['author_id'] = $authorId;
         $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable('now', new \DateTimeZone('UTC')) : null;
 
-        $page = $this->pages->create($data);
+        try {
+            $page = $this->pages->create($data);
+        } catch (UniqueConstraintViolationException) {
+            throw new PageValidationFailed(['slug' => ['Този URL адрес вече се използва.']]);
+        }
         $fields = $this->pluginFieldsForEvent($attributes['plugin_fields'] ?? null, $attributes['plugin_settings'] ?? null);
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_CREATED, $page->toPublicArray(), $fields));
 
@@ -56,7 +61,11 @@ final readonly class PageService
         } elseif ($data['status'] === 'draft') {
             $page->setAttribute('published_at', null);
         }
-        $page->saveOrFail();
+        try {
+            $page->saveOrFail();
+        } catch (UniqueConstraintViolationException) {
+            throw new PageValidationFailed(['slug' => ['Този URL адрес вече се използва.']]);
+        }
         $fields = $this->pluginFieldsForEvent($attributes['plugin_fields'] ?? null, $attributes['plugin_settings'] ?? null);
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
@@ -184,11 +193,12 @@ final readonly class PageService
                     if (!str_starts_with((string) $image['mime'], 'image/') || ($image['deleted_at'] !== null && $previous !== $mediaId)) {
                         throw new \Flex\Media\MediaException('Invalid image', 422);
                     }
-                } catch (\Flex\Media\MediaException) {
+                } catch (\Throwable) {
                     $errors['featured_media_id'][] = 'Изберете налично изображение от библиотеката.';
+                    $mediaId = null;
                 }
             }
-            $featured['featured_media_id'] = $mediaId;
+            $featured['featured_media_id'] = is_int($mediaId) ? $mediaId : null;
         }
 
         if ($title === '' || mb_strlen($title) > 190) {

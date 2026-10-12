@@ -44,7 +44,8 @@ final class PageRepository
 
     public function slugExists(string $slug, ?int $exceptId = null): bool
     {
-        $query = Page::query()->where('slug', $slug);
+        // Unique index covers trashed rows too; validation must match the database.
+        $query = Page::withTrashed()->where('slug', $slug);
         if ($exceptId !== null) {
             $query->whereKeyNot($exceptId);
         }

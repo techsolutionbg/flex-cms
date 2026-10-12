@@ -3161,12 +3161,21 @@ body {
   transform: rotate(-90deg);
 }
 .collapsible-section-body {
-  display: block;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.collapsible-section.is-open > .collapsible-section-body {
+  grid-template-rows: 1fr;
 }
 .collapsible-section-body-inner {
   min-width: 0;
-  overflow: visible;
+  min-height: 0;
+  overflow: hidden;
   padding: 1.25rem;
+}
+.collapsible-section.is-open > .collapsible-section-body > .collapsible-section-body-inner {
+  overflow: visible;
 }
 .page-editor-basic-panel {
   align-self: start;
@@ -6023,3 +6032,75 @@ button.react-action-button svg {
   .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-react .sidebar-link-react { padding-left: 3.6rem; }
   .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-toggle-react { padding-left: 2.4rem; }
 }
+
+.theme-content-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.theme-content-form-section {
+  margin: 0;
+}
+
+.theme-content-form .theme-content-form-section + .theme-content-form-section {
+  margin-top: 0.25rem;
+}
+
+.theme-content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.theme-content-workspace {
+  width: 100%;
+  max-width: none;
+}
+
+.theme-content-workspace .collapsible-section {
+  width: 100%;
+}
+
+.theme-content-fields-main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1rem;
+  align-items: start;
+  width: 100%;
+}
+
+.theme-content-field--full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .theme-content-fields-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.theme-content-fields-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.theme-content-repeater .react-form-field > small {
+  grid-column: 1 / -1;
+}
+
+.theme-content-repeater-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-content-repeater-row:last-of-type {
+  border-bottom: 0;
+}
+

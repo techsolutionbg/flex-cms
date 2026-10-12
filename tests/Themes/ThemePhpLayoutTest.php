@@ -42,11 +42,60 @@ final class ThemePhpLayoutTest extends TestCase
         self::assertSame('not-found', $manager->renderForTheme('demo', '404.twig'));
     }
 
+    public function testResolvesPageTemplateFromPagesViewIndex(): void
+    {
+        mkdir($this->directory . '/themes/demo/pages/page', 0777, true);
+        file_put_contents($this->directory . '/themes/demo/theme.json', '{"id":"demo","name":"Demo","version":"1.0.0","author":"Test","description":"Test"}');
+        file_put_contents($this->directory . '/themes/demo/pages/page/index.php', '<?php echo "pages-dir-index";');
+        $manager = $this->manager('demo');
+        self::assertSame('pages-dir-index', $manager->renderForTheme('demo', 'page.twig'));
+    }
+
+    public function testRenderUsesThemeSrcIndex(): void
+    {
+        file_put_contents($this->directory . '/themes/demo/theme.json', '{"id":"demo","name":"Demo","version":"1.0.0","author":"Test","description":"Test"}');
+        mkdir($this->directory . '/themes/demo/src', 0777, true);
+        file_put_contents(
+            $this->directory . '/themes/demo/src/index.php',
+            '<?php echo "view=" . (string) ($theme_view ?? "");',
+        );
+        $manager = $this->manager('demo');
+        self::assertSame('view=page', $manager->renderForTheme('demo', 'page.twig'));
+        self::assertSame('view=404', $manager->renderForTheme('demo', '404.twig'));
+    }
+
+    public function testPrefersPagesDirectoryIndexOverFlatFile(): void
+    {
+        mkdir($this->directory . '/themes/demo/pages/page', 0777, true);
+        file_put_contents($this->directory . '/themes/demo/theme.json', '{"id":"demo","name":"Demo","version":"1.0.0","author":"Test","description":"Test"}');
+        file_put_contents($this->directory . '/themes/demo/pages/page/index.php', '<?php echo "folder";');
+        file_put_contents($this->directory . '/themes/demo/pages/page.php', '<?php echo "flat";');
+        $manager = $this->manager('demo');
+        self::assertSame('folder', $manager->renderForTheme('demo', 'page.twig'));
+    }
+
+    public function testLegacyPagePhpStillWorksWhenNoIndex(): void
+    {
+        mkdir($this->directory . '/themes/demo/pages/page', 0777, true);
+        file_put_contents($this->directory . '/themes/demo/theme.json', '{"id":"demo","name":"Demo","version":"1.0.0","author":"Test","description":"Test"}');
+        file_put_contents($this->directory . '/themes/demo/pages/page/page.php', '<?php echo "legacy-page";');
+        $manager = $this->manager('demo');
+        self::assertSame('legacy-page', $manager->renderForTheme('demo', 'page.twig'));
+    }
+
     public function testThemeHasRenderEntryAcceptsPagesDirectory(): void
     {
         $root = $this->directory . '/themes/demo';
         mkdir($root . '/pages', 0777, true);
         file_put_contents($root . '/pages/page.php', '<?php');
+        self::assertTrue(ThemeManager::themeHasRenderEntry($root));
+    }
+
+    public function testThemeHasRenderEntryAcceptsNestedPagesDirectory(): void
+    {
+        $root = $this->directory . '/themes/demo';
+        mkdir($root . '/pages/page', 0777, true);
+        file_put_contents($root . '/pages/page/page.php', '<?php');
         self::assertTrue(ThemeManager::themeHasRenderEntry($root));
     }
 

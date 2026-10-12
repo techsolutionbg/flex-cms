@@ -105,7 +105,7 @@ export function CollapsibleSection({
         <span>{title}</span>
         <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
       </button>
-      {open ? body : <div className="collapsible-section-body" hidden />}
+      {body}
     </section>
   )
 }

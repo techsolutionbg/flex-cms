@@ -56,7 +56,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Flex\\Tests\\": "tests/"
+            "Flex\\Tests\\": "tests/",
+            "KriskataCorporate\\": "themes/kriskata-corporate/src/"
         }
     },
     "bin": [

@@ -33,6 +33,7 @@ $context->admin?->extend('commerce.product.editor.pricing', 'section.nested', 'v
 | --- | --- | --- |
 | `page.editor` | `page.editor` | `screen.section` |
 | `page.settings` | `page.settings` | `screen.section` |
+| `page.theme-content` | `page.theme-content` | `screen.section` |
 | `pages.list.column` | `pages.list` | `table.column` |
 | `settings.tab` | `settings` | `screen.tab` |
 | `commerce.product.editor` | `commerce.product.editor` | `screen.section` |
@@ -76,6 +77,7 @@ Forms share the record being edited with every extension inside them through `Ex
 | --- | --- |
 | Page editor | `{type: 'page', id, values: {title, slug, content, featured_media_id, status, parent_id}}` (unsaved values) |
 | Page settings | `{type: 'page', id, page, settings}` |
+| Page theme content | `{type: 'page', id, page, settings}` (dedicated screen at `/pages/{id}/theme-content`) |
 | Profile | `{type: 'profile', id, values: {name, email, theme}}` |
 | Settings → General / a section | `{type: 'settings', id: 'general' \| section, values}` |
 | User editor | `{type: 'user', id, values: {name, email, role, status}}` |
@@ -91,6 +93,7 @@ Forms share the record being edited with every extension inside them through `Ex
 | --- | --- |
 | Page editor | `page.editor` (screen), `page.editor.basic`, `page.editor.featured-image`, `page.editor.content`, `page.editor.publishing` |
 | Page settings | `page.settings` (screen), `page.settings.appearance`, `page.settings.navigation`, `page.settings.indexing` |
+| Page theme content | `page.theme-content` (screen) |
 | Pages list | `pages.list` |
 | Profile | `profile.information`, `profile.security`, `profile.appearance` |
 | Settings | `settings` (tabs), `settings.general`, `settings.public`, `settings.users`, `settings.media`, `settings.mail`, `settings.updates`, `settings.admin`, `settings.maintenance` (includes the operation error journal UI) |

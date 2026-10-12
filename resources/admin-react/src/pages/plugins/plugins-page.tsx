@@ -24,6 +24,7 @@ const statusLabels: Record<string, string> = {
   installed: "Инсталирано",
   inactive: "Неактивно",
   error: "Грешка",
+  discovered: "Неинсталирано",
 }
 type PluginAction = PluginBulkAction
 const bulkLabels: Record<PluginAction, { label: string; running: string; done: string }> = {
