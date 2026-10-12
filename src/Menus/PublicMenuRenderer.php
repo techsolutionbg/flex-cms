@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Flex\Menus;
 
 use Flex\Database\DatabaseManager;
+use Flex\Pages\HomePageResolver;
 use Flex\Pages\PublicPageSet;
 
 /** Theme-independent, escaped menu markup and structured data for PHP and Twig themes. */
 final readonly class PublicMenuRenderer
 {
-    public function __construct(private DatabaseManager $database) {}
+    public function __construct(private DatabaseManager $database, private ?HomePageResolver $homePages = null) {}
 
     /** @param array<string, string> $locations
      * @return array<string, mixed>
@@ -62,7 +63,9 @@ final readonly class PublicMenuRenderer
     private function itemsForMenu(int $menuId, PublicPageSet $pages): array
     {
         $rows = $this->database->connection()->table('menu_items')->where('menu_id', $menuId)->orderBy('position')->get()->all();
-        $build = function (?string $parent, int $depth = 1) use (&$build, $rows, $pages): array {
+        // The home page is served at "/", so its menu items link there rather than to its slug.
+        $homeId = (int) ($this->homePages?->resolve($pages)?->getKey() ?? 0);
+        $build = function (?string $parent, int $depth = 1) use (&$build, $rows, $pages, $homeId): array {
             if ($depth > 3) {
                 return [];
             }
@@ -75,7 +78,9 @@ final readonly class PublicMenuRenderer
                 if ($row->type === 'page' && $page === null) {
                     continue;
                 }
-                $url = $page && !$row->url ? '/' . ltrim($pages->publicPath($page), '/') : (string) $row->url;
+                $url = $page && !$row->url
+                    ? ($homeId > 0 && (int) $page->getKey() === $homeId ? '/' : '/' . ltrim($pages->publicPath($page), '/'))
+                    : (string) $row->url;
                 if (!MenuService::safeUrl($url)) {
                     continue;
                 }

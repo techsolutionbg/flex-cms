@@ -177,9 +177,27 @@ final class ThemeContentSchemaValidator
             if (array_key_exists('layout', $field) && !in_array($field['layout'], ['full', 'half'], true)) {
                 $errors[] = sprintf('%s field "%s" layout must be \"full\" or \"half\" when set.', $contextLabel, $id);
             }
+            if (array_key_exists('preview_background', $field) && ($type !== 'media' || !in_array($field['preview_background'], ['light', 'dark'], true))) {
+                $errors[] = sprintf('%s field "%s" preview_background must be "light" or "dark" on a media field.', $contextLabel, $id);
+            }
+            if (array_key_exists('default', $field) && !$this->isValidDefault($type, $field['default'])) {
+                $errors[] = sprintf('%s field "%s" default does not match its type.', $contextLabel, $id);
+            }
         }
 
         return $errors;
+    }
+
+    /** `default` uses the same value shape as stored content for the field type. */
+    private function isValidDefault(string $type, mixed $value): bool
+    {
+        return match ($type) {
+            'checkbox' => is_bool($value),
+            'number' => $value === null || is_int($value) || is_float($value),
+            'media', 'page_link' => $value === null || (is_int($value) && $value > 0),
+            'repeater' => is_array($value) && array_is_list($value) && array_filter($value, static fn(mixed $row): bool => !is_array($row) || ($row !== [] && array_is_list($row))) === [],
+            default => is_string($value),
+        };
     }
 
     /**

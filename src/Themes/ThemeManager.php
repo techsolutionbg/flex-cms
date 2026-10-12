@@ -175,16 +175,31 @@ final class ThemeManager
         return '';
     }
 
-    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>} */
+    /** @return list<array{id: string, label: string}> */
+    public const BUILTIN_PAGE_TEMPLATES = [
+        ['id' => 'default', 'label' => 'Стандартен'],
+        ['id' => 'full_width', 'label' => 'Пълна ширина'],
+        ['id' => 'landing', 'label' => 'Landing page'],
+    ];
+
+    /** @return list<array{id: string, label: string}> */
+    public function pageTemplates(): array
+    {
+        $templates = $this->capabilities()['page_templates'] ?? null;
+
+        return is_array($templates) && $templates !== [] ? $templates : self::BUILTIN_PAGE_TEMPLATES;
+    }
+
+    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>, page_templates: list<array{id: string, label: string}>} */
     public function capabilities(): array
     {
         return $this->capabilitiesForTheme($this->activeTheme());
     }
 
-    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>} */
+    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>, page_templates: list<array{id: string, label: string}>} */
     public function capabilitiesForTheme(string $theme): array
     {
-        $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => []];
+        $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => [], 'page_templates' => self::BUILTIN_PAGE_TEMPLATES];
         if ($theme === '' || preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) !== 1) {
             return $result;
         }
@@ -200,6 +215,9 @@ final class ThemeManager
             $result['supports']['menus'] = ($manifest->supports['menus'] ?? false) === true;
             if ($result['supports']['menus']) {
                 $result['menu_locations'] = $manifest->menuLocations;
+            }
+            if ($manifest->templates !== []) {
+                $result['page_templates'] = $manifest->templates;
             }
             $contentSchema = is_string($data['content_schema'] ?? null) ? trim($data['content_schema']) : '';
             $result['content_schema'] = $contentSchema !== '' ? $contentSchema : null;

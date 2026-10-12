@@ -36,6 +36,7 @@ $context->admin?->extend('commerce.product.editor.pricing', 'section.nested', 'v
 | `page.theme-content` | `page.theme-content` | `screen.section` |
 | `pages.list.column` | `pages.list` | `table.column` |
 | `settings.tab` | `settings` | `screen.tab` |
+| `theme.settings` | `theme.settings` | `screen.section` |
 | `commerce.product.editor` | `commerce.product.editor` | `screen.section` |
 | `commerce.category.editor` | `commerce.category.editor` | `screen.section` |
 
@@ -94,6 +95,7 @@ Forms share the record being edited with every extension inside them through `Ex
 | Page editor | `page.editor` (screen), `page.editor.basic`, `page.editor.featured-image`, `page.editor.content`, `page.editor.publishing` |
 | Page settings | `page.settings` (screen), `page.settings.appearance`, `page.settings.navigation`, `page.settings.indexing` |
 | Page theme content | `page.theme-content` (screen) |
+| Theme settings | `theme.settings` (screen) |
 | Pages list | `pages.list` |
 | Profile | `profile.information`, `profile.security`, `profile.appearance` |
 | Settings | `settings` (tabs), `settings.general`, `settings.public`, `settings.users`, `settings.media`, `settings.mail`, `settings.updates`, `settings.admin`, `settings.maintenance` (includes the operation error journal UI) |

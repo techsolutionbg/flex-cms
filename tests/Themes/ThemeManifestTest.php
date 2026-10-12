@@ -41,6 +41,33 @@ final class ThemeManifestTest extends TestCase
         ThemeManifest::fromArray(['id' => 'demo', 'name' => 'Demo', 'version' => '1.0.0', 'supports' => ['menus' => 'false']]);
     }
 
+    public function testItReadsPageTemplatesFromTheTheme(): void
+    {
+        $manifest = ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'templates' => [['id' => 'default', 'label' => 'По подразбиране']],
+        ]);
+
+        self::assertSame([['id' => 'default', 'label' => 'По подразбиране']], $manifest->templates);
+        self::assertSame([], ThemeManifest::fromArray(['id' => 'old', 'name' => 'Old', 'version' => '1.0.0'])->templates);
+    }
+
+    public function testItRejectsDuplicatePageTemplates(): void
+    {
+        $this->expectException(InvalidThemeManifest::class);
+        ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'templates' => [
+                ['id' => 'default', 'label' => 'По подразбиране'],
+                ['id' => 'default', 'label' => 'Още веднъж'],
+            ],
+        ]);
+    }
+
     public function testItRejectsInvalidMenuLocationIdentifiers(): void
     {
         $this->expectException(InvalidThemeManifest::class);

@@ -8,8 +8,9 @@ use Flex\Themes\Exception\InvalidThemeManifest;
 
 final readonly class ThemeManifest
 {
-    /** @param array<string, bool> $supports
+    /*     * @param array<string, bool> $supports
      * @param array<string, string> $menuLocations
+     * @param list<array{id: string, label: string}> $templates Page templates shown in page settings.
      */
     public function __construct(
         public string $id,
@@ -21,6 +22,7 @@ final readonly class ThemeManifest
         public array $supports = [],
         public array $menuLocations = [],
         public string $entry = '',
+        public array $templates = [],
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -84,7 +86,9 @@ final readonly class ThemeManifest
         if ($entry !== '' && !ThemeRenderPaths::isValidEntryPath($entry)) {
             throw new InvalidThemeManifest('Полето entry трябва да бъде относителен път до .php файл в темата (напр. src/main.php).');
         }
-        return new self($id, trim($data['name']), $version, trim((string) ($data['author'] ?? '')), trim((string) ($data['description'] ?? '')), $minimum, $supports, $locations, $entry);
+        $templates = self::templates($data['templates'] ?? []);
+
+        return new self($id, trim($data['name']), $version, trim((string) ($data['author'] ?? '')), trim((string) ($data['description'] ?? '')), $minimum, $supports, $locations, $entry, $templates);
     }
 
     /** @return array<string, mixed> */
@@ -100,6 +104,37 @@ final readonly class ThemeManifest
             'entry' => $this->entry,
             ...($this->supports !== [] ? ['supports' => $this->supports] : []),
             ...($this->menuLocations !== [] ? ['menu_locations' => $this->menuLocations] : []),
+            ...($this->templates !== [] ? ['templates' => $this->templates] : []),
         ], static fn(mixed $value): bool => $value !== '');
+    }
+
+    /**
+     * @return list<array{id: string, label: string}>
+     */
+    private static function templates(mixed $templates): array
+    {
+        if ($templates === []) {
+            return [];
+        }
+        if (!is_array($templates) || !array_is_list($templates)) {
+            throw new InvalidThemeManifest('Полето templates трябва да бъде списък.');
+        }
+        $parsed = [];
+        foreach ($templates as $template) {
+            $id = is_array($template) ? ($template['id'] ?? null) : null;
+            $label = is_array($template) ? ($template['label'] ?? null) : null;
+            if (!is_string($id) || preg_match('/^[a-z][a-z0-9_-]*$/', $id) !== 1 || strlen($id) > 40) {
+                throw new InvalidThemeManifest('Невалиден идентификатор на шаблон.');
+            }
+            if (!is_string($label) || trim($label) === '' || mb_strlen(trim($label)) > 80) {
+                throw new InvalidThemeManifest('Невалидно име на шаблон.');
+            }
+            if (isset($parsed[$id])) {
+                throw new InvalidThemeManifest('Идентификаторите на шаблоните трябва да са уникални.');
+            }
+            $parsed[$id] = ['id' => $id, 'label' => trim($label)];
+        }
+
+        return array_values($parsed);
     }
 }

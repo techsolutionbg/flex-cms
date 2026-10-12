@@ -28,7 +28,7 @@ export function isWorkspacePath(value: unknown): value is string {
       /^\/extension-pages\/[a-z][a-z0-9_-]*(?:\/(?:create|[a-z0-9][a-z0-9_-]*\/edit|inbox(?:\/submissions\/[0-9]{14}-[a-f0-9]{16})?))?$/.test(
         value,
       ) ||
-      /^\/themes\/[a-z0-9][a-z0-9._-]*$/.test(value) ||
+      /^\/themes\/[a-z0-9][a-z0-9._-]*(?:\/settings)?$/.test(value) ||
       /^\/users\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/structure$/.test(value) ||

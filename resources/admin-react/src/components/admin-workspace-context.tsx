@@ -5,10 +5,13 @@ import type { ExtensionPageDescriptor } from "./extension-page"
 import type { ExtensionDescriptor } from "./extension-runtime"
 
 export type WorkspaceTab = { id: string; path: string; title: string; dirty: boolean }
+export type PageTemplateOption = { id: string; label: string }
+
 export type ThemeCapabilities = {
   theme: string | null
   supports: { menus: boolean }
   menu_locations: Record<string, string>
+  page_templates?: PageTemplateOption[]
 }
 export const AdminWorkspaceContext = createContext<{
   tabs: WorkspaceTab[]

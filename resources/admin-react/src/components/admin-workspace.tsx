@@ -9,6 +9,7 @@ import { ProfilePage } from "@/pages/profile-page"
 import { ThemesPage } from "@/pages/themes-page"
 import { ThemeStorePage } from "@/pages/theme-store-page"
 import { ThemeDetailPage } from "@/pages/theme-detail-page"
+import { ThemeSettingsPage } from "@/pages/theme-settings-page"
 import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
 import { UpdatesPage } from "@/pages/updates-page"
 import { SettingsPage } from "@/pages/settings-page"
@@ -186,7 +187,11 @@ export function AdminWorkspace({
         extensionPages.find((page) => path === page.href || path.startsWith(page.href + "/"))
           ?.label ??
         (isSettingsWorkspacePath(path) ? "Настройки" : sections[path]) ??
-        (path.startsWith("/themes/") ? `Тема: ${path.split("/")[2]}` : undefined) ??
+        (path.startsWith("/themes/")
+          ? path.endsWith("/settings")
+            ? `Настройки: ${path.split("/")[2]}`
+            : `Тема: ${path.split("/")[2]}`
+          : undefined) ??
         (path === "/pages/create"
           ? "Нова страница"
           : /^\/pages\/\d+\/theme-content$/.test(path)
@@ -537,7 +542,28 @@ export function AdminWorkspace({
     }
     const themeMatch = tab.path.match(/^\/themes\/([a-z0-9][a-z0-9._-]*)$/)
     if (themeMatch)
-      return <ThemeDetailPage {...common} id={themeMatch[1]} onBack={() => open("/themes")} />
+      return (
+        <ThemeDetailPage
+          {...common}
+          id={themeMatch[1]}
+          onBack={() => open("/themes")}
+          onSettings={() =>
+            open(`/themes/${themeMatch[1]}/settings`, { title: `Настройки: ${themeMatch[1]}` })
+          }
+        />
+      )
+    const themeSettingsMatch = tab.path.match(/^\/themes\/([a-z0-9][a-z0-9._-]*)\/settings$/)
+    if (themeSettingsMatch)
+      return (
+        <ThemeSettingsPage
+          {...common}
+          id={themeSettingsMatch[1]}
+          onBack={() => open("/themes")}
+          onDetails={() =>
+            open(`/themes/${themeSettingsMatch[1]}`, { title: `Тема: ${themeSettingsMatch[1]}` })
+          }
+        />
+      )
     const menuStructureMatch = tab.path.match(/^\/menus\/(\d+)\/structure$/)
     if (menuStructureMatch)
       return (

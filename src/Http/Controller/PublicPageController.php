@@ -7,6 +7,7 @@ namespace Flex\Http\Controller;
 use Flex\Contracts\Configuration\ConfigRepositoryInterface;
 use Flex\Contracts\Http\ResponseFactoryInterface;
 use Flex\Extension\V1\ExtensionApiInterface;
+use Flex\Pages\HomePageResolver;
 use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
 use Flex\Pages\PublicPageSet;
@@ -18,7 +19,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class PublicPageController
 {
-    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ?\Flex\Media\PublicMediaApi $media = null, private ?\Flex\Settings\SectionSettings $siteSettings = null, private ?\Flex\Contracts\Http\ViewRendererInterface $views = null) {}
+    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ?\Flex\Media\PublicMediaApi $media = null, private ?\Flex\Settings\SectionSettings $siteSettings = null, private ?\Flex\Contracts\Http\ViewRendererInterface $views = null, private ?HomePageResolver $homePages = null) {}
 
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
@@ -70,12 +71,6 @@ final readonly class PublicPageController
 
     private function homePage(PublicPageSet $publicPages): ?Page
     {
-        $id = (int) ($this->siteSettings?->all('public')['home_page_id'] ?? 0);
-        if ($id > 0) {
-            return $publicPages->findPublishedById($id);
-        }
-        $slug = trim($this->configuration->string('app.public_home_slug', 'home'));
-
-        return $slug === '' ? null : $publicPages->findPublishedBySlug($slug);
+        return ($this->homePages ?? new HomePageResolver($this->configuration, $this->siteSettings))->resolve($publicPages);
     }
 }

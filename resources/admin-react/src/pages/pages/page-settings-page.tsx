@@ -1,10 +1,11 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
+import { useContext, useEffect, useMemo, useState, type SyntheticEvent } from "react"
 import { LayoutTemplate, Navigation, Puzzle, Search } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
+import { AdminWorkspaceContext, type PageTemplateOption } from "@/components/admin-workspace-context"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CheckboxField } from "@/components/checkbox-field"
 import { CollapsibleSection } from "@/components/collapsible-section"
@@ -44,6 +45,16 @@ export function PageSettingsForm({
     Record<string, Record<string, string | boolean>>
   >(page.plugin_settings ?? {})
   const [saving, setSaving] = useState(false)
+  const templates = useContext(AdminWorkspaceContext)?.themeCapabilities?.page_templates
+  const templateOptions: PageTemplateOption[] = templates?.length
+    ? templates
+    : [
+        { id: "default", label: "Стандартен" },
+        { id: "full_width", label: "Пълна ширина" },
+        { id: "landing", label: "Landing page" },
+      ]
+  const selectedTemplate =
+    templateOptions.find((template) => template.id === settings.template) ?? templateOptions[0]
   const saves = usePanelSaves()
   const panelContext = useMemo(
     () => ({ type: "page", id: page.id, page, settings }),
@@ -155,35 +166,20 @@ export function PageSettingsForm({
                 triggerClassName="react-form-dropdown"
                 trigger={
                   <>
-                    <span>
-                      {settings.template === "full_width"
-                        ? "Пълна ширина"
-                        : settings.template === "landing"
-                          ? "Landing page"
-                          : "Стандартен"}
-                    </span>
+                    <span>{selectedTemplate?.label ?? "По подразбиране"}</span>
                     <DropdownChevron />
                   </>
                 }
               >
-                <DropdownOption
-                  selected={settings.template === "default"}
-                  onClick={() => setSettings({ ...settings, template: "default" })}
-                >
-                  Стандартен
-                </DropdownOption>
-                <DropdownOption
-                  selected={settings.template === "full_width"}
-                  onClick={() => setSettings({ ...settings, template: "full_width" })}
-                >
-                  Пълна ширина
-                </DropdownOption>
-                <DropdownOption
-                  selected={settings.template === "landing"}
-                  onClick={() => setSettings({ ...settings, template: "landing" })}
-                >
-                  Landing page
-                </DropdownOption>
+                {templateOptions.map((template) => (
+                  <DropdownOption
+                    key={template.id}
+                    selected={selectedTemplate?.id === template.id}
+                    onClick={() => setSettings({ ...settings, template: template.id })}
+                  >
+                    {template.label}
+                  </DropdownOption>
+                ))}
               </DropdownMenu>
             </label>
           </CollapsibleSection>

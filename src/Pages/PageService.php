@@ -12,6 +12,7 @@ use Flex\Extensions\PageFieldRegistry;
 use Flex\Extensions\PageSettingsRegistry;
 use Flex\Pages\Exception\PageNotFound;
 use Flex\Pages\Exception\PageValidationFailed;
+use Flex\Themes\ThemeManager;
 use Illuminate\Database\UniqueConstraintViolationException;
 
 final readonly class PageService
@@ -25,6 +26,7 @@ final readonly class PageService
         private ?PageFieldRegistry $pageFields = null,
         private ?PageSettingsRegistry $pageSettings = null,
         private ?\Flex\Media\MediaService $media = null,
+        private ?ThemeManager $themes = null,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -137,7 +139,7 @@ final readonly class PageService
             'seo_title' => mb_substr(trim((string) ($settings['seo_title'] ?? '')), 0, 190),
             'meta_description' => mb_substr(trim((string) ($settings['meta_description'] ?? '')), 0, 320),
             'canonical_url' => mb_substr(trim((string) ($settings['canonical_url'] ?? '')), 0, 500),
-            'template' => in_array($settings['template'] ?? 'default', ['default', 'full_width', 'landing'], true) ? (string) $settings['template'] : 'default',
+            'template' => $this->templateId($settings['template'] ?? 'default'),
             'menu_order' => max(0, (int) ($settings['menu_order'] ?? 0)),
             'use_parent_slugs' => filter_var($settings['use_parent_slugs'] ?? false, FILTER_VALIDATE_BOOL),
             'no_index' => filter_var($settings['no_index'] ?? false, FILTER_VALIDATE_BOOL),
@@ -149,6 +151,18 @@ final readonly class PageService
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
         return $page;
+    }
+
+    private function templateId(mixed $requested): string
+    {
+        $templates = $this->themes?->pageTemplates() ?? ThemeManager::BUILTIN_PAGE_TEMPLATES;
+        $ids = array_column($templates, 'id');
+        $id = is_string($requested) ? $requested : '';
+        if (in_array($id, $ids, true)) {
+            return $id;
+        }
+
+        return in_array('default', $ids, true) ? 'default' : (string) $ids[0];
     }
 
     /** @return array<string, array<string, string|bool>> */

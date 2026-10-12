@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Info, Palette, ListTree, History, Eye, Power, Download, Upload } from "lucide-react"
+import { Info, Palette, ListTree, History, Eye, Power, Download, Upload, Settings2 } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -56,12 +56,14 @@ export function ThemeDetailPage({
   onNavigate,
   loggingOut,
   onBack,
+  onSettings,
 }: {
   id: string
   onLogout: () => void
   onNavigate: (label: string) => void
   loggingOut: boolean
   onBack: () => void
+  onSettings: () => void
 }) {
   const [theme, setTheme] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -149,7 +151,15 @@ export function ThemeDetailPage({
             items={[{ label: "Теми", onClick: onBack }, { label: theme?.name ?? id }]}
           />
         </div>
-        <LoadingButton onClick={onBack}>Назад към темите</LoadingButton>
+        <div className="react-page-heading-actions">
+          {theme?.active && (
+            <LoadingButton onClick={onSettings}>
+              <Settings2 aria-hidden="true" />
+              Настройки на темата
+            </LoadingButton>
+          )}
+          <LoadingButton onClick={onBack}>Назад към темите</LoadingButton>
+        </div>
       </div>
       {error && (
         <p className="react-error-text" role="alert">

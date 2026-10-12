@@ -63,6 +63,10 @@ Each `global.json` / `layouts/*.json` file contains:
 
 Repeater: optional `maxItems` (1–100, default 50).
 
+Optional `preview_background` (`media` only): `light` (default) or `dark` — the admin preview tile uses that surface, e.g. `dark` for a logo meant for dark backgrounds.
+
+Optional `default`: initial value in the same shape as the table above (repeater → list of row objects). The admin form starts from it, and the public payload uses it for every field the page or global content has not saved yet. A saved value — even an empty one — always wins.
+
 Optional `layout`: `half` (two columns in admin) or `full` (one row). Default: `textarea` / `repeater` / `media` / `page_link` → full width; `text`, `url`, `email`, `number` → half width (pairs such as label + URL).
 
 IDs must match `^[a-z][a-z0-9_-]{0,63}$`.
@@ -72,7 +76,7 @@ Validation is implemented in `Flex\ThemeContent\ThemeContentSchemaValidator`.
 ## Admin
 
 1. Install and activate **`flex/theme-content`**.
-2. **Settings → Сайт / Theme content** — global sections from `global.json`.
+2. **Теми → active theme → „Настройки на темата“** (`/themes/{id}/settings`, panel location `theme.settings`) — global sections from `global.json`. Each JSON section is a collapsible section and each field an input; adding a section or field needs only JSON, no admin code.
 3. **Страници → Действия → Съдържание на шаблона** — `/pages/{id}/theme-content` with fields from a matching `pages[]` binding or from the layout for the page template.
 
 Storage keys:

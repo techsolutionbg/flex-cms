@@ -7,6 +7,9 @@ namespace Flex\Providers;
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Http\Controller\PublicPageController;
+use Flex\Menus\PublicMenuRenderer;
+use Flex\Pages\HomePageResolver;
+use Flex\Settings\SectionSettings;
 use Psr\Container\ContainerInterface;
 
 use function DI\autowire;
@@ -16,7 +19,14 @@ final class PublicRouteServiceProvider implements ServiceProviderInterface
 {
     public function definitions(): array
     {
-        return [PublicPageController::class => autowire()->constructorParameter('media', get(\Flex\Media\PublicMediaApi::class))];
+        return [
+            PublicPageController::class => autowire()
+                ->constructorParameter('media', get(\Flex\Media\PublicMediaApi::class))
+                ->constructorParameter('homePages', get(HomePageResolver::class)),
+            // The page served at "/" — shared by the public controller and menu links, so both agree.
+            HomePageResolver::class => autowire()->constructorParameter('siteSettings', get(SectionSettings::class)),
+            PublicMenuRenderer::class => autowire()->constructorParameter('homePages', get(HomePageResolver::class)),
+        ];
     }
 
     public function boot(ContainerInterface $container): void

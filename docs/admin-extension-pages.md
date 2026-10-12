@@ -68,6 +68,7 @@ $context->admin?->panel('settings.tab', 'settings', 'SEO', 'assets/panels.js');
 | `page.editor` | the page editor, after "Съдържание" | `context: {type: 'page', id, values: {title, slug, content, featured_media_id, status, parent_id}}` |
 | `page.settings` | the page settings screen | `context: {type: 'page', id, page, settings}` |
 | `page.theme-content` | dedicated theme layout fields for one page (`/pages/{id}/theme-content`) | `context: {type: 'page', id, page, settings}` |
+| `theme.settings` | theme settings screen (`/themes/{id}/settings`, button „Настройки на темата“ in the theme details) | `context: {type: 'theme', id, theme}`; saved with the screen's save button (`registerSave`) |
 | `commerce.product.editor`, `commerce.category.editor` | the Flex Commerce editors (rendered by Flex Commerce) | `context: {type: 'product' \| 'category', id, values}` |
 | `settings.tab` | an extra tab in Settings | `navigate(path)`; the panel saves on its own |
 | `pages.list.column` | a column in the pages list | export `createColumn(host, info)` returning `{label?, load(rows), render(row, data), sortValue?(row, data)}` |
