@@ -53,6 +53,13 @@ final class PageRepository
         return $query->exists();
     }
 
+    public function findBySlug(string $slug): ?Page
+    {
+        $page = Page::query()->where('slug', $slug)->first();
+
+        return $page instanceof Page ? $page : null;
+    }
+
     public function findPublishedBySlug(string $slug): ?Page
     {
         return $this->publicPageSet()->findPublishedBySlug($slug);

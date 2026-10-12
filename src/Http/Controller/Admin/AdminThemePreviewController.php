@@ -12,6 +12,7 @@ use Flex\Extension\V1\ExtensionApiInterface;
 use Flex\Pages\Page;
 use Flex\Pages\PageRepository;
 use Flex\Themes\ThemeManager;
+use Flex\Themes\ThemeResourceService;
 use Flex\Menus\PublicMenuRenderer;
 use Flex\Menus\PublicMenuApi;
 use Psr\Http\Message\ResponseInterface;
@@ -27,6 +28,7 @@ final readonly class AdminThemePreviewController
         private ExtensionApiInterface $extensionApi,
         private ResponseFactoryInterface $responses,
         private PublicMenuRenderer $menus,
+        private ThemeResourceService $records,
     ) {}
 
     /** @param array<string, string> $arguments */
@@ -48,6 +50,7 @@ final readonly class AdminThemePreviewController
         if (!$page instanceof Page) {
             $menuData = $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations']);
             $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+            $menuData['__flex_theme_records'] = fn(string $resource): array => $this->records->published($resource);
 
             return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', ['title' => 'Няма публикувана начална страница'] + $menuData), 404);
         }
@@ -61,6 +64,7 @@ final readonly class AdminThemePreviewController
 
         $menuData = $this->menus->forTheme($theme, $publicPages, $this->themes->capabilitiesForTheme($theme)['menu_locations']);
         $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
+        $menuData['__flex_theme_records'] = fn(string $resource): array => $this->records->published($resource);
 
         return $this->responses->html($this->themes->renderForTheme($theme, 'page.twig', [
             'page' => $page,

@@ -29,6 +29,7 @@ import { TableSkeleton } from "./table-skeleton"
 import { DropdownMenu, DropdownOption, DropdownChevron } from "./dropdown-menu"
 import { TableActionsMenu } from "./table-actions-menu"
 import { LoadingButton } from "./loading-button"
+import { ImageField } from "./image-field"
 import { MediaPicker } from "./media-picker"
 import { Hint, useHintsVisible, usePageHelp } from "./page-help"
 import { Input } from "./ui/input"
@@ -181,6 +182,7 @@ const host = {
     DropdownChevron,
     TableActionsMenu,
     LoadingButton,
+    ImageField,
     MediaPicker,
     Input,
     Textarea,

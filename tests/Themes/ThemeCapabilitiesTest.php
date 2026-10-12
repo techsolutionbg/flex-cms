@@ -51,7 +51,7 @@ final class ThemeCapabilitiesTest extends TestCase
                 return $user;
             });
             $controller = new AdminMenusDataController($authentication, $themes, new ResponseFactory(new Psr17Factory()), new \Flex\Menus\MenuService($database, $themes), new \Flex\Pages\PageRepository(), new \Flex\Http\RequestInput());
-            $capabilitiesController = new AdminThemeCapabilitiesController($authentication, $themes, new ResponseFactory(new Psr17Factory()));
+            $capabilitiesController = new AdminThemeCapabilitiesController($authentication, $themes, new ResponseFactory(new Psr17Factory()), new \Flex\Pages\PageRepository());
             $menus = new ServerRequest('GET', 'http://localhost/api/admin/menus');
             $response = $controller($menus);
             self::assertSame(200, $response->getStatusCode());

@@ -27,6 +27,7 @@ import { MenusPage } from "@/pages/menus-page"
 import { MenuEditor } from "@/pages/menu-editor"
 import { MenuStructurePage } from "@/pages/menu-structure-page"
 import { MediaPage } from "@/pages/media-page"
+import { ThemeResourceForm, ThemeResourcePage } from "@/pages/theme-resources"
 import { ExtensionPage, type ExtensionPageDescriptor } from "./extension-page"
 import type { ExtensionDescriptor } from "./extension-runtime"
 
@@ -204,7 +205,7 @@ export function AdminWorkspace({
                   : "Меню"
                 : path.startsWith("/media/")
                   ? "Медия"
-                  : "Зареждане…"),
+                  : (themeResourceTitle(path) ?? "Зареждане…")),
       dirty: false,
       revision: 0,
       ...data,
@@ -391,6 +392,14 @@ export function AdminWorkspace({
     }
   }, [])
 
+  function themeResourceTitle(path: string): string | undefined {
+    const match = path.match(/^\/theme-resources\/([a-z][a-z0-9_-]*)(?:\/(create|\d+\/edit))?$/)
+    if (!match) return undefined
+    const definition = themeCapabilities?.resources?.find((item) => item.id === match[1])
+    if (match[2] === "create") return `Нов ${(definition?.singular ?? "запис").toLocaleLowerCase("bg")}`
+    if (match[2]) return definition?.singular ?? "Запис"
+    return definition?.label ?? "Колекция"
+  }
   function navigate(target: string) {
     if (target.startsWith("/")) {
       open(target)
@@ -409,7 +418,9 @@ export function AdminWorkspace({
       window.history.replaceState(null, "", adminUrl(data.path))
     setTabs((current) =>
       current.map((item) =>
-        ["/pages", "/users", "/menus", "/media"].includes(item.path) && !item.dirty
+        (["/pages", "/users", "/menus", "/media"].includes(item.path) ||
+          /^\/theme-resources\/[a-z][a-z0-9_-]*$/.test(item.path)) &&
+        !item.dirty
           ? { ...item, revision: item.revision + 1 }
           : item,
       ),
@@ -643,6 +654,47 @@ export function AdminWorkspace({
       )
     if (tab.plugin)
       return <PluginDetailPage {...common} plugin={tab.plugin} onBack={() => open("/plugins")} />
+    const themeResourceMatch = tab.path.match(
+      /^\/theme-resources\/([a-z][a-z0-9_-]*)(?:\/(create|\d+\/edit))?$/,
+    )
+    if (themeResourceMatch) {
+      const definition = themeCapabilities?.resources?.find((item) => item.id === themeResourceMatch[1])
+      if (!definition)
+        return (
+          <AdminShell {...common} title="Колекция">
+            <p role="status">
+              {themeCapabilities
+                ? "Активната тема не обявява тази колекция."
+                : "Зареждане…"}
+            </p>
+          </AdminShell>
+        )
+      const listPath = `/theme-resources/${definition.id}`
+      if (!themeResourceMatch[2])
+        return (
+          <ThemeResourcePage
+            {...common}
+            resource={definition}
+            onCreate={() => open(`${listPath}/create`, { title: `Нов ${definition.singular.toLocaleLowerCase("bg")}` })}
+            onEdit={(record) =>
+              open(`${listPath}/${record.id}/edit`, { title: record.title })
+            }
+          />
+        )
+      const recordId = themeResourceMatch[2] === "create" ? null : Number(tab.path.split("/")[3])
+      return (
+        <ThemeResourceForm
+          key={tab.id}
+          {...common}
+          resource={definition}
+          recordId={recordId}
+          onBack={() => open(listPath)}
+          onSaved={(record) =>
+            saved(tab, { title: record.title, path: `${listPath}/${record.id}/edit` })
+          }
+        />
+      )
+    }
     return <DashboardPage {...common} onCreatePage={() => open("/pages/create")} />
   }
   return (

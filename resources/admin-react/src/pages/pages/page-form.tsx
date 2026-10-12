@@ -10,12 +10,10 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { CheckboxField } from "@/components/checkbox-field"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { RichTextEditor } from "@/components/rich-text-editor"
-import { MediaPicker } from "@/components/media-picker"
-import { MediaPreview } from "@/components/media-browser"
+import { ImageField } from "@/components/image-field"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { useExtensions } from "@/components/extension-runtime"
-import { mediaRequest, type MediaRecord } from "@/lib/media-api"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
 type PageFormProps = {
@@ -53,8 +51,6 @@ export function PageForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [featuredId, setFeaturedId] = useState<number | null>(page?.featured_media_id ?? null)
-  const [featured, setFeatured] = useState<MediaRecord | null>(null)
-  const [mediaOpen, setMediaOpen] = useState(false)
   const changed = useWorkspaceChanged()
   const saves = usePanelSaves()
   const themeContentPanels = useExtensions("page.theme-content", "screen.section")
@@ -73,23 +69,6 @@ export function PageForm({
     () => ({ context: panelContext, saves }),
     [panelContext, saves],
   )
-  useEffect(() => {
-    setFeatured(null)
-    if (!featuredId) return
-    const abort = new AbortController()
-    mediaRequest<{ media: MediaRecord }>(
-      `/api/admin/media/${featuredId}`,
-      "GET",
-      undefined,
-      abort.signal,
-    )
-      .then((data) => setFeatured(data.media))
-      .catch((error) => {
-        if (!abort.signal.aborted) toast.error(error.message)
-      })
-    return () => abort.abort()
-  }, [featuredId])
-
   const pageId = page?.id ?? null
 
   // Sync from the server when opening a different page — never reset the create form while typing.
@@ -259,16 +238,6 @@ export function PageForm({
           {error}
         </div>
       )}
-      <MediaPicker
-        open={mediaOpen}
-        imagesOnly
-        onClose={() => setMediaOpen(false)}
-        onSelect={(record) => {
-          setFeaturedId(record.id)
-          setFeatured(record)
-          changed?.()
-        }}
-      />
       <form className="react-page-form" onSubmit={save}>
           <section className="page-editor-basic-panel" aria-labelledby="page-editor-basic-heading">
             <header className="page-editor-basic-panel-heading" id="page-editor-basic-heading">
@@ -361,38 +330,18 @@ export function PageForm({
             icon={FileText}
             className="page-featured-media-section"
           >
-            {featured && (
-              <div className="media-featured-preview">
-                <MediaPreview record={featured} />
-                <p>{featured.title}</p>
-              </div>
-            )}
-            <div className="react-form-actions">
-              <button
-                className="react-secondary-button"
-                type="button"
-                disabled={saving}
-                onClick={() => setMediaOpen(true)}
-              >
-                {featuredId ? "Смени изображението" : "Избери изображение"}
-              </button>
-              {featuredId && (
-                <button
-                  className="react-secondary-button"
-                  type="button"
-                  disabled={saving}
-                  onClick={() => {
-                    setFeaturedId(null)
-                    changed?.()
-                  }}
-                >
-                  Премахни изображението
-                </button>
-              )}
-            </div>
-            <small className="react-field-hint">
-              Темата може да използва това изображение като водещо за страницата.
-            </small>
+            <ImageField
+              label="Основно изображение"
+              value={featuredId}
+              disabled={saving}
+              width="20rem"
+              fit="contain"
+              description="Темата може да използва това изображение като водещо за страницата."
+              onChange={(id) => {
+                setFeaturedId(id)
+                changed?.()
+              }}
+            />
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="page.editor.content"

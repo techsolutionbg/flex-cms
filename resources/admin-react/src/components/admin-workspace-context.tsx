@@ -7,11 +7,37 @@ import type { ExtensionDescriptor } from "./extension-runtime"
 export type WorkspaceTab = { id: string; path: string; title: string; dirty: boolean }
 export type PageTemplateOption = { id: string; label: string }
 
+export type ThemeAdminNavigation = {
+  groups: { id: string; label: string; icon: string; order: number }[]
+  sections: { id: string; label: string; icon: string; group: string; order: number }[]
+  items: {
+    id: string
+    label: string
+    icon: string
+    href: string
+    group: string
+    section: string
+    order: number
+  }[]
+}
+
+export type ThemeResourceDefinition = {
+  id: string
+  label: string
+  singular: string
+  icon: string
+  group: string
+  order: number
+  public_page: string
+}
+
 export type ThemeCapabilities = {
   theme: string | null
   supports: { menus: boolean }
   menu_locations: Record<string, string>
   page_templates?: PageTemplateOption[]
+  admin_navigation?: ThemeAdminNavigation
+  resources?: ThemeResourceDefinition[]
 }
 export const AdminWorkspaceContext = createContext<{
   tabs: WorkspaceTab[]

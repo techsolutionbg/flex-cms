@@ -80,5 +80,14 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('DELETE', '/api/pages/{id:number}', DeletePageController::class, 'api.pages.delete', $write);
         $r->add('DELETE', '/api/pages/{id:number}/force', ForceDeletePageController::class, 'api.pages.force-delete', $write);
         $r->add('POST', '/api/pages/{id:number}/restore', RestorePageController::class, 'api.pages.restore', $write);
+        $records = \Flex\Http\Controller\Admin\AdminThemeResourcesController::class;
+        $r->add('GET', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}', $records, 'api.admin.theme-resources', $auth);
+        $r->add('GET', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}', $records, 'api.admin.theme-resources.show', $auth);
+        $r->add('POST', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}', $records, 'api.admin.theme-resources.create', $write);
+        $r->add(['PATCH', 'PUT'], '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}', $records, 'api.admin.theme-resources.update', $write);
+        $r->add('PATCH', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}/status', $records, 'api.admin.theme-resources.status', $write);
+        $r->add('DELETE', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}', $records, 'api.admin.theme-resources.trash', $write);
+        $r->add('POST', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}/restore', $records, 'api.admin.theme-resources.restore', $write);
+        $r->add('DELETE', '/api/admin/theme-resources/{resource:[a-z][a-z0-9_-]+}/{id:number}/force', $records, 'api.admin.theme-resources.force', $write);
     }
 }

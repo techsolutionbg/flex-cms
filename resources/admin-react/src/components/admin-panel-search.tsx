@@ -19,6 +19,31 @@ export function AdminPanelSearch() {
   const [activeIndex, setActiveIndex] = useState(0)
 
   const targets = useMemo(() => {
+    const navigation = workspace?.themeCapabilities?.admin_navigation
+    const groupLabels: Record<string, string> = {
+      overview: "Основни",
+      content: "Съдържание",
+      appearance: "Външен вид",
+      commerce: "Магазин",
+      management: "Управление",
+      system: "Система",
+      extensions: "Допълнителни инструменти",
+      account: "Акаунт",
+    }
+    for (const group of navigation?.groups ?? []) groupLabels[group.id] = group.label
+    const themeTargets: PanelSearchTarget[] = (navigation?.items ?? []).flatMap((item) =>
+      item.href
+        ? [
+            {
+              id: `theme-${item.id}`,
+              label: item.label,
+              group: groupLabels[item.group] ?? "Тема",
+              path: item.href,
+              keywords: item.href,
+            },
+          ]
+        : [],
+    )
     const extensionTargets: PanelSearchTarget[] = (workspace?.extensionPages ?? []).map((page) => ({
       id: `ext-${page.href}`,
       label: page.label,
@@ -34,7 +59,7 @@ export function AdminPanelSearch() {
         group: "Отворени табове",
         path: tab.path,
       }))
-    const merged = [...CORE_PANEL_SEARCH_TARGETS, ...extensionTargets, ...tabTargets]
+    const merged = [...CORE_PANEL_SEARCH_TARGETS, ...themeTargets, ...extensionTargets, ...tabTargets]
     const seen = new Set<string>()
     return merged.filter((target) => {
       const key = `${target.path}:${target.settingsTab ?? ""}:${target.label}`
@@ -42,7 +67,7 @@ export function AdminPanelSearch() {
       seen.add(key)
       return true
     })
-  }, [workspace?.extensionPages, workspace?.tabs])
+  }, [workspace?.extensionPages, workspace?.tabs, workspace?.themeCapabilities?.admin_navigation])
 
   const results = useMemo(
     () => filterPanelSearchTargets(targets, query, 12),

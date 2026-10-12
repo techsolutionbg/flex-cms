@@ -5559,6 +5559,148 @@ select:focus-visible,
   max-height: 14rem;
   object-fit: contain;
 }
+.image-field-frame {
+  position: relative;
+  width: min(100%, var(--image-field-width, 16rem));
+}
+.image-field-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: var(--image-field-aspect, 16 / 10);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--image-field-foreground, inherit);
+  font: inherit;
+  text-align: center;
+  border-radius: var(--image-field-radius, 0.75rem);
+  border: 2px dashed var(--image-field-border, var(--border));
+  background: var(--image-field-background, #fff);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.image-field-tile.has-image {
+  border-style: solid;
+  border-width: 1px;
+}
+.image-field-tile:hover:not(:disabled),
+.image-field-tile:focus-visible {
+  border-color: var(--accent, currentColor);
+}
+.image-field-tile:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--accent));
+  outline-offset: 2px;
+}
+.image-field-tile:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.image-field-skeleton {
+  position: absolute;
+  inset: 0;
+}
+.image-field-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--image-field-fit, contain);
+  padding: 0.75rem;
+  transition: opacity 150ms ease;
+}
+.image-field.is-cover .image-field-image {
+  padding: 0;
+}
+.image-field-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  max-width: 14rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  opacity: 0.75;
+}
+.image-field-empty svg {
+  width: 2rem;
+  height: 2rem;
+}
+.image-field-tile:hover .image-field-empty {
+  opacity: 1;
+}
+.image-field-hover {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.image-field-tile:hover .image-field-hover,
+.image-field-tile:focus-visible .image-field-hover {
+  opacity: 1;
+}
+.image-field-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(15 23 42 / 72%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+  backdrop-filter: blur(4px);
+  transition: opacity 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+.image-field-remove svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.image-field-remove:hover:not(:disabled) {
+  background: var(--danger-action-bg, #dc2626);
+  transform: scale(1.06);
+}
+.image-field-remove:focus-visible {
+  outline: 2px solid var(--focus-ring, #fff);
+  outline-offset: 2px;
+}
+.image-field-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+@media (hover: hover) {
+  .image-field-frame .image-field-remove {
+    opacity: 0;
+  }
+  .image-field-frame:hover .image-field-remove,
+  .image-field-frame:focus-within .image-field-remove {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .image-field-tile,
+  .image-field-image,
+  .image-field-hover,
+  .image-field-remove {
+    transition: none;
+  }
+}
 .page-featured-media-section .collapsible-section-body-inner {
   display: grid;
   gap: 0.75rem;

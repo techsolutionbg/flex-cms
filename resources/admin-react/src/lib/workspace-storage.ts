@@ -32,7 +32,8 @@ export function isWorkspacePath(value: unknown): value is string {
       /^\/users\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/structure$/.test(value) ||
-      /^\/plugins\/[a-zA-Z0-9._-]+(?:%2[fF][a-zA-Z0-9._-]+)?$/.test(value))
+      /^\/plugins\/[a-zA-Z0-9._-]+(?:%2[fF][a-zA-Z0-9._-]+)?$/.test(value) ||
+      /^\/theme-resources\/[a-z][a-z0-9_-]*(?:\/(?:create|\d+\/edit))?$/.test(value))
   )
 }
 

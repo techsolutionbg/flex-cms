@@ -68,6 +68,88 @@ final class ThemeManifestTest extends TestCase
         ]);
     }
 
+    public function testItPlacesThemeNavigationOnThreeLevels(): void
+    {
+        $manifest = ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'admin_navigation' => [
+                ['id' => 'studio', 'label' => 'Студио', 'icon' => 'palette', 'children' => [
+                    ['id' => 'services', 'label' => 'Услуги', 'page' => 'services'],
+                    ['id' => 'portfolio', 'label' => 'Портфолио', 'children' => [
+                        ['id' => 'websites', 'label' => 'Сайтове', 'page' => 'projects'],
+                    ]],
+                ]],
+                ['id' => 'projects', 'label' => 'Проекти', 'icon' => 'folder', 'group' => 'content', 'order' => 30, 'page' => 'projects'],
+                ['id' => 'offers', 'label' => 'Оферти', 'group' => 'commerce', 'section' => 'catalog', 'href' => '/pages'],
+            ],
+        ]);
+
+        $placed = $manifest->placedNavigation();
+        self::assertSame('studio', $placed['groups'][0]['id']);
+        self::assertSame('portfolio', $placed['sections'][0]['id']);
+        self::assertSame(['services', 'websites', 'projects', 'offers'], array_column($placed['items'], 'id'));
+        self::assertSame('content', $placed['items'][2]['group']);
+        self::assertSame('portfolio', $placed['items'][1]['section']);
+        self::assertSame('catalog', $placed['items'][3]['section']);
+    }
+
+    public function testItRejectsNavigationDeeperThanThreeLevels(): void
+    {
+        $this->expectException(InvalidThemeManifest::class);
+        ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'admin_navigation' => [
+                ['id' => 'studio', 'label' => 'Студио', 'children' => [
+                    ['id' => 'portfolio', 'label' => 'Портфолио', 'children' => [
+                        ['id' => 'websites', 'label' => 'Сайтове', 'children' => [
+                            ['id' => 'archive', 'label' => 'Архив', 'href' => '/pages'],
+                        ]],
+                    ]],
+                ]],
+            ],
+        ]);
+    }
+
+    public function testItDeclaresCollectionsWithPageScreens(): void
+    {
+        $manifest = ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'resources' => [[
+                'id' => 'projects',
+                'label' => 'Проекти',
+                'singular' => 'Проект',
+                'icon' => 'folder',
+                'group' => 'content',
+                'order' => 30,
+                'public_page' => 'projects',
+            ]],
+        ]);
+
+        self::assertSame('projects', $manifest->resources[0]['id']);
+        self::assertSame('Проект', $manifest->resources[0]['singular']);
+        self::assertSame([], $manifest->placedNavigation()['items']);
+    }
+
+    public function testItRejectsDuplicateCollections(): void
+    {
+        $this->expectException(InvalidThemeManifest::class);
+        ThemeManifest::fromArray([
+            'id' => 'demo',
+            'name' => 'Demo',
+            'version' => '1.0.0',
+            'resources' => [
+                ['id' => 'projects', 'label' => 'Проекти'],
+                ['id' => 'projects', 'label' => 'Още проекти'],
+            ],
+        ]);
+    }
+
     public function testItRejectsInvalidMenuLocationIdentifiers(): void
     {
         $this->expectException(InvalidThemeManifest::class);

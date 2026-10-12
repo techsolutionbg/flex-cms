@@ -69,6 +69,8 @@ final class ThemeManager
         $menuApi = ($data['__flex_menu_api'] ?? null) instanceof PublicMenuApi ? $data['__flex_menu_api'] : null;
         unset($data['__flex_menu_api']);
         $this->menuApi = $menuApi;
+        $themeRecords = $data['__flex_theme_records'] ?? null;
+        unset($data['__flex_theme_records']);
         $mediaApi = ($data['__flex_media_api'] ?? null) instanceof \Flex\Media\PublicMediaApi ? $data['__flex_media_api'] : null;
         unset($data['__flex_media_api']);
         $this->mediaApi = $mediaApi;
@@ -117,6 +119,7 @@ final class ThemeManager
                     'flex_menu' => $flexMenu,
                     'flex_menu_html' => $flexMenuHtml,
                     'flex_media' => $flexMedia,
+                    'flex_theme_records' => is_callable($themeRecords) ? $themeRecords : static fn(string $resource): array => [],
                     'flex_time' => static fn(mixed $value, string $style = 'datetime'): string => Time::html($value, $style),
                     'flex_extension' => fn(string $extension, string $id): string => (string) $this->extensionApi?->applyFilters('public.extension.render', '', ['extension' => $extension, 'id' => $id]),
                     'flex_theme_content' => $themeContent,
@@ -199,7 +202,7 @@ final class ThemeManager
     /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>, page_templates: list<array{id: string, label: string}>} */
     public function capabilitiesForTheme(string $theme): array
     {
-        $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => [], 'page_templates' => self::BUILTIN_PAGE_TEMPLATES];
+        $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => [], 'page_templates' => self::BUILTIN_PAGE_TEMPLATES, 'admin_navigation' => ['groups' => [], 'sections' => [], 'items' => []], 'resources' => []];
         if ($theme === '' || preg_match('/^[a-z0-9][a-z0-9._-]*$/', $theme) !== 1) {
             return $result;
         }
@@ -219,6 +222,8 @@ final class ThemeManager
             if ($manifest->templates !== []) {
                 $result['page_templates'] = $manifest->templates;
             }
+            $result['admin_navigation'] = $manifest->placedNavigation();
+            $result['resources'] = $manifest->resources;
             $contentSchema = is_string($data['content_schema'] ?? null) ? trim($data['content_schema']) : '';
             $result['content_schema'] = $contentSchema !== '' ? $contentSchema : null;
         } catch (\Throwable) {
