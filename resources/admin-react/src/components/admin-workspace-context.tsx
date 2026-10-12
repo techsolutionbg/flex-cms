@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 import type { ExtensionPageDescriptor } from "./extension-page"
 import type { ExtensionDescriptor } from "./extension-runtime"
 
-export type WorkspaceTab = { id: string; title: string; dirty: boolean }
+export type WorkspaceTab = { id: string; path: string; title: string; dirty: boolean }
 export type ThemeCapabilities = {
   theme: string | null
   supports: { menus: boolean }
