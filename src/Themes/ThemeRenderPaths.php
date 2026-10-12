@@ -11,6 +11,10 @@ namespace Flex\Themes;
  * (`page.twig`, `404.twig`), derives {@see logicalViewFromTemplate()}, then
  * {@see resolveThemeEntryPath()}. When `src/index.php` exists, the same file
  * runs for every view; the platform sets `theme_view` before `include`.
+ *
+ * A theme may name its own start file with `"entry"` in `theme.json`
+ * (e.g. `"entry": "src/main.php"`). It then runs for every view and replaces
+ * the default lookup; without it the default lookup below applies unchanged.
  */
 final class ThemeRenderPaths
 {
@@ -30,8 +34,54 @@ final class ThemeRenderPaths
         return pathinfo($templateFilename, PATHINFO_FILENAME);
     }
 
+    /** Relative `.php` path inside the theme, forward slashes, no `.`/`..` segments. */
+    public static function isValidEntryPath(string $relative): bool
+    {
+        return strlen($relative) <= 255
+            && preg_match('~^(?!.*(?:^|/)\.{1,2}(?:/|$))[A-Za-z0-9_][A-Za-z0-9._-]*(?:/[A-Za-z0-9_][A-Za-z0-9._-]*)*\.php$~', $relative) === 1;
+    }
+
+    /** The `entry` from the theme's `theme.json`, or null when it is not set or the manifest cannot be read. */
+    public static function declaredEntry(string $themeRoot): ?string
+    {
+        $manifestPath = $themeRoot . '/theme.json';
+        if (!is_file($manifestPath) || !is_readable($manifestPath)) {
+            return null;
+        }
+        try {
+            $data = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+            $entry = is_array($data) ? ThemeManifest::fromArray($data)->entry : '';
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $entry !== '' ? $entry : null;
+    }
+
+    /** Absolute path of the declared entry; null when it is missing or resolves outside the theme. */
+    public static function resolveDeclaredEntryPath(string $themeRoot, string $relative): ?string
+    {
+        if (!self::isValidEntryPath($relative)) {
+            return null;
+        }
+        $root = realpath($themeRoot);
+        $path = self::readableFile($themeRoot, $relative);
+        $real = $path !== null ? realpath($path) : false;
+        if ($root === false || $real === false || !str_starts_with($real, rtrim($root, '/\\') . DIRECTORY_SEPARATOR)) {
+            return null;
+        }
+
+        return $real;
+    }
+
     public static function resolveThemeEntryPath(string $themeRoot, string $logicalView): ?string
     {
+        // A declared entry is authoritative: a missing file does not fall back to the default lookup.
+        $declared = self::declaredEntry($themeRoot);
+        if ($declared !== null) {
+            return self::resolveDeclaredEntryPath($themeRoot, $declared);
+        }
+
         foreach (self::unifiedPhpEntries() as $relative) {
             $path = self::readableFile($themeRoot, $relative);
             if ($path !== null) {

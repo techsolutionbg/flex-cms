@@ -75,6 +75,10 @@ final class ThemeManager
         $themeRoot = $this->paths->themes($theme);
         $themeView = ThemeRenderPaths::logicalViewFromTemplate($template);
         $themeEntryPath = ThemeRenderPaths::resolveThemeEntryPath($themeRoot, $themeView);
+        $declaredEntry = ThemeRenderPaths::declaredEntry($themeRoot);
+        if ($themeEntryPath === null && $declaredEntry !== null) {
+            throw new \RuntimeException(sprintf('Стартовият файл „%s“ от theme.json на темата „%s“ не е намерен.', $declaredEntry, $theme));
+        }
         $themeContent = function () use ($data, $theme): array {
             $default = ['global' => ['sections' => []], 'page' => ['template' => '', 'layout' => null, 'sections' => []]];
             if ($this->extensionApi === null) {
@@ -283,7 +287,10 @@ final class ThemeManager
                     $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $suffix)));
                 }
                 $record['valid'] = self::themeHasRenderEntry($path);
-                if (!$record['valid']) {
+                $declaredEntry = ThemeRenderPaths::declaredEntry($path);
+                if (!$record['valid'] && $declaredEntry !== null) {
+                    $record['error'] = sprintf('Стартовият файл „%s“ от theme.json не е намерен.', $declaredEntry);
+                } elseif (!$record['valid']) {
                     $record['error'] = 'Липсва PHP entry (src/index.php, pages/ …) или папка templates с Twig шаблони.';
                 }
             } catch (\Throwable $exception) {

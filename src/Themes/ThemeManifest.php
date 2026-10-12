@@ -20,6 +20,7 @@ final readonly class ThemeManifest
         public string $minimumPlatformVersion = '',
         public array $supports = [],
         public array $menuLocations = [],
+        public string $entry = '',
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -75,7 +76,15 @@ final readonly class ThemeManifest
             }
             $locations[$location] = trim($label);
         }
-        return new self($id, trim($data['name']), $version, trim((string) ($data['author'] ?? '')), trim((string) ($data['description'] ?? '')), $minimum, $supports, $locations);
+        $entry = $data['entry'] ?? '';
+        if (!is_string($entry)) {
+            throw new InvalidThemeManifest('Полето entry трябва да бъде текст.');
+        }
+        $entry = trim($entry);
+        if ($entry !== '' && !ThemeRenderPaths::isValidEntryPath($entry)) {
+            throw new InvalidThemeManifest('Полето entry трябва да бъде относителен път до .php файл в темата (напр. src/main.php).');
+        }
+        return new self($id, trim($data['name']), $version, trim((string) ($data['author'] ?? '')), trim((string) ($data['description'] ?? '')), $minimum, $supports, $locations, $entry);
     }
 
     /** @return array<string, mixed> */
@@ -88,6 +97,7 @@ final readonly class ThemeManifest
             'author' => $this->author,
             'description' => $this->description,
             'minimum_platform_version' => $this->minimumPlatformVersion,
+            'entry' => $this->entry,
             ...($this->supports !== [] ? ['supports' => $this->supports] : []),
             ...($this->menuLocations !== [] ? ['menu_locations' => $this->menuLocations] : []),
         ], static fn(mixed $value): bool => $value !== '');

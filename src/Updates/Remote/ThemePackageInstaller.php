@@ -7,6 +7,7 @@ namespace Flex\Updates\Remote;
 use Flex\Configuration\ProjectPaths;
 use Flex\Themes\ThemeManifest;
 use Flex\Themes\ThemeManager;
+use Flex\Themes\ThemeRenderPaths;
 use Flex\Updates\Exception\InvalidPlatformPackage;
 
 final readonly class ThemePackageInstaller
@@ -61,6 +62,9 @@ final readonly class ThemePackageInstaller
         $manifest = ThemeManifest::fromArray(json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR));
         if ($manifest->id !== $expectedId || $manifest->version !== $expectedVersion) throw new InvalidPlatformPackage('Манифестът на темата не съвпада с избрания release.');
         $themeRoot = dirname($manifestPath);
+        if ($manifest->entry !== '' && ThemeRenderPaths::resolveDeclaredEntryPath($themeRoot, $manifest->entry) === null) {
+            throw new InvalidPlatformPackage(sprintf('Пакетът на темата не съдържа стартовия файл „%s“ от theme.json.', $manifest->entry));
+        }
         if (!ThemeManager::themeHasRenderEntry($themeRoot)) {
             throw new InvalidPlatformPackage('Пакетът на темата не съдържа PHP entry (src/index.php, pages/ …) или Twig шаблони в templates/.');
         }

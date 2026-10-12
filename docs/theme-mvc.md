@@ -48,6 +48,24 @@ Themes **can** use MVC inside the render entry:
 
 Platform injects variables via `extract()` before the entry runs. Since 0.1.66+ **`theme_view`** is set (`page`, `404`, …) so one bootstrap can dispatch internally.
 
+## Custom start file (`entry` in `theme.json`)
+
+A theme may choose its own start file — the PHP file the platform `include`s for every public view:
+
+```json
+{
+  "id": "your-theme",
+  "entry": "src/main.php"
+}
+```
+
+| Rule | Behaviour |
+|------|-----------|
+| `entry` missing or empty | Default lookup above (`src/index.php`, `index.php`, legacy `pages/…`) — unchanged. |
+| `entry` set | Only this file is used, for every view (`$theme_view` tells `page` from `404`); the default lookup is skipped. |
+| Format | Relative path inside the theme ending in `.php`, forward slashes, no `..` / leading `/` (`ThemeRenderPaths::isValidEntryPath()`). |
+| File missing / outside the theme | No fallback: the theme is marked invalid in Admin → Themes, packages are rejected on install, and rendering fails with a clear message. |
+
 ## Internal routing (optional)
 
 Use **League Route** (or similar) **inside the theme** to map **page slug** (or path) to a controller — not to compete with CMS URLs. Example: slug `home` → `HomeController`, everything else → `PageController`.
