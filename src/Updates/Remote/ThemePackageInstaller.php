@@ -61,7 +61,9 @@ final readonly class ThemePackageInstaller
         $manifest = ThemeManifest::fromArray(json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR));
         if ($manifest->id !== $expectedId || $manifest->version !== $expectedVersion) throw new InvalidPlatformPackage('Манифестът на темата не съвпада с избрания release.');
         $themeRoot = dirname($manifestPath);
-        if (!is_file($themeRoot . '/index.php') && !is_dir($themeRoot . '/templates')) throw new InvalidPlatformPackage('Пакетът на темата не съдържа index.php или папка templates.');
+        if (!ThemeManager::themeHasRenderEntry($themeRoot)) {
+            throw new InvalidPlatformPackage('Пакетът на темата не съдържа pages/page.php, pages/index.php, index.php или Twig шаблони в templates/.');
+        }
         return dirname($manifestPath);
     }
 

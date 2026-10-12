@@ -5,14 +5,30 @@ import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { LoadingButton } from "@/components/loading-button"
 import { TableActionsMenu } from "@/components/table-actions-menu"
 import type { PageRecord } from "@/lib/admin-types"
+import { getCsrfToken } from "@/lib/admin-api"
 import { adminUrl } from "@/lib/admin-routes"
 import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { publicPagePath } from "./page-utils"
 import { DateTime } from "@/components/date-time"
 import { parse } from "@/lib/flex-time"
+
+type PageBulkAction = "published" | "draft" | "trash" | "restore" | "force"
+
+function bulkTargets(action: PageBulkAction, pages: PageRecord[]): PageRecord[] {
+  switch (action) {
+    case "published":
+      return pages.filter((page) => page.status === "draft")
+    case "draft":
+      return pages.filter((page) => page.status === "published")
+    default:
+      return pages
+  }
+}
+
 export function PagesPage({
   onLogout,
   onNavigate,
@@ -38,7 +54,10 @@ export function PagesPage({
   const [viewFilter, setViewFilter] = useState(query.get("view") === "trash" ? "trash" : "active")
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string | number>>(new Set())
   const [statusLoadingIds, setStatusLoadingIds] = useState<Set<number>>(new Set())
-  const [bulkStatusLoading, setBulkStatusLoading] = useState<"draft" | "published" | null>(null)
+  const [bulkAction, setBulkAction] = useState<PageBulkAction | null>(null)
+  const [pendingBulkTrash, setPendingBulkTrash] = useState(false)
+  const [pendingBulkForce, setPendingBulkForce] = useState(false)
+  const [pendingForcePage, setPendingForcePage] = useState<PageRecord | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -142,75 +161,112 @@ export function PagesPage({
     setStructureFilter("all")
     setViewFilter("active")
   }
-  async function changeSelectedStatus(status: "draft" | "published") {
-    if (selectedPageIds.size === 0) return
-    setBulkStatusLoading(status)
-    try {
-      const csrfResponse = await fetch("/api/auth/csrf", {
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      })
-      const csrf = (await csrfResponse.json()) as { csrf_token?: string }
-      const responses = await Promise.all(
-        [...selectedPageIds].map((id) =>
-          fetch(`/api/pages/${id}/status`, {
-            method: "PATCH",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrf.csrf_token ?? "",
-            },
-            body: JSON.stringify({ status }),
-          }),
-        ),
+  const selectedPages = filteredPages.filter((page) => selectedPageIds.has(page.id))
+  const bulkCount = (action: PageBulkAction) => bulkTargets(action, selectedPages).length
+  const bulkBusy = bulkAction !== null
+
+  async function pageRequest(
+    method: string,
+    path: string,
+    token: string,
+    body?: unknown,
+  ): Promise<void> {
+    const response = await fetch(path, {
+      method,
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        "X-CSRF-Token": token,
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    })
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string | { message?: string }
+    }
+    if (!response.ok) {
+      throw new Error(
+        typeof payload.error === "string"
+          ? payload.error
+          : (payload.error?.message ?? "Действието не можа да бъде изпълнено."),
       )
-      const failed = responses.find((response) => !response.ok)
-      if (failed) throw new Error("Статусът на някои страници не можа да бъде променен.")
-      setPages((current) =>
-        current.map((page) => (selectedPageIds.has(page.id) ? { ...page, status } : page)),
-      )
-      setSelectedPageIds(new Set())
-      toast.success(
-        status === "published"
-          ? "Избраните страници са публикувани."
-          : "Избраните страници са върнати в чернова.",
-      )
-    } catch (reason) {
-      toast.error(
-        reason instanceof Error ? reason.message : "Масовото действие не можа да бъде изпълнено.",
-      )
-    } finally {
-      setBulkStatusLoading(null)
     }
   }
+
+  async function runBulk(action: PageBulkAction) {
+    const targets = bulkTargets(action, selectedPages)
+    if (targets.length === 0 || bulkBusy) return
+    setBulkAction(action)
+    const token = await getCsrfToken()
+    const succeeded: number[] = []
+    const failures: { id: number; title: string; message: string }[] = []
+    for (const page of targets) {
+      try {
+        if (action === "published" || action === "draft") {
+          await pageRequest("PATCH", `/api/pages/${page.id}/status`, token, {
+            status: action,
+          })
+          succeeded.push(page.id)
+        } else if (action === "trash") {
+          await pageRequest("DELETE", `/api/pages/${page.id}`, token)
+          succeeded.push(page.id)
+        } else if (action === "restore") {
+          await pageRequest("POST", `/api/pages/${page.id}/restore`, token)
+          succeeded.push(page.id)
+        } else {
+          await pageRequest("DELETE", `/api/pages/${page.id}/force`, token)
+          succeeded.push(page.id)
+        }
+      } catch (reason) {
+        failures.push({
+          id: page.id,
+          title: page.title,
+          message: reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.",
+        })
+      }
+    }
+    if (succeeded.length > 0) {
+      const succeededIds = new Set(succeeded)
+      if (action === "published" || action === "draft") {
+        setPages((current) =>
+          current.map((page) =>
+            succeededIds.has(page.id) ? { ...page, status: action } : page,
+          ),
+        )
+      } else {
+        setPages((current) => current.filter((page) => !succeededIds.has(page.id)))
+      }
+    }
+    setSelectedPageIds(new Set(failures.map((failure) => failure.id)))
+    setBulkAction(null)
+    if (succeeded.length > 0) {
+      const count = succeeded.length
+      const label = count === 1 ? "1 страница" : `${count} страници`
+      toast.success(
+        action === "published"
+          ? `${label}: публикувани.`
+          : action === "draft"
+            ? `${label}: върнати в чернова.`
+            : action === "trash"
+              ? `${label}: преместени в кошчето.`
+              : action === "restore"
+                ? `${label}: възстановени.`
+                : `${label}: изтрити окончателно.`,
+      )
+    }
+    if (failures.length > 0) {
+      toast.error(`${failures.length} страници не бяха обработени.`, {
+        description: failures.map((failure) => `${failure.title}: ${failure.message}`).join("\n"),
+      })
+    }
+  }
+
   async function changePageStatus(page: PageRecord, status: "draft" | "published") {
+    if (bulkBusy) return
     setStatusLoadingIds((current) => new Set(current).add(page.id))
     try {
-      const csrfResponse = await fetch("/api/auth/csrf", {
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      })
-      const csrf = (await csrfResponse.json()) as { csrf_token?: string }
-      const response = await fetch(`/api/pages/${page.id}/status`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrf.csrf_token ?? "",
-        },
-        body: JSON.stringify({ status }),
-      })
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string | { message?: string }
-      }
-      if (!response.ok)
-        throw new Error(
-          typeof body.error === "string"
-            ? body.error
-            : (body.error?.message ?? "Статусът не можа да бъде променен."),
-        )
+      const token = await getCsrfToken()
+      await pageRequest("PATCH", `/api/pages/${page.id}/status`, token, { status })
       setPages((current) =>
         current.map((item) => (item.id === page.id ? { ...item, status } : item)),
       )
@@ -219,6 +275,77 @@ export function PagesPage({
       )
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Статусът не можа да бъде променен.")
+    } finally {
+      setStatusLoadingIds((current) => {
+        const next = new Set(current)
+        next.delete(page.id)
+        return next
+      })
+    }
+  }
+
+  async function trashPage(page: PageRecord) {
+    if (bulkBusy) return
+    setStatusLoadingIds((current) => new Set(current).add(page.id))
+    try {
+      const token = await getCsrfToken()
+      await pageRequest("DELETE", `/api/pages/${page.id}`, token)
+      setPages((current) => current.filter((item) => item.id !== page.id))
+      setSelectedPageIds((current) => {
+        if (!current.has(page.id)) return current
+        const next = new Set(current)
+        next.delete(page.id)
+        return next
+      })
+      toast.success("Страницата е преместена в кошчето.")
+    } catch (reason) {
+      toast.error(
+        reason instanceof Error ? reason.message : "Страницата не можа да бъде преместена в кошчето.",
+      )
+    } finally {
+      setStatusLoadingIds((current) => {
+        const next = new Set(current)
+        next.delete(page.id)
+        return next
+      })
+    }
+  }
+
+  async function restorePage(page: PageRecord) {
+    if (bulkBusy) return
+    setStatusLoadingIds((current) => new Set(current).add(page.id))
+    try {
+      const token = await getCsrfToken()
+      await pageRequest("POST", `/api/pages/${page.id}/restore`, token)
+      setPages((current) => current.filter((item) => item.id !== page.id))
+      toast.success("Страницата е възстановена.")
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Страницата не можа да бъде възстановена.")
+    } finally {
+      setStatusLoadingIds((current) => {
+        const next = new Set(current)
+        next.delete(page.id)
+        return next
+      })
+    }
+  }
+
+  async function forceDeletePage(page: PageRecord) {
+    if (bulkBusy) return
+    setStatusLoadingIds((current) => new Set(current).add(page.id))
+    try {
+      const token = await getCsrfToken()
+      await pageRequest("DELETE", `/api/pages/${page.id}/force`, token)
+      setPages((current) => current.filter((item) => item.id !== page.id))
+      setSelectedPageIds((current) => {
+        if (!current.has(page.id)) return current
+        const next = new Set(current)
+        next.delete(page.id)
+        return next
+      })
+      toast.success("Страницата е изтрита окончателно.")
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Страницата не можа да бъде изтрита.")
     } finally {
       setStatusLoadingIds((current) => {
         const next = new Set(current)
@@ -281,36 +408,60 @@ export function PagesPage({
         const statusLoading = statusLoadingIds.has(page.id)
         return (
           <TableActionsMenu>
-            <button type="button" role="menuitem" onClick={() => onEdit(page)}>
-              Редактирай
-            </button>
-            <button type="button" role="menuitem" onClick={() => onSettings(page)}>
-              Настройки
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              disabled={statusLoading}
-              onClick={() =>
-                void changePageStatus(page, page.status === "published" ? "draft" : "published")
-              }
-            >
-              {statusLoading && <LoaderCircle className="react-button-spinner" />}
-              {statusLoading
-                ? "Изчакване…"
-                : page.status === "published"
-                  ? "Върни в чернова"
-                  : "Публикувай"}
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() =>
-                toast.info(`„${page.title}“ ще бъде преместена в кошчето в следващата стъпка.`)
-              }
-            >
-              Премести в кошчето
-            </button>
+            {viewFilter === "active" ? (
+              <>
+                <button type="button" role="menuitem" onClick={() => onEdit(page)}>
+                  Редактирай
+                </button>
+                <button type="button" role="menuitem" onClick={() => onSettings(page)}>
+                  Настройки
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={statusLoading || bulkBusy}
+                  onClick={() =>
+                    void changePageStatus(page, page.status === "published" ? "draft" : "published")
+                  }
+                >
+                  {statusLoading && <LoaderCircle className="react-button-spinner" />}
+                  {statusLoading
+                    ? "Изчакване…"
+                    : page.status === "published"
+                      ? "Върни в чернова"
+                      : "Публикувай"}
+                </button>
+                <button
+                  className="is-danger"
+                  type="button"
+                  role="menuitem"
+                  disabled={statusLoading || bulkBusy}
+                  onClick={() => void trashPage(page)}
+                >
+                  Премести в кошчето
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={statusLoading || bulkBusy}
+                  onClick={() => void restorePage(page)}
+                >
+                  Възстанови
+                </button>
+                <button
+                  className="is-danger"
+                  type="button"
+                  role="menuitem"
+                  disabled={statusLoading || bulkBusy}
+                  onClick={() => setPendingForcePage(page)}
+                >
+                  Изтрий завинаги
+                </button>
+              </>
+            )}
           </TableActionsMenu>
         )
       },
@@ -344,7 +495,7 @@ export function PagesPage({
         columns={columns}
         rowKey={(page) => page.id}
         loading={loading}
-        selectable={viewFilter === "active"}
+        selectable
         selectedKeys={selectedPageIds}
         onSelectionChange={setSelectedPageIds}
         emptyMessage={
@@ -355,27 +506,63 @@ export function PagesPage({
             : "Няма страници, отговарящи на филтрите."
         }
         bulkActions={
-          viewFilter === "active" && (
-            <>
-              <strong>{selectedPageIds.size} избрани</strong>
-              <LoadingButton
-                type="button"
-                loading={bulkStatusLoading === "published"}
-                disabled={selectedPageIds.size === 0 || bulkStatusLoading !== null}
-                onClick={() => void changeSelectedStatus("published")}
-              >
-                {bulkStatusLoading === "published" ? "Изчакване…" : "Публикувай"}
-              </LoadingButton>
-              <LoadingButton
-                type="button"
-                loading={bulkStatusLoading === "draft"}
-                disabled={selectedPageIds.size === 0 || bulkStatusLoading !== null}
-                onClick={() => void changeSelectedStatus("draft")}
-              >
-                {bulkStatusLoading === "draft" ? "Изчакване…" : "Върни в чернова"}
-              </LoadingButton>
-            </>
-          )
+          <>
+            <strong>{selectedPages.length} избрани</strong>
+            {viewFilter === "active" ? (
+              <>
+                <LoadingButton
+                  type="button"
+                  loading={bulkAction === "published"}
+                  disabled={bulkBusy || bulkCount("published") === 0}
+                  onClick={() => void runBulk("published")}
+                >
+                  Публикувай
+                  {bulkCount("published") > 0 ? ` (${bulkCount("published")})` : ""}
+                </LoadingButton>
+                <LoadingButton
+                  type="button"
+                  loading={bulkAction === "draft"}
+                  disabled={bulkBusy || bulkCount("draft") === 0}
+                  onClick={() => void runBulk("draft")}
+                >
+                  Върни в чернова
+                  {bulkCount("draft") > 0 ? ` (${bulkCount("draft")})` : ""}
+                </LoadingButton>
+                <LoadingButton
+                  type="button"
+                  className="is-danger"
+                  loading={bulkAction === "trash"}
+                  disabled={bulkBusy || bulkCount("trash") === 0}
+                  onClick={() => setPendingBulkTrash(true)}
+                >
+                  В кошчето
+                  {bulkCount("trash") > 0 ? ` (${bulkCount("trash")})` : ""}
+                </LoadingButton>
+              </>
+            ) : (
+              <>
+                <LoadingButton
+                  type="button"
+                  loading={bulkAction === "restore"}
+                  disabled={bulkBusy || bulkCount("restore") === 0}
+                  onClick={() => void runBulk("restore")}
+                >
+                  Възстанови
+                  {bulkCount("restore") > 0 ? ` (${bulkCount("restore")})` : ""}
+                </LoadingButton>
+                <LoadingButton
+                  type="button"
+                  className="is-danger"
+                  loading={bulkAction === "force"}
+                  disabled={bulkBusy || bulkCount("force") === 0}
+                  onClick={() => setPendingBulkForce(true)}
+                >
+                  Изтрий завинаги
+                  {bulkCount("force") > 0 ? ` (${bulkCount("force")})` : ""}
+                </LoadingButton>
+              </>
+            )}
+          </>
         }
         toolbar={
           <>
@@ -502,6 +689,63 @@ export function PagesPage({
             </span>
           </>
         }
+      />
+      <ConfirmDialog
+        open={pendingBulkTrash}
+        title="Преместване в кошчето"
+        message={`${bulkTargets("trash", selectedPages)
+          .map((page) => `„${page.title}“`)
+          .join(", ")} ще бъдат преместени в кошчето.`}
+        confirmLabel="В кошчето"
+        danger
+        busy={bulkAction === "trash"}
+        onCancel={() => {
+          if (!bulkBusy) setPendingBulkTrash(false)
+        }}
+        onConfirm={() => {
+          setPendingBulkTrash(false)
+          void runBulk("trash")
+        }}
+      />
+      <ConfirmDialog
+        open={pendingBulkForce}
+        title="Окончателно изтриване"
+        message={`${bulkTargets("force", selectedPages)
+          .map((page) => `„${page.title}“`)
+          .join(", ")} ще бъдат изтрити завинаги. Действието не може да бъде отменено.`}
+        confirmLabel="Изтрий завинаги"
+        danger
+        busy={bulkAction === "force"}
+        onCancel={() => {
+          if (!bulkBusy) setPendingBulkForce(false)
+        }}
+        onConfirm={() => {
+          setPendingBulkForce(false)
+          void runBulk("force")
+        }}
+      />
+      <ConfirmDialog
+        open={pendingForcePage !== null}
+        title="Окончателно изтриване"
+        message={
+          pendingForcePage
+            ? `Страницата „${pendingForcePage.title}“ ще бъде изтрита завинаги. Действието не може да бъде отменено.`
+            : ""
+        }
+        confirmLabel="Изтрий завинаги"
+        danger
+        busy={pendingForcePage !== null && statusLoadingIds.has(pendingForcePage.id)}
+        onCancel={() => {
+          if (pendingForcePage === null || !statusLoadingIds.has(pendingForcePage.id))
+            setPendingForcePage(null)
+        }}
+        onConfirm={() => {
+          if (pendingForcePage) {
+            const page = pendingForcePage
+            setPendingForcePage(null)
+            void forceDeletePage(page)
+          }
+        }}
       />
     </AdminShell>
   )

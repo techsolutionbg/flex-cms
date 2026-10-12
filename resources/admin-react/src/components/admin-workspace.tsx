@@ -552,6 +552,7 @@ export function AdminWorkspace({
     if (/^\/pages\/(create|\d+\/edit)$/.test(tab.path))
       return (
         <PageForm
+          key={tab.id}
           {...common}
           page={tab.page ?? null}
           onBack={() => open("/pages")}
@@ -588,7 +589,10 @@ export function AdminWorkspace({
   }
   return (
     <>
-      {tabs.map((tab) => (
+      {tabs.map((tab) => {
+        const panelActive = tab.id === active
+        const keepMounted = panelActive || tab.dirty || tab.loading
+        return (
         <AdminWorkspaceContext.Provider
           key={tab.id}
           value={{
@@ -610,8 +614,9 @@ export function AdminWorkspace({
             extensions,
           }}
         >
+          {!keepMounted ? null : (
           <div
-            hidden={tab.id !== active}
+            hidden={!panelActive}
             role="tabpanel"
             id={`workspace-panel-${tab.id}`}
             aria-labelledby={`workspace-tab-${tab.id}`}
@@ -623,21 +628,13 @@ export function AdminWorkspace({
               )
                 patch(tab.id, { dirty: true })
             }}
-            onInputCapture={(event) => {
-              if ((event.target as HTMLElement).closest("[data-workspace-transient]")) return
-              if (/^\/(pages|users)\/(create|\d+\/)|^\/profile$/.test(tab.path))
-                patch(tab.id, { dirty: true })
-            }}
-            onChangeCapture={(event) => {
-              if ((event.target as HTMLElement).closest("[data-workspace-transient]")) return
-              if (/^\/(pages|users)\/(create|\d+\/)|^\/profile$/.test(tab.path))
-                patch(tab.id, { dirty: true })
-            }}
           >
             <div key={tab.revision}>{render(tab)}</div>
           </div>
+          )}
         </AdminWorkspaceContext.Provider>
-      ))}
+        )
+      })}
       <ConfirmDialog
         open={confirmCloseAll}
         title="Затваряне на всички табове"

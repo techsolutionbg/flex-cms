@@ -1,5 +1,5 @@
 import { MoreHorizontal } from "lucide-react"
-import { useContext, type ReactNode } from "react"
+import { Children, useContext, type ReactNode } from "react"
 import { DropdownMenu, DropdownOption } from "./dropdown-menu"
 import { RowExtensionActionsContext } from "./extension-runtime"
 
@@ -9,6 +9,7 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
   const actions = (extension?.actions ?? []).filter(
     (action) => !action.visible || action.visible(extension!.row),
   )
+  if (Children.count(children) === 0 && actions.length === 0) return null
   return (
     <DropdownMenu
       ariaLabel="Действия"

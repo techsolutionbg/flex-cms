@@ -19,8 +19,8 @@ services:
       FLEX_CMS_GID: "${FLEX_CMS_GID:-33}"
       THEMES_PATH: "${THEMES_PATH:-themes}"
       TRUSTED_HOSTS: "${TRUSTED_HOSTS:-localhost,127.0.0.1,app}"
-      DB_HOST: "${DB_HOST:-mysql}"
-      DB_PORT: "${DB_PORT:-3306}"
+      DB_HOST: mysql
+      DB_PORT: "3306"
       DB_DATABASE: "${DB_DATABASE:-flex_cms}"
       DB_USERNAME: "${DB_USERNAME:-flex_cms}"
       DB_PASSWORD: "${DB_PASSWORD:-flex_cms}"
@@ -79,8 +79,8 @@ services:
     image: mysql:8.0
     command: --default-authentication-plugin=caching_sha2_password
     environment:
-      MYSQL_DATABASE: "flex_cms"
-      MYSQL_USER: "flex_cms"
+      MYSQL_DATABASE: "${DB_DATABASE:-flex_cms}"
+      MYSQL_USER: "${DB_USERNAME:-flex_cms}"
       MYSQL_PASSWORD: "${DB_PASSWORD:-flex_cms}"
       MYSQL_ROOT_PASSWORD: "change-me"
     ports:

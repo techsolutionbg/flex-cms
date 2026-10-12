@@ -10,6 +10,8 @@ type CollapsibleSectionProps = {
   defaultOpen?: boolean
   storageKey?: string
   className?: string
+  /** When false, the section stays open and fields remain editable (no inert/collapse). */
+  collapsible?: boolean
   /** Name of this section for plugin content, e.g. "page.editor.publishing" (slots section.start, section.end, section.nested). */
   extensionPoint?: string
 }
@@ -21,11 +23,13 @@ export function CollapsibleSection({
   defaultOpen = true,
   storageKey,
   className = "",
+  collapsible = true,
   extensionPoint,
 }: CollapsibleSectionProps) {
   const nested = useExtensions(extensionPoint, "section.nested")
   const persistenceKey = `flex-admin-collapsible:${storageKey ?? title}`
   const [open, setOpen] = useState(() => {
+    if (!collapsible) return true
     try {
       const saved = window.localStorage.getItem(persistenceKey)
       return saved === null ? defaultOpen : saved === "open"
@@ -35,10 +39,45 @@ export function CollapsibleSection({
   })
 
   useEffect(() => {
+    if (!collapsible) return
     try {
       window.localStorage.setItem(persistenceKey, open ? "open" : "closed")
     } catch {}
-  }, [open, persistenceKey])
+  }, [collapsible, open, persistenceKey])
+
+  const body = (
+    <div className="collapsible-section-body">
+      <div className="collapsible-section-body-inner">
+        <ExtensionSlot point={extensionPoint} slot="section.start" />
+        {children}
+        <ExtensionSlot point={extensionPoint} slot="section.end" />
+        {nested.map((extension) => (
+          <CollapsibleSection
+            key={extension.id}
+            title={extension.label}
+            icon={panelIcon(extension.icon)}
+            defaultOpen={extension.default_open}
+            storageKey={`nested:${extensionPoint}:${extension.id}`}
+            className={`extension-nested-section extension-panel-${extension.id}`}
+          >
+            <ExtensionComponent descriptor={extension} />
+          </CollapsibleSection>
+        ))}
+      </div>
+    </div>
+  )
+
+  if (!collapsible) {
+    return (
+      <section className={`collapsible-section is-open is-static${className ? ` ${className}` : ""}`}>
+        <div className="collapsible-section-header collapsible-section-header-static">
+          {Icon && <Icon aria-hidden="true" />}
+          <span>{title}</span>
+        </div>
+        {body}
+      </section>
+    )
+  }
 
   return (
     <section
@@ -66,25 +105,7 @@ export function CollapsibleSection({
         <span>{title}</span>
         <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
       </button>
-      <div className="collapsible-section-body" inert={!open}>
-        <div className="collapsible-section-body-inner">
-          <ExtensionSlot point={extensionPoint} slot="section.start" />
-          {children}
-          <ExtensionSlot point={extensionPoint} slot="section.end" />
-          {nested.map((extension) => (
-            <CollapsibleSection
-              key={extension.id}
-              title={extension.label}
-              icon={panelIcon(extension.icon)}
-              defaultOpen={extension.default_open}
-              storageKey={`nested:${extensionPoint}:${extension.id}`}
-              className={`extension-nested-section extension-panel-${extension.id}`}
-            >
-              <ExtensionComponent descriptor={extension} />
-            </CollapsibleSection>
-          ))}
-        </div>
-      </div>
+      {open ? body : <div className="collapsible-section-body" hidden />}
     </section>
   )
 }

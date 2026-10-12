@@ -1,6 +1,10 @@
 import { useContext, useEffect, useRef, useState } from "react"
 import { MediaPicker } from "./media-picker"
-import { AdminWorkspaceContext, useWorkspaceChanged } from "./admin-workspace-context"
+import {
+  AdminWorkspaceContext,
+  useWorkspaceChanged,
+  useWorkspacePanelActive,
+} from "./admin-workspace-context"
 import { ExtensionModule, type ExtensionPageDescriptor } from "./extension-page"
 import { Button } from "./ui/button"
 import Quill from "quill"
@@ -45,6 +49,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const insertion = useRef(0)
   const workspace = useContext(AdminWorkspaceContext)
+  const panelActive = useWorkspacePanelActive()
   const [embed, setEmbed] = useState<ExtensionPageDescriptor | null>(null)
   const [embeddedItems, setEmbeddedItems] = useState<{ index: number; text: string }[]>([])
   const replacement = useRef<{ index: number; text: string } | null>(null)
@@ -65,7 +70,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   }, [value, onChange])
 
   useEffect(() => {
-    if (!hostRef.current) return
+    if (!panelActive || !hostRef.current) return
     const editor = new Quill(hostRef.current, {
       theme: "snow",
       placeholder: "Въведете съдържанието на страницата…",
@@ -103,7 +108,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       editor.off("text-change", handleChange)
       editorRef.current = null
     }
-  }, [])
+  }, [panelActive])
 
   useEffect(() => {
     const editor = editorRef.current

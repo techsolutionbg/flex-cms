@@ -261,9 +261,9 @@ final class ThemeManager
                 if ($screenshot !== '' && preg_match('/^(?!.*\.\.)[a-zA-Z0-9][a-zA-Z0-9._\/-]*$/', $screenshot) === 1 && is_file($path . '/assets/' . $screenshot)) {
                     $record['screenshot_url'] = '/theme-assets/' . rawurlencode($directory) . '/' . implode('/', array_map('rawurlencode', explode('/', $screenshot)));
                 }
-                $record['valid'] = is_file($path . '/index.php') || is_dir($path . '/templates');
+                $record['valid'] = self::themeHasRenderEntry($path);
                 if (!$record['valid']) {
-                    $record['error'] = 'Липсва index.php или папка templates.';
+                    $record['error'] = 'Липсва pages/page.php, pages/index.php, index.php или папка templates с Twig шаблони.';
                 }
             } catch (\Throwable $exception) {
                 $record['error'] = $exception->getMessage();
@@ -354,13 +354,39 @@ final class ThemeManager
         if (!is_dir($root)) {
             return null;
         }
-        foreach ([pathinfo($template, PATHINFO_FILENAME) . '.php', 'index.php'] as $candidate) {
+        $name = pathinfo($template, PATHINFO_FILENAME);
+        $candidates = ["pages/{$name}.php", "{$name}.php"];
+        if ($name === 'page') {
+            array_splice($candidates, 1, 0, ['pages/index.php', 'index.php']);
+        } elseif ($name === 'index') {
+            array_unshift($candidates, 'pages/index.php');
+        }
+        foreach (array_values(array_unique($candidates)) as $candidate) {
             $path = $root . '/' . $candidate;
             if (is_file($path) && is_readable($path)) {
                 return $path;
             }
         }
+
         return null;
+    }
+
+    public static function themeHasRenderEntry(string $themeRoot): bool
+    {
+        if (is_file($themeRoot . '/pages/page.php') || is_file($themeRoot . '/pages/index.php') || is_file($themeRoot . '/index.php')) {
+            return true;
+        }
+        $templates = $themeRoot . '/templates';
+        if (!is_dir($templates)) {
+            return false;
+        }
+        foreach (new \FilesystemIterator($templates) as $file) {
+            if ($file instanceof \SplFileInfo && $file->isFile() && str_ends_with($file->getFilename(), '.twig')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function deleteDirectory(string $path): void

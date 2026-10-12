@@ -1,7 +1,7 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { CircleAlert, FileText, FolderTree, Puzzle, Settings2 } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -54,6 +54,7 @@ export function PageForm({
   const [mediaOpen, setMediaOpen] = useState(false)
   const changed = useWorkspaceChanged()
   const saves = usePanelSaves()
+  const syncedPageId = useRef<number | null>(page?.id ?? null)
   // Panels of active plugins (for example Flex SEO) see the unsaved values while the user types.
   const panelContext = useMemo(
     () => ({
@@ -62,6 +63,10 @@ export function PageForm({
       values: { title, slug, content, featured_media_id: featuredId, status, parent_id: parentId },
     }),
     [page?.id, title, slug, content, featuredId, status, parentId],
+  )
+  const extensionScope = useMemo(
+    () => ({ context: panelContext, saves }),
+    [panelContext, saves],
   )
   useEffect(() => {
     setFeatured(null)
@@ -80,16 +85,25 @@ export function PageForm({
     return () => abort.abort()
   }, [featuredId])
 
+  const pageId = page?.id ?? null
+
+  // Sync from the server when opening a different page — never reset the create form while typing.
   useEffect(() => {
-    setTitle(page?.title ?? "")
-    setSlug(page?.slug ?? "")
-    setContent(page?.content ?? "")
-    setFeaturedId(page?.featured_media_id ?? null)
-    setStatus(page?.status ?? "draft")
-    setParentId(page?.parent_id ?? null)
-    setSlugEdited(Boolean(page))
-    setPluginFields(page?.plugin_fields ?? {})
-  }, [page])
+    if (pageId === null) {
+      syncedPageId.current = null
+      return
+    }
+    if (syncedPageId.current === pageId) return
+    syncedPageId.current = pageId
+    setTitle(page!.title)
+    setSlug(page!.slug)
+    setContent(page!.content ?? "")
+    setFeaturedId(page!.featured_media_id ?? null)
+    setStatus(page!.status ?? "draft")
+    setParentId(page!.parent_id ?? null)
+    setSlugEdited(true)
+    setPluginFields(page!.plugin_fields ?? {})
+  }, [pageId, page])
 
   useEffect(() => {
     fetch("/api/admin/pages?view=active", {
@@ -230,71 +244,91 @@ export function PageForm({
           changed?.()
         }}
       />
-      <ExtensionScope value={{ context: panelContext, saves }}>
-        <form className="react-page-form" onSubmit={save}>
-          <CollapsibleSection
-            extensionPoint="page.editor.basic"
-            title="Основна информация"
-            icon={FolderTree}
-          >
-            <div className="react-form-grid">
-              <label>
-                Заглавие *
-                <input
-                  value={title}
-                  maxLength={190}
-                  onChange={(event) => {
-                    setTitle(event.target.value)
-                    if (!slugEdited) setSlug(slugify(event.target.value))
-                  }}
-                  required
-                />
-              </label>
-              <label>
-                URL адрес (slug) *
-                <input
-                  value={slug}
-                  maxLength={190}
-                  onChange={(event) => {
-                    setSlug(event.target.value)
-                    setSlugEdited(true)
-                  }}
-                  required
-                />
-              </label>
-              <label>
-                Родителска страница
-                <DropdownMenu
-                  ariaLabel="Избор на родителска страница"
-                  triggerClassName="react-form-dropdown"
-                  trigger={
-                    <>
-                      <span>
-                        {parentId
-                          ? (parents.find((item) => item.id === parentId)?.title ??
-                            "Избери страница")
-                          : "Няма родителска страница"}
-                      </span>
-                      <DropdownChevron />
-                    </>
-                  }
-                >
-                  <DropdownOption selected={!parentId} onClick={() => setParentId(null)}>
-                    Няма родителска страница
-                  </DropdownOption>
-                  {parents.map((item) => (
+      <form className="react-page-form" onSubmit={save}>
+          <section className="page-editor-basic-panel" aria-labelledby="page-editor-basic-heading">
+            <header className="page-editor-basic-panel-heading" id="page-editor-basic-heading">
+              <FolderTree aria-hidden="true" />
+              <span>Основна информация</span>
+            </header>
+            <div className="page-editor-basic-panel-body">
+              <div className="react-form-grid">
+                <label className="react-form-field">
+                  <span>Заглавие *</span>
+                  <input
+                    name="title"
+                    value={title}
+                    maxLength={190}
+                    disabled={saving}
+                    autoComplete="off"
+                    onChange={(event) => {
+                      const next = event.currentTarget.value
+                      setTitle(next)
+                      if (!slugEdited) setSlug(slugify(next))
+                      changed?.()
+                    }}
+                    required
+                  />
+                </label>
+                <label className="react-form-field">
+                  <span>URL адрес (slug) *</span>
+                  <input
+                    name="slug"
+                    value={slug}
+                    maxLength={190}
+                    disabled={saving}
+                    autoComplete="off"
+                    onChange={(event) => {
+                      setSlug(event.currentTarget.value)
+                      setSlugEdited(true)
+                      changed?.()
+                    }}
+                    required
+                  />
+                </label>
+                <div className="react-form-field">
+                  <span>Родителска страница</span>
+                  <DropdownMenu
+                    ariaLabel="Избор на родителска страница"
+                    triggerClassName="react-form-dropdown"
+                    trigger={
+                      <>
+                        <span>
+                          {parentId
+                            ? (parents.find((item) => item.id === parentId)?.title ??
+                              "Избери страница")
+                            : "Няма родителска страница"}
+                        </span>
+                        <DropdownChevron />
+                      </>
+                    }
+                  >
                     <DropdownOption
-                      key={item.id}
-                      selected={parentId === item.id}
-                      onClick={() => setParentId(item.id)}
+                      selected={!parentId}
+                      onClick={() => {
+                        setParentId(null)
+                        changed?.()
+                      }}
                     >
-                      {item.title}
+                      Няма родителска страница
                     </DropdownOption>
-                  ))}
-                </DropdownMenu>
-              </label>
+                    {parents.map((item) => (
+                      <DropdownOption
+                        key={item.id}
+                        selected={parentId === item.id}
+                        onClick={() => {
+                          setParentId(item.id)
+                          changed?.()
+                        }}
+                      >
+                        {item.title}
+                      </DropdownOption>
+                    ))}
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
-          </CollapsibleSection>
+          </section>
+          <ExtensionScope value={extensionScope}>
           <CollapsibleSection
             extensionPoint="page.editor.featured-image"
             title="Основно изображение"
@@ -343,7 +377,13 @@ export function PageForm({
           >
             <div className="react-form-field">
               <span>Съдържание</span>
-              <RichTextEditor value={content} onChange={setContent} />
+              <RichTextEditor
+                value={content}
+                onChange={(value) => {
+                  setContent(value)
+                  changed?.()
+                }}
+              />
             </div>
           </CollapsibleSection>
           <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
@@ -407,18 +447,28 @@ export function PageForm({
                   </>
                 }
               >
-                <DropdownOption selected={status === "draft"} onClick={() => setStatus("draft")}>
+                <DropdownOption
+                  selected={status === "draft"}
+                  onClick={() => {
+                    setStatus("draft")
+                    changed?.()
+                  }}
+                >
                   Чернова
                 </DropdownOption>
                 <DropdownOption
                   selected={status === "published"}
-                  onClick={() => setStatus("published")}
+                  onClick={() => {
+                    setStatus("published")
+                    changed?.()
+                  }}
                 >
                   Публикувана
                 </DropdownOption>
               </DropdownMenu>
             </label>
           </CollapsibleSection>
+          </ExtensionScope>
           <div className="react-form-actions">
             <LoadingButton
               icon={<Save aria-hidden="true" />}
@@ -434,7 +484,6 @@ export function PageForm({
             </button>
           </div>
         </form>
-      </ExtensionScope>
     </AdminShell>
   )
 }

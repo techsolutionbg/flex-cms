@@ -14,7 +14,7 @@ use Flex\Updates\Remote\RemoteCatalogClient;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-/** Returns the installed/discovered extensions for the React administration. */
+/** Returns installed extensions for the React administration (catalog lists the rest). */
 final readonly class AdminPluginsDataController
 {
     public function __construct(
@@ -55,38 +55,19 @@ final readonly class AdminPluginsDataController
     /** @return list<array<string, mixed>> */
     private function buildExtensions(): array
     {
-        $discovered = $this->plugins->discover();
-        /** @var array<string, Plugin> $registered */
-        $registered = [];
-        foreach ($this->plugins->all() as $plugin) {
-            $registered[(string) $plugin->getAttribute('id')] = $plugin;
-        }
+        $installed = $this->plugins->all();
+        $pluginIds = $installed
+            ->map(static fn(Plugin $plugin): string => (string) $plugin->getAttribute('id'))
+            ->all();
 
-        $availableVersions = $this->availableVersionsFor(
-            array_map(static fn(array $entry): string => $entry['manifest']->id, $discovered),
-        );
+        $availableVersions = $this->availableVersionsFor($pluginIds);
 
         $extensions = [];
-        foreach ($discovered as $entry) {
-            $registeredPlugin = $registered[$entry['manifest']->id] ?? null;
-            $plugin = $registeredPlugin?->toPublicArray() ?? [
-                'id' => $entry['manifest']->id,
-                'name' => $entry['manifest']->name,
-                'version' => $entry['manifest']->version,
-                'description' => $entry['manifest']->description,
-                'entrypoint' => $entry['manifest']->entrypoint,
-                'path' => $entry['path'],
-                'status' => 'discovered',
-                'source' => 'local',
-                'manifest' => $entry['manifest']->toArray(),
-                'requested_permissions' => $entry['manifest']->permissions,
-                'approved_permissions' => [],
-                'last_error' => null,
-                'installed_at' => null,
-                'activated_at' => null,
-            ];
+        foreach ($installed as $registeredPlugin) {
+            $plugin = $registeredPlugin->toPublicArray();
+            $id = (string) ($plugin['id'] ?? '');
             $currentVersion = (string) ($plugin['version'] ?? '');
-            $available = $availableVersions[$entry['manifest']->id] ?? null;
+            $available = $availableVersions[$id] ?? null;
             $availableVersion = is_array($available) ? ($available['version'] ?? null) : null;
             $plugin['available_version'] = $availableVersion;
             $plugin['available_release_notes'] = is_array($available) ? ($available['release_notes'] ?? null) : null;

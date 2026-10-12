@@ -24,7 +24,6 @@ const statusLabels: Record<string, string> = {
   installed: "Инсталирано",
   inactive: "Неактивно",
   error: "Грешка",
-  discovered: "Неинсталирано",
 }
 type PluginAction = PluginBulkAction
 const bulkLabels: Record<PluginAction, { label: string; running: string; done: string }> = {
@@ -83,23 +82,7 @@ export function PluginsPage({
       .finally(() => {
         if (!abort.signal.aborted) setLoading(false)
       })
-    const reload = () => {
-      invalidateAdminPluginsCache()
-      setLoading(true)
-      fetchAdminPlugins({ force: true, refresh: true })
-        .then(setPlugins)
-        .catch((reason) =>
-          toast.error(
-            reason instanceof Error ? reason.message : "Разширенията не можаха да бъдат заредени.",
-          ),
-        )
-        .finally(() => setLoading(false))
-    }
-    window.addEventListener("flex-admin-plugins-changed", reload)
-    return () => {
-      abort.abort()
-      window.removeEventListener("flex-admin-plugins-changed", reload)
-    }
+    return () => abort.abort()
   }, [])
 
   useEffect(() => {
@@ -192,6 +175,14 @@ export function PluginsPage({
                 ? "Разширението е обновено."
                 : "Разширението е премахнато.",
       )
+      if (action === "uninstall") {
+        setSelectedIds((current) => {
+          if (!current.has(plugin.id)) return current
+          const next = new Set(current)
+          next.delete(plugin.id)
+          return next
+        })
+      }
     } catch (reason) {
       toast.error(
         reason instanceof Error ? reason.message : "Действието не можа да бъде изпълнено.",
@@ -272,13 +263,6 @@ export function PluginsPage({
       sortValue: (plugin) => plugin.name,
     },
     {
-      key: "description",
-      label: "Описание",
-      sortable: true,
-      render: (plugin) => plugin.description || "—",
-      sortValue: (plugin) => plugin.description,
-    },
-    {
       key: "version",
       label: "Версия",
       sortable: true,
@@ -312,26 +296,15 @@ export function PluginsPage({
             <button type="button" role="menuitem" onClick={() => onView(plugin)}>
               Преглед
             </button>
-            {plugin.status !== "discovered" && (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={busy || !plugin.update_available}
-                onClick={() => void runAction(plugin, "update_remote")}
-              >
-                {busy && <span className="react-button-spinner" />}Обнови
-              </button>
-            )}
-            {plugin.status === "discovered" ? (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={busy}
-                onClick={() => void runAction(plugin, "install")}
-              >
-                {busy && <span className="react-button-spinner" />}Инсталирай
-              </button>
-            ) : plugin.status === "active" ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={busy || !plugin.update_available}
+              onClick={() => void runAction(plugin, "update_remote")}
+            >
+              {busy && <span className="react-button-spinner" />}Обнови
+            </button>
+            {plugin.status === "active" ? (
               <button
                 type="button"
                 role="menuitem"
@@ -354,7 +327,7 @@ export function PluginsPage({
               className="is-danger"
               type="button"
               role="menuitem"
-              disabled={busy || plugin.status === "discovered"}
+              disabled={busy}
               onClick={() => setPendingRemoval(plugin)}
             >
               Премахни
@@ -376,6 +349,7 @@ export function PluginsPage({
       <div className="react-page-heading">
         <div>
           <h1>Разширения</h1>
+          <p className="react-page-lead">Инсталирани разширения на този сайт. Нови — от „Каталог с разширения“.</p>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Разширения" }]} />
         </div>
         <div className="react-page-heading-actions">
@@ -409,7 +383,7 @@ export function PluginsPage({
                 ? `${bulkLabels[bulk.action].running} ${bulk.done + 1 > bulk.total ? bulk.total : bulk.done + 1} от ${bulk.total}…`
                 : `${selectedPlugins.length} избрани`}
             </strong>
-            {(["install", "activate", "deactivate", "update_remote"] as const).map((action) => (
+            {(["activate", "deactivate", "update_remote"] as const).map((action) => (
               <LoadingButton
                 key={action}
                 type="button"
@@ -434,7 +408,7 @@ export function PluginsPage({
         }
         emptyMessage={
           plugins.length === 0
-            ? "Няма открити разширения."
+            ? "Няма инсталирани разширения. Отворете каталога, за да добавите."
             : "Няма разширения, отговарящи на филтрите."
         }
         toolbar={
