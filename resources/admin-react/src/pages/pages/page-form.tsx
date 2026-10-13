@@ -176,11 +176,11 @@ export function PageForm({
             }
       }
       if (!response.ok) {
-        const fieldErrors = body.error?.details?.fields
+        const fieldErrors = typeof body.error === "object" ? body.error.details?.fields : undefined
         const fieldMessage =
           fieldErrors &&
           Object.entries(fieldErrors)
-            .flatMap(([field, messages]) => messages.map((message) => `${field}: ${message}`))
+            .flatMap(([field, messages]) => messages.map((message: string) => `${field}: ${message}`))
             .join(" ")
         throw new Error(
           fieldMessage ||
