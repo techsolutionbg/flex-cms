@@ -106,6 +106,16 @@ final class ThemeManager
 
                 return $version === null ? $url : $url . '?v=' . $version;
             };
+            if ($this->extensionApi !== null) {
+                $filtered = $this->extensionApi->applyFilters('theme.render.data', $data, [
+                    'theme' => $theme,
+                    'template' => $template,
+                    'theme_view' => $themeView,
+                ]);
+                if (is_array($filtered)) {
+                    $data = $filtered;
+                }
+            }
             ob_start();
             try {
                 $flexMenu = static fn(string $slug): array => $menuApi?->get($slug) ?? [];
@@ -150,6 +160,16 @@ final class ThemeManager
             // The public files of plugins for this page, as in PHP themes (Flex CMS 0.1.62+).
             $this->twig->addFunction(new TwigFunction('frontend_extension_tags', fn(): string => $this->frontendAssets?->publicTags() ?? '', ['is_safe' => ['html']]));
             $this->loadedTheme = $theme;
+        }
+        if ($this->extensionApi !== null) {
+            $filtered = $this->extensionApi->applyFilters('theme.render.data', $data, [
+                'theme' => $theme,
+                'template' => $template,
+                'theme_view' => $themeView,
+            ]);
+            if (is_array($filtered)) {
+                $data = $filtered;
+            }
         }
 
         return $this->twig->render($template, $data + ['theme' => $theme]);

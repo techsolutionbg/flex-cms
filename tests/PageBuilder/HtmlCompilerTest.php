@@ -361,6 +361,29 @@ final class HtmlCompilerTest extends TestCase
         self::assertStringContainsString('--fpb-tint-opacity:0.4', $html);
     }
 
+    public function testItRendersSectionParticles(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'particles' => 'links', 'particles_color' => '#38BDF8', 'particles_density' => 500, 'particles_speed' => 0, 'children' => [
+                ['id' => 'title', 'type' => 'heading', 'text' => 'Здравей'],
+            ]],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('class="fpb-section-particles" data-fpb-particles="links" data-color="#38bdf8" data-density="150" data-speed="1"', $html);
+        self::assertStringContainsString('Здравей', $html);
+    }
+
+    public function testItDropsUnknownParticlesAndTheirSettings(): void
+    {
+        $normalized = $this->compiler->normalize([
+            ['id' => 'band', 'type' => 'section', 'particles' => 'fireworks', 'particles_color' => '#fff', 'children' => []],
+        ]);
+
+        self::assertNull($normalized[0]['particles']);
+        self::assertNull($normalized[0]['particles_color']);
+        self::assertStringNotContainsString('fpb-section-particles', $this->compiler->compile($normalized, static fn(int $id): string => ''));
+    }
+
     public function testItOmitsASectionOverlayWithoutAColor(): void
     {
         $html = $this->compiler->compile([
@@ -550,5 +573,18 @@ final class HtmlCompilerTest extends TestCase
         self::assertSame('CTA', $styles[0]['name']);
         self::assertSame('#0ea5e9', $styles[0]['background']);
         self::assertSame('#fff', $styles[0]['hover_color']);
+    }
+
+    public function testItWrapsChromeDocumentsWithChromeRootClasses(): void
+    {
+        $header = $this->compiler->compile([
+            ['id' => 'h', 'type' => 'heading', 'text' => 'Шапка', 'level' => 2],
+        ], static fn(int $id): string => '', [], null, [], 'header');
+        $footer = $this->compiler->compile([
+            ['id' => 'f', 'type' => 'paragraph', 'text' => 'Футър'],
+        ], static fn(int $id): string => '', [], null, [], 'footer');
+
+        self::assertStringStartsWith('<div class="fpb-root fpb-chrome fpb-chrome--header">', $header);
+        self::assertStringStartsWith('<div class="fpb-root fpb-chrome fpb-chrome--footer">', $footer);
     }
 }
