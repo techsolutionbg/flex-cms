@@ -6,7 +6,7 @@ import { MediaPicker } from "./media-picker"
 const BACKGROUNDS = {
   light: "#fff",
   dark: "#0f172a",
-  surface: "var(--surface-subtle, transparent)",
+  surface: "var(--control-bg, var(--surface-subtle, transparent))",
 } as const
 
 export type ImageFieldBackground = keyof typeof BACKGROUNDS | (string & {})
@@ -20,8 +20,9 @@ export type ImageFieldProps = {
   description?: string
   disabled?: boolean
   /**
-   * Surface behind the image. `dark` is for artwork that sits on a dark background
-   * (a light logo). Any other CSS color is used as-is.
+   * Surface behind the image. The default follows the panel theme.
+   * `light` and `dark` preview artwork on a fixed background (a logo).
+   * Any other CSS color is used as-is.
    */
   background?: ImageFieldBackground
   /** CSS aspect-ratio of the tile. */
@@ -48,7 +49,7 @@ export function ImageField({
   onChange,
   description,
   disabled = false,
-  background = "light",
+  background = "surface",
   aspectRatio = "16 / 10",
   fit = "contain",
   width = "16rem",
@@ -99,8 +100,8 @@ export function ImageField({
 
   const style = {
     "--image-field-background": backgroundColor,
-    "--image-field-foreground": preset === "dark" ? "#e2e8f0" : "inherit",
-    "--image-field-border": preset === "dark" ? "#334155" : "var(--border)",
+    "--image-field-foreground": preset === "dark" ? "#e2e8f0" : "var(--text-secondary, inherit)",
+    "--image-field-border": preset === "dark" ? "#334155" : "var(--control-border, var(--border))",
     "--image-field-aspect": aspectRatio,
     "--image-field-fit": fit,
     "--image-field-width": width,

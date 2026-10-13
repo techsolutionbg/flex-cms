@@ -5578,7 +5578,7 @@ select:focus-visible,
   text-align: center;
   border-radius: var(--image-field-radius, 0.75rem);
   border: 2px dashed var(--image-field-border, var(--border));
-  background: var(--image-field-background, #fff);
+  background: var(--image-field-background, var(--control-bg, var(--surface-subtle, #f8faf7)));
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 .image-field-tile.has-image {
