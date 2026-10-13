@@ -43,7 +43,9 @@ if [ "$(id -u)" = "0" ]; then
 
     runtime_gid="${FLEX_CMS_GID:-1000}"
     if [ -f storage/.env ]; then
-        chgrp "$runtime_gid" storage/.env
+        # Owner must be www-data so Apache can read 640; group stays the host
+        # updater GID so install/update tooling can rewrite the file.
+        chown "www-data:$runtime_gid" storage/.env
         chmod 640 storage/.env
     fi
     if [ -d themes ]; then

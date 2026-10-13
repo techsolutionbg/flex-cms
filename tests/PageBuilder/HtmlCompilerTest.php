@@ -248,11 +248,31 @@ final class HtmlCompilerTest extends TestCase
         self::assertStringContainsString("background-image:url('/media/4')", $html);
         self::assertStringContainsString('background-size:cover', $html);
         self::assertStringNotContainsString('linear-gradient', $html);
+        self::assertStringNotContainsString('<img', $html);
+        self::assertMatchesRegularExpression(
+            '/fpb-section-wallpaper"[^>]*background-color:#abcdef[^>]*background-image:url\(\'\/media\/4\'\)/',
+            $html
+        );
 
         $fitted = $this->compiler->compile([
             ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'wallpaper_fit' => 'contain', 'children' => []],
         ], static fn(int $id): string => '/media/' . $id);
         self::assertStringContainsString('background-size:contain', $fitted);
+
+        $anchored = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'wallpaper_position' => 'top-left', 'children' => []],
+        ], static fn(int $id): string => '/media/' . $id);
+        self::assertStringContainsString('background-position:left top', $anchored);
+
+        $bottomRight = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'wallpaper_position' => 'bottom-right', 'children' => []],
+        ], static fn(int $id): string => '/media/' . $id);
+        self::assertStringContainsString('background-position:right bottom', $bottomRight);
+
+        $invalidPosition = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'wallpaper_position' => 'somewhere', 'children' => []],
+        ], static fn(int $id): string => '/media/' . $id);
+        self::assertStringContainsString('background-position:center', $invalidPosition);
     }
 
     public function testItEmitsTabletAndPhoneStyleOverrides(): void
@@ -410,5 +430,125 @@ final class HtmlCompilerTest extends TestCase
         ], static fn(int $id): string => '');
 
         self::assertStringContainsString('href="/home"', $html);
+    }
+
+    public function testItEmitsButtonHoverStyles(): void
+    {
+        $html = $this->compiler->compile([
+            [
+                'id' => 'cta',
+                'type' => 'button',
+                'text' => 'Към нас',
+                'url' => '/contacts',
+                'hover_background' => '#0ea5e9',
+                'hover_color' => '#ffffff',
+                'hover_border_color' => '#0369a1',
+            ],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('[data-fpb-id="cta"] .fpb-button:hover{', $html);
+        self::assertStringContainsString('background:#0ea5e9', $html);
+        self::assertStringContainsString('color:#ffffff', $html);
+        self::assertStringContainsString('border-color:#0369a1', $html);
+        self::assertStringContainsString('transition:background-color .2s ease,color .2s ease,border-color .2s ease', $html);
+    }
+
+    public function testItSkipsButtonHoverStylesWhenUnset(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'plain', 'type' => 'button', 'text' => 'Ок', 'url' => '/'],
+        ], static fn(int $id): string => '');
+
+        self::assertStringNotContainsString(':hover', $html);
+    }
+
+    public function testItAppliesNamedButtonStylesBeforeDefaults(): void
+    {
+        $html = $this->compiler->compile(
+            [
+                ['id' => 'cta', 'type' => 'button', 'text' => 'CTA', 'url' => '/', 'button_style_id' => 'bs_primary'],
+            ],
+            static fn(int $id): string => '',
+            ['button' => ['background' => '#111827', 'color' => '#ffffff']],
+            null,
+            [
+                [
+                    'id' => 'bs_primary',
+                    'name' => 'Основен',
+                    'background' => '#0ea5e9',
+                    'color' => '#f8fafc',
+                    'hover_background' => '#0369a1',
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('background:#0ea5e9', $html);
+        self::assertStringContainsString('color:#f8fafc', $html);
+        self::assertStringContainsString('[data-fpb-id="cta"] .fpb-button:hover{background:#0369a1}', $html);
+        self::assertStringNotContainsString('background:#111827', $html);
+    }
+
+    public function testItLetsLocalButtonStylesOverrideNamedDesigns(): void
+    {
+        $html = $this->compiler->compile(
+            [
+                [
+                    'id' => 'cta',
+                    'type' => 'button',
+                    'text' => 'CTA',
+                    'url' => '/',
+                    'button_style_id' => 'bs_primary',
+                    'background' => '#be123c',
+                ],
+            ],
+            static fn(int $id): string => '',
+            [],
+            null,
+            [
+                [
+                    'id' => 'bs_primary',
+                    'name' => 'Основен',
+                    'background' => '#0ea5e9',
+                    'color' => '#ffffff',
+                ],
+            ],
+        );
+
+        self::assertStringContainsString('background:#be123c', $html);
+        self::assertStringContainsString('color:#ffffff', $html);
+    }
+
+    public function testItFallsBackToDefaultsWhenButtonStyleIsMissing(): void
+    {
+        $html = $this->compiler->compile(
+            [
+                ['id' => 'cta', 'type' => 'button', 'text' => 'CTA', 'url' => '/', 'button_style_id' => 'bs_missing'],
+            ],
+            static fn(int $id): string => '',
+            ['button' => ['background' => '#111827', 'color' => '#ffffff']],
+            null,
+            [
+                ['id' => 'bs_primary', 'name' => 'Основен', 'background' => '#0ea5e9'],
+            ],
+        );
+
+        self::assertStringContainsString('background:#111827', $html);
+        self::assertStringContainsString('color:#ffffff', $html);
+    }
+
+    public function testItNormalizesButtonStyles(): void
+    {
+        $styles = $this->compiler->normalizeButtonStyles([
+            ['id' => 'bs_ok', 'name' => '  CTA  ', 'background' => '#0ea5e9', 'hover_color' => '#fff'],
+            ['id' => 'nope', 'name' => 'Bad'],
+            ['id' => 'bs_ok', 'name' => 'Duplicate'],
+            'skip',
+        ]);
+
+        self::assertCount(1, $styles);
+        self::assertSame('bs_ok', $styles[0]['id']);
+        self::assertSame('CTA', $styles[0]['name']);
+        self::assertSame('#0ea5e9', $styles[0]['background']);
+        self::assertSame('#fff', $styles[0]['hover_color']);
     }
 }
