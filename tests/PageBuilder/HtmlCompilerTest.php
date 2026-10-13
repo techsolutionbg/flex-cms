@@ -89,6 +89,21 @@ final class HtmlCompilerTest extends TestCase
         ])[0]['full_width']);
     }
 
+    public function testItHidesASectionOnThePublicPage(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'hidden' => true, 'children' => [
+                ['id' => 'title', 'type' => 'heading', 'level' => 2, 'text' => 'Скрита'],
+            ]],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('class="fpb-section fpb-is-hidden"', $html);
+        self::assertStringContainsString('<h2>Скрита</h2>', $html);
+        self::assertTrue($this->compiler->normalize([
+            ['id' => 'band', 'type' => 'section', 'hidden' => true, 'children' => []],
+        ])[0]['hidden']);
+    }
+
     public function testItRendersSectionVerticalPadding(): void
     {
         $html = $this->compiler->compile([
@@ -110,6 +125,49 @@ final class HtmlCompilerTest extends TestCase
         self::assertStringContainsString('padding-left:16px', $html);
         self::assertStringContainsString('margin-top:8px', $html);
         self::assertStringContainsString('margin-bottom:0px', $html);
+    }
+
+    public function testItKeepsACustomNameOnASection(): void
+    {
+        $normalized = $this->compiler->normalize([
+            ['id' => 'hero', 'type' => 'section', 'name' => '  Начало  ', 'children' => []],
+        ]);
+
+        self::assertSame('Начало', $normalized[0]['name']);
+    }
+
+    public function testItBoxesANestedSectionThatIsNotFullWidth(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'outer', 'type' => 'section', 'full_width' => true, 'children' => [
+                ['id' => 'inner', 'type' => 'section', 'full_width' => false, 'children' => []],
+                ['id' => 'wide', 'type' => 'section', 'full_width' => true, 'children' => []],
+            ]],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('class="fpb-section fpb-section--boxed" data-fpb-id="inner"', $html);
+        self::assertStringContainsString('class="fpb-section fpb-section--full" data-fpb-id="wide"', $html);
+        self::assertStringContainsString('class="fpb-section fpb-section--full" data-fpb-id="outer"', $html);
+    }
+
+    public function testItRendersASectionInsideASection(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'outer', 'type' => 'section', 'children' => [
+                ['id' => 'inner', 'type' => 'section', 'background' => '#abcdef', 'children' => [
+                    ['id' => 'title', 'type' => 'heading', 'level' => 2, 'text' => 'Вътрешна'],
+                ]],
+            ]],
+        ], static fn(int $id): string => '');
+
+        self::assertSame(2, substr_count($html, 'data-fpb-type="section"'));
+        self::assertStringContainsString('data-fpb-id="inner"', $html);
+        self::assertStringContainsString('<h2>Вътрешна</h2>', $html);
+        self::assertSame('inner', $this->compiler->normalize([
+            ['id' => 'outer', 'type' => 'section', 'children' => [
+                ['id' => 'inner', 'type' => 'section', 'children' => []],
+            ]],
+        ])[0]['children'][0]['id']);
     }
 
     public function testItRendersColumnsInsideASection(): void
@@ -186,7 +244,8 @@ final class HtmlCompilerTest extends TestCase
         ], static fn(int $id): string => '/media/' . $id);
 
         self::assertStringContainsString('background-color:#abcdef', $html);
-        self::assertStringContainsString('background-image:url("/media/4")', $html);
+        self::assertStringContainsString('class="fpb-section-wallpaper"', $html);
+        self::assertStringContainsString("background-image:url('/media/4')", $html);
         self::assertStringContainsString('background-size:cover', $html);
         self::assertStringNotContainsString('linear-gradient', $html);
 
@@ -196,6 +255,101 @@ final class HtmlCompilerTest extends TestCase
         self::assertStringContainsString('background-size:contain', $fitted);
     }
 
+    public function testItEmitsTabletAndPhoneStyleOverrides(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'title', 'type' => 'heading', 'level' => 2, 'text' => 'Заглавие', 'size' => 40, 'tablet' => ['size' => 28], 'phone' => ['size' => 18, 'hidden' => true]],
+            ['id' => 'row', 'type' => 'columns', 'columns' => 3, 'children' => [
+                ['id' => 'c1', 'type' => 'column', 'children' => []],
+                ['id' => 'c2', 'type' => 'column', 'children' => []],
+                ['id' => 'c3', 'type' => 'column', 'children' => []],
+            ], 'phone' => ['columns' => 1]],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('@media (max-width:1023px)', $html);
+        self::assertStringContainsString('[data-fpb-id="title"]', $html);
+        self::assertStringContainsString('font-size:28px', $html);
+        self::assertStringContainsString('@media (max-width:639px)', $html);
+        self::assertStringContainsString('font-size:18px', $html);
+        self::assertStringContainsString('display:none', $html);
+        self::assertStringContainsString('grid-template-columns:repeat(1,minmax(0,1fr))', $html);
+    }
+
+    public function testItKeepsOnlyValidBreakpointOverrides(): void
+    {
+        $normalized = $this->compiler->normalize([
+            ['id' => 'title', 'type' => 'heading', 'text' => 'X', 'tablet' => ['size' => 16, 'align' => 'center', 'junk' => true], 'phone' => ['hidden' => true]],
+        ]);
+
+        self::assertSame(['size' => 16, 'align' => 'center'], $normalized[0]['tablet']);
+        self::assertSame(['hidden' => true], $normalized[0]['phone']);
+    }
+
+    public function testItRendersASectionOverlay(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'overlay_color' => '#000', 'overlay_opacity' => 50, 'children' => []],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('class="fpb-section-overlay"', $html);
+        self::assertStringContainsString('background:rgba(0,0,0,0.5)', $html);
+    }
+
+    public function testItRendersAGrayscaleImage(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'photo', 'type' => 'image', 'media_id' => 4, 'alt' => 'Лого', 'image_filter' => 'grayscale'],
+        ], static fn(int $id): string => '/media/' . $id);
+
+        self::assertStringContainsString('fpb-photo--grayscale', $html);
+        self::assertStringNotContainsString('fpb-photo--grayscale', $this->compiler->compile([
+            ['id' => 'photo', 'type' => 'image', 'media_id' => 4, 'alt' => 'Лого'],
+        ], static fn(int $id): string => '/media/' . $id));
+    }
+
+    public function testItRendersAGrayscaleWallpaper(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'image_filter' => 'grayscale', 'children' => []],
+        ], static fn(int $id): string => '/media/' . $id);
+
+        self::assertStringContainsString('fpb-section-wallpaper', $html);
+        self::assertStringContainsString('fpb-photo--grayscale', $html);
+    }
+
+    public function testItRendersTextEffectsOnAHeading(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'title', 'type' => 'heading', 'level' => 2, 'text' => 'Сянка', 'shadow_color' => '#112233', 'shadow_x' => 1, 'shadow_y' => 3, 'shadow_blur' => 6, 'italic' => true, 'text_transform' => 'uppercase', 'letter_spacing' => 2, 'stroke_width' => 1, 'stroke_color' => '#000'],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('text-shadow:1px 3px 6px #112233', $html);
+        self::assertStringContainsString('font-style:italic', $html);
+        self::assertStringContainsString('text-transform:uppercase', $html);
+        self::assertStringContainsString('letter-spacing:2px', $html);
+        self::assertStringContainsString('-webkit-text-stroke:1px #000', $html);
+    }
+
+    public function testItRendersAnImageColorFilter(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'photo', 'type' => 'image', 'media_id' => 4, 'alt' => 'Лого', 'image_tint' => '#7c3aed', 'image_tint_opacity' => 40],
+        ], static fn(int $id): string => '/media/' . $id);
+
+        self::assertStringContainsString('fpb-photo--tint', $html);
+        self::assertStringContainsString('--fpb-tint:#7c3aed', $html);
+        self::assertStringContainsString('--fpb-tint-opacity:0.4', $html);
+    }
+
+    public function testItOmitsASectionOverlayWithoutAColor(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'overlay_opacity' => 50, 'children' => []],
+        ], static fn(int $id): string => '');
+
+        self::assertStringNotContainsString('fpb-section-overlay', $html);
+    }
+
     public function testItOmitsASectionWallpaperWithoutAPublicAddress(): void
     {
         $html = $this->compiler->compile([
@@ -203,5 +357,58 @@ final class HtmlCompilerTest extends TestCase
         ], static fn(int $id): string => '');
 
         self::assertStringNotContainsString('background-image', $html);
+    }
+
+    public function testItRendersAPresetPatternWallpaper(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_preset' => 'dots', 'children' => []],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('fpb-section-wallpaper', $html);
+        self::assertStringContainsString('fpb-pattern fpb-pattern-dots', $html);
+        self::assertStringNotContainsString('<img', $html);
+    }
+
+    public function testItOmitsAnUnknownPatternWallpaper(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_preset' => 'not-a-pattern', 'children' => []],
+        ], static fn(int $id): string => '');
+
+        self::assertStringNotContainsString('fpb-pattern', $html);
+    }
+
+    public function testItPrefersAMediaWallpaperOverAPatternPreset(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'band', 'type' => 'section', 'wallpaper_id' => 4, 'wallpaper_preset' => 'dots', 'children' => []],
+        ], static fn(int $id): string => '/media/' . $id);
+
+        self::assertStringContainsString("background-image:url('/media/4')", $html);
+        self::assertStringNotContainsString('fpb-pattern-dots', $html);
+    }
+
+    public function testItResolvesButtonLinksToPages(): void
+    {
+        $paths = [3 => '/kontakt', 1 => '/'];
+        $html = $this->compiler->compile([
+            ['id' => 'to-page', 'type' => 'button', 'text' => 'Контакт', 'link_type' => 'page', 'page_id' => 3],
+            ['id' => 'custom', 'type' => 'button', 'text' => 'Външен', 'link_type' => 'url', 'url' => 'https://example.com/x'],
+            ['id' => 'missing', 'type' => 'button', 'text' => 'Липсва', 'link_type' => 'page', 'page_id' => 99],
+        ], static fn(int $id): string => '', [], static fn(int $id): string => $paths[$id] ?? '');
+
+        self::assertStringContainsString('href="/kontakt"', $html);
+        self::assertStringContainsString('href="https://example.com/x"', $html);
+        self::assertStringContainsString('href="#">Липсва</a>', $html);
+    }
+
+    public function testItKeepsLegacyButtonUrlWhenLinkTypeIsMissing(): void
+    {
+        $html = $this->compiler->compile([
+            ['id' => 'legacy', 'type' => 'button', 'text' => 'Начало', 'url' => '/home'],
+        ], static fn(int $id): string => '');
+
+        self::assertStringContainsString('href="/home"', $html);
     }
 }

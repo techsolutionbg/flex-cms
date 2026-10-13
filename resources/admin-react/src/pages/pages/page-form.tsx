@@ -13,7 +13,7 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { ImageField } from "@/components/image-field"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
-import { useExtensions } from "@/components/extension-runtime"
+import { useExtensions, useTableExtensions } from "@/components/extension-runtime"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
 
 type PageFormProps = {
@@ -54,6 +54,24 @@ export function PageForm({
   const changed = useWorkspaceChanged()
   const saves = usePanelSaves()
   const themeContentPanels = useExtensions("page.theme-content", "screen.section")
+  const pageListExtensions = useTableExtensions<PageRecord>(
+    page ? "pages.list" : undefined,
+    page ? [page] : [],
+    page ? String(page.id) : "new",
+  )
+  // Heading tools from plugins (Page Builder, Composer). Skip SEO / theme-content —
+  // SEO stays in the editor panel; theme content has its own button below.
+  const pageTools = page
+    ? pageListExtensions.rowActions.filter((action) => {
+        if (action.visible && !action.visible(page)) return false
+        const label = action.label.trim().toLowerCase()
+        if (label.includes("seo")) return false
+        if (label.includes("съдържание от темата") || label.includes("съдържание на шаблона")) {
+          return false
+        }
+        return true
+      })
+    : []
   const syncedPageId = useRef<number | null>(page?.id ?? null)
   // Panels of active plugins (for example Flex SEO) see the unsaved values while the user types.
   const panelContext = useMemo(
@@ -221,9 +239,18 @@ export function PageForm({
         </div>
         {page && (
           <div className="react-page-heading-actions">
+            {pageTools.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={() => void action.onSelect(page, pageListExtensions.helpers)}
+              >
+                {action.label}
+              </button>
+            ))}
             {themeContentPanels.length > 0 && (
               <button type="button" onClick={() => onThemeContent(page)}>
-                Съдържание на шаблона
+                Съдържание от темата
               </button>
             )}
             <button type="button" onClick={() => onSettings(page)}>

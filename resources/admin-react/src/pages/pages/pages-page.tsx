@@ -422,7 +422,7 @@ export function PagesPage({
                 </button>
                 {themeContentPanels.length > 0 && (
                   <button type="button" role="menuitem" onClick={() => onThemeContent(page)}>
-                    Съдържание на шаблона
+                    Съдържание от темата
                   </button>
                 )}
                 <button

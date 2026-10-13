@@ -63,7 +63,7 @@ export function PageThemeContentForm({
   usePageHelp(
     useMemo(
       () => ({
-        title: "Съдържание на шаблона",
+        title: "Съдържание от темата",
         content: (
           <>
             <p>
@@ -99,7 +99,7 @@ export function PageThemeContentForm({
           </>
         ),
       }),
-      [page.title, templateLabel, layoutHint],
+      [page.title, page.slug, template, templateLabel, layoutHint],
     ),
   )
 
@@ -108,7 +108,7 @@ export function PageThemeContentForm({
     setSaving(true)
     try {
       await saves.run({ id: page.id })
-      toast.success("Съдържанието на шаблона е запазено.")
+      toast.success("Съдържанието от темата е запазено.")
     } catch (reason) {
       toast.error(
         reason instanceof Error ? reason.message : "Съдържанието не можа да бъде запазено.",
@@ -120,7 +120,7 @@ export function PageThemeContentForm({
 
   return (
     <AdminShell
-      title="Съдържание на шаблона"
+      title="Съдържание от темата"
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Страници"
@@ -128,13 +128,13 @@ export function PageThemeContentForm({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Съдържание на шаблона</h1>
+          <h1>Съдържание от темата</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[
               { label: "Страници", onClick: onBack },
               { label: page.title, onClick: () => onEdit(page) },
-              { label: "Съдържание на шаблона" },
+              { label: "Съдържание от темата" },
             ]}
           />
         </div>

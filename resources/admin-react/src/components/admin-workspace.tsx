@@ -124,7 +124,7 @@ export function AdminWorkspace({
             pageMatch[2] === "settings"
               ? `Настройки: ${page.title}`
               : pageMatch[2] === "theme-content"
-                ? `Съдържание на шаблона: ${page.title}`
+                ? `Съдържание от темата: ${page.title}`
                 : page.title,
           loading: false,
         })
@@ -196,7 +196,7 @@ export function AdminWorkspace({
         (path === "/pages/create"
           ? "Нова страница"
           : /^\/pages\/\d+\/theme-content$/.test(path)
-            ? "Съдържание на шаблона"
+            ? "Съдържание от темата"
             : path === "/users/create"
               ? "Нов потребител"
               : path.startsWith("/menus/")
@@ -463,7 +463,7 @@ export function AdminWorkspace({
     const themeContent = (page: PageRecord) =>
       open(`/pages/${page.id}/theme-content`, {
         page,
-        title: `Съдържание на шаблона: ${page.title}`,
+        title: `Съдържание от темата: ${page.title}`,
       })
     const editUser = (user: UserRecord) =>
       open(`/users/${user.id}/edit`, { user, title: user.email })
@@ -616,7 +616,7 @@ export function AdminWorkspace({
     if (/^\/pages\/\d+\/theme-content$/.test(tab.path)) {
       if (!tab.page) {
         return (
-          <AdminShell {...common} title="Съдържание на шаблона" activeItem="Страници">
+          <AdminShell {...common} title="Съдържание от темата" activeItem="Страници">
             <p role="status">{tab.loading ? "Зареждане…" : (tab.error ?? "Страницата не е налична.")}</p>
           </AdminShell>
         )

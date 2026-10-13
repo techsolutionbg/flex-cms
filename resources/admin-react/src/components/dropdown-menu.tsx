@@ -22,7 +22,7 @@ export function DropdownMenu({
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 176, maxHeight: 320 })
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 240, maxHeight: 320 })
 
   function reposition() {
     const rect = triggerRef.current?.getBoundingClientRect()
@@ -38,7 +38,9 @@ export function DropdownMenu({
     const openAbove = below < desiredHeight && above > below
     const maxHeight = Math.min(320, openAbove ? above : below)
     const height = Math.min(desiredHeight, maxHeight)
-    const width = Math.min(Math.max(rect.width, 176), Math.max(0, viewportWidth - 16))
+    // Table action triggers are only ~2.5rem wide; keep a floor so labels like
+    // „Отвори в Page Builder“ fit on one line.
+    const width = Math.min(Math.max(rect.width, 240), Math.max(0, viewportWidth - 16))
     setPosition({
       top: Math.max(viewportTop + 8, openAbove ? rect.top - 6 - height : rect.bottom + 6),
       left: Math.max(

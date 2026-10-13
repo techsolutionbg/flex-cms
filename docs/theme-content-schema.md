@@ -77,7 +77,7 @@ Validation is implemented in `Flex\ThemeContent\ThemeContentSchemaValidator`.
 
 1. Install and activate **`flex/theme-content`**.
 2. **Теми → active theme → „Настройки на темата“** (`/themes/{id}/settings`, panel location `theme.settings`) — global sections from `global.json`. Each JSON section is a collapsible section and each field an input; adding a section or field needs only JSON, no admin code.
-3. **Страници → Действия → Съдържание на шаблона** — `/pages/{id}/theme-content` with fields from a matching `pages[]` binding or from the layout for the page template.
+3. **Страници → Действия → Съдържание от темата** — `/pages/{id}/theme-content` with fields from a matching `pages[]` binding or from the layout for the page template.
 
 Storage keys:
 
