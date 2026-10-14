@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { Breadcrumbs } from "@/components/breadcrumbs"
+import { PasswordGenerator } from "@/components/password-generator"
+import { PasswordInput } from "@/components/password-input"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
@@ -258,33 +260,43 @@ export function UserForm({
             storageKey={editing ? "user-form-change-password" : "user-form-password"}
           >
             <div className="react-form-grid">
-              <label className="react-form-field">
-                <span>
+              <div className="react-form-field">
+                <label className="react-form-field-label" htmlFor="user-form-password">
                   {editing ? "Нова парола" : "Парола"}
                   {!editing && <b> *</b>}
-                </span>
-                <input
-                  type="password"
+                </label>
+                <PasswordInput
+                  variant="admin"
+                  id="user-form-password"
                   autoComplete="new-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required={!editing}
                 />
                 <small>Паролата трябва да съдържа поне {minimumPassword} символа.</small>
-              </label>
-              <label className="react-form-field">
-                <span>
+                <PasswordGenerator
+                  length={Math.max(24, minimumPassword)}
+                  disabled={saving}
+                  onGenerate={(generated) => {
+                    setPassword(generated)
+                    setPasswordConfirmation(generated)
+                  }}
+                />
+              </div>
+              <div className="react-form-field">
+                <label className="react-form-field-label" htmlFor="user-form-password-confirmation">
                   {editing ? "Потвърждение на новата парола" : "Потвърждение на паролата"}
                   {!editing && <b> *</b>}
-                </span>
-                <input
-                  type="password"
+                </label>
+                <PasswordInput
+                  variant="admin"
+                  id="user-form-password-confirmation"
                   autoComplete="new-password"
                   value={passwordConfirmation}
                   onChange={(event) => setPasswordConfirmation(event.target.value)}
                   required={!editing}
                 />
-              </label>
+              </div>
             </div>
           </CollapsibleSection>
           {!editing && (

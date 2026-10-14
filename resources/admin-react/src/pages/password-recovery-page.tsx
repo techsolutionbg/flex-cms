@@ -5,6 +5,8 @@ import { BrandLogo } from "@/components/brand-logo"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PasswordGenerator } from "@/components/password-generator"
+import { PasswordInput } from "@/components/password-input"
 import { getCsrfToken } from "@/lib/admin-api"
 
 export function PasswordRecoveryPage({
@@ -154,9 +156,9 @@ export function PasswordRecoveryPage({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="recovery-password">Нова парола</Label>
-                  <Input
+                  <PasswordInput
                     id="recovery-password"
-                    type="password"
+                    variant="ui"
                     autoComplete="new-password"
                     required
                     minLength={12}
@@ -166,12 +168,19 @@ export function PasswordRecoveryPage({
                     onChange={(event) => setPassword(event.target.value)}
                   />
                   <small className="react-field-hint">Поне 12 знака.</small>
+                  <PasswordGenerator
+                    disabled={busy}
+                    onGenerate={(generated) => {
+                      setPassword(generated)
+                      setConfirmation(generated)
+                    }}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="recovery-confirmation">Повторете паролата</Label>
-                  <Input
+                  <PasswordInput
                     id="recovery-confirmation"
-                    type="password"
+                    variant="ui"
                     autoComplete="new-password"
                     required
                     minLength={12}

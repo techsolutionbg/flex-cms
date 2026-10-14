@@ -13,10 +13,30 @@ export type AdminThemeMode =
   | "dark-plum"
   | "dark-ember"
 
+export type AdminFontChoice =
+  | "inter"
+  | "system"
+  | "arial"
+  | "verdana"
+  | "trebuchet"
+  | "georgia"
+  | "monospace"
+
+const adminFontStacks: Record<AdminFontChoice, string> = {
+  inter: "Inter, ui-sans-serif, system-ui, sans-serif",
+  system: "system-ui, sans-serif",
+  arial: "Arial, Helvetica, sans-serif",
+  verdana: "Verdana, Geneva, sans-serif",
+  trebuchet: "'Trebuchet MS', sans-serif",
+  georgia: "Georgia, 'Times New Roman', serif",
+  monospace: "ui-monospace, SFMono-Regular, Menlo, monospace",
+}
+
 // The theme applied last, used for the first paint before the session is restored.
 const storageKey = "flex-admin-theme"
 // A user's own choice from the profile. It wins over the default from Settings → Administration panel.
 const personalPrefix = "flex-admin-theme:user:"
+const personalFontPrefix = "flex-admin-font:user:"
 
 let currentUserId = 0
 let siteDefault: AdminThemeMode = "system"
@@ -39,9 +59,47 @@ function isTheme(value: unknown): value is AdminThemeMode {
   )
 }
 
+function isAdminFont(value: unknown): value is AdminFontChoice {
+  return typeof value === "string" && Object.hasOwn(adminFontStacks, value)
+}
+
+export function getAdminFontFamily(font: AdminFontChoice): string {
+  return adminFontStacks[font]
+}
+
 /** Identifies the signed-in user, so their personal theme is used on this device. */
 export function setAdminThemeUser(userId: number): void {
   currentUserId = userId > 0 ? userId : 0
+  setAdminFont(getPersonalFont() ?? "inter")
+}
+
+/** The user's personal panel font, or null when they use the default font. */
+export function getPersonalFont(userId = currentUserId): AdminFontChoice | null {
+  if (userId <= 0) return null
+  try {
+    const value = window.localStorage.getItem(personalFontPrefix + userId)
+    return isAdminFont(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+/** Applies a font stack to the entire admin panel. */
+export function setAdminFont(font: AdminFontChoice): void {
+  document.documentElement.style.setProperty("--admin-font-family", adminFontStacks[font])
+}
+
+/** Saves (or with null clears) the user's personal font and applies it. */
+export function savePersonalFont(font: AdminFontChoice | null, userId = currentUserId): void {
+  if (userId > 0) {
+    try {
+      if (font === null) window.localStorage.removeItem(personalFontPrefix + userId)
+      else window.localStorage.setItem(personalFontPrefix + userId, font)
+    } catch {
+      // The font still applies for the current session.
+    }
+  }
+  setAdminFont(font ?? "inter")
 }
 
 /** The user's own theme from the profile, or null when they follow the panel default. */

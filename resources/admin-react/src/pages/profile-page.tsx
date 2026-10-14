@@ -1,19 +1,26 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
-import { LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
+import { Check, LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { useWorkspaceSaved } from "@/components/admin-workspace-context"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CollapsibleSection } from "@/components/collapsible-section"
+import { PasswordGenerator } from "@/components/password-generator"
+import { PasswordInput } from "@/components/password-input"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
 import {
   effectiveAdminTheme,
+  getAdminFontFamily,
+  getPersonalFont,
   getPersonalTheme,
+  savePersonalFont,
   savePersonalTheme,
+  setAdminFont,
   setAdminTheme,
+  type AdminFontChoice,
   type AdminThemeMode,
 } from "@/lib/admin-theme"
 import type { UserRecord } from "@/lib/admin-types"
@@ -35,6 +42,16 @@ const themeLabels: Record<AdminThemeMode, string> = {
   "dark-ember": "Тъмна — жар",
 }
 
+const fontLabels: Record<AdminFontChoice, string> = {
+  inter: "Inter / стандартен",
+  system: "Системен",
+  arial: "Arial",
+  verdana: "Verdana",
+  trebuchet: "Trebuchet MS",
+  georgia: "Georgia",
+  monospace: "Моноширинен",
+}
+
 export function ProfilePage({
   onLogout,
   onNavigate,
@@ -54,6 +71,7 @@ export function ProfilePage({
   const [theme, setTheme] = useState<AdminThemeMode>(
     () => getPersonalTheme() ?? effectiveAdminTheme(),
   )
+  const [font, setFont] = useState<AdminFontChoice>(() => getPersonalFont() ?? "inter")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   // Plugins add sections and fields here through extension points; they save right after this record.
@@ -103,6 +121,11 @@ export function ProfilePage({
     setAdminTheme(value)
   }
   useEffect(() => () => setAdminTheme(effectiveAdminTheme()), [])
+  function changeFont(value: AdminFontChoice) {
+    setFont(value)
+    setAdminFont(value)
+  }
+  useEffect(() => () => setAdminFont(getPersonalFont() ?? "inter"), [])
 
   async function save(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -145,6 +168,7 @@ export function ProfilePage({
       setPasswordConfirmation("")
       setCurrentPassword("")
       savePersonalTheme(theme)
+      savePersonalFont(font)
       await saves.run({ id: body.user.id })
       toast.success("Профилът е запазен.")
       markSaved?.()
@@ -216,10 +240,13 @@ export function ProfilePage({
                 storageKey="profile-security"
               >
                 <div className="react-form-grid">
-                  <label className="react-form-field">
-                    <span>Нова парола</span>
-                    <input
-                      type="password"
+                  <div className="react-form-field">
+                    <label className="react-form-field-label" htmlFor="profile-new-password">
+                      Нова парола
+                    </label>
+                    <PasswordInput
+                      variant="admin"
+                      id="profile-new-password"
                       autoComplete="new-password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
@@ -227,26 +254,38 @@ export function ProfilePage({
                     <small>
                       Оставете празно, ако не искате да променяте паролата. Минимум 12 символа.
                     </small>
-                  </label>
-                  <label className="react-form-field">
-                    <span>Потвърждение на новата парола</span>
-                    <input
-                      type="password"
+                    <PasswordGenerator
+                      onGenerate={(generated) => {
+                        setPassword(generated)
+                        setPasswordConfirmation(generated)
+                      }}
+                    />
+                  </div>
+                  <div className="react-form-field">
+                    <label className="react-form-field-label" htmlFor="profile-confirm-password">
+                      Потвърждение на новата парола
+                    </label>
+                    <PasswordInput
+                      variant="admin"
+                      id="profile-confirm-password"
                       autoComplete="new-password"
                       value={passwordConfirmation}
                       onChange={(event) => setPasswordConfirmation(event.target.value)}
                     />
-                  </label>
-                  <label className="react-form-field">
-                    <span>Текуща парола</span>
-                    <input
-                      type="password"
+                  </div>
+                  <div className="react-form-field">
+                    <label className="react-form-field-label" htmlFor="profile-current-password">
+                      Текуща парола
+                    </label>
+                    <PasswordInput
+                      variant="admin"
+                      id="profile-current-password"
                       autoComplete="current-password"
                       value={currentPassword}
                       onChange={(event) => setCurrentPassword(event.target.value)}
                     />
                     <small>Не е задължителна за супер администратор.</small>
-                  </label>
+                  </div>
                 </div>
               </CollapsibleSection>
               <CollapsibleSection
@@ -255,35 +294,77 @@ export function ProfilePage({
                 icon={Palette}
                 storageKey="profile-appearance"
               >
-                <div className="react-form-grid">
-                  <label className="react-form-field">
-                    <span>Тема на панела</span>
+                <div className="profile-theme-picker">
+                  <p className="profile-theme-picker-label">Тема на панела</p>
+                  <div className="profile-theme-options" role="group" aria-label="Тема на панела">
+                    {(Object.keys(themeLabels) as AdminThemeMode[]).map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={theme === value}
+                        className={`profile-theme-card${theme === value ? " is-selected" : ""}`}
+                        data-theme-choice={value}
+                        onClick={() => changeTheme(value)}
+                      >
+                        <span className="profile-theme-preview" aria-hidden="true">
+                          <span className="profile-theme-preview-top" />
+                          <span className="profile-theme-preview-sidebar" />
+                          <span className="profile-theme-preview-content">
+                            <span />
+                            <span />
+                            <i />
+                          </span>
+                        </span>
+                        <span className="profile-theme-card-name">{themeLabels[value]}</span>
+                        {theme === value && (
+                          <span className="profile-theme-selected" aria-label="Избрана тема">
+                            <Check size={14} aria-hidden="true" />
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <small>
+                    Вашият избор се пази на това устройство и има предимство пред темата от
+                    Настройки → Административен панел. Системната тема следва операционната
+                    система.
+                  </small>
+                  <div className="profile-font-picker">
+                    <label className="react-form-field-label" id="profile-font-label">
+                      Шрифт на панела
+                    </label>
                     <DropdownMenu
-                      ariaLabel="Избор на тема на панела"
+                      ariaLabel="Избор на шрифт на панела"
                       triggerClassName="react-form-select"
                       trigger={
                         <>
-                          <span>{themeLabels[theme]}</span>
+                          <span style={{ fontFamily: getAdminFontFamily(font) }}>
+                            {fontLabels[font]}
+                          </span>
                           <DropdownChevron />
                         </>
                       }
                     >
-                      {(Object.keys(themeLabels) as AdminThemeMode[]).map((value) => (
+                      {(Object.keys(fontLabels) as AdminFontChoice[]).map((value) => (
                         <DropdownOption
                           key={value}
-                          selected={theme === value}
-                          onClick={() => changeTheme(value)}
+                          selected={font === value}
+                          onClick={() => changeFont(value)}
                         >
-                          {themeLabels[value]}
+                          <span style={{ fontFamily: getAdminFontFamily(value) }}>
+                            {fontLabels[value]}
+                          </span>
                         </DropdownOption>
                       ))}
                     </DropdownMenu>
-                    <small>
-                      Вашият избор се пази на това устройство и има предимство пред темата от
-                      Настройки → Административен панел. Системната тема следва операционната
-                      система.
-                    </small>
-                  </label>
+                    <span
+                      className="profile-font-sample"
+                      style={{ fontFamily: getAdminFontFamily(font) }}
+                      aria-live="polite"
+                    >
+                      Пример: Flex CMS — Аа Bb 123
+                    </span>
+                  </div>
                 </div>
               </CollapsibleSection>
               <div className="react-form-actions">

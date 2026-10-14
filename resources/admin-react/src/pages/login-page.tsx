@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/password-input"
 import { Label } from "@/components/ui/label"
 import { BrandLogo } from "@/components/brand-logo"
 import { PasswordRecoveryPage } from "./password-recovery-page"
@@ -92,10 +93,10 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Парола</Label>
-            <Input
+            <PasswordInput
               id="password"
+              variant="ui"
               name="password"
-              type="password"
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}

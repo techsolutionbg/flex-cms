@@ -312,7 +312,7 @@ button.admin-workspace-close-all {
 }
 
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--admin-font-family, Inter, ui-sans-serif, system-ui, sans-serif);
   color: var(--text-primary);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -1785,6 +1785,160 @@ body {
   gap: 1.5rem;
   width: 100%;
 }
+.profile-theme-picker {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.profile-theme-picker-label {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.profile-theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+  gap: 0.85rem;
+}
+.profile-theme-card {
+  position: relative;
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease,
+    transform 140ms ease;
+}
+.profile-theme-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+.profile-theme-card.is-selected {
+  border-color: var(--control-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-accent) 22%, transparent);
+}
+.profile-theme-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.profile-theme-preview {
+  --preview-accent: #203b29;
+  --preview-bg: #f4f5ef;
+  --preview-sidebar: #e3e8e0;
+  --preview-surface: #ffffff;
+  --preview-ink: #344238;
+  position: relative;
+  display: grid;
+  grid-template-columns: 26% minmax(0, 1fr);
+  grid-template-rows: 0.35rem 3.4rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--preview-ink) 20%, transparent);
+  border-radius: 0.45rem;
+  background: var(--preview-bg);
+}
+.profile-theme-preview-top {
+  z-index: 1;
+  grid-column: 1 / -1;
+  background: var(--preview-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--preview-ink) 12%, transparent);
+}
+.profile-theme-preview-sidebar {
+  grid-row: 2;
+  background: var(--preview-sidebar);
+}
+.profile-theme-preview-content {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  background: var(--preview-bg);
+}
+.profile-theme-preview-content span,
+.profile-theme-preview-content i {
+  display: block;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--preview-surface);
+}
+.profile-theme-preview-content span:first-child {
+  width: 72%;
+  background: color-mix(in srgb, var(--preview-ink) 30%, var(--preview-surface));
+}
+.profile-theme-preview-content span:nth-child(2) {
+  width: 92%;
+}
+.profile-theme-preview-content i {
+  width: 38%;
+  height: 0.55rem;
+  margin-top: 0.1rem;
+  background: var(--preview-accent);
+}
+.profile-theme-card[data-theme-choice^="dark"] .profile-theme-preview {
+  --preview-bg: #111713;
+  --preview-sidebar: #1d2921;
+  --preview-surface: #202b24;
+  --preview-ink: #e5eee6;
+}
+.profile-theme-card[data-theme-choice="system"] .profile-theme-preview {
+  --preview-accent: #678b70;
+  --preview-bg: linear-gradient(135deg, #f4f5ef 0 50%, #111713 50% 100%);
+  --preview-sidebar: #c8d1c7;
+  --preview-surface: #ffffff;
+  --preview-ink: #344238;
+}
+.profile-theme-card[data-theme-choice="light"] .profile-theme-preview { --preview-accent: #203b29; }
+.profile-theme-card[data-theme-choice="light-ocean"] .profile-theme-preview { --preview-accent: #087f8c; --preview-sidebar: #d9eff0; }
+.profile-theme-card[data-theme-choice="light-sand"] .profile-theme-preview { --preview-accent: #9a6b36; --preview-sidebar: #eee5d5; }
+.profile-theme-card[data-theme-choice="light-lavender"] .profile-theme-preview { --preview-accent: #7553a6; --preview-sidebar: #e9e1f3; }
+.profile-theme-card[data-theme-choice="light-rose"] .profile-theme-preview { --preview-accent: #b44365; --preview-sidebar: #f4e1e7; }
+.profile-theme-card[data-theme-choice="light-sky"] .profile-theme-preview { --preview-accent: #3977b5; --preview-sidebar: #e0ebf6; }
+.profile-theme-card[data-theme-choice="dark"] .profile-theme-preview { --preview-accent: #80a987; }
+.profile-theme-card[data-theme-choice="dark-midnight"] .profile-theme-preview { --preview-accent: #8ca5e8; --preview-sidebar: #1a2235; }
+.profile-theme-card[data-theme-choice="dark-graphite"] .profile-theme-preview { --preview-accent: #aeb8c2; --preview-sidebar: #252b32; }
+.profile-theme-card[data-theme-choice="dark-ocean"] .profile-theme-preview { --preview-accent: #67c2cf; --preview-sidebar: #153038; }
+.profile-theme-card[data-theme-choice="dark-plum"] .profile-theme-preview { --preview-accent: #c18bd8; --preview-sidebar: #302338; }
+.profile-theme-card[data-theme-choice="dark-ember"] .profile-theme-preview { --preview-accent: #ff967d; --preview-sidebar: #34231e; }
+.profile-theme-card-name {
+  overflow: hidden;
+  padding-right: 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-theme-selected {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.72rem;
+  display: grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--control-accent);
+  color: var(--primary-text);
+}
+.profile-font-picker {
+  display: grid;
+  gap: 0.65rem;
+  width: min(100%, 30rem);
+  margin-top: 0.35rem;
+}
+.profile-font-sample {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
 .react-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1809,6 +1963,92 @@ body {
 }
 .react-form-field > span b {
   color: #ff8062;
+}
+.react-form-field-label {
+  color: var(--text-primary);
+  font-weight: 400;
+}
+.react-form-field-label b {
+  color: var(--accent);
+}
+.password-generator-button {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.password-generator-button:hover:not(:disabled) {
+  border-color: var(--control-accent);
+  background: var(--surface-hover);
+}
+.password-generator-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.password-generator-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.password-field-control {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.password-field-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding-right: 3rem !important;
+}
+.react-form-field .password-field-input {
+  border-color: var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+}
+.password-field-control.is-ui .password-field-input {
+  min-height: 3rem;
+  border-color: var(--control-border);
+  border-radius: 0.6rem;
+  background: var(--control-bg);
+  color: var(--control-text);
+}
+.password-field-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  transform: translateY(-50%);
+  place-items: center;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.password-field-toggle:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.password-field-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.password-field-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 .react-form-field input {
   width: 100%;
