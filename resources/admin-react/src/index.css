@@ -3735,6 +3735,14 @@ body {
   color: #687268;
   font-size: 0.78rem;
 }
+.react-page-builder-link {
+  width: fit-content;
+  color: var(--admin-accent, #a56bb5);
+  text-decoration: none;
+}
+.react-page-builder-link:hover {
+  text-decoration: underline;
+}
 .react-table-update {
   display: block;
   margin-top: 0.2rem;

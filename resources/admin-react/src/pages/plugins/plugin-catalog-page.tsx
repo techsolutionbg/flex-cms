@@ -196,7 +196,11 @@ export function PluginCatalogPage({
                     <span>{plugin.id}</span>
                   </div>
                 </div>
-                <p>{plugin.description || t("No description is available for this extension.")}</p>
+                <p>
+                  {plugin.description
+                    ? t(plugin.description, plugin.id)
+                    : t("No description is available for this extension.")}
+                </p>
                 <div className="plugin-catalog-meta">
                   <span>
 

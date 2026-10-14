@@ -35,6 +35,31 @@ final readonly class PublicMenuRenderer
         return ['menus' => $menus, 'menu_html' => $html];
     }
 
+    /** @return list<array{id: int, name: string, slug: string, items: list<array<string, mixed>>}> */
+    public function optionsForTheme(string $theme, PublicPageSet $pages): array
+    {
+        if ($theme === '') {
+            return [];
+        }
+
+        $rows = $this->database->connection()->table('theme_menu_assignments')
+            ->join('menus', 'menus.id', '=', 'theme_menu_assignments.menu_id')
+            ->where('theme_menu_assignments.theme_id', $theme)
+            ->where('menus.status', 'active')
+            ->whereNull('menus.deleted_at')
+            ->select('menus.id', 'menus.name', 'menus.slug')
+            ->distinct()
+            ->orderBy('menus.name')
+            ->get();
+
+        return $rows->map(fn($menu): array => [
+            'id' => (int) $menu->id,
+            'name' => (string) $menu->name,
+            'slug' => (string) $menu->slug,
+            'items' => $this->itemsForMenu((int) $menu->id, $pages),
+        ])->all();
+    }
+
     /** Return one active, non-deleted menu and its safe public tree by slug. */
     public function bySlug(string $slug, PublicPageSet $pages): array
     {

@@ -56,7 +56,9 @@ export function PluginDetailPage({
             items={[{ label: "Разширения", onClick: onBack }, { label: plugin.name }]}
           />
           <p className="plugin-detail-description">
-            {plugin.description || t("No description is available for this extension.")}
+            {plugin.description
+              ? t(plugin.description, plugin.id)
+              : t("No description is available for this extension.")}
           </p>
         </div>
         <button type="button" onClick={onBack}>

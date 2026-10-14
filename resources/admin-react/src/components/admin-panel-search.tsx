@@ -82,11 +82,12 @@ export function AdminPanelSearch() {
           group: navigationGroup(groupId),
           section: navigationSection(sectionId),
           path: page.href,
+          namespace: page.plugin,
           keywords: [
             page.href,
             groupLabels[groupId],
             sectionId ? sectionLabels[sectionId] ?? sectionId : "",
-            t(page.label),
+            t(page.label, page.plugin),
           ]
             .filter(Boolean)
             .join(" "),
@@ -97,6 +98,7 @@ export function AdminPanelSearch() {
       .map((tab) => ({
         id: `tab-${tab.id}`,
         label: tab.title,
+        namespace: tab.namespace,
         group: "Отворени табове",
         path: tab.path,
       }))
@@ -195,7 +197,7 @@ export function AdminPanelSearch() {
           onMouseEnter={() => setActiveIndex(index)}
           onClick={() => go(target)}
         >
-          <span className="admin-topbar-search-option-label">{t(target.label)}</span>
+          <span className="admin-topbar-search-option-label">{t(target.label, target.namespace)}</span>
           {!target.section && <span className="admin-topbar-search-option-group">{t(target.group)}</span>}
         </button>
       </li>

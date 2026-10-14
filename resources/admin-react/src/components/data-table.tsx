@@ -14,6 +14,7 @@ import {
 export type DataTableColumn<T> = {
   key: string
   label: string
+  namespace?: string
   sortable?: boolean
   render?: (row: T) => ReactNode
   sortValue?: (row: T) => string | number
@@ -205,7 +206,7 @@ export function DataTable<T>({
               className={action.danger ? "react-danger-button" : "react-secondary-button"}
               onClick={() => void action.run(selectedRows, extensions.helpers)}
             >
-              {t(action.label)}
+              {t(action.label, action.namespace)}
             </button>
           ))}
         </div>
@@ -232,7 +233,7 @@ export function DataTable<T>({
                     onClick={() => sort(column)}
                     disabled={!column.sortable}
                   >
-                    {t(column.label)}
+                    {t(column.label, column.namespace)}
                     {column.sortable &&
                       (sortKey === column.key ? (
                         descending ? (

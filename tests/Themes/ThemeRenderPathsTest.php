@@ -57,6 +57,7 @@ final class ThemeRenderPathsTest extends TestCase
     {
         $root = $this->directory . '/themes/demo';
         mkdir($root . '/pages/page', 0777, true);
+        mkdir($root . '/src', 0777, true);
         file_put_contents($root . '/src/index.php', '<?php echo "unified";');
         file_put_contents($root . '/pages/page/index.php', '<?php echo "legacy";');
         self::assertSame($root . '/src/index.php', ThemeRenderPaths::resolvePhpTemplate($root, 'page'));
@@ -73,6 +74,7 @@ final class ThemeRenderPathsTest extends TestCase
     public function testUnifiedSrcIndexServesPageAnd404Views(): void
     {
         $root = $this->directory . '/themes/demo';
+        mkdir($root . '/src', 0777, true);
         file_put_contents($root . '/src/index.php', '<?php echo "view=" . ($theme_view ?? "");');
         self::assertSame($root . '/src/index.php', ThemeRenderPaths::resolvePhpTemplate($root, 'page'));
         self::assertSame($root . '/src/index.php', ThemeRenderPaths::resolvePhpTemplate($root, '404'));

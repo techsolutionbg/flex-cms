@@ -55,7 +55,7 @@ export function CollapsibleSection({
         {nested.map((extension) => (
           <CollapsibleSection
             key={extension.id}
-            title={t(extension.label)}
+            title={t(extension.label, extension.plugin)}
             icon={panelIcon(extension.icon)}
             defaultOpen={extension.default_open}
             storageKey={`nested:${extensionPoint}:${extension.id}`}

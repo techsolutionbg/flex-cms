@@ -4,4 +4,6 @@ parameters:
         - contracts
         - src
         - tests
+    scanDirectories:
+        - plugins/flex/page-builder/src
     tmpDir: storage/tmp/phpstan

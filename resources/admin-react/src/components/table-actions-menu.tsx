@@ -30,7 +30,7 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
           danger={action.danger}
           onClick={() => void action.onSelect(extension!.row, extension!.helpers)}
         >
-          {t(action.label)}
+          {t(action.label, action.namespace)}
         </DropdownOption>
       ))}
     </DropdownMenu>

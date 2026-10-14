@@ -46,9 +46,13 @@ export function AdminTranslationManagement() {
       return
     }
 
-    const packagedCatalog = getPackagedAdminTranslationCatalog(selectedLocale)
+    const packagedCatalog = getPackagedAdminTranslationCatalog(selectedLocale).core ?? {}
     const overrides: Record<string, Record<string, string>> = {}
     for (const [namespace, entries] of Object.entries(catalog)) {
+      if (namespace !== "core") {
+        toast.error(t("Platform translation files can contain only the core namespace."))
+        return
+      }
       if (!entries || typeof entries !== "object" || Array.isArray(entries)) {
         toast.error(t("Each namespace must contain a JSON object of translations."))
         return
@@ -59,14 +63,12 @@ export function AdminTranslationManagement() {
           toast.error(t("Every translation value must be a string."))
           return
         }
-        if (translated !== packagedCatalog[namespace]?.[source]) translatedEntries[source] = translated
+        if (translated !== packagedCatalog[source]) translatedEntries[source] = translated
       }
       if (Object.keys(translatedEntries).length > 0) overrides[namespace] = translatedEntries
     }
-    const previousOverrides = getAdminTranslationOverrides()[selectedLocale] ?? {}
-    const hasPreviousOverrides = Object.values(previousOverrides).some(
-      (entries) => Object.keys(entries).length > 0,
-    )
+    const previousOverrides = getAdminTranslationOverrides()[selectedLocale]?.core ?? {}
+    const hasPreviousOverrides = Object.keys(previousOverrides).length > 0
     const hasDraftOverrides = Object.keys(overrides).length > 0
     if (
       hasPreviousOverrides &&

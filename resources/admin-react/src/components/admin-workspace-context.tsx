@@ -5,7 +5,7 @@ import { Button } from "./ui/button"
 import type { ExtensionPageDescriptor } from "./extension-page"
 import type { ExtensionDescriptor } from "./extension-runtime"
 
-export type WorkspaceTab = { id: string; path: string; title: string; dirty: boolean }
+export type WorkspaceTab = { id: string; path: string; title: string; dirty: boolean; namespace?: string }
 export type PageTemplateOption = { id: string; label: string }
 
 export type ThemeAdminNavigation = {
@@ -51,6 +51,7 @@ export const AdminWorkspaceContext = createContext<{
   saved: () => void
   changed: () => void
   refresh: () => void
+  rename: (title: string) => void
   open?: (path: string) => void
   refreshing: boolean
   themeCapabilities: ThemeCapabilities | null
@@ -61,6 +62,10 @@ export const AdminWorkspaceContext = createContext<{
 
 export function useWorkspaceSaved() {
   return useContext(AdminWorkspaceContext)?.saved
+}
+
+export function useWorkspaceTitle() {
+  return useContext(AdminWorkspaceContext)?.rename
 }
 
 export function useWorkspaceChanged() {
@@ -119,7 +124,7 @@ export function AdminWorkspaceTabs() {
                 )
               }}
             >
-              <span className="admin-workspace-tab-title">{t(tab.title)}</span>
+              <span className="admin-workspace-tab-title">{t(tab.title, tab.namespace)}</span>
               {tab.dirty && (
                 <span className="admin-workspace-dirty" aria-label={t("Unsaved changes")}>
                   ●
@@ -129,7 +134,7 @@ export function AdminWorkspaceTabs() {
             <button
               type="button"
               className="admin-workspace-close"
-              aria-label={`${t("Close")} ${t(tab.title)}`}
+              aria-label={`${t("Close")} ${t(tab.title, tab.namespace)}`}
               onClick={() => workspace.close(tab.id)}
             >
               <X size={15} aria-hidden="true" />

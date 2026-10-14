@@ -13,7 +13,7 @@ final class AdminExtensionRegistry
     /** @var array<string, array{id: string, label: string, href: string, priority: int}> */
     private array $sidebarItems = [];
 
-    /** @var array<string, array{id: string, label: string, href: string, module: string, embeddable: bool}> */
+    /** @var array<string, array{id: string, plugin: string, label: string, href: string, module: string, embeddable: bool}> */
     private array $pages = [];
 
     /** @var array<string, list<array{kind: string, title: string, text: string, href: string|null, priority: int}>> */
@@ -59,6 +59,9 @@ final class AdminExtensionRegistry
     /** @var array<string, string> Module URL (without version) => file, versioned only when the admin asks for the list. */
     private array $moduleFiles = [];
 
+    /** @var array<string, string> Active plugin ID => plugin root directory. */
+    private array $pluginPaths = [];
+
     /** @var list<string> */
     private const SLOTS = [
         'admin.dashboard.before', 'admin.dashboard.after',
@@ -73,6 +76,9 @@ final class AdminExtensionRegistry
     /** @param list<string> $permissions */
     public function registrar(string $pluginId, array $permissions, ?string $pluginPath = null): AdminExtensionRegistrarInterface
     {
+        if ($pluginPath !== null && is_dir($pluginPath)) {
+            $this->pluginPaths[$pluginId] = $pluginPath;
+        }
         $addSidebarItem = function (string $id, string $label, string $href, int $priority): void {
             $this->addSidebarItem($id, $label, $href, $priority);
         };
@@ -123,7 +129,7 @@ final class AdminExtensionRegistry
         };
     }
 
-    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>, pages: list<array{id: string, label: string, href: string, module: string, embeddable: bool}>, panels: list<array<string, mixed>>, extensions: list<array<string, mixed>>} */
+    /** @return array{sidebar: list<array{id: string, label: string, href: string}>, slots: array<string, list<array{kind: string, title: string, text: string, href: string|null}>>, pages: list<array{id: string, plugin: string, label: string, href: string, module: string, embeddable: bool}>, panels: list<array<string, mixed>>, extensions: list<array<string, mixed>>, translations: array<string, array<string, array<string, string>>>} */
     public function bootstrap(): array
     {
         $sidebar = array_values($this->sidebarItems);
@@ -152,7 +158,67 @@ final class AdminExtensionRegistry
             return $item;
         };
 
-        return ['sidebar' => $sidebar, 'slots' => $slots, 'pages' => array_map($versioned, array_values($this->pages)), 'panels' => array_map($versioned, $panels), 'extensions' => array_map($versioned, $extensions)];
+        return [
+            'sidebar' => $sidebar,
+            'slots' => $slots,
+            'pages' => array_map($versioned, array_values($this->pages)),
+            'panels' => array_map($versioned, $panels),
+            'extensions' => array_map($versioned, $extensions),
+            'translations' => $this->pluginTranslations(),
+        ];
+    }
+
+    /** @return array<string, array<string, array<string, string>>> */
+    private function pluginTranslations(): array
+    {
+        $translations = [];
+        $totalBytes = 0;
+        foreach ($this->pluginPaths as $pluginId => $pluginPath) {
+            $localeDirectory = $pluginPath . DIRECTORY_SEPARATOR . 'locales';
+            $realPluginPath = realpath($pluginPath);
+            $realLocaleDirectory = realpath($localeDirectory);
+            if ($realPluginPath === false || $realLocaleDirectory === false ||
+                !str_starts_with($realLocaleDirectory, rtrim($realPluginPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+
+            foreach (glob($realLocaleDirectory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
+                $locale = basename($file, '.json');
+                if (!preg_match('/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/D', $locale) || is_link($file)) {
+                    continue;
+                }
+                $realFile = realpath($file);
+                if ($realFile === false || !str_starts_with($realFile, $realLocaleDirectory . DIRECTORY_SEPARATOR)) {
+                    continue;
+                }
+                $size = filesize($realFile);
+                if ($size === false || $size > 262144 || $totalBytes + $size > 2097152) {
+                    continue;
+                }
+                $json = file_get_contents($realFile);
+                if ($json === false) {
+                    continue;
+                }
+                try {
+                    $catalog = json_decode($json, true, 32, JSON_THROW_ON_ERROR);
+                } catch (\JsonException) {
+                    continue;
+                }
+                if (!is_array($catalog) || array_is_list($catalog)) {
+                    continue;
+                }
+                $validCatalog = [];
+                foreach ($catalog as $source => $translation) {
+                    if (is_string($source) && $source !== '' && is_string($translation)) {
+                        $validCatalog[$source] = $translation;
+                    }
+                }
+                $translations[$pluginId][$locale] = $validCatalog;
+                $totalBytes += $size;
+            }
+        }
+
+        return $translations;
     }
 
     public function addPage(string $pluginId, string $id, string $label, string $module, bool $embeddable, array $navigation = [], ?string $pluginPath = null): void
@@ -187,7 +253,7 @@ final class AdminExtensionRegistry
         $key = str_replace('/', '-', $pluginId) . '-' . $id;
         $href = '/extension-pages/' . $key;
         $this->rememberModule($pluginId, $module, $pluginPath);
-        $this->pages[$key] = ['id' => $key, 'label' => trim($label), 'href' => $href,
+        $this->pages[$key] = ['id' => $key, 'plugin' => $pluginId, 'label' => trim($label), 'href' => $href,
             'module' => $this->moduleUrl($pluginId, $module), 'embeddable' => $embeddable, 'navigation' => $placement];
         if ($hidden) {
             // Opened only by its address, for example from a row action; not listed in the sidebar.

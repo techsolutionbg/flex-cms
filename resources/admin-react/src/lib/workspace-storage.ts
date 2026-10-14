@@ -32,6 +32,8 @@ export function isWorkspacePath(value: unknown): value is string {
       /^\/users\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/edit$/.test(value) ||
       /^\/menus\/\d+\/structure$/.test(value) ||
+      /^\/plugins\/[a-zA-Z0-9._-]+(?:\/[a-zA-Z0-9._-]+)*$/.test(value) ||
+      // Keep previously saved workspace tabs with encoded namespaced IDs restorable.
       /^\/plugins\/[a-zA-Z0-9._-]+(?:%2[fF][a-zA-Z0-9._-]+)?$/.test(value) ||
       /^\/theme-resources\/[a-z][a-z0-9_-]*(?:\/(?:create|\d+\/edit))?$/.test(value))
   )
@@ -46,6 +48,8 @@ export function readWorkspace(key: string): { paths: string[]; active: string | 
     const normalizePath = (value: string) => {
       if (value === "/media/upload") return "/media"
       if (value === "/settings") return settingsPathForSection("general")
+      const legacyPluginPath = value.match(/^\/plugins\/([^/]+)%2[fF]([^/]+)$/)
+      if (legacyPluginPath) return `/plugins/${legacyPluginPath[1]}/${legacyPluginPath[2]}`
       return value
     }
     const paths = [

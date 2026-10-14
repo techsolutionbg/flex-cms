@@ -15,6 +15,21 @@ use Twig\Loader\FilesystemLoader;
 use Twig\TwigFunction;
 use Flex\Menus\PublicMenuApi;
 
+/**
+ * @phpstan-type ThemeCapabilities array{
+ *   theme: string|null,
+ *   supports: array{menus: bool},
+ *   menu_locations: array<string, string>,
+ *   page_templates: list<array{id: string, label: string}>,
+ *   admin_navigation: array{
+ *     groups: list<array{id: string, label: string, icon: string, order: int}>,
+ *     sections: list<array{id: string, label: string, icon: string, group: string, order: int}>,
+ *     items: list<array{id: string, label: string, icon: string, href: string, page: string, group: string, section: string, order: int}>
+ *   },
+ *   resources: list<array{id: string, label: string, singular: string, icon: string, group: string, order: int, public_page: string}>,
+ *   content_schema?: string|null
+ * }
+ */
 final class ThemeManager
 {
     private ?Environment $twig = null;
@@ -111,6 +126,7 @@ final class ThemeManager
                     'theme' => $theme,
                     'template' => $template,
                     'theme_view' => $themeView,
+                    'menu_api' => $menuApi,
                 ]);
                 if (is_array($filtered)) {
                     $data = $filtered;
@@ -166,6 +182,7 @@ final class ThemeManager
                 'theme' => $theme,
                 'template' => $template,
                 'theme_view' => $themeView,
+                'menu_api' => $menuApi,
             ]);
             if (is_array($filtered)) {
                 $data = $filtered;
@@ -208,18 +225,18 @@ final class ThemeManager
     /** @return list<array{id: string, label: string}> */
     public function pageTemplates(): array
     {
-        $templates = $this->capabilities()['page_templates'] ?? null;
+        $templates = $this->capabilities()['page_templates'];
 
-        return is_array($templates) && $templates !== [] ? $templates : self::BUILTIN_PAGE_TEMPLATES;
+        return $templates !== [] ? $templates : self::BUILTIN_PAGE_TEMPLATES;
     }
 
-    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>, page_templates: list<array{id: string, label: string}>} */
+    /** @phpstan-return ThemeCapabilities */
     public function capabilities(): array
     {
         return $this->capabilitiesForTheme($this->activeTheme());
     }
 
-    /** @return array{theme: string|null, supports: array{menus: bool}, menu_locations: array<string, string>, page_templates: list<array{id: string, label: string}>} */
+    /** @phpstan-return ThemeCapabilities */
     public function capabilitiesForTheme(string $theme): array
     {
         $result = ['theme' => $theme !== '' ? $theme : null, 'supports' => ['menus' => false], 'menu_locations' => [], 'page_templates' => self::BUILTIN_PAGE_TEMPLATES, 'admin_navigation' => ['groups' => [], 'sections' => [], 'items' => []], 'resources' => []];

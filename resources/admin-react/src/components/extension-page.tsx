@@ -40,6 +40,7 @@ import {
   useWorkspaceChanged,
   useWorkspacePanelActive,
   useWorkspaceSaved,
+  useWorkspaceTitle,
 } from "./admin-workspace-context"
 import {
   ExtensionBoundary,
@@ -79,6 +80,7 @@ import {
 
 export type ExtensionPageDescriptor = {
   id: string
+  plugin: string
   label: string
   href: string
   module: string
@@ -169,6 +171,7 @@ const host = {
   useWorkspaceChanged,
   useWorkspacePanelActive,
   useWorkspaceSaved,
+  useWorkspaceTitle,
   // Lets a plugin screen (for example the Flex Commerce product editor) host panels of other plugins.
   usePanelSaves,
   // Plugin screens share their record with extensions inside them, like the platform screens.
@@ -213,6 +216,21 @@ const host = {
   },
 }
 
+/** Gives a plugin its own default translation namespace while retaining explicit namespace support. */
+function hostForPlugin(pluginId: string): typeof host {
+  const pluginI18n = {
+    ...host.i18n,
+    t: (
+      source: string,
+      namespaceOrVariables?: string | Record<string, string | number>,
+      variables?: Record<string, string | number>,
+    ) => typeof namespaceOrVariables === "string"
+      ? t(source, namespaceOrVariables, variables)
+      : t(source, pluginId, namespaceOrVariables),
+  }
+  return { ...host, i18n: pluginI18n as typeof host.i18n }
+}
+
 /** Optional plugin capability check used when a page-specific extension may have no fields. */
 export async function extensionHasPageContent(
   descriptor: { module: string },
@@ -233,6 +251,8 @@ export function ExtensionModule({
   embed?: boolean
   [key: string]: unknown
 }) {
+  // Plugin UIs inherit locale updates without subscribing in each component.
+  useAdminLocale()
   const [Component, setComponent] = React.useState<React.ComponentType<
     Record<string, unknown>
   > | null>(null)
@@ -251,7 +271,7 @@ export function ExtensionModule({
           | ((hostApi: typeof host) => React.ComponentType<Record<string, unknown>>)
           | undefined
         if (typeof factory !== "function") throw new Error("Разширението няма съвместим интерфейс.")
-        const component = factory(host)
+        const component = factory(hostForPlugin(descriptor.plugin))
         if (alive) setComponent(() => component)
       })
       .catch((error) => {
@@ -294,7 +314,7 @@ export function ExtensionPage({
   onNavigate: (label: string) => void
 }) {
   return (
-    <AdminShell {...shell} title={t(descriptor.label)} activeItem={descriptor.href}>
+    <AdminShell {...shell} title={t(descriptor.label, descriptor.plugin)} activeItem={descriptor.href}>
       <ExtensionModule descriptor={descriptor} path={path} navigate={navigate} />
     </AdminShell>
   )
@@ -320,7 +340,7 @@ export function ExtensionPanels({
       {panels.map((panel) => (
         <CollapsibleSection
           key={panel.id}
-          title={t(panel.label)}
+          title={t(panel.label, panel.plugin)}
           icon={panelIcon(panel.icon)}
           defaultOpen={panel.default_open}
           storageKey={`panel:${panel.point}:${panel.id}`}

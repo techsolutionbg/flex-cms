@@ -402,7 +402,7 @@ export function PageForm({
                 type="button"
                 onClick={() => void action.onSelect(page, pageListExtensions.helpers)}
               >
-                {t(action.label)}
+                {t(action.label, action.namespace)}
               </button>
             ))}
             {themeContentAvailable === true && (

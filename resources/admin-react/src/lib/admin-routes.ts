@@ -8,6 +8,12 @@ export function adminUrl(path = "/") {
   return `${adminBasePath}${route === "/" ? "" : route}` || "/"
 }
 
+export function adminPluginPath(pluginId: string) {
+  // Plugin IDs can be namespaced (for example `flex/composer`). Encode each
+  // segment separately so web servers never receive a `%2F` path separator.
+  return `/plugins/${pluginId.split("/").map(encodeURIComponent).join("/")}`
+}
+
 export function adminRoute(pathname = window.location.pathname) {
   if (!adminBasePath) return pathname || "/"
   if (pathname === adminBasePath) return "/"

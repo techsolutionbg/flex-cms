@@ -1,6 +1,6 @@
 // Runtime of admin extension points: named collapsible sections, tables and screens accept content from plugins.
 // It does not import the components it extends, so CollapsibleSection and DataTable can use it without cycles.
-import { t } from "@/lib/admin-i18n"
+import { t, useAdminLocale } from "@/lib/admin-i18n"
 import * as React from "react"
 import {
   FileText,
@@ -40,6 +40,21 @@ let extensionHost: unknown = null
 /** The host object (React, UI components, helpers) every extension factory receives. */
 export function setExtensionHost(host: unknown): void {
   extensionHost = host
+}
+
+function hostForPlugin(pluginId: string): unknown {
+  if (!extensionHost || typeof extensionHost !== "object") return extensionHost
+  const host = extensionHost as { i18n?: Record<string, unknown> }
+  if (!host.i18n || typeof host.i18n !== "object") return extensionHost
+  const i18n = host.i18n as { t?: unknown }
+  const pluginI18n = {
+    ...i18n,
+    t: (source: string, namespaceOrVariables?: string | Record<string, string | number>, variables?: Record<string, string | number>) =>
+      typeof namespaceOrVariables === "string"
+        ? t(source, namespaceOrVariables, variables)
+        : t(source, pluginId, namespaceOrVariables),
+  }
+  return { ...host, i18n: pluginI18n }
 }
 
 const modules = new Map<string, Promise<Record<string, unknown>>>()
@@ -177,7 +192,7 @@ export function loadExtensionExport(descriptor: ExtensionDescriptor): Promise<un
           const factory = module[descriptor.export]
           if (typeof factory !== "function")
             throw new Error("Разширението няма съвместим интерфейс.")
-          return factory(extensionHost, {
+          return factory(hostForPlugin(descriptor.plugin), {
             point: descriptor.point,
             slot: descriptor.slot,
             id: descriptor.id,
@@ -212,6 +227,8 @@ export function ExtensionComponent({
   saves?: PanelSaves
   props?: Record<string, unknown>
 }) {
+  // Plugin extension components re-render when the admin locale changes.
+  useAdminLocale()
   const scope = useExtensionScope()
   const workspace = React.useContext(AdminWorkspaceContext)
   const changed = useWorkspaceChanged()
@@ -304,6 +321,7 @@ export type ExtensionActionHelpers = {
 }
 export type ExtensionRowAction<T> = {
   label: string
+  namespace?: string
   onSelect: (row: T, helpers: ExtensionActionHelpers) => unknown
   visible?: (row: T) => boolean
   danger?: boolean
@@ -312,6 +330,7 @@ export type ExtensionRowAction<T> = {
 }
 export type ExtensionBulkAction<T> = {
   label: string
+  namespace?: string
   run: (rows: T[], helpers: ExtensionActionHelpers) => unknown
   danger?: boolean
 }
@@ -402,6 +421,7 @@ export function useTableExtensions<T>(point: string | undefined, rows: T[], rows
       ({ descriptor, value }): DataTableColumn<T> => ({
         key: "extension:" + descriptor.id,
         label: value.label ?? descriptor.label,
+        namespace: descriptor.plugin,
         render: (row: T) => value.render(row, data[descriptor.id]),
         sortable: Boolean(value.sortValue),
         sortValue: value.sortValue
@@ -409,8 +429,8 @@ export function useTableExtensions<T>(point: string | undefined, rows: T[], rows
           : undefined,
       }),
     ),
-    rowActions: actions.map(({ value }) => value),
-    bulkActions: bulk.map(({ value }) => value),
+    rowActions: actions.map(({ descriptor, value }) => ({ ...value, namespace: descriptor.plugin })),
+    bulkActions: bulk.map(({ descriptor, value }) => ({ ...value, namespace: descriptor.plugin })),
     toolbars,
     helpers,
     setFilter,

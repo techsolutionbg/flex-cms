@@ -119,7 +119,7 @@ final readonly class AdminPluginsDataController
         $id = (string) ($plugin['id'] ?? '');
         $currentVersion = (string) ($plugin['version'] ?? '');
         $available = $availableVersions[$id] ?? null;
-        $availableVersion = is_array($available) ? ($available['version'] ?? null) : null;
+        $availableVersion = is_array($available) ? $available['version'] : null;
         $plugin['available_version'] = $availableVersion;
         $plugin['available_release_notes'] = is_array($available) ? ($available['release_notes'] ?? null) : null;
         $plugin['update_available'] = is_string($availableVersion) && $currentVersion !== '' && version_compare($availableVersion, $currentVersion, '>');

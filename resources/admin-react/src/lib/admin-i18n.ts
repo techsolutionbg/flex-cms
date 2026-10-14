@@ -102,6 +102,8 @@ const catalogs = new Map<string, Record<AdminLocale, AdminCatalog>>([
 ])
 let currentLocale = "en"
 let translationOverrides: AdminTranslationOverrides = {}
+const pluginNamespaces = new Set<string>()
+const registeredPluginCatalogs = new Map<string, Record<AdminLocale, AdminCatalog>>()
 let storeRevision = 0
 const listeners = new Set<() => void>()
 
@@ -148,13 +150,11 @@ export function getPackagedAdminTranslationCatalog(locale: AdminLocale): Record<
 }
 
 export function getAdminTranslationCatalog(locale: AdminLocale): Record<string, AdminCatalog> {
-  const catalog = getPackagedAdminTranslationCatalog(locale)
-  for (const [namespace, entries] of Object.entries(
-    translationOverrides[locale] ?? translationOverrides[locale.split("-")[0]] ?? {},
-  )) {
-    catalog[namespace] = { ...(catalog[namespace] ?? {}), ...entries }
+  const packaged = getPackagedAdminTranslationCatalog(locale)
+  const overrides = translationOverrides[locale] ?? translationOverrides[locale.split("-")[0]] ?? {}
+  return {
+    core: { ...(packaged.core ?? {}), ...(overrides.core ?? {}) },
   }
-  return catalog
 }
 
 export function getAdminTranslationOverrides(): AdminTranslationOverrides {
@@ -181,8 +181,10 @@ export function t(
 ): string {
   const sourceKey = getSourceKey(source, namespace)
   const catalogByLocale = catalogs.get(namespace)
-  const localeOverride = translationOverrides[currentLocale]?.[namespace]
-    ?? translationOverrides[currentLocale.split("-")[0]]?.[namespace]
+  const localeOverride = namespace === "core"
+    ? translationOverrides[currentLocale]?.core
+      ?? translationOverrides[currentLocale.split("-")[0]]?.core
+    : undefined
   if (localeOverride && Object.hasOwn(localeOverride, sourceKey))
     return interpolate(localeOverride[sourceKey], variables)
   const localeCatalog = catalogByLocale?.[currentLocale]
@@ -192,13 +194,6 @@ export function t(
 
   const englishFallback = catalogByLocale?.en?.[sourceKey]
   if (englishFallback) return interpolate(englishFallback, variables)
-
-  for (const [registeredNamespace, translations] of catalogs) {
-    if (registeredNamespace === namespace) continue
-    const translated = translations[currentLocale]?.[sourceKey]
-      ?? translations[currentLocale.split("-")[0]]?.[sourceKey]
-    if (translated) return interpolate(translated, variables)
-  }
 
   return interpolate(sourceKey, variables)
 }
@@ -214,8 +209,61 @@ export function registerAdminTranslations(
   namespace: string,
   translations: Record<AdminLocale, AdminCatalog>,
 ): void {
+  if (!namespace || namespace === "core") return
   const current = catalogs.get(namespace) ?? {}
-  catalogs.set(namespace, { ...current, ...translations })
+  const registered = registeredPluginCatalogs.get(namespace) ?? {}
+  const mergedRegistered = { ...registered }
+  for (const [locale, catalog] of Object.entries(translations)) {
+    mergedRegistered[locale] = { ...(registered[locale] ?? {}), ...catalog }
+  }
+  registeredPluginCatalogs.set(namespace, mergedRegistered)
+  const mergedCurrent = { ...current, ...translations }
+  for (const [locale, catalog] of Object.entries(translations)) {
+    mergedCurrent[locale] = { ...(current[locale] ?? {}), ...catalog }
+  }
+  catalogs.set(namespace, mergedCurrent)
+  notify()
+}
+
+/** Replaces the plugin catalogs discovered by the platform from active plugin locale files. */
+export function setAdminPluginTranslations(
+  translations: Record<string, Record<AdminLocale, AdminCatalog>>,
+): void {
+  for (const namespace of pluginNamespaces) catalogs.delete(namespace)
+  pluginNamespaces.clear()
+  for (const [namespace, locales] of registeredPluginCatalogs) catalogs.set(namespace, locales)
+
+  if (translations && typeof translations === "object") {
+    for (const [namespace, locales] of Object.entries(translations)) {
+      if (!namespace || namespace === "core" || !locales || typeof locales !== "object") continue
+      const validLocales: Record<string, AdminCatalog> = {}
+      for (const [locale, catalog] of Object.entries(locales)) {
+        if (!/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale) || !catalog || typeof catalog !== "object") continue
+        const strings = Object.fromEntries(
+          Object.entries(catalog).filter(([source, value]) => source.length > 0 && typeof value === "string"),
+        ) as AdminCatalog
+        validLocales[locale] = strings
+        if (!localeLabels[locale]) {
+          let label: string | undefined
+          try {
+            label = typeof Intl !== "undefined" && "DisplayNames" in Intl
+              ? new Intl.DisplayNames([locale], { type: "language" }).of(locale)
+              : undefined
+          } catch {
+            label = undefined
+          }
+          registerAdminLocale(locale, label && label !== locale ? label : locale)
+        }
+      }
+      const registered = registeredPluginCatalogs.get(namespace) ?? {}
+      const combined = { ...registered, ...validLocales }
+      for (const [locale, catalog] of Object.entries(validLocales)) {
+        combined[locale] = { ...(registered[locale] ?? {}), ...catalog }
+      }
+      catalogs.set(namespace, combined)
+      pluginNamespaces.add(namespace)
+    }
+  }
   notify()
 }
 

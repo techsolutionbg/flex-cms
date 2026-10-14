@@ -1,6 +1,6 @@
-import { t } from "@/lib/admin-i18n"
+import { setAdminPluginTranslations, t } from "@/lib/admin-i18n"
 import { useEffect, useRef, useState } from "react"
-import { adminRoute, adminUrl } from "@/lib/admin-routes"
+import { adminPluginPath, adminRoute, adminUrl } from "@/lib/admin-routes"
 import { isWorkspacePath, readWorkspace, writeWorkspace } from "@/lib/workspace-storage"
 import type { PageRecord, PluginRecord, UserRecord } from "@/lib/admin-types"
 import { DashboardPage } from "@/pages/dashboard-page"
@@ -36,6 +36,7 @@ type Tab = {
   id: string
   path: string
   title: string
+  namespace?: string
   dirty: boolean
   loading?: boolean
   error?: string
@@ -211,6 +212,10 @@ export function AdminWorkspace({
       revision: 0,
       ...data,
     }
+    const extensionPage = extensionPages.find(
+      (page) => path === page.href || path.startsWith(page.href + "/"),
+    )
+    if (extensionPage) tab.namespace = extensionPage.plugin
     const needsData =
       !tab.page &&
       !tab.user &&
@@ -342,6 +347,7 @@ export function AdminWorkspace({
       })
       if (!response.ok) throw new Error("Интерфейсите на разширенията не можаха да бъдат заредени.")
       const body = await response.json()
+      setAdminPluginTranslations(body.translations ?? {})
       setExtensionPages(body.pages ?? [])
       setExtensions(body.extensions ?? [])
       setExtensionsError("")
@@ -365,7 +371,7 @@ export function AdminWorkspace({
         const page = extensionPages.find(
           (page) => tab.path === page.href || tab.path.startsWith(page.href + "/"),
         )
-        return page ? { ...tab, title: page.label } : tab
+        return page ? { ...tab, title: page.label, namespace: page.plugin } : tab
       }),
     )
   }, [extensionPages])
@@ -469,7 +475,7 @@ export function AdminWorkspace({
     const editUser = (user: UserRecord) =>
       open(`/users/${user.id}/edit`, { user, title: user.email })
     const plugin = (plugin: PluginRecord) =>
-      open(`/plugins/${encodeURIComponent(plugin.id)}`, { plugin, title: plugin.name })
+      open(adminPluginPath(plugin.id), { plugin, title: plugin.name })
     if (tab.loading || tab.error)
       return (
         <AdminShell {...common} title={tab.title}>
@@ -499,6 +505,12 @@ export function AdminWorkspace({
             {...common}
             onCreate={() => open("/pages/create")}
             onEdit={editPage}
+            onOpenBuilder={(page) =>
+              open(`/extension-pages/flex-page-builder-editor/${page.id}/edit`, {
+                title: page.title,
+                namespace: "flex/page-builder",
+              })
+            }
             onSettings={settings}
             onThemeContent={themeContent}
           />
@@ -531,7 +543,7 @@ export function AdminWorkspace({
           <PluginCatalogPage
             {...common}
             onBack={() => open("/plugins")}
-            onView={(id) => open(`/plugins/${encodeURIComponent(id)}`)}
+            onView={(id) => open(adminPluginPath(id))}
           />
         )
       case "/updates":
@@ -717,6 +729,7 @@ export function AdminWorkspace({
             canCloseAll: tabs.some((item) => item.path !== "/" || item.dirty),
             saved: () => patch(tab.id, { dirty: false }),
             changed: () => patch(tab.id, { dirty: true }),
+            rename: (title: string) => patch(tab.id, { title }),
             refresh: () => void refresh(tab.id),
             refreshing: Boolean(tab.loading),
             open: (path: string) => open(path),

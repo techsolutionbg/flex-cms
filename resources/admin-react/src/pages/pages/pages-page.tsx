@@ -36,6 +36,7 @@ export function PagesPage({
   onNavigate,
   onCreate,
   onEdit,
+  onOpenBuilder,
   onSettings,
   onThemeContent,
   loggingOut,
@@ -44,6 +45,7 @@ export function PagesPage({
   onNavigate: (label: string) => void
   onCreate: () => void
   onEdit: (page: PageRecord) => void
+  onOpenBuilder: (page: PageRecord) => void
   onSettings: (page: PageRecord) => void
   onThemeContent: (page: PageRecord) => void
   loggingOut: boolean
@@ -378,7 +380,26 @@ export function PagesPage({
             {"— ".repeat(page.depth ?? 0)}
             {page.title}
           </a>
-          <small>#{page.id}</small>
+          {page.settings?.content_builder === "flex/page-builder" && !page.deleted_at && (
+            <a
+              className="react-table-subtext react-page-builder-link"
+              href={adminUrl(`/extension-pages/flex-page-builder-editor/${page.id}/edit`)}
+              onClick={(event) => {
+                if (
+                  event.button !== 0 ||
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  event.shiftKey ||
+                  event.altKey
+                )
+                  return
+                event.preventDefault()
+                onOpenBuilder(page)
+              }}
+            >
+              {t("Open in Page Builder")}
+            </a>
+          )}
         </>
       ),
       sortValue: (page: PageRecord) => page.title,

@@ -67,7 +67,7 @@ final class HtmlCompilerTest extends TestCase
             ['id' => 'empty', 'type' => 'section', 'children' => []],
         ], static fn(int $id): string => '');
 
-        self::assertSame(2, substr_count($html, 'class="fpb-section"'));
+        self::assertSame(2, substr_count($html, '<section class="fpb-section fpb-section--boxed"'));
         self::assertStringContainsString('background:#abcdef', $html);
         self::assertStringContainsString('padding:12px', $html);
         self::assertStringContainsString('<h2>Вътре</h2>', $html);
@@ -97,7 +97,7 @@ final class HtmlCompilerTest extends TestCase
             ]],
         ], static fn(int $id): string => '');
 
-        self::assertStringContainsString('class="fpb-section fpb-is-hidden"', $html);
+        self::assertStringContainsString('class="fpb-section fpb-section--boxed fpb-is-hidden"', $html);
         self::assertStringContainsString('<h2>Скрита</h2>', $html);
         self::assertTrue($this->compiler->normalize([
             ['id' => 'band', 'type' => 'section', 'hidden' => true, 'children' => []],
@@ -214,7 +214,7 @@ final class HtmlCompilerTest extends TestCase
         ]);
 
         self::assertSame(1, substr_count($html, 'fpb-section--full'));
-        self::assertStringContainsString('class="fpb-section" data-fpb-id="band"', $html);
+        self::assertStringContainsString('class="fpb-section fpb-section--boxed" data-fpb-id="band"', $html);
         self::assertStringContainsString('class="fpb-section fpb-section--full" data-fpb-id="wide"', $html);
     }
 

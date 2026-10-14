@@ -1,5 +1,5 @@
 import { t } from "@/lib/admin-i18n"
-import { adminUrl } from "@/lib/admin-routes"
+import { adminPluginPath, adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
@@ -249,7 +249,7 @@ export function PluginsPage({
         <>
           <a
             className="react-page-link"
-            href={adminUrl(`/plugins/${encodeURIComponent(plugin.id)}`)}
+            href={adminUrl(adminPluginPath(plugin.id))}
             onClick={(event) => {
               if (
                 event.button !== 0 ||

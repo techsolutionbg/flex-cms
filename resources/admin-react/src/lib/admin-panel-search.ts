@@ -6,6 +6,7 @@ export type PanelSearchTarget = {
   group: string
   section?: string
   path: string
+  namespace?: string
   keywords?: string
   settingsTab?: string
 }

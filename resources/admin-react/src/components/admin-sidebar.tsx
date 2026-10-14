@@ -29,6 +29,7 @@ type SidebarItem = {
   label: string
   icon: typeof LayoutDashboard
   href: string
+  namespace?: string
   section?: string
   order?: number
 }
@@ -165,6 +166,7 @@ export function AdminSidebar({
             label: page.label,
             icon: extensionIcons[page.navigation?.icon ?? "puzzle"] ?? Puzzle,
             href: page.href,
+            namespace: page.plugin,
             section: page.navigation?.section,
             order: page.navigation?.order ?? 50,
           })
@@ -222,7 +224,7 @@ export function AdminSidebar({
           className={`sidebar-link-react${active ? " is-active" : ""}`}
           href={adminUrl(item.href)}
           aria-current={active ? "page" : undefined}
-          title={t(item.label)}
+          title={t(item.label, item.namespace)}
           onClick={(event) => {
             if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
             event.preventDefault()
@@ -230,7 +232,7 @@ export function AdminSidebar({
           }}
         >
           <Icon className="sidebar-icon-react" aria-hidden="true" />
-          <span className="sidebar-label-react">{t(item.label)}</span>
+          <span className="sidebar-label-react">{t(item.label, item.namespace)}</span>
         </a>
       </li>
     )

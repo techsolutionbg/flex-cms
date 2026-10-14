@@ -26,20 +26,4 @@ Super administrators can open **Profile settings → Appearance → Translation 
 
 ## Themes and plugins
 
-Theme and plugin admin modules receive the platform's `i18n` API through the extension host. Register their admin-only strings by namespace and use `t` when rendering:
-
-```js
-export function createPage(host) {
-  host.i18n.register("example-plugin", {
-    en: { "Campaigns": "Campaigns" },
-    bg: { "Campaigns": "Кампании" },
-  })
-
-  return function CampaignsPage() {
-    const locale = host.i18n.useLocale()
-    return <h1>{host.i18n.t("Campaigns", "example-plugin")}</h1>
-  }
-}
-```
-
-To make another language selectable, register its BCP 47 code and native language name with `host.i18n.registerLocale("de", "Deutsch")`, and add that locale's strings to the module catalog. Use these APIs only for admin UI; do not apply the admin locale to public-facing theme output.
+Active plugins can add admin translations as `<plugin-root>/locales/<locale>.json`. The platform discovers these catalogs automatically, registers each under that plugin's namespace, and adds discovered locales to the admin language picker. Plugin modules call `host.i18n.t("Campaigns")`; the extension host defaults to the module's plugin namespace. Explicit namespace calls and runtime catalog registration remain supported for compatibility. See [plugin admin translations](plugin-admin-translations.md) for the file format and fallback behavior. Admin locale catalogs must not be used for public-facing theme output.

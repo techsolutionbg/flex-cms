@@ -28,7 +28,20 @@ final readonly class AdminTranslationOverrides
             return [];
         }
 
-        return is_array($decoded) ? $decoded : [];
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        // Platform-managed overrides are intentionally limited to the core catalog.
+        // Plugin translations belong to each plugin's packaged locale files.
+        $coreOverrides = [];
+        foreach ($decoded as $locale => $catalogs) {
+            if (is_string($locale) && is_array($catalogs) && isset($catalogs['core']) && is_array($catalogs['core'])) {
+                $coreOverrides[$locale] = ['core' => $catalogs['core']];
+            }
+        }
+
+        return $coreOverrides;
     }
 
     /** @param array<string, mixed> $input
@@ -47,7 +60,7 @@ final readonly class AdminTranslationOverrides
 
         $entries = 0;
         foreach ($catalog as $namespace => $translations) {
-            if (!is_string($namespace) || $namespace === '' || strlen($namespace) > 200 || !is_array($translations)) {
+            if ($namespace !== 'core' || !is_array($translations)) {
                 throw new \InvalidArgumentException('Invalid translation namespace.', 422);
             }
             foreach ($translations as $source => $translation) {
