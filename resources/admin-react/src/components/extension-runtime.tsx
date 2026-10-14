@@ -305,6 +305,8 @@ export type ExtensionRowAction<T> = {
   onSelect: (row: T, helpers: ExtensionActionHelpers) => unknown
   visible?: (row: T) => boolean
   danger?: boolean
+  /** Show this editor action only when the page declares this plugin as its content editor. */
+  contentBuilder?: string
 }
 export type ExtensionBulkAction<T> = {
   label: string

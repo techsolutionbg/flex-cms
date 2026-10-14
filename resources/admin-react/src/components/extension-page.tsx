@@ -196,6 +196,18 @@ const host = {
     Hint,
   },
 }
+
+/** Optional plugin capability check used when a page-specific extension may have no fields. */
+export async function extensionHasPageContent(
+  descriptor: { module: string },
+  context: unknown,
+): Promise<boolean> {
+  const module = await loadModule(descriptor.module)
+  const check = module.hasPageContent
+  if (typeof check !== "function") return true
+  return Boolean(await (check as (host: typeof host, context: unknown) => unknown)(host, context))
+}
+
 export function ExtensionModule({
   descriptor,
   embed = false,
@@ -275,10 +287,12 @@ export function ExtensionPanels({
   location,
   context,
   saves,
+  hint,
 }: {
   location: string
   context?: unknown
   saves?: PanelSaves
+  hint?: string
 }) {
   const panels = useExtensions(location, "screen.section")
   return (
@@ -292,6 +306,7 @@ export function ExtensionPanels({
           storageKey={`panel:${panel.point}:${panel.id}`}
           className={`extension-panel extension-panel-${panel.id}`}
         >
+          {hint && <Hint>{hint}</Hint>}
           <div id={`panel-${panel.id}`}>
             <ExtensionComponent descriptor={panel} context={context} saves={saves} />
           </div>

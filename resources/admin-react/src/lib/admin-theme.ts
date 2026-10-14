@@ -1,4 +1,17 @@
-export type AdminThemeMode = "system" | "light" | "dark"
+export type AdminThemeMode =
+  | "system"
+  | "light"
+  | "light-ocean"
+  | "light-sand"
+  | "light-lavender"
+  | "light-rose"
+  | "light-sky"
+  | "dark"
+  | "dark-midnight"
+  | "dark-graphite"
+  | "dark-ocean"
+  | "dark-plum"
+  | "dark-ember"
 
 // The theme applied last, used for the first paint before the session is restored.
 const storageKey = "flex-admin-theme"
@@ -9,7 +22,21 @@ let currentUserId = 0
 let siteDefault: AdminThemeMode = "system"
 
 function isTheme(value: unknown): value is AdminThemeMode {
-  return value === "system" || value === "light" || value === "dark"
+  return (
+    value === "system" ||
+    value === "light" ||
+    value === "light-ocean" ||
+    value === "light-sand" ||
+    value === "light-lavender" ||
+    value === "light-rose" ||
+    value === "light-sky" ||
+    value === "dark" ||
+    value === "dark-midnight" ||
+    value === "dark-graphite" ||
+    value === "dark-ocean" ||
+    value === "dark-plum" ||
+    value === "dark-ember"
+  )
 }
 
 /** Identifies the signed-in user, so their personal theme is used on this device. */
@@ -104,9 +131,11 @@ export function subscribeAdminColorScheme(onChange: () => void): () => void {
 
 export function setAdminTheme(theme: AdminThemeMode): void {
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches === true
+  const darkVariant = theme.startsWith("dark")
   document.documentElement.dataset.adminThemeMode = theme
+  document.documentElement.dataset.adminThemeVariant = theme
   document.documentElement.dataset.adminTheme =
-    theme === "system" ? (prefersDark ? "dark" : "light") : theme
+    theme === "system" ? (prefersDark ? "dark" : "light") : darkVariant ? "dark" : "light"
   try {
     window.localStorage.setItem(storageKey, theme)
   } catch {

@@ -21,8 +21,18 @@ import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 const themeLabels: Record<AdminThemeMode, string> = {
   system: "Системна",
-  light: "Светла",
-  dark: "Тъмна",
+  light: "Светла — класическа",
+  "light-ocean": "Светла — океан",
+  "light-sand": "Светла — пясък",
+  "light-lavender": "Светла — лавандула",
+  "light-rose": "Светла — роза",
+  "light-sky": "Светла — небе",
+  dark: "Тъмна — гора",
+  "dark-midnight": "Тъмна — полунощ",
+  "dark-graphite": "Тъмна — графит",
+  "dark-ocean": "Тъмна — океан",
+  "dark-plum": "Тъмна — слива",
+  "dark-ember": "Тъмна — жар",
 }
 
 export function ProfilePage({

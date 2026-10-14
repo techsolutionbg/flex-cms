@@ -18,6 +18,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 final readonly class PageService
 {
     private const STATUSES = ['draft', 'published'];
+    public const BUILTIN_CONTENT_EDITOR = 'flex-cms/native';
 
     public function __construct(
         private PageRepository $pages,
@@ -33,6 +34,9 @@ final readonly class PageService
     public function create(array $attributes, int $authorId): Page
     {
         $data = $this->validate($attributes);
+        $data['settings'] = [
+            'content_builder' => $this->contentBuilderId($attributes['content_builder'] ?? self::BUILTIN_CONTENT_EDITOR),
+        ];
         $data['author_id'] = $authorId;
         $data['published_at'] = $data['status'] === 'published' ? new \DateTimeImmutable('now', new \DateTimeZone('UTC')) : null;
 

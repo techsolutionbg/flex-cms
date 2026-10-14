@@ -13,6 +13,7 @@ import "quill/dist/quill.snow.css"
 type RichTextEditorProps = {
   value: string
   onChange: (value: string) => void
+  excludeEmbeddableIds?: string[]
 }
 
 const Font = Quill.import("formats/font") as { whitelist?: string[] }
@@ -40,7 +41,11 @@ const toolbar = [
   ["clean"],
 ]
 
-export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  excludeEmbeddableIds = [],
+}: RichTextEditorProps) {
   const markChanged = useWorkspaceChanged()
   const hostRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<Quill | null>(null)
@@ -53,6 +58,10 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const [embed, setEmbed] = useState<ExtensionPageDescriptor | null>(null)
   const [embeddedItems, setEmbeddedItems] = useState<{ index: number; text: string }[]>([])
   const replacement = useRef<{ index: number; text: string } | null>(null)
+  const excludedEmbeddableIds = new Set(excludeEmbeddableIds)
+  const embeddablePages = (workspace?.extensionPages ?? []).filter(
+    (page) => page.embeddable && !excludedEmbeddableIds.has(page.id),
+  )
 
   function refreshEmbeddedItems(editor: Quill) {
     const text = editor.getText()
@@ -103,9 +112,20 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       onChangeRef.current(html)
     }
     editor.on("text-change", handleChange)
+    const handleSelectionChange = (range: { index: number } | null) => {
+      if (range) insertion.current = range.index
+    }
+    editor.on("selection-change", handleSelectionChange)
 
     return () => {
       editor.off("text-change", handleChange)
+      editor.off("selection-change", handleSelectionChange)
+      editor.disable()
+      const toolbarElement = (
+        editor.getModule("toolbar") as { container?: HTMLElement } | undefined
+      )?.container
+      toolbarElement?.remove()
+      hostRef.current?.replaceChildren()
       editorRef.current = null
     }
   }, [panelActive])
@@ -119,21 +139,17 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
 
   return (
     <div className="rich-text-field">
-      {!!workspace?.extensionPages?.some((page) => page.embeddable) && (
+      {embeddablePages.length > 0 && (
         <div className="rich-text-insert-toolbar">
-          <span>Вмъкване</span>
-          {(workspace.extensionPages ?? [])
-            .filter((page) => page.embeddable)
-            .map((page) => (
+          {embeddablePages.map((page) => (
               <Button
                 key={page.id}
                 type="button"
                 variant="secondary"
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   replacement.current = null
-                  insertion.current =
-                    editorRef.current?.getSelection()?.index ??
-                    (editorRef.current?.getLength() ?? 1) - 1
+                  insertion.current = editorRef.current?.getSelection()?.index ?? insertion.current
                   setEmbed(page)
                 }}
               >
@@ -172,15 +188,13 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       <div className="rich-text-editor-react">
         <div ref={hostRef} />
       </div>
-      {embeddedItems.length > 0 && workspace?.extensionPages?.some((page) => page.embeddable) && (
+      {embeddedItems.length > 0 && embeddablePages.length > 0 && (
         <div className="rich-text-embedded-items" aria-label="Вмъкнати елементи">
           <span>Вмъкнати елементи</span>
           {embeddedItems.map((item, index) => (
             <div className="rich-text-embedded-item" key={`${item.index}-${item.text}`}>
               <code>{item.text}</code>
-              {(workspace.extensionPages ?? [])
-                .filter((page) => page.embeddable)
-                .map((page) => (
+              {embeddablePages.map((page) => (
                   <Button
                     key={page.id}
                     type="button"
@@ -191,7 +205,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
                     }}
                   >
                     Редактирай
-                    {(workspace.extensionPages ?? []).filter((page) => page.embeddable).length > 1
+                    {embeddablePages.length > 1
                       ? `: ${page.label}`
                       : ""}
                   </Button>

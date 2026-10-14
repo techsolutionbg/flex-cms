@@ -7,7 +7,13 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
   // Row actions that plugins add to this table (slot table.row-action), after the screen's own options.
   const extension = useContext(RowExtensionActionsContext)
   const actions = (extension?.actions ?? []).filter(
-    (action) => !action.visible || action.visible(extension!.row),
+    (action) => {
+      if (action.contentBuilder) {
+        const row = extension!.row as { settings?: { content_builder?: string | null } }
+        if (row.settings?.content_builder !== action.contentBuilder) return false
+      }
+      return !action.visible || action.visible(extension!.row)
+    },
   )
   if (Children.count(children) === 0 && actions.length === 0) return null
   return (

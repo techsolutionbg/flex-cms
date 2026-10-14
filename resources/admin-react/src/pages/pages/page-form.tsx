@@ -13,9 +13,73 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { ImageField } from "@/components/image-field"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
-import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { Hint, usePageHelp } from "@/components/page-help"
+import {
+  ExtensionPanels,
+  ExtensionScope,
+  extensionHasPageContent,
+  usePanelSaves,
+} from "@/components/extension-page"
 import { useExtensions, useTableExtensions } from "@/components/extension-runtime"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
+
+const BUILTIN_CONTENT_EDITOR = "flex-cms/native"
+
+function PageFormHelp({
+  pageTitle,
+  isEditing,
+  pluginContentEditor,
+  contentBuilderName,
+  themeContentAvailable,
+}: {
+  pageTitle: string
+  isEditing: boolean
+  pluginContentEditor: boolean
+  contentBuilderName: string | null
+  themeContentAvailable: boolean
+}) {
+  usePageHelp(
+    useMemo(
+      () => ({
+        title: isEditing ? `Редактиране на страницата „${pageTitle}“` : "Създаване на страница",
+        content: (
+          <>
+            <p>Оттук управлявате съдържанието, адреса и публикуването на страницата.</p>
+            <ul>
+              <li>
+                <strong>Основна информация:</strong> задайте заглавие, URL адрес и родителска
+                страница. Заглавието се използва и за навигационната структура на сайта.
+              </li>
+              <li>
+                <strong>Съдържание:</strong>{" "}
+                {pluginContentEditor
+                  ? `съдържанието се редактира с плъгина ${contentBuilderName}. Отворете го от съответния бутон горе. С „Премахни връзката“ можете да се върнете към вградения редактор.`
+                  : "редактирайте текста и оформлението на страницата. Ако е наличен бутон за контактни форми, с него можете да вмъкнете активна форма."}
+              </li>
+              {themeContentAvailable && (
+                <li>
+                  <strong>Съдържание от темата:</strong> отворете полетата, предоставени от
+                  активната тема за тази страница.
+                </li>
+              )}
+              <li>
+                <strong>Основно изображение и допълнителни полета:</strong> добавете водещо
+                изображение и попълнете полетата, предоставени от активните разширения.
+              </li>
+              <li>
+                <strong>Публикуване:</strong> изберете „Чернова“, за да продължите редакцията
+                по-късно, или „Публикувана“, за да направите страницата достъпна на сайта.
+              </li>
+            </ul>
+            <p>Натиснете „Запази страницата“, за да приложите промените.</p>
+          </>
+        ),
+      }),
+      [pageTitle, isEditing, pluginContentEditor, contentBuilderName, themeContentAvailable],
+    ),
+  )
+  return null
+}
 
 type PageFormProps = {
   page: PageRecord | null
@@ -41,6 +105,7 @@ export function PageForm({
   const [title, setTitle] = useState(page?.title ?? "")
   const [slug, setSlug] = useState(page?.slug ?? "")
   const [content, setContent] = useState(page?.content ?? "")
+  const [contentEdited, setContentEdited] = useState(false)
   const [status, setStatus] = useState(page?.status ?? "draft")
   const [parentId, setParentId] = useState<number | null>(page?.parent_id ?? null)
   const [parents, setParents] = useState<PageRecord[]>([])
@@ -52,6 +117,7 @@ export function PageForm({
   const [saving, setSaving] = useState(false)
   const [detachDialogOpen, setDetachDialogOpen] = useState(false)
   const [detachingBuilder, setDetachingBuilder] = useState(false)
+  const [themeContentAvailable, setThemeContentAvailable] = useState<boolean | null>(null)
   const [error, setError] = useState("")
   const [featuredId, setFeaturedId] = useState<number | null>(page?.featured_media_id ?? null)
   const changed = useWorkspaceChanged()
@@ -92,9 +158,42 @@ export function PageForm({
   )
   const pageId = page?.id ?? null
   const contentBuilder = page?.settings?.content_builder ?? null
+  const pluginContentEditor = Boolean(contentBuilder && contentBuilder !== BUILTIN_CONTENT_EDITOR)
   const contentBuilderName = contentBuilder === "flex/page-builder"
     ? "Flex Page Builder"
-    : contentBuilder
+    : contentBuilder === "flex/composer"
+      ? "Flex Composer"
+      : pluginContentEditor
+        ? contentBuilder
+        : null
+
+  useEffect(() => {
+    let alive = true
+    if (!page || themeContentPanels.length === 0) {
+      setThemeContentAvailable(false)
+      return () => {
+        alive = false
+      }
+    }
+    setThemeContentAvailable(null)
+    const context = {
+      type: "page",
+      id: page.id,
+      page,
+      settings: { template: page.settings?.template ?? "default" },
+    }
+    void Promise.all(themeContentPanels.map((panel) => extensionHasPageContent(panel, context)))
+      .then((availability) => {
+        if (alive) setThemeContentAvailable(availability.some(Boolean))
+      })
+      .catch(() => {
+        // Keep the entry point available if a plugin's optional capability check fails.
+        if (alive) setThemeContentAvailable(true)
+      })
+    return () => {
+      alive = false
+    }
+  }, [page?.id, page?.slug, page?.settings?.template, themeContentPanels])
 
   // Sync from the server when opening a different page — never reset the create form while typing.
   useEffect(() => {
@@ -107,6 +206,7 @@ export function PageForm({
     setTitle(page!.title)
     setSlug(page!.slug)
     setContent(page!.content ?? "")
+    setContentEdited(false)
     setFeaturedId(page!.featured_media_id ?? null)
     setStatus(page!.status ?? "draft")
     setParentId(page!.parent_id ?? null)
@@ -171,6 +271,9 @@ export function PageForm({
           status,
           parent_id: parentId,
           plugin_fields: pluginFields,
+          content_builder: contentEdited
+            ? BUILTIN_CONTENT_EDITOR
+            : (page?.settings?.content_builder ?? BUILTIN_CONTENT_EDITOR),
         }),
       })
       const body = (await response.json().catch(() => ({}))) as {
@@ -196,6 +299,7 @@ export function PageForm({
               : (body.error?.message ?? "Страницата не можа да бъде запазена.")),
         )
       }
+      setContentEdited(false)
       let panelFailure = ""
       try {
         await saves.run({ id: body.page?.id ?? page?.id ?? null })
@@ -237,7 +341,7 @@ export function PageForm({
           "Content-Type": "application/json",
           "X-CSRF-Token": csrf.csrf_token ?? "",
         },
-        body: JSON.stringify({ ...page.settings, content_builder: null }),
+        body: JSON.stringify({ ...page.settings, content_builder: BUILTIN_CONTENT_EDITOR }),
       })
       const body = (await response.json().catch(() => ({}))) as {
         page?: PageRecord
@@ -269,6 +373,13 @@ export function PageForm({
       activeItem="Страници"
       loggingOut={loggingOut}
     >
+      <PageFormHelp
+        pageTitle={page?.title ?? ""}
+        isEditing={Boolean(page)}
+        pluginContentEditor={pluginContentEditor}
+        contentBuilderName={contentBuilderName}
+        themeContentAvailable={themeContentAvailable}
+      />
       <div className="react-page-heading">
         <div>
           <h1>{page ? "Редактиране на страница" : "Създаване на страница"}</h1>
@@ -292,7 +403,7 @@ export function PageForm({
                 {action.label}
               </button>
             ))}
-            {themeContentPanels.length > 0 && (
+            {themeContentAvailable === true && (
               <button type="button" onClick={() => onThemeContent(page)}>
                 Съдържание от темата
               </button>
@@ -309,11 +420,11 @@ export function PageForm({
           {error}
         </div>
       )}
-      {contentBuilder && (
+      {pluginContentEditor && (
         <div className="page-content-builder-notice" role="status">
           <div>
             <strong>Редактор на съдържанието: {contentBuilderName}</strong>
-            <span>Секцията „Съдържание“ е скрита, докато този builder е свързан със страницата.</span>
+            <span>Секцията „Съдържание“ е скрита, защото редакторът на страницата е плъгинът „{contentBuilderName}“.</span>
           </div>
           <button type="button" onClick={() => setDetachDialogOpen(true)}>
             Премахни връзката
@@ -321,6 +432,27 @@ export function PageForm({
         </div>
       )}
       <form className="react-page-form" onSubmit={save}>
+          {!pluginContentEditor && <CollapsibleSection
+            title="Съдържание"
+            icon={FileText}
+            className="content-editor-section"
+          >
+            <div className="react-form-field">
+              <Hint>
+                Тук редактирате основното съдържание, което се показва в страницата. Можете да
+                добавяте текст, изображения и активни контактни форми.
+              </Hint>
+              <RichTextEditor
+                value={content}
+                excludeEmbeddableIds={["flex-page-builder-chrome"]}
+                onChange={(value) => {
+                  setContent(value)
+                  setContentEdited(true)
+                  changed?.()
+                }}
+              />
+            </div>
+          </CollapsibleSection>}
           <CollapsibleSection
             title="Основна информация"
             icon={FolderTree}
@@ -328,6 +460,10 @@ export function PageForm({
             className="page-editor-basic-panel page-editor-basic-panel--collapsible"
           >
             <div className="page-editor-basic-panel-body">
+              <Hint>
+                Заглавието и URL адресът помагат на посетителите да разпознават страницата и да я
+                отварят на правилния адрес.
+              </Hint>
               <div className="react-form-grid">
                 <label className="react-form-field">
                   <span>Заглавие *</span>
@@ -345,6 +481,7 @@ export function PageForm({
                     }}
                     required
                   />
+                  <small>Изберете ясно заглавие — то се вижда като име на страницата.</small>
                 </label>
                 <label className="react-form-field">
                   <span>URL адрес (slug) *</span>
@@ -361,6 +498,7 @@ export function PageForm({
                     }}
                     required
                   />
+                  <small>Последната част от адреса трябва да е кратка и уникална.</small>
                 </label>
                 <div className="react-form-field">
                   <span>Родителска страница</span>
@@ -401,6 +539,7 @@ export function PageForm({
                       </DropdownOption>
                     ))}
                   </DropdownMenu>
+                  <small>Родителската страница определя мястото ѝ в йерархията и адреса ѝ.</small>
                 </div>
               </div>
             </div>
@@ -426,24 +565,12 @@ export function PageForm({
               }}
             />
           </CollapsibleSection>
-          {!contentBuilder && <CollapsibleSection
-            extensionPoint="page.editor.content"
-            title="Съдържание"
-            icon={FileText}
-            className="content-editor-section"
-          >
-            <div className="react-form-field">
-              <span>Съдържание</span>
-              <RichTextEditor
-                value={content}
-                onChange={(value) => {
-                  setContent(value)
-                  changed?.()
-                }}
-              />
-            </div>
-          </CollapsibleSection>}
-          <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
+          <ExtensionPanels
+            location="page.editor"
+            context={panelContext}
+            saves={saves}
+            hint="Тази секция е добавена от разширение и съдържа настройки за страницата."
+          />
           {Object.entries(groupedFields).map(([plugin, fields]) => (
             <CollapsibleSection
               key={plugin}
@@ -453,35 +580,39 @@ export function PageForm({
               <p className="react-plugin-provider">
                 Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
               </p>
+              <Hint>Тези полета се управляват от разширението и допълват настройките на страницата.</Hint>
               <div className="react-plugin-fields-inner">
                 {fields.map((field) => {
                   const current = pluginFields[field.plugin]?.[field.id] ?? field.default
-                  return field.type === "checkbox" ? (
-                    <CheckboxField
-                      key={`${field.plugin}.${field.id}`}
-                      checked={Boolean(current)}
-                      label={field.label}
-                      description={field.hint}
-                      onChange={(event) => setPluginField(field, event.target.checked)}
-                    />
-                  ) : (
-                    <label key={`${field.plugin}.${field.id}`}>
-                      {field.label}
-                      {field.type === "textarea" ? (
-                        <Textarea
-                          value={String(current ?? "")}
-                          maxLength={field.max_length ?? 10000}
-                          onChange={(event) => setPluginField(field, event.target.value)}
+                  return (
+                    <div className="page-plugin-field" key={`${field.plugin}.${field.id}`}>
+                      {field.type === "checkbox" ? (
+                        <CheckboxField
+                          checked={Boolean(current)}
+                          label={field.label}
+                          description={field.hint}
+                          onChange={(event) => setPluginField(field, event.target.checked)}
                         />
                       ) : (
-                        <input
-                          value={String(current ?? "")}
-                          maxLength={field.max_length}
-                          onChange={(event) => setPluginField(field, event.target.value)}
-                        />
+                        <label className="react-form-field">
+                          {field.label}
+                          {field.type === "textarea" ? (
+                            <Textarea
+                              value={String(current ?? "")}
+                              maxLength={field.max_length ?? 10000}
+                              onChange={(event) => setPluginField(field, event.target.value)}
+                            />
+                          ) : (
+                            <input
+                              value={String(current ?? "")}
+                              maxLength={field.max_length}
+                              onChange={(event) => setPluginField(field, event.target.value)}
+                            />
+                          )}
+                          {field.hint && <small>{field.hint}</small>}
+                        </label>
                       )}
-                      {field.hint && <small>{field.hint}</small>}
-                    </label>
+                    </div>
                   )
                 })}
               </div>
@@ -492,6 +623,10 @@ export function PageForm({
             title="Публикуване"
             icon={Settings2}
           >
+            <Hint>
+              Черновите страници не са видими за посетителите. Публикувайте страницата, когато е
+              готова.
+            </Hint>
             <label>
               Статус
               <DropdownMenu
@@ -543,8 +678,8 @@ export function PageForm({
         </form>
       <ConfirmDialog
         open={detachDialogOpen}
-        title="Премахване на връзката с builder"
-        message={`Страницата ще спре да се управлява от ${contentBuilderName ?? "текущия builder"}. HTML съдържанието ще остане запазено, секцията „Съдържание“ ще стане достъпна, а документът на builder-а няма да бъде изтрит.`}
+        title="Премахване на връзката с редактора"
+        message={`Страницата ще спре да използва плъгина „${contentBuilderName ?? "текущия редактор"}“. HTML съдържанието ще остане запазено, секцията „Съдържание“ ще стане достъпна, а документът на плъгина няма да бъде изтрит.`}
         confirmLabel="Премахни връзката"
         busy={detachingBuilder}
         onConfirm={() => void detachContentBuilder()}
