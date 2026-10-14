@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useMemo, useState } from "react"
 import { Save, Settings } from "lucide-react"
@@ -135,7 +136,7 @@ export function GeneralSettingsForm() {
       <form onSubmit={(event) => void save(event)}>
         <CollapsibleSection
           extensionPoint="settings.general"
-          title="Общи"
+          title={t("General")}
           icon={Settings}
           storageKey="settings:general"
         >
@@ -144,16 +145,17 @@ export function GeneralSettingsForm() {
               {failure}
               {!values && (
                 <LoadingButton onClick={() => setRevision((value) => value + 1)}>
-                  Опитай отново
+
+                  {t("Try again")}
                 </LoadingButton>
               )}
             </p>
           )}
-          {!values && !failure && <p role="status">Зареждане…</p>}
+          {!values && !failure && <p role="status">{t("Loading…")}</p>}
           {values && (
             <div className="react-form-grid">
               <label className="react-form-field settings-field-wide">
-                <span>Име на сайта</span>
+                <span>{t("Site name")}</span>
                 <input
                   value={values.name}
                   required
@@ -161,10 +163,10 @@ export function GeneralSettingsForm() {
                   disabled={saving}
                   onChange={(event) => update("name", event.target.value)}
                 />
-                <small>Публично име на сайта. До 150 символа.</small>
+                <small>{t("Public name of the site. Up to 150 characters.")}</small>
               </label>
               <label className="react-form-field settings-field-wide">
-                <span>Кратко описание</span>
+                <span>{t("Short description")}</span>
                 <Textarea
                   value={values.description}
                   maxLength={500}
@@ -172,13 +174,13 @@ export function GeneralSettingsForm() {
                   disabled={saving}
                   onChange={(event) => update("description", event.target.value)}
                 />
-                <small>По желание. До 500 символа.</small>
+                <small>{t("Optional. Up to 500 characters.")}</small>
               </label>
               {selects.map(({ key, label, choices, hint }) => (
                 <div className="react-form-field" key={key}>
-                  <span>{label}</span>
+                  <span>{t(label)}</span>
                   <DropdownMenu
-                    ariaLabel={label}
+                    ariaLabel={t(label)}
                     triggerClassName="react-form-select"
                     trigger={
                       <>
@@ -194,11 +196,11 @@ export function GeneralSettingsForm() {
                         disabled={saving}
                         onClick={() => update(key, value)}
                       >
-                        {label}
+                        {t(label)}
                       </DropdownOption>
                     ))}
                   </DropdownMenu>
-                  <small>{hint}</small>
+                  <small>{t(hint)}</small>
                 </div>
               ))}
             </div>
@@ -213,7 +215,8 @@ export function GeneralSettingsForm() {
               icon={<Save aria-hidden="true" />}
               className="settings-save-button"
             >
-              Запази настройките
+
+              {t("Save settings")}
             </LoadingButton>
           </div>
         )}

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useMemo, useState } from "react"
 import { CodeEditor } from "./code-editor"
 import { FileCode2, Folder } from "lucide-react"
@@ -65,7 +66,7 @@ function SourceTree({
                   onSelect={onSelect}
                 />
               ) : (
-                <small className="react-field-hint">Няма файлове за преглед.</small>
+                <small className="react-field-hint">{t("No files to preview.")}</small>
               )}
             </CollapsibleSection>
           </li>
@@ -172,19 +173,19 @@ export function PluginSourceViewer({ pluginId }: { pluginId: string }) {
   return (
     <div className="plugin-source-viewer">
       <p className="react-field-hint">
-        Преглед на изходните файлове без редактиране. Скрити файлове, зависимости и бинарни файлове
-        не се показват.
+
+        {t("Preview source files without editing. Hidden files, dependencies, and binary files are not shown.")}
       </p>
       <div className="plugin-source-layout">
         {(files.length > 0 || directories.length > 0) && (
-          <nav className="plugin-source-files" aria-label="Файлове на разширението">
-            <h3>Файлове</h3>
+          <nav className="plugin-source-files" aria-label={t("Extension files")}>
+            <h3>{t("Files")}</h3>
             <SourceTree node={tree} pluginId={pluginId} selected={path} onSelect={setPath} />
           </nav>
         )}
         <div className="plugin-source-content" aria-busy={loading}>
           {path && <p className="plugin-source-path">{path}</p>}
-          {loading && <p role="status">Зареждане на кода…</p>}
+          {loading && <p role="status">{t("Loading code…")}</p>}
           {error && (
             <p className="react-form-error" role="alert">
               {error}
@@ -194,10 +195,10 @@ export function PluginSourceViewer({ pluginId }: { pluginId: string }) {
             <CodeEditor
               value={content}
               language={languages[path.split(".").pop()?.toLowerCase() ?? ""] ?? "plaintext"}
-              copyLabel="Копирай кода"
+              copyLabel={t("Copy code")}
               toolbarContent={
                 <DropdownMenu
-                  ariaLabel="Избери файл за преглед"
+                  ariaLabel={t("Choose a file to preview")}
                   triggerVariant="secondary"
                   triggerClassName="plugin-source-file-select"
                   trigger={
@@ -220,7 +221,7 @@ export function PluginSourceViewer({ pluginId }: { pluginId: string }) {
               }
             />
           ) : (
-            <p>Няма изходни файлове за преглед.</p>
+            <p>{t("No source files to preview.")}</p>
           )}
         </div>
       </div>

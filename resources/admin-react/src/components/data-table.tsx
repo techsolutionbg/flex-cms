@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 import { PaginationControls } from "./pagination-controls"
+import { t } from "@/lib/admin-i18n"
 import { TableSkeletonRows } from "./table-skeleton"
 import { TableActionsMenu } from "./table-actions-menu"
 import {
@@ -164,14 +165,14 @@ export function DataTable<T>({
       {hasToolbar && (
         <div className={`react-table-filter-panel${toolbarOpen ? " is-open" : " is-closed"}`}>
           <div className="react-table-filter-header">
-            <span>Филтри и търсене</span>
+            <span>{t("Filters and search")}</span>
             <button
               type="button"
               aria-expanded={toolbarOpen}
               aria-controls={filterContentId}
               onClick={() => setToolbarOpen((current) => !current)}
             >
-              {toolbarOpen ? "Скрий" : "Покажи"}
+              {toolbarOpen ? t("Hide") : t("Show")}
               <ChevronDown aria-hidden="true" />
             </button>
           </div>
@@ -204,7 +205,7 @@ export function DataTable<T>({
               className={action.danger ? "react-danger-button" : "react-secondary-button"}
               onClick={() => void action.run(selectedRows, extensions.helpers)}
             >
-              {action.label}
+              {t(action.label)}
             </button>
           ))}
         </div>
@@ -217,7 +218,7 @@ export function DataTable<T>({
                 <th className="react-selection-column">
                   <input
                     type="checkbox"
-                    aria-label="Избери всички видими записи"
+                    aria-label={t("Select all visible records")}
                     checked={allVisibleSelected}
                     onChange={(event) => toggleVisibleSelection(event.target.checked)}
                   />
@@ -231,7 +232,7 @@ export function DataTable<T>({
                     onClick={() => sort(column)}
                     disabled={!column.sortable}
                   >
-                    {column.label}
+                    {t(column.label)}
                     {column.sortable &&
                       (sortKey === column.key ? (
                         descending ? (
@@ -257,7 +258,7 @@ export function DataTable<T>({
             ) : sortedData.length === 0 ? (
               <tr>
                 <td className="react-table-empty" colSpan={columnCount}>
-                  {emptyMessage}
+                  {t(emptyMessage)}
                 </td>
               </tr>
             ) : (
@@ -267,7 +268,7 @@ export function DataTable<T>({
                     <td className="react-selection-column">
                       <input
                         type="checkbox"
-                        aria-label="Избери запис"
+                        aria-label={t("Select record")}
                         checked={selectedKeys.has(rowKey(row))}
                         onChange={(event) => toggleSelection(rowKey(row), event.target.checked)}
                       />
@@ -299,8 +300,9 @@ export function DataTable<T>({
       </div>
       <div className="react-pagination">
         <span>
-          Показани {sortedData.length === 0 ? 0 : (activePage - 1) * pageSize + 1}–
-          {Math.min(activePage * pageSize, sortedData.length)} от {sortedData.length}
+
+          {t("Showing")} {sortedData.length === 0 ? 0 : (activePage - 1) * pageSize + 1}–
+          {Math.min(activePage * pageSize, sortedData.length)}  {t("of")} {sortedData.length}
         </span>
         <PaginationControls
           page={activePage}

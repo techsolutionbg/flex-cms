@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { KeyRound } from "lucide-react"
 
 const PASSWORD_GROUPS = [
@@ -52,7 +53,8 @@ export function PasswordGenerator({
       onClick={() => onGenerate(generateSecurePassword(safeLength))}
     >
       <KeyRound size={16} aria-hidden="true" />
-      Генерирай парола
+
+      {t("Generate password")}
     </button>
   )
 }

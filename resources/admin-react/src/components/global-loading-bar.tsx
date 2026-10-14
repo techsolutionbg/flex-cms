@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { createPortal } from "react-dom"
 import { requestTracker } from "@/lib/request-tracker"
@@ -14,8 +15,8 @@ export function GlobalLoadingBar() {
     <div
       className={`admin-global-loading${pending === 0 ? " is-complete" : ""}`}
       role="progressbar"
-      aria-label="Зареждане на данни"
-      aria-valuetext={pending > 0 ? "Зареждане…" : "Завършено"}
+      aria-label={t("Loading data")}
+      aria-valuetext={pending > 0 ? t("Loading…") : t("Complete")}
     >
       <span />
     </div>,

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { CircleHelp, Info, X } from "lucide-react"
 import {
   createContext,
@@ -87,8 +88,8 @@ export function Hint({ children }: { children: ReactNode }) {
       <button
         type="button"
         className="admin-hint-close"
-        aria-label="Скрий насоките"
-        title="Скрий насоките (можете да ги включите отново от „Помощ“)"
+        aria-label={t("Hide hints")}
+        title={t("Hide hints (you can turn them back on from Help)")}
         onClick={() => setHintsVisible(false)}
       >
         <X size={16} aria-hidden="true" />
@@ -132,12 +133,12 @@ export function PageHelpButton({ entries }: { entries: () => PageHelpEntry[] }) 
       <LoadingButton
         className="admin-page-refresh"
         type="button"
-        title="Насоки за работа с тази страница"
+        title={t("Guidance for this page")}
         aria-haspopup="dialog"
         icon={<CircleHelp size={18} aria-hidden="true" />}
         onClick={() => setOpen(true)}
       >
-        <span>Помощ</span>
+        <span>{t("Help")}</span>
       </LoadingButton>
       {createPortal(
         <dialog
@@ -154,28 +155,30 @@ export function PageHelpButton({ entries }: { entries: () => PageHelpEntry[] }) 
           }}
         >
           <div className="media-picker-heading">
-            <h2 id={titleId}>Помощ</h2>
-            <Button type="button" variant="secondary" aria-label="Затвори" onClick={() => setOpen(false)}>
+            <h2 id={titleId}>{t("Help")}</h2>
+            <Button type="button" variant="secondary" aria-label={t("Close")} onClick={() => setOpen(false)}>
               <X />
             </Button>
           </div>
           {open && (
             <div className="page-help-body">
               {list.length === 0 ? (
-                <p className="page-help-empty">Няма специални насоки за тази страница.</p>
+                <p className="page-help-empty">{t("No special guidance is available for this page.")}</p>
               ) : (
                 list.map((entry, index) => (
                   <section key={index} className="page-help-entry">
-                    <h3>{entry.title}</h3>
-                    <div className="page-help-content">{entry.content}</div>
+                    <h3>{t(entry.title)}</h3>
+                    <div className="page-help-content">
+                      {typeof entry.content === "string" ? t(entry.content) : entry.content}
+                    </div>
                   </section>
                 ))
               )}
               <div className="page-help-settings">
                 <CheckboxField
                   checked={visible}
-                  label="Показвай насоките в страниците"
-                  description="Кратките обяснения в самите страници. Тази помощ остава достъпна винаги."
+                  label={t("Show hints on pages")}
+                  description={t("Short explanations shown on each page. This help is always available.")}
                   onChange={(event) => setHintsVisible(event.target.checked)}
                 />
               </div>

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -115,7 +116,7 @@ export function MenusPage({
           : current,
       )
       setFailure("")
-      toast.success(`Статусът на менюто е сменен на „${menuStatusLabels[status]}“.`)
+      toast.success(t("Menu status changed to “{status}”.", "core", { status: t(menuStatusLabels[status]) }))
     } catch (error) {
       setFailure((error as Error).message)
     } finally {
@@ -175,10 +176,10 @@ export function MenusPage({
       render: (menu) => (
         <span className={`react-status-badge status-${menu.status}`}>
           {menu.status === "active"
-            ? "Активно"
+            ? t("Active")
             : menu.status === "inactive"
-              ? "Неактивно"
-              : "Чернова"}
+              ? t("Inactive")
+              : t("Draft")}
         </span>
       ),
     },
@@ -193,12 +194,12 @@ export function MenusPage({
               key={`${assignment.theme}:${assignment.location}`}
             >
               {assignment.theme === data?.theme
-                ? (data.menu_locations[assignment.location] ?? assignment.location)
+                ? t(data.menu_locations[assignment.location] ?? assignment.location)
                 : `${assignment.theme}: ${assignment.location}`}
             </span>
           ))
         ) : (
-          <span className="react-table-location-empty">Не е присвоено към локация</span>
+          <span className="react-table-location-empty">{t("Not assigned to a location")}</span>
         ),
     },
     {
@@ -215,17 +216,20 @@ export function MenusPage({
                   disabled={busy || loading || menu.status === status}
                   onClick={() => void changeStatus(menu, status)}
                 >
-                  Статус: {menuStatusLabels[status]}
+
+                  {t("Status:")} {t(menuStatusLabels[status])}
                 </DropdownOption>
               ))}
               <DropdownOption disabled={busy || loading} onClick={() => onEdit(menu)}>
-                Редактирай
+
+                {t("Edit")}
               </DropdownOption>
               <DropdownOption
                 disabled={busy || loading}
                 onClick={() => void request(menu, "trash")}
               >
-                Премести в кошчето
+
+                {t("Move item to trash")}
               </DropdownOption>
             </>
           ) : (
@@ -234,10 +238,12 @@ export function MenusPage({
                 disabled={busy || loading}
                 onClick={() => void request(menu, "restore")}
               >
-                Възстанови
+
+                {t("Restore")}
               </DropdownOption>
               <DropdownOption disabled={busy || loading} onClick={() => setDeleting(menu)}>
-                Изтрий завинаги
+
+                {t("Delete forever")}
               </DropdownOption>
             </>
           )}
@@ -245,7 +251,7 @@ export function MenusPage({
       ),
     },
   ]
-  const title = view === "trash" ? "Кошче за менюта" : "Менюта"
+  const title = view === "trash" ? t("Menu trash") : t("Menus")
   return (
     <AdminShell {...shell} title={title} activeItem="Менюта">
       <div className="react-page-heading">
@@ -254,7 +260,8 @@ export function MenusPage({
           <Breadcrumbs onHomeClick={() => shell.onNavigate("Табло")} items={[{ label: title }]} />
         </div>
         <button type="button" onClick={onCreate} disabled={!supported || busy || view === "trash"}>
-          Ново меню
+
+          {t("New menu")}
         </button>
       </div>
       {(error || failure) && (
@@ -263,9 +270,9 @@ export function MenusPage({
         </p>
       )}
       {!capabilities ? (
-        <p role="status">Проверка на активната тема…</p>
+        <p role="status">{t("Checking active theme…")}</p>
       ) : !supported ? (
-        <p>Активната тема не поддържа управление на менюта.</p>
+        <p>{t("The active theme does not support menu management.")}</p>
       ) : (
         <DataTable
           extensionPoint="menus.list"
@@ -278,7 +285,7 @@ export function MenusPage({
             failure
               ? "Менютата не са заредени."
               : search || location !== "all"
-                ? "Няма менюта, отговарящи на филтрите."
+                ? t("No menus match the filters.")
                 : view === "trash"
                   ? "Кошчето е празно."
                   : "Все още няма менюта. Създайте първото меню."
@@ -286,39 +293,41 @@ export function MenusPage({
           toolbar={
             <>
               <label className="react-filter-field">
-                <span>Търсене</span>
+                <span>{t("Search")}</span>
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Име или идентификатор"
+                  placeholder={t("Name or identifier")}
                 />
               </label>
               <label className="react-filter-field">
-                <span>Локация</span>
+                <span>{t("Location")}</span>
                 <DropdownMenu
-                  ariaLabel="Избор на локация"
+                  ariaLabel={t("Choose location")}
                   triggerClassName="react-filter-trigger"
                   trigger={
                     <>
                       <span>
                         {location === "all"
-                          ? "Всички локации"
+                          ? t("All locations")
                           : location === "none"
-                            ? "Без локация"
-                            : (data?.menu_locations[location] ?? location)}
+                            ? t("No location")
+                            : t(data?.menu_locations[location] ?? location)}
                       </span>
                       <DropdownChevron />
                     </>
                   }
                 >
                   <DropdownOption selected={location === "all"} onClick={() => setLocation("all")}>
-                    Всички локации
+
+                    {t("All locations")}
                   </DropdownOption>
                   <DropdownOption
                     selected={location === "none"}
                     onClick={() => setLocation("none")}
                   >
-                    Без локация
+
+                    {t("No location")}
                   </DropdownOption>
                   {Object.entries(data?.menu_locations ?? {}).map(([id, label]) => (
                     <DropdownOption
@@ -326,19 +335,19 @@ export function MenusPage({
                       selected={location === id}
                       onClick={() => setLocation(id)}
                     >
-                      {label}
+                      {t(label)}
                     </DropdownOption>
                   ))}
                 </DropdownMenu>
               </label>
               <label className="react-filter-field">
-                <span>Изглед</span>
+                <span>{t("View")}</span>
                 <DropdownMenu
-                  ariaLabel="Избор на изглед"
+                  ariaLabel={t("Choose view")}
                   triggerClassName="react-filter-trigger"
                   trigger={
                     <>
-                      <span>{view === "trash" ? "Кошче" : "Активни менюта"}</span>
+                      <span>{view === "trash" ? t("Trash") : t("Active menus")}</span>
                       <DropdownChevron />
                     </>
                   }
@@ -348,14 +357,16 @@ export function MenusPage({
                     selected={view === "active"}
                     onClick={() => setView("active")}
                   >
-                    Активни менюта
+
+                    {t("Active menus")}
                   </DropdownOption>
                   <DropdownOption
                     disabled={busy}
                     selected={view === "trash"}
                     onClick={() => setView("trash")}
                   >
-                    Кошче
+
+                    {t("Trash")}
                   </DropdownOption>
                 </DropdownMenu>
               </label>
@@ -369,10 +380,11 @@ export function MenusPage({
                   setView("active")
                 }}
               >
-                Изчисти филтрите
+
+                {t("Clear filters")}
               </button>
               <span className="react-filter-count">
-                {activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}
+                {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
               </span>
             </>
           }
@@ -380,9 +392,9 @@ export function MenusPage({
       )}
       <ConfirmDialog
         open={deleting !== null}
-        title="Окончателно изтриване на меню"
+        title={t("Permanently delete menu")}
         message={`Менюто „${deleting?.name}“ и всички негови елементи ще бъдат изтрити завинаги. Свързаните страници ще останат.`}
-        confirmLabel="Изтрий завинаги"
+        confirmLabel={t("Delete forever")}
         danger
         busy={busy}
         onCancel={() => {

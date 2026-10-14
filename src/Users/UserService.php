@@ -80,6 +80,7 @@ final readonly class UserService
         $user->setAttribute('email', $data['email']);
         $user->setAttribute('role', $data['role']);
         $user->setAttribute('status', $data['status']);
+        $user->setAttribute('admin_locale', $data['admin_locale']);
         if ($data['password'] !== '') {
             $user->setAttribute('password_hash', $this->passwords->hash($data['password']));
         }
@@ -152,7 +153,7 @@ final readonly class UserService
 
     /**
      * @param array<string, mixed> $attributes
-     * @return array{name: string, email: string, password: string, role: string, status: string}
+     * @return array{name: string, email: string, password: string, role: string, status: string, admin_locale: string}
      */
     private function validate(array $attributes, bool $creating, ?int $id = null, ?User $current = null): array
     {
@@ -161,6 +162,7 @@ final readonly class UserService
         $password = is_string($attributes['password'] ?? null) ? $attributes['password'] : '';
         $role = is_string($attributes['role'] ?? null) ? $attributes['role'] : (string) ($current?->getAttribute('role') ?? $this->settings?->all('users')['default_role'] ?? 'user');
         $status = is_string($attributes['status'] ?? null) ? $attributes['status'] : (string) ($current?->getAttribute('status') ?? 'active');
+        $adminLocale = is_string($attributes['admin_locale'] ?? null) ? $attributes['admin_locale'] : (string) ($current?->getAttribute('admin_locale') ?: 'en');
         $errors = [];
 
         if ($name === '' || mb_strlen($name) > 120) {
@@ -184,11 +186,21 @@ final readonly class UserService
         if (!in_array($status, self::STATUSES, true)) {
             $errors[] = 'Статусът е невалиден.';
         }
+        if (strlen($adminLocale) > 16 || preg_match('/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/D', $adminLocale) !== 1) {
+            $errors[] = 'Езикът на административния панел е невалиден.';
+        }
 
         if ($errors !== []) {
             throw new UserValidationFailed($errors);
         }
 
-        return compact('name', 'email', 'password', 'role', 'status');
+        return [
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+            'role' => $role,
+            'status' => $status,
+            'admin_locale' => $adminLocale,
+        ];
     }
 }

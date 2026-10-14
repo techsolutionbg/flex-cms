@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
@@ -111,7 +112,7 @@ export function SettingsPage({
   }
   return (
     <AdminShell
-      title="Настройки"
+      title={t("Settings")}
       activeItem="Настройки"
       onLogout={onLogout}
       onNavigate={onNavigate}
@@ -119,14 +120,14 @@ export function SettingsPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Настройки</h1>
+          <h1>{t("Settings")}</h1>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Настройки" }]} />
         </div>
       </div>
       <div
         className="settings-tabs"
         role="tablist"
-        aria-label="Раздели на настройките"
+        aria-label={t("Settings sections")}
         onKeyDown={(event) => {
           if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return
           event.preventDefault()
@@ -156,7 +157,7 @@ export function SettingsPage({
             onClick={() => selectSection(id)}
           >
             <Icon aria-hidden="true" />
-            {title}
+            {t(title)}
           </button>
         ))}
       </div>

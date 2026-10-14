@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Save, Settings2 } from "lucide-react"
@@ -144,10 +145,14 @@ export function MenuEditor({
     }
   }
   return (
-    <AdminShell {...shell} title={menu.id ? `Меню: ${menu.name}` : "Ново меню"} activeItem="Менюта">
+    <AdminShell
+      {...shell}
+      title={menu.id ? t("Menu: {name}", "core", { name: menu.name }) : t("New menu")}
+      activeItem="Менюта"
+    >
       <div className="react-page-heading">
         <div>
-          <h1>{menu.id ? "Редактиране на меню" : "Създаване на меню"}</h1>
+          <h1>{menu.id ? t("Edit menu") : t("Create menu")}</h1>
           <Breadcrumbs
             onHomeClick={() => shell.onNavigate("Табло")}
             items={[{ label: "Менюта", onClick: onBack }, { label: menu.name || "Ново меню" }]}
@@ -155,7 +160,8 @@ export function MenuEditor({
         </div>
         {menu.id > 0 && (
           <button type="button" onClick={() => onStructure(menu.id)}>
-            Структура на менюто
+
+            {t("Menu structure")}
           </button>
         )}
       </div>
@@ -166,13 +172,14 @@ export function MenuEditor({
       )}
       {themeChanged && (
         <p className="react-form-error" role="alert">
-          Активната тема е сменена. Презаредете данните, за да изберете нейните локации.
+
+          {t("The active theme has changed. Reload the data to choose its locations.")}
         </p>
       )}
       {!supported ? (
-        <p>Активната тема не поддържа управление на менюта. Незапазените промени остават в таба.</p>
+        <p>{t("The active theme does not support menu management. Unsaved changes remain in this tab.")}</p>
       ) : loading ? (
-        <p role="status">Зареждане на менюто…</p>
+        <p role="status">{t("Loading menu…")}</p>
       ) : (
         <ExtensionScope value={extensionScope}>
           <form
@@ -186,13 +193,13 @@ export function MenuEditor({
             <fieldset className="menu-fieldset" disabled={saving || themeChanged}>
               <CollapsibleSection
                 extensionPoint="menu.editor.settings"
-                title="Настройки на менюто"
+                title={t("Menu settings")}
                 icon={Settings2}
                 storageKey="menu-editor-settings"
               >
                 <div className="react-form-grid">
                   <label className="react-form-field">
-                    <span>Име</span>
+                    <span>{t("Name")}</span>
                     <input
                       value={menu.name}
                       maxLength={120}
@@ -200,31 +207,32 @@ export function MenuEditor({
                       onChange={(event) => update({ ...menu, name: event.target.value })}
                     />
                     <small>
-                      Въведете описателно име, по което да разпознавате менюто в панела.
+
+                      {t("Enter a descriptive name so you can identify this menu in the panel.")}
                     </small>
                   </label>
                   <label className="react-form-field">
-                    <span>Идентификатор (по желание)</span>
+                    <span>{t("Identifier (optional)")}</span>
                     <input
                       value={menu.slug}
                       maxLength={120}
                       pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                      placeholder="Генерира се от името"
+                      placeholder={t("Generated from the name")}
                       onChange={(event) => update({ ...menu, slug: event.target.value })}
                     />
                     <small>
-                      Оставете празно за автоматично генериране от името. При ръчно задаване
-                      използвайте малки латински букви, цифри и тирета.
+
+                      {t("Leave blank to generate automatically from the name. Use lowercase Latin letters, numbers, and hyphens when entering a value manually.")}
                     </small>
                   </label>
                   <div className="react-form-field">
-                    <span>Локация</span>
+                    <span>{t("Location")}</span>
                     <DropdownMenu
-                      ariaLabel="Локация на менюто"
+                      ariaLabel={t("Menu location")}
                       triggerClassName="react-form-select"
                       trigger={
                         <>
-                          <span>{index?.menu_locations[location] ?? "— Без локация —"}</span>
+                          <span>{t(index?.menu_locations[location] ?? "— No location —")}</span>
                           <DropdownChevron />
                         </>
                       }
@@ -234,7 +242,8 @@ export function MenuEditor({
                         disabled={saving || themeChanged}
                         onClick={() => selectLocation("")}
                       >
-                        — Без локация —
+
+                        {t("— No location —")}
                       </DropdownOption>
                       {Object.entries(index?.menu_locations ?? {}).map(([key, title]) => (
                         <DropdownOption
@@ -243,29 +252,29 @@ export function MenuEditor({
                           disabled={saving || themeChanged}
                           onClick={() => selectLocation(key)}
                         >
-                          {title}
+                          {t(title)}
                         </DropdownOption>
                       ))}
                     </DropdownMenu>
                     <small>
-                      Изберете къде активната тема да показва менюто. „Без локация“ го запазва без
-                      място за показване в темата.
+
+                      {t("Choose where the active theme should display this menu. “No location” saves it without displaying it in the theme.")}
                     </small>
                     {occupiedMenu && (
                       <small>
-                        Тази локация се използва от „{occupiedMenu.name}“. При запис ще бъде
-                        свързана с това меню.
+
+                        {t("This location is used by “")}{occupiedMenu.name}{t("”. Saving will link it to this menu.")}
                       </small>
                     )}
                   </div>
                   <div className="react-form-field">
-                    <span>Статус</span>
+                    <span>{t("Status")}</span>
                     <DropdownMenu
-                      ariaLabel="Статус на менюто"
+                      ariaLabel={t("Menu status")}
                       triggerClassName="react-form-select"
                       trigger={
                         <>
-                          <span>{statusLabels[menu.status]}</span>
+                          <span>{t(statusLabels[menu.status])}</span>
                           <DropdownChevron />
                         </>
                       }
@@ -278,14 +287,14 @@ export function MenuEditor({
                             disabled={saving || themeChanged}
                             onClick={() => update({ ...menu, status: value })}
                           >
-                            {title}
+                            {t(title)}
                           </DropdownOption>
                         ),
                       )}
                     </DropdownMenu>
                     <small>
-                      Само активните менюта с избрана локация се показват в темата. Неактивните
-                      менюта и черновите остават запазени в панела.
+
+                      {t("Only active menus with a selected location appear in the theme. Inactive menus and drafts remain saved in the panel.")}
                     </small>
                   </div>
                 </div>
@@ -299,7 +308,7 @@ export function MenuEditor({
                 disabled={!supported || saving || loading || !index || themeChanged}
               >
                 <Save size={18} />
-                {saving ? "Запазване…" : "Запази менюто"}
+                {saving ? t("Saving…") : t("Save menu")}
               </LoadingButton>
             </div>
           </form>

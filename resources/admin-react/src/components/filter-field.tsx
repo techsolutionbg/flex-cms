@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes } from "react"
 import { forwardRef, useId } from "react"
 import { cn } from "@/lib/utils"
+import { t } from "@/lib/admin-i18n"
 
 export type FilterFieldProps = {
   label: string
@@ -19,9 +20,9 @@ export const FilterField = forwardRef<HTMLInputElement, FilterFieldProps>(functi
   return (
     <label className={cn("react-filter-field", className)} htmlFor={inputId}>
       {hideLabel ? (
-        <span className="react-filter-field-visually-hidden">{label}</span>
+        <span className="react-filter-field-visually-hidden">{t(label)}</span>
       ) : (
-        <span>{label}</span>
+        <span>{t(label)}</span>
       )}
       <input ref={ref} id={inputId} className={inputClassName} {...inputProps} />
     </label>

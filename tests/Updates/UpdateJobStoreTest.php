@@ -78,4 +78,13 @@ final class UpdateJobStoreTest extends TestCase
         $store->complete($running, ['version' => '0.1.46']);
         self::assertSame('completed', $store->all()[0]->status);
     }
+
+    public function testItTreatsAnEmptyNulPaddedJobStoreAsEmpty(): void
+    {
+        $directory = $this->basePath . '/storage/updates';
+        mkdir($directory, 0770, true);
+        file_put_contents($directory . '/jobs.json', "\0\0\0");
+
+        self::assertSame([], (new UpdateJobStore($this->basePath))->all());
+    }
 }

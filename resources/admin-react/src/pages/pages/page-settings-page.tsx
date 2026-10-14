@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
@@ -132,7 +133,7 @@ export function PageSettingsForm({
 
   return (
     <AdminShell
-      title="Настройки на страница"
+      title={t("Page settings")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Страници"
@@ -140,7 +141,7 @@ export function PageSettingsForm({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Настройки на страница</h1>
+          <h1>{t("Page settings")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[
@@ -155,18 +156,19 @@ export function PageSettingsForm({
         <form className="react-page-form" onSubmit={save}>
           <CollapsibleSection
             extensionPoint="page.settings.appearance"
-            title="Визуализация"
+            title={t("Page preview")}
             storageKey="page-settings-appearance"
             icon={LayoutTemplate}
           >
             <label>
-              Шаблон
+
+              {t("Template")}
               <DropdownMenu
-                ariaLabel="Избор на шаблон"
+                ariaLabel={t("Choose template")}
                 triggerClassName="react-form-dropdown"
                 trigger={
                   <>
-                    <span>{selectedTemplate?.label ?? "По подразбиране"}</span>
+                    <span>{selectedTemplate?.label ? t(selectedTemplate.label) : t("Default setting")}</span>
                     <DropdownChevron />
                   </>
                 }
@@ -177,7 +179,7 @@ export function PageSettingsForm({
                     selected={selectedTemplate?.id === template.id}
                     onClick={() => setSettings({ ...settings, template: template.id })}
                   >
-                    {template.label}
+                    {t(template.label)}
                   </DropdownOption>
                 ))}
               </DropdownMenu>
@@ -185,7 +187,7 @@ export function PageSettingsForm({
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="page.settings.navigation"
-            title="Навигация"
+            title={t("Navigation")}
             storageKey="page-settings-navigation"
             icon={Navigation}
           >
@@ -198,7 +200,8 @@ export function PageSettingsForm({
                     setSettings({ ...settings, show_in_navigation: event.target.checked })
                   }
                 />{" "}
-                Показвай страницата в навигацията
+
+                {t("Show this page in navigation")}
               </label>
               <label>
                 <input
@@ -208,11 +211,13 @@ export function PageSettingsForm({
                     setSettings({ ...settings, use_parent_slugs: event.target.checked })
                   }
                 />{" "}
-                Използвай slug-овете на родителските страници в URL адреса
+
+                {t("Include parent page slugs in the URL")}
               </label>
             </div>
             <label className="react-navigation-order-field">
-              Позиция в навигацията
+
+              {t("Navigation position")}
               <input
                 type="number"
                 min={0}
@@ -221,12 +226,12 @@ export function PageSettingsForm({
                   setSettings({ ...settings, menu_order: Number(event.target.value) })
                 }
               />
-              <small>По-малките числа се показват по-напред.</small>
+              <small>{t("Lower numbers appear first.")}</small>
             </label>
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="page.settings.indexing"
-            title="Индексация"
+            title={t("Indexing")}
             storageKey="page-settings-indexing"
             icon={Search}
           >
@@ -237,7 +242,8 @@ export function PageSettingsForm({
                   checked={settings.no_index ?? false}
                   onChange={(event) => setSettings({ ...settings, no_index: event.target.checked })}
                 />{" "}
-                Не индексирай страницата
+
+                {t("Do not index this page")}
               </label>
             </div>
           </CollapsibleSection>
@@ -249,7 +255,8 @@ export function PageSettingsForm({
               icon={Puzzle}
             >
               <p className="react-plugin-provider">
-                Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
+
+                {t("Extension")} {fields[0].plugin_name}  {t("· version")} {fields[0].plugin_version}
               </p>
               <div className="react-plugin-fields-inner">
                 {fields.map((field) => {
@@ -259,12 +266,12 @@ export function PageSettingsForm({
                       key={`${field.plugin}.${field.id}`}
                       checked={Boolean(current)}
                       label={field.label}
-                      description={field.hint}
+                      description={field.hint ? t(field.hint) : undefined}
                       onChange={(event) => setPluginSetting(field, event.target.checked)}
                     />
                   ) : (
                     <label key={`${field.plugin}.${field.id}`}>
-                      {field.label}
+                      {t(field.label)}
                       {field.type === "textarea" ? (
                         <Textarea
                           value={String(current ?? "")}
@@ -278,7 +285,7 @@ export function PageSettingsForm({
                           onChange={(event) => setPluginSetting(field, event.target.value)}
                         />
                       )}
-                      {field.hint && <small>{field.hint}</small>}
+                      {field.hint && <small>{t(field.hint)}</small>}
                     </label>
                   )
                 })}
@@ -293,10 +300,11 @@ export function PageSettingsForm({
               type="submit"
               disabled={saving}
             >
-              {saving ? "Записване…" : "Запази настройките"}
+              {saving ? t("Saving record…") : t("Save settings")}
             </LoadingButton>
             <button type="button" onClick={onBack}>
-              Отказ
+
+              {t("Cancel")}
             </button>
           </div>
         </form>

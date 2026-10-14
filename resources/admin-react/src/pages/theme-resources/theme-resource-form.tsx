@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { CircleAlert, FileText } from "lucide-react"
 import { useEffect, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
@@ -123,7 +124,7 @@ export function ThemeResourceForm({
         </div>
       </div>
       {loading ? (
-        <p role="status">Зареждане…</p>
+        <p role="status">{t("Loading…")}</p>
       ) : (
         <>
           {error && (
@@ -136,12 +137,12 @@ export function ThemeResourceForm({
             <section className="page-editor-basic-panel">
               <header className="page-editor-basic-panel-heading">
                 <FileText aria-hidden="true" />
-                <span>Основна информация</span>
+                <span>{t("Basic information")}</span>
               </header>
               <div className="page-editor-basic-panel-body">
                 <div className="react-form-grid">
                   <label className="react-form-field">
-                    <span>Заглавие *</span>
+                    <span>{t("Title *")}</span>
                     <input
                       value={title}
                       maxLength={190}
@@ -156,7 +157,7 @@ export function ThemeResourceForm({
                     />
                   </label>
                   <label className="react-form-field">
-                    <span>URL адрес (slug) *</span>
+                    <span>{t("URL slug *")}</span>
                     <input
                       value={slug}
                       maxLength={190}
@@ -170,13 +171,13 @@ export function ThemeResourceForm({
                     />
                   </label>
                   <div className="react-form-field">
-                    <span>Статус</span>
+                    <span>{t("Status")}</span>
                     <DropdownMenu
-                      ariaLabel="Избор на статус"
+                      ariaLabel={t("Choose status")}
                       triggerClassName="react-form-dropdown"
                       trigger={
                         <>
-                          <span>{status === "published" ? "Публикуван" : "Чернова"}</span>
+                          <span>{status === "published" ? t("Published theme") : t("Draft")}</span>
                           <DropdownChevron />
                         </>
                       }
@@ -188,7 +189,8 @@ export function ThemeResourceForm({
                           changed?.()
                         }}
                       >
-                        Чернова
+
+                        {t("Draft")}
                       </DropdownOption>
                       <DropdownOption
                         selected={status === "published"}
@@ -197,12 +199,13 @@ export function ThemeResourceForm({
                           changed?.()
                         }}
                       >
-                        Публикуван
+
+                        {t("Published theme")}
                       </DropdownOption>
                     </DropdownMenu>
                   </div>
                   <label className="react-form-field" style={{ gridColumn: "1 / -1" }}>
-                    <span>Кратко описание</span>
+                    <span>{t("Short description")}</span>
                     <textarea
                       value={summary}
                       maxLength={1000}
@@ -215,7 +218,7 @@ export function ThemeResourceForm({
                     />
                   </label>
                   <label className="react-form-field" style={{ gridColumn: "1 / -1" }}>
-                    <span>Съдържание</span>
+                    <span>{t("Content")}</span>
                     <textarea
                       value={content}
                       rows={8}
@@ -229,13 +232,13 @@ export function ThemeResourceForm({
                 </div>
               </div>
             </section>
-            <CollapsibleSection title="Основно изображение" storageKey={`theme-resource-${resource.id}-media`} icon={FileText}>
+            <CollapsibleSection title={t("Featured image")} storageKey={`theme-resource-${resource.id}-media`} icon={FileText}>
               <ImageField
-                label="Основно изображение"
+                label={t("Featured image")}
                 value={featuredId}
                 disabled={saving}
                 width="20rem"
-                description="Показва се заедно със записа в клиентската зона."
+                description={t("Shown alongside the content on the public site.")}
                 onChange={(id) => {
                   setFeaturedId(id)
                   changed?.()
@@ -244,10 +247,12 @@ export function ThemeResourceForm({
             </CollapsibleSection>
             <div className="react-form-actions">
               <LoadingButton type="submit" loading={saving}>
-                Запази
+
+                {t("Save")}
               </LoadingButton>
               <button className="react-secondary-button" type="button" onClick={onBack} disabled={saving}>
-                Назад
+
+                {t("Back")}
               </button>
             </div>
           </form>

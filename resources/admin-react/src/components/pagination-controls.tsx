@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { t } from "@/lib/admin-i18n"
 
 export function PaginationControls({
   page,
@@ -17,11 +18,11 @@ export function PaginationControls({
   const start = Math.max(1, end - 4)
   const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index)
   return (
-    <nav className="react-pagination-controls" aria-label="Страници на таблицата">
+    <nav className="react-pagination-controls" aria-label={t("Table pages")}>
       <button
         type="button"
-        aria-label="Първа страница"
-        title="Първа страница"
+        aria-label={t("First page")}
+        title={t("First page")}
         disabled={loading || current === 1}
         onClick={() => onChange(1)}
       >
@@ -29,8 +30,8 @@ export function PaginationControls({
       </button>
       <button
         type="button"
-        aria-label="Предишна страница"
-        title="Предишна страница"
+        aria-label={t("Previous page")}
+        title={t("Previous page")}
         disabled={loading || current === 1}
         onClick={() => onChange(current - 1)}
       >
@@ -45,7 +46,7 @@ export function PaginationControls({
         <button
           type="button"
           key={number}
-          aria-label={`Страница ${number}`}
+          aria-label={`${t("Page")} ${number}`}
           aria-current={number === current ? "page" : undefined}
           disabled={loading || number === current}
           onClick={() => onChange(number)}
@@ -60,8 +61,8 @@ export function PaginationControls({
       )}
       <button
         type="button"
-        aria-label="Следваща страница"
-        title="Следваща страница"
+        aria-label={t("Next page")}
+        title={t("Next page")}
         disabled={loading || current === total}
         onClick={() => onChange(current + 1)}
       >
@@ -69,8 +70,8 @@ export function PaginationControls({
       </button>
       <button
         type="button"
-        aria-label="Последна страница"
-        title="Последна страница"
+        aria-label={t("Last page")}
+        title={t("Last page")}
         disabled={loading || current === total}
         onClick={() => onChange(total)}
       >

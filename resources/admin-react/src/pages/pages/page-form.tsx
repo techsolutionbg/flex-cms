@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,34 +45,30 @@ function PageFormHelp({
         title: isEditing ? `Редактиране на страницата „${pageTitle}“` : "Създаване на страница",
         content: (
           <>
-            <p>Оттук управлявате съдържанието, адреса и публикуването на страницата.</p>
+            <p>{t("Manage the page content, address, and publishing here.")}</p>
             <ul>
               <li>
-                <strong>Основна информация:</strong> задайте заглавие, URL адрес и родителска
-                страница. Заглавието се използва и за навигационната структура на сайта.
+                <strong>{t("Basic information:")}</strong>  {t("set the title, URL, and parent page. The title is also used in the site's navigation structure.")}
               </li>
               <li>
-                <strong>Съдържание:</strong>{" "}
+                <strong>{t("Content:")}</strong>{" "}
                 {pluginContentEditor
                   ? `съдържанието се редактира с плъгина ${contentBuilderName}. Отворете го от съответния бутон горе. С „Премахни връзката“ можете да се върнете към вградения редактор.`
-                  : "редактирайте текста и оформлението на страницата. Ако е наличен бутон за контактни форми, с него можете да вмъкнете активна форма."}
+                  : t("edit the page text and layout. If a contact form button is available, use it to insert an active form.")}
               </li>
               {themeContentAvailable && (
                 <li>
-                  <strong>Съдържание от темата:</strong> отворете полетата, предоставени от
-                  активната тема за тази страница.
+                  <strong>{t("Theme content:")}</strong>  {t("open the fields provided by the active theme for this page.")}
                 </li>
               )}
               <li>
-                <strong>Основно изображение и допълнителни полета:</strong> добавете водещо
-                изображение и попълнете полетата, предоставени от активните разширения.
+                <strong>{t("Featured image and additional fields:")}</strong>  {t("add a featured image and complete the fields provided by active extensions.")}
               </li>
               <li>
-                <strong>Публикуване:</strong> изберете „Чернова“, за да продължите редакцията
-                по-късно, или „Публикувана“, за да направите страницата достъпна на сайта.
+                <strong>{t("Publishing:")}</strong>  {t("choose “Draft” to continue editing later or “Published” to make the page available on the site.")}
               </li>
             </ul>
-            <p>Натиснете „Запази страницата“, за да приложите промените.</p>
+            <p>{t("Select “Save page” to apply your changes.")}</p>
           </>
         ),
       }),
@@ -367,7 +364,7 @@ export function PageForm({
   }, {})
   return (
     <AdminShell
-      title={page ? "Редактиране на страница" : "Създаване на страница"}
+      title={page ? t("Edit page") : t("Create page")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Страници"
@@ -382,7 +379,7 @@ export function PageForm({
       />
       <div className="react-page-heading">
         <div>
-          <h1>{page ? "Редактиране на страница" : "Създаване на страница"}</h1>
+          <h1>{page ? t("Edit page") : t("Create page")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={
@@ -400,16 +397,18 @@ export function PageForm({
                 type="button"
                 onClick={() => void action.onSelect(page, pageListExtensions.helpers)}
               >
-                {action.label}
+                {t(action.label)}
               </button>
             ))}
             {themeContentAvailable === true && (
               <button type="button" onClick={() => onThemeContent(page)}>
-                Съдържание от темата
+
+                {t("Theme content")}
               </button>
             )}
             <button type="button" onClick={() => onSettings(page)}>
-              Настройки
+
+              {t("Settings")}
             </button>
           </div>
         )}
@@ -423,24 +422,25 @@ export function PageForm({
       {pluginContentEditor && (
         <div className="page-content-builder-notice" role="status">
           <div>
-            <strong>Редактор на съдържанието: {contentBuilderName}</strong>
-            <span>Секцията „Съдържание“ е скрита, защото редакторът на страницата е плъгинът „{contentBuilderName}“.</span>
+            <strong>{t("Content editor:")} {contentBuilderName}</strong>
+            <span>{t("The “Content” section is hidden because this page uses the “")}{contentBuilderName}“.</span>
           </div>
           <button type="button" onClick={() => setDetachDialogOpen(true)}>
-            Премахни връзката
+
+            {t("Remove link")}
           </button>
         </div>
       )}
       <form className="react-page-form" onSubmit={save}>
           {!pluginContentEditor && <CollapsibleSection
-            title="Съдържание"
+            title={t("Content")}
             icon={FileText}
             className="content-editor-section"
           >
             <div className="react-form-field">
               <Hint>
-                Тук редактирате основното съдържание, което се показва в страницата. Можете да
-                добавяте текст, изображения и активни контактни форми.
+
+                {t("Edit the main content shown on this page. You can add text, images, and active contact forms.")}
               </Hint>
               <RichTextEditor
                 value={content}
@@ -454,19 +454,19 @@ export function PageForm({
             </div>
           </CollapsibleSection>}
           <CollapsibleSection
-            title="Основна информация"
+            title={t("Basic information")}
             icon={FolderTree}
             storageKey="page-basic-information"
             className="page-editor-basic-panel page-editor-basic-panel--collapsible"
           >
             <div className="page-editor-basic-panel-body">
               <Hint>
-                Заглавието и URL адресът помагат на посетителите да разпознават страницата и да я
-                отварят на правилния адрес.
+
+                {t("The title and URL help visitors recognize the page and open it at the right address.")}
               </Hint>
               <div className="react-form-grid">
                 <label className="react-form-field">
-                  <span>Заглавие *</span>
+                  <span>{t("Title *")}</span>
                   <input
                     name="title"
                     value={title}
@@ -481,10 +481,10 @@ export function PageForm({
                     }}
                     required
                   />
-                  <small>Изберете ясно заглавие — то се вижда като име на страницата.</small>
+                  <small>{t("Choose a clear title. It appears as the page name.")}</small>
                 </label>
                 <label className="react-form-field">
-                  <span>URL адрес (slug) *</span>
+                  <span>{t("URL slug *")}</span>
                   <input
                     name="slug"
                     value={slug}
@@ -498,20 +498,20 @@ export function PageForm({
                     }}
                     required
                   />
-                  <small>Последната част от адреса трябва да е кратка и уникална.</small>
+                  <small>{t("The final part of the address should be short and unique.")}</small>
                 </label>
                 <div className="react-form-field">
-                  <span>Родителска страница</span>
+                  <span>{t("Parent page")}</span>
                   <DropdownMenu
-                    ariaLabel="Избор на родителска страница"
+                    ariaLabel={t("Choose parent page")}
                     triggerClassName="react-form-dropdown"
                     trigger={
                       <>
                         <span>
                           {parentId
                             ? (parents.find((item) => item.id === parentId)?.title ??
-                              "Избери страница")
-                            : "Няма родителска страница"}
+                              t("Choose page"))
+                            : t("No parent page")}
                         </span>
                         <DropdownChevron />
                       </>
@@ -524,7 +524,8 @@ export function PageForm({
                         changed?.()
                       }}
                     >
-                      Няма родителска страница
+
+                      {t("No parent page")}
                     </DropdownOption>
                     {parents.map((item) => (
                       <DropdownOption
@@ -539,7 +540,7 @@ export function PageForm({
                       </DropdownOption>
                     ))}
                   </DropdownMenu>
-                  <small>Родителската страница определя мястото ѝ в йерархията и адреса ѝ.</small>
+                  <small>{t("The parent page sets this page's place in the hierarchy and its address.")}</small>
                 </div>
               </div>
             </div>
@@ -547,18 +548,18 @@ export function PageForm({
           <ExtensionScope value={extensionScope}>
           <CollapsibleSection
             extensionPoint="page.editor.featured-image"
-            title="Основно изображение"
+            title={t("Featured image")}
             storageKey="page-featured-media"
             icon={FileText}
             className="page-featured-media-section"
           >
             <ImageField
-              label="Основно изображение"
+              label={t("Featured image")}
               value={featuredId}
               disabled={saving}
               width="20rem"
               fit="contain"
-              description="Темата може да използва това изображение като водещо за страницата."
+              description={t("The theme can use this image as the page's featured image.")}
               onChange={(id) => {
                 setFeaturedId(id)
                 changed?.()
@@ -569,7 +570,7 @@ export function PageForm({
             location="page.editor"
             context={panelContext}
             saves={saves}
-            hint="Тази секция е добавена от разширение и съдържа настройки за страницата."
+            hint={t("This section was added by an extension and contains page settings.")}
           />
           {Object.entries(groupedFields).map(([plugin, fields]) => (
             <CollapsibleSection
@@ -578,9 +579,10 @@ export function PageForm({
               icon={Puzzle}
             >
               <p className="react-plugin-provider">
-                Разширение {fields[0].plugin_name} · версия {fields[0].plugin_version}
+
+                {t("Extension")} {fields[0].plugin_name}  {t("· version")} {fields[0].plugin_version}
               </p>
-              <Hint>Тези полета се управляват от разширението и допълват настройките на страницата.</Hint>
+              <Hint>{t("These fields are managed by the extension and complement the page settings.")}</Hint>
               <div className="react-plugin-fields-inner">
                 {fields.map((field) => {
                   const current = pluginFields[field.plugin]?.[field.id] ?? field.default
@@ -595,7 +597,7 @@ export function PageForm({
                         />
                       ) : (
                         <label className="react-form-field">
-                          {field.label}
+                          {t(field.label)}
                           {field.type === "textarea" ? (
                             <Textarea
                               value={String(current ?? "")}
@@ -609,7 +611,7 @@ export function PageForm({
                               onChange={(event) => setPluginField(field, event.target.value)}
                             />
                           )}
-                          {field.hint && <small>{field.hint}</small>}
+                          {field.hint && <small>{t(field.hint)}</small>}
                         </label>
                       )}
                     </div>
@@ -620,21 +622,22 @@ export function PageForm({
           ))}
           <CollapsibleSection
             extensionPoint="page.editor.publishing"
-            title="Публикуване"
+            title={t("Publishing")}
             icon={Settings2}
           >
             <Hint>
-              Черновите страници не са видими за посетителите. Публикувайте страницата, когато е
-              готова.
+
+              {t("Draft pages are not visible to visitors. Publish the page when it is ready.")}
             </Hint>
             <label>
-              Статус
+
+              {t("Status")}
               <DropdownMenu
-                ariaLabel="Избор на статус"
+                ariaLabel={t("Choose status")}
                 triggerClassName="react-form-dropdown"
                 trigger={
                   <>
-                    <span>{status === "published" ? "Публикувана" : "Чернова"}</span>
+                    <span>{status === "published" ? t("Published") : t("Draft")}</span>
                     <DropdownChevron />
                   </>
                 }
@@ -646,7 +649,8 @@ export function PageForm({
                     changed?.()
                   }}
                 >
-                  Чернова
+
+                  {t("Draft")}
                 </DropdownOption>
                 <DropdownOption
                   selected={status === "published"}
@@ -655,7 +659,8 @@ export function PageForm({
                     changed?.()
                   }}
                 >
-                  Публикувана
+
+                  {t("Published")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
@@ -669,18 +674,19 @@ export function PageForm({
               type="submit"
               disabled={saving}
             >
-              {saving ? "Записване…" : "Запази страницата"}
+              {saving ? t("Saving record…") : t("Save page")}
             </LoadingButton>
             <button type="button" onClick={onBack}>
-              Отказ
+
+              {t("Cancel")}
             </button>
           </div>
         </form>
       <ConfirmDialog
         open={detachDialogOpen}
-        title="Премахване на връзката с редактора"
+        title={t("Remove editor link")}
         message={`Страницата ще спре да използва плъгина „${contentBuilderName ?? "текущия редактор"}“. HTML съдържанието ще остане запазено, секцията „Съдържание“ ще стане достъпна, а документът на плъгина няма да бъде изтрит.`}
-        confirmLabel="Премахни връзката"
+        confirmLabel={t("Remove link")}
         busy={detachingBuilder}
         onConfirm={() => void detachContentBuilder()}
         onCancel={() => setDetachDialogOpen(false)}

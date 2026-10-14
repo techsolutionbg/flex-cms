@@ -23,6 +23,7 @@ import { LoadingButton } from "./loading-button"
 import { AdminWorkspaceContext } from "./admin-workspace-context"
 import { adminUrl } from "@/lib/admin-routes"
 import { BrandLogo } from "./brand-logo"
+import { t } from "@/lib/admin-i18n"
 
 type SidebarItem = {
   label: string
@@ -133,6 +134,14 @@ export function AdminSidebar({
     query.addEventListener("change", update)
     return () => query.removeEventListener("change", update)
   }, [collapsed])
+  useEffect(() => {
+    if (!open) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", closeOnEscape)
+    return () => window.removeEventListener("keydown", closeOnEscape)
+  }, [open])
   const themeGroups = (themeNavigation?.groups ?? []).map((group) => ({
     id: group.id,
     label: group.label,
@@ -213,7 +222,7 @@ export function AdminSidebar({
           className={`sidebar-link-react${active ? " is-active" : ""}`}
           href={adminUrl(item.href)}
           aria-current={active ? "page" : undefined}
-          title={item.label}
+          title={t(item.label)}
           onClick={(event) => {
             if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
             event.preventDefault()
@@ -221,7 +230,7 @@ export function AdminSidebar({
           }}
         >
           <Icon className="sidebar-icon-react" aria-hidden="true" />
-          <span className="sidebar-label-react">{item.label}</span>
+          <span className="sidebar-label-react">{t(item.label)}</span>
         </a>
       </li>
     )
@@ -230,9 +239,9 @@ export function AdminSidebar({
   return (
     <>
       <button
-        className="sidebar-mobile-toggle"
+        className={`sidebar-mobile-toggle${open ? " is-open" : ""}`}
         type="button"
-        aria-label={open ? "Затвори страничната лента" : "Отвори страничната лента"}
+        aria-label={open ? t("Close sidebar") : t("Open sidebar")}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
@@ -243,19 +252,20 @@ export function AdminSidebar({
         <button
           className="sidebar-backdrop"
           type="button"
-          aria-label="Затвори страничната лента"
+          aria-label={t("Close sidebar")}
           onClick={() => setOpen(false)}
         />
       )}
 
       <aside
+        id="admin-sidebar"
         className={`admin-sidebar-react${open ? " is-open" : ""}${collapsed ? " is-collapsed" : ""}`}
       >
         <div className="sidebar-brand-react">
           <BrandLogo />
         </div>
 
-        <nav aria-label="Основна навигация">
+        <nav aria-label={t("Primary navigation")}>
           {visibleGroups.map((group) => {
             const expandable = group.id !== "overview" && group.id !== "account"
             const active = group.items.some((item) => itemActive(item, activeItem))
@@ -286,17 +296,18 @@ export function AdminSidebar({
             const looseItems = sections.length
               ? group.items.filter((item) => !sections.some((section) => section.id === item.section))
               : group.items
+            const showGroupLabel = group.id !== "overview" && group.id !== "account"
             return (
-            <div className="sidebar-group-react" key={group.label}>
+            <div className={`sidebar-group-react${showGroupLabel ? "" : " is-label-hidden"}`} key={group.label}>
               {expandable ? (
                 <button type="button" className={"sidebar-group-toggle-react" + (active ? " has-active-child" : "")}
-                  aria-expanded={expanded} aria-controls={"sidebar-submenu-" + group.id} title={group.label}
+                  aria-expanded={expanded} aria-controls={"sidebar-submenu-" + group.id} title={t(group.label)}
                   onClick={() => setExpandedGroups((current) => ({ ...current, [group.id]: !expanded }))}>
                   <GroupIcon className="sidebar-icon-react" aria-hidden="true" />
-                  <span className="sidebar-label-react">{group.label}</span>
+                  <span className="sidebar-label-react">{t(group.label)}</span>
                   <ChevronDown className={"sidebar-group-chevron" + (expanded ? " is-expanded" : "")} size={16} aria-hidden="true" />
                 </button>
-              ) : <p className="sidebar-group-label-react">{group.label}</p>}
+              ) : showGroupLabel ? <p className="sidebar-group-label-react">{t(group.label)}</p> : null}
               <div className={"sidebar-submenu-transition" + (!expandable || expanded ? " is-expanded" : "")}
                 aria-hidden={expandable && !expanded} inert={expandable && !expanded}>
               <ul id={"sidebar-submenu-" + group.id} className={expandable ? "sidebar-submenu-react" : undefined}>
@@ -316,7 +327,7 @@ export function AdminSidebar({
                         onClick={() => setExpandedGroups((current) => ({ ...current, [sectionKey]: !sectionExpanded }))}
                       >
                         <SectionIcon className="sidebar-icon-react" aria-hidden="true" />
-                        <span className="sidebar-label-react">{section.label}</span>
+                        <span className="sidebar-label-react">{t(section.label)}</span>
                         <ChevronDown className={"sidebar-group-chevron" + (sectionExpanded ? " is-expanded" : "")} size={16} aria-hidden="true" />
                       </button>
                       <div
@@ -345,7 +356,7 @@ export function AdminSidebar({
           loading={loggingOut}
           icon={<LogOut className="sidebar-icon-react" aria-hidden="true" />}
         >
-          <span>{loggingOut ? "Излизане…" : "Изход"}</span>
+          <span>{loggingOut ? t("Signing out…") : t("Log out")}</span>
         </LoadingButton>
       </aside>
     </>

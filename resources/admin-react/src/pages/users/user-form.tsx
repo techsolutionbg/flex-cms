@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
@@ -123,7 +124,7 @@ export function UserForm({
 
   return (
     <AdminShell
-      title={editing ? "Редактиране на потребител" : "Създаване на потребител"}
+      title={editing ? t("Edit user") : t("Create user")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Потребители"
@@ -131,7 +132,7 @@ export function UserForm({
     >
       <div className="react-page-heading">
         <div>
-          <h1>{editing ? "Редактиране на потребител" : "Създаване на потребител"}</h1>
+          <h1>{editing ? t("Edit user") : t("Create user")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[
@@ -145,21 +146,23 @@ export function UserForm({
         <form className="react-user-form" onSubmit={save}>
           <CollapsibleSection
             extensionPoint="user.editor.details"
-            title="Основна информация"
+            title={t("Basic information")}
             icon={UserRound}
             storageKey="user-form-details"
           >
             <div className="react-form-grid">
               <label className="react-form-field">
                 <span>
-                  Име <b>*</b>
+
+                  {t("Name")} <b>*</b>
                 </span>
                 <input value={name} onChange={(event) => setName(event.target.value)} required />
-                <small>Името, което ще се показва в административния панел.</small>
+                <small>{t("The name shown in the admin panel.")}</small>
               </label>
               <label className="react-form-field">
                 <span>
-                  Имейл <b>*</b>
+
+                  {t("Email")} <b>*</b>
                 </span>
                 <input
                   type="email"
@@ -167,16 +170,16 @@ export function UserForm({
                   onChange={(event) => setEmail(event.target.value)}
                   required
                 />
-                <small>Имейл адресът се използва за вход.</small>
+                <small>{t("Your email address is used to sign in.")}</small>
               </label>
               <label className="react-form-field">
-                <span>Роля</span>
+                <span>{t("Role")}</span>
                 <DropdownMenu
-                  ariaLabel="Избор на роля"
+                  ariaLabel={t("Choose role")}
                   triggerClassName="react-form-select"
                   trigger={
                     <>
-                      <span>{roleLabels[role]}</span>
+                      <span>{t(roleLabels[role])}</span>
                       <DropdownChevron />
                     </>
                   }
@@ -189,7 +192,8 @@ export function UserForm({
                       setRole("user")
                     }}
                   >
-                    Потребител
+
+                    {t("User")}
                   </DropdownOption>
                   <DropdownOption
                     selected={role === "editor"}
@@ -199,7 +203,8 @@ export function UserForm({
                       setRole("editor")
                     }}
                   >
-                    Редактор
+
+                    {t("Editor")}
                   </DropdownOption>
                   <DropdownOption
                     selected={role === "admin"}
@@ -209,7 +214,8 @@ export function UserForm({
                       setRole("admin")
                     }}
                   >
-                    Администратор
+
+                    {t("Administrator")}
                   </DropdownOption>
                   <DropdownOption
                     selected={role === "super_admin"}
@@ -219,18 +225,19 @@ export function UserForm({
                       setRole("super_admin")
                     }}
                   >
-                    Супер администратор
+
+                    {t("Super administrator")}
                   </DropdownOption>
                 </DropdownMenu>
               </label>
               <label className="react-form-field">
-                <span>Статус</span>
+                <span>{t("Status")}</span>
                 <DropdownMenu
-                  ariaLabel="Избор на статус"
+                  ariaLabel={t("Choose status")}
                   triggerClassName="react-form-select"
                   trigger={
                     <>
-                      <span>{status === "active" ? "Активен" : "Деактивиран"}</span>
+                      <span>{status === "active" ? t("Active user") : t("Deactivated")}</span>
                       <DropdownChevron />
                     </>
                   }
@@ -240,14 +247,16 @@ export function UserForm({
                     disabled={isSuperAdmin}
                     onClick={() => setStatus("active")}
                   >
-                    Активен
+
+                    {t("Active user")}
                   </DropdownOption>
                   <DropdownOption
                     selected={status === "disabled"}
                     disabled={isSuperAdmin}
                     onClick={() => setStatus("disabled")}
                   >
-                    Деактивиран
+
+                    {t("Deactivated")}
                   </DropdownOption>
                 </DropdownMenu>
               </label>
@@ -255,14 +264,14 @@ export function UserForm({
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="user.editor.password"
-            title={editing ? "Смяна на паролата" : "Парола"}
+            title={editing ? t("Change password") : t("Password")}
             icon={Shield}
             storageKey={editing ? "user-form-change-password" : "user-form-password"}
           >
             <div className="react-form-grid">
               <div className="react-form-field">
                 <label className="react-form-field-label" htmlFor="user-form-password">
-                  {editing ? "Нова парола" : "Парола"}
+                  {editing ? t("New password") : t("Password")}
                   {!editing && <b> *</b>}
                 </label>
                 <PasswordInput
@@ -273,7 +282,7 @@ export function UserForm({
                   onChange={(event) => setPassword(event.target.value)}
                   required={!editing}
                 />
-                <small>Паролата трябва да съдържа поне {minimumPassword} символа.</small>
+                <small>{t("Password must contain at least")} {minimumPassword}  {t("characters.")}</small>
                 <PasswordGenerator
                   length={Math.max(24, minimumPassword)}
                   disabled={saving}
@@ -285,7 +294,7 @@ export function UserForm({
               </div>
               <div className="react-form-field">
                 <label className="react-form-field-label" htmlFor="user-form-password-confirmation">
-                  {editing ? "Потвърждение на новата парола" : "Потвърждение на паролата"}
+                  {editing ? t("Confirm new password") : t("Confirm password label")}
                   {!editing && <b> *</b>}
                 </label>
                 <PasswordInput
@@ -302,7 +311,7 @@ export function UserForm({
           {!editing && (
             <CollapsibleSection
               extensionPoint="user.editor.confirmation"
-              title="Потвърждение на имейла"
+              title={t("Email verification")}
               icon={Mail}
               storageKey="user-form-confirmation"
             >
@@ -312,7 +321,7 @@ export function UserForm({
                   checked={sendConfirmation}
                   onChange={(event) => setSendConfirmation(event.target.checked)}
                 />
-                <span>Изпрати код за потвърждение на имейла</span>
+                <span>{t("Send email verification code")}</span>
               </label>
             </CollapsibleSection>
           )}
@@ -323,10 +332,11 @@ export function UserForm({
               type="submit"
               disabled={saving}
             >
-              {editing ? "Запази промените" : "Създай потребител"}
+              {editing ? t("Save changes") : t("Create user action")}
             </LoadingButton>
             <button type="button" onClick={onBack} disabled={saving}>
-              Отказ
+
+              {t("Cancel")}
             </button>
           </div>
         </form>

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState, type SyntheticEvent } from "react"
 import { ArrowLeft, LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -98,15 +99,15 @@ export function PasswordRecoveryPage({
           <div className="react-login-brand mx-auto w-52">
             <BrandLogo className="h-auto w-full" />
           </div>
-          <h1 className="mt-5 text-xl">Възстановяване на парола</h1>
+          <h1 className="mt-5 text-xl">{t("Password recovery")}</h1>
           <p className="react-login-description mt-3">
             {stage === "request"
-              ? "Въведете имейла на административния си профил."
+              ? t("Enter the email address for your admin account.")
               : stage === "verify"
                 ? `Въведете шестцифрения код, изпратен до ${email}. Валиден е 15 минути.`
                 : stage === "reset"
-                  ? "Задайте нова парола. Потвърждението е валидно 5 минути."
-                  : "Можете да влезете с новата си парола."}
+                  ? t("Set a new password. The code is valid for 5 minutes.")
+                  : t("You can now sign in with your new password.")}
           </p>
         </div>
         {error && (
@@ -123,7 +124,7 @@ export function PasswordRecoveryPage({
           <form className="mt-7 space-y-5" onSubmit={submit}>
             {stage === "request" && (
               <div className="space-y-2">
-                <Label htmlFor="recovery-email">Имейл</Label>
+                <Label htmlFor="recovery-email">{t("Email")}</Label>
                 <Input
                   id="recovery-email"
                   type="email"
@@ -138,7 +139,7 @@ export function PasswordRecoveryPage({
             )}
             {stage === "verify" && (
               <div className="space-y-2">
-                <Label htmlFor="recovery-code">Код за потвърждение</Label>
+                <Label htmlFor="recovery-code">{t("Verification code")}</Label>
                 <Input
                   id="recovery-code"
                   inputMode="numeric"
@@ -155,7 +156,7 @@ export function PasswordRecoveryPage({
             {stage === "reset" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="recovery-password">Нова парола</Label>
+                  <Label htmlFor="recovery-password">{t("New password")}</Label>
                   <PasswordInput
                     id="recovery-password"
                     variant="ui"
@@ -167,7 +168,7 @@ export function PasswordRecoveryPage({
                     disabled={busy}
                     onChange={(event) => setPassword(event.target.value)}
                   />
-                  <small className="react-field-hint">Поне 12 знака.</small>
+                  <small className="react-field-hint">{t("At least 12 characters.")}</small>
                   <PasswordGenerator
                     disabled={busy}
                     onGenerate={(generated) => {
@@ -177,7 +178,7 @@ export function PasswordRecoveryPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="recovery-confirmation">Повторете паролата</Label>
+                  <Label htmlFor="recovery-confirmation">{t("Confirm password")}</Label>
                   <PasswordInput
                     id="recovery-confirmation"
                     variant="ui"
@@ -196,14 +197,15 @@ export function PasswordRecoveryPage({
               {busy ? (
                 <>
                   <LoaderCircle className="mr-2 size-4 animate-spin" />
-                  Изпращане…
+
+                  {t("Sending…")}
                 </>
               ) : stage === "request" ? (
-                "Изпрати код"
+                t("Send code")
               ) : stage === "verify" ? (
-                "Потвърди кода"
+                t("Verify code")
               ) : (
-                "Запази новата парола"
+                t("Save new password")
               )}
             </Button>
           </form>
@@ -217,7 +219,7 @@ export function PasswordRecoveryPage({
             loading={busy}
             onClick={() => void send("request")}
           >
-            {seconds > 0 ? `Нов код след ${seconds} сек.` : "Изпрати нов код"}
+            {seconds > 0 ? `Нов код след ${seconds} сек.` : t("Send a new code")}
           </Button>
         )}
         {stage === "reset" && (
@@ -234,7 +236,8 @@ export function PasswordRecoveryPage({
               setError("")
             }}
           >
-            Заяви нов код
+
+            {t("Request a new code")}
           </Button>
         )}
         <Button
@@ -245,7 +248,8 @@ export function PasswordRecoveryPage({
           onClick={onBack}
         >
           <ArrowLeft size={17} />
-          Назад към входа
+
+          {t("Back to sign in")}
         </Button>
       </Card>
     </main>

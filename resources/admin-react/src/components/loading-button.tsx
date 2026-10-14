@@ -1,5 +1,18 @@
 import { LoaderCircle } from "lucide-react"
-import type { ButtonHTMLAttributes, ReactNode } from "react"
+import { Children, cloneElement, isValidElement, type ButtonHTMLAttributes, type ReactNode } from "react"
+import { t } from "@/lib/admin-i18n"
+
+function localizeButtonContent(children: ReactNode): ReactNode {
+  return Children.map(children, (child) => {
+    if (typeof child === "string") return t(child)
+    if (isValidElement<{ children?: ReactNode }>(child) && child.props.children !== undefined) {
+      return cloneElement(child, {
+        children: localizeButtonContent(child.props.children),
+      })
+    }
+    return child
+  })
+}
 
 type LoadingButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean
@@ -23,7 +36,7 @@ export function LoadingButton({
       aria-busy={loading}
     >
       {loading ? <LoaderCircle className="react-button-spinner" aria-hidden="true" /> : icon}
-      {children}
+      {localizeButtonContent(children)}
     </button>
   )
 }

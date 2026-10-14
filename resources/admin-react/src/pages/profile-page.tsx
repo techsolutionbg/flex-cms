@@ -25,6 +25,13 @@ import {
 } from "@/lib/admin-theme"
 import type { UserRecord } from "@/lib/admin-types"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import {
+  getAdminLocale,
+  getAdminLocales,
+  setAdminLocale,
+  t,
+  useAdminLocale,
+} from "@/lib/admin-i18n"
 
 const themeLabels: Record<AdminThemeMode, string> = {
   system: "Системна",
@@ -72,6 +79,8 @@ export function ProfilePage({
     () => getPersonalTheme() ?? effectiveAdminTheme(),
   )
   const [font, setFont] = useState<AdminFontChoice>(() => getPersonalFont() ?? "inter")
+  const activeLocale = useAdminLocale()
+  const [locale, setLocale] = useState(() => getAdminLocale())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   // Plugins add sections and fields here through extension points; they save right after this record.
@@ -99,6 +108,9 @@ export function ProfilePage({
           setUser(body.user)
           setName(body.user.name)
           setEmail(body.user.email)
+          const savedLocale = body.user.admin_locale ?? "en"
+          setLocale(savedLocale)
+          setAdminLocale(savedLocale)
         }
       })
       .catch((reason) => {
@@ -153,6 +165,7 @@ export function ProfilePage({
           password,
           password_confirmation: passwordConfirmation,
           current_password: currentPassword,
+          admin_locale: locale,
         }),
       })
       const body = (await response.json().catch(() => ({}))) as {
@@ -162,6 +175,8 @@ export function ProfilePage({
       if (!response.ok || !body.user)
         throw new Error(body.error?.message ?? "Профилът не можа да бъде запазен.")
       setUser(body.user)
+      setLocale(body.user.admin_locale ?? locale)
+      setAdminLocale(body.user.admin_locale ?? locale)
       setName(body.user.name)
       setEmail(body.user.email)
       setPassword("")
@@ -181,7 +196,7 @@ export function ProfilePage({
 
   return (
     <AdminShell
-      title="Профил"
+      title={t("Profile")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Профил"
@@ -189,8 +204,8 @@ export function ProfilePage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Настройки на профила</h1>
-          <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Профил" }]} />
+          <h1>{t("Profile settings")}</h1>
+          <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: t("Profile") }]} />
         </div>
       </div>
       {loading ? (
@@ -200,28 +215,28 @@ export function ProfilePage({
       ) : (
         user && (
           <ExtensionScope value={extensionScope}>
-            <form className="react-user-form" onSubmit={save}>
+            <form className="react-user-form" onSubmit={save} data-admin-locale={activeLocale}>
               <CollapsibleSection
                 extensionPoint="profile.information"
-                title="Основна информация"
+                title={t("Basic information")}
                 icon={UserRound}
                 storageKey="profile-information"
               >
                 <div className="react-form-grid">
                   <label className="react-form-field">
                     <span>
-                      Име <b>*</b>
+                      {t("Name")} <b>*</b>
                     </span>
                     <input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       required
                     />
-                    <small>Името, което ще се показва в административния панел.</small>
+                    <small>{t("The name shown in the admin panel.")}</small>
                   </label>
                   <label className="react-form-field">
                     <span>
-                      Имейл <b>*</b>
+                      {t("Email")} <b>*</b>
                     </span>
                     <input
                       type="email"
@@ -229,20 +244,20 @@ export function ProfilePage({
                       onChange={(event) => setEmail(event.target.value)}
                       required
                     />
-                    <small>Имейл адресът се използва за вход.</small>
+                    <small>{t("Your email address is used to sign in.")}</small>
                   </label>
                 </div>
               </CollapsibleSection>
               <CollapsibleSection
                 extensionPoint="profile.security"
-                title="Сигурност"
+                title={t("Security")}
                 icon={Shield}
                 storageKey="profile-security"
               >
                 <div className="react-form-grid">
                   <div className="react-form-field">
                     <label className="react-form-field-label" htmlFor="profile-new-password">
-                      Нова парола
+                      {t("New password")}
                     </label>
                     <PasswordInput
                       variant="admin"
@@ -252,7 +267,7 @@ export function ProfilePage({
                       onChange={(event) => setPassword(event.target.value)}
                     />
                     <small>
-                      Оставете празно, ако не искате да променяте паролата. Минимум 12 символа.
+                      {t("Leave blank to keep your current password. Minimum 12 characters.")}
                     </small>
                     <PasswordGenerator
                       onGenerate={(generated) => {
@@ -263,7 +278,7 @@ export function ProfilePage({
                   </div>
                   <div className="react-form-field">
                     <label className="react-form-field-label" htmlFor="profile-confirm-password">
-                      Потвърждение на новата парола
+                      {t("Confirm new password")}
                     </label>
                     <PasswordInput
                       variant="admin"
@@ -275,7 +290,7 @@ export function ProfilePage({
                   </div>
                   <div className="react-form-field">
                     <label className="react-form-field-label" htmlFor="profile-current-password">
-                      Текуща парола
+                      {t("Current password")}
                     </label>
                     <PasswordInput
                       variant="admin"
@@ -284,19 +299,50 @@ export function ProfilePage({
                       value={currentPassword}
                       onChange={(event) => setCurrentPassword(event.target.value)}
                     />
-                    <small>Не е задължителна за супер администратор.</small>
+                    <small>{t("Not required for a super administrator.")}</small>
                   </div>
                 </div>
               </CollapsibleSection>
               <CollapsibleSection
                 extensionPoint="profile.appearance"
-                title="Външен вид"
+                title={t("Appearance")}
                 icon={Palette}
                 storageKey="profile-appearance"
               >
                 <div className="profile-theme-picker">
-                  <p className="profile-theme-picker-label">Тема на панела</p>
-                  <div className="profile-theme-options" role="group" aria-label="Тема на панела">
+                  <div className="profile-font-picker">
+                    <label className="react-form-field-label" id="profile-locale-label">
+                      {t("Admin panel language")}
+                    </label>
+                    <DropdownMenu
+                      ariaLabel={t("Choose panel language")}
+                      triggerClassName="react-form-select"
+                      trigger={
+                        <>
+                          <span>{getAdminLocales().find((item) => item.code === locale)?.label ?? locale}</span>
+                          <DropdownChevron />
+                        </>
+                      }
+                    >
+                      {getAdminLocales().map((item) => (
+                        <DropdownOption
+                          key={item.code}
+                          selected={locale === item.code}
+                          onClick={() => {
+                            setLocale(item.code)
+                            setAdminLocale(item.code)
+                          }}
+                        >
+                          {item.label}
+                        </DropdownOption>
+                      ))}
+                    </DropdownMenu>
+                    <small>
+                      {t("This language applies only to the admin panel.")}
+                    </small>
+                  </div>
+                  <p className="profile-theme-picker-label">{t("Panel theme")}</p>
+                  <div className="profile-theme-options" role="group" aria-label={t("Panel theme")}>
                     {(Object.keys(themeLabels) as AdminThemeMode[]).map((value) => (
                       <button
                         key={value}
@@ -315,9 +361,9 @@ export function ProfilePage({
                             <i />
                           </span>
                         </span>
-                        <span className="profile-theme-card-name">{themeLabels[value]}</span>
+                        <span className="profile-theme-card-name">{t(themeLabels[value])}</span>
                         {theme === value && (
-                          <span className="profile-theme-selected" aria-label="Избрана тема">
+                          <span className="profile-theme-selected" aria-label={t("Selected theme")}>
                             <Check size={14} aria-hidden="true" />
                           </span>
                         )}
@@ -325,21 +371,19 @@ export function ProfilePage({
                     ))}
                   </div>
                   <small>
-                    Вашият избор се пази на това устройство и има предимство пред темата от
-                    Настройки → Административен панел. Системната тема следва операционната
-                    система.
+                      {t("Your choice is saved on this device and takes precedence over the theme in Settings → Admin panel. System theme follows your operating system.")}
                   </small>
                   <div className="profile-font-picker">
                     <label className="react-form-field-label" id="profile-font-label">
-                      Шрифт на панела
+                      {t("Panel font")}
                     </label>
                     <DropdownMenu
-                      ariaLabel="Избор на шрифт на панела"
+                      ariaLabel={t("Choose panel font")}
                       triggerClassName="react-form-select"
                       trigger={
                         <>
                           <span style={{ fontFamily: getAdminFontFamily(font) }}>
-                            {fontLabels[font]}
+                            {t(fontLabels[font])}
                           </span>
                           <DropdownChevron />
                         </>
@@ -352,7 +396,7 @@ export function ProfilePage({
                           onClick={() => changeFont(value)}
                         >
                           <span style={{ fontFamily: getAdminFontFamily(value) }}>
-                            {fontLabels[value]}
+                            {t(fontLabels[value])}
                           </span>
                         </DropdownOption>
                       ))}
@@ -362,7 +406,7 @@ export function ProfilePage({
                       style={{ fontFamily: getAdminFontFamily(font) }}
                       aria-live="polite"
                     >
-                      Пример: Flex CMS — Аа Bb 123
+                      {t("Preview: Flex CMS — Aa Bb 123")}
                     </span>
                   </div>
                 </div>
@@ -374,7 +418,8 @@ export function ProfilePage({
                   type="submit"
                   disabled={saving}
                 >
-                  Запази промените
+
+                  {t("Save changes")}
                 </LoadingButton>
               </div>
             </form>

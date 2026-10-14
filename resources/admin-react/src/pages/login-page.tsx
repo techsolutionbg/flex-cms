@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useState, type SyntheticEvent } from "react"
 import { ArrowRight, CircleAlert, LoaderCircle } from "lucide-react"
 import { toast } from "sonner"
@@ -66,7 +67,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
           <div className="react-login-brand mx-auto w-52">
             <BrandLogo className="h-auto w-full" />
           </div>
-          <p className="react-login-description mt-5">Влезте, за да управлявате сайта.</p>
+          <p className="react-login-description mt-5">{t("Sign in to manage your site.")}</p>
         </div>
         {error && (
           <div
@@ -79,7 +80,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
         )}
         <form className="mt-7 space-y-5" onSubmit={submit}>
           <div className="space-y-2">
-            <Label htmlFor="email">Имейл</Label>
+            <Label htmlFor="email">{t("Email")}</Label>
             <Input
               id="email"
               name="email"
@@ -92,7 +93,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Парола</Label>
+            <Label htmlFor="password">{t("Password")}</Label>
             <PasswordInput
               id="password"
               variant="ui"
@@ -108,11 +109,13 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
             {submitting ? (
               <>
                 <LoaderCircle className="mr-2 size-4 animate-spin" />
-                Проверка…
+
+                {t("Checking…")}
               </>
             ) : (
               <>
-                Вход <ArrowRight className="ml-2 size-4" />
+
+                {t("Sign in")} <ArrowRight className="ml-2 size-4" />
               </>
             )}
           </Button>
@@ -127,7 +130,8 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
             setRecovering(true)
           }}
         >
-          Забравена парола?
+
+          {t("Forgot password?")}
         </Button>
       </Card>
     </main>

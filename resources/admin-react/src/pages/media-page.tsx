@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useMemo, useState } from "react"
@@ -94,13 +95,13 @@ export function MediaPage({
       onLogout={onLogout}
       onNavigate={onNavigate}
       loggingOut={loggingOut}
-      title="Медийна библиотека"
+      title={t("Media library")}
       activeItem="Медийна библиотека"
     >
       <div className="media-page-content">
         <div className="react-page-heading">
           <div>
-            <h1>{id ? "Детайли на файл" : "Медийна библиотека"}</h1>
+            <h1>{id ? t("File details") : t("Media library")}</h1>
             <Breadcrumbs
               onHomeClick={() => onNavigate("Табло")}
               items={
@@ -115,7 +116,7 @@ export function MediaPage({
           </div>
           {!id && uploadIndex?.permissions.upload && (
             <Button variant="secondary" type="button" onClick={() => setUploadOpen(true)}>
-              <Upload size={18} /> Качи файлове
+              <Upload size={18} />  {t("Choose files to upload")}
             </Button>
           )}
         </div>
@@ -170,7 +171,7 @@ export function MediaPage({
             >
               <CollapsibleSection
                 extensionPoint="media.editor.preview"
-                title="Преглед"
+                title={t("Preview")}
                 icon={FileImage}
               >
                 <div className="media-detail-preview">
@@ -182,30 +183,31 @@ export function MediaPage({
                     <audio controls preload="metadata" src={record.url} />
                   ) : (
                     <a href={record.url} target="_blank" rel="noopener noreferrer">
-                      Отвори PDF файла
+
+                      {t("Open PDF file")}
                     </a>
                   )}
                 </div>
               </CollapsibleSection>
               <CollapsibleSection
                 extensionPoint="media.editor.file"
-                title="Информация за файла"
+                title={t("File information")}
                 icon={Info}
               >
                 <div className="media-file-information">
                   <dl className="media-technical-info">
-                    <dt>Оригинално име</dt>
+                    <dt>{t("Original name")}</dt>
                     <dd>{record.original_name}</dd>
-                    <dt>Тип и размер</dt>
+                    <dt>{t("Type and size")}</dt>
                     <dd>
                       {record.mime} · {mediaSize(record.size)}
                       {record.width ? ` · ${record.width} × ${record.height}` : ""}
                     </dd>
-                    <dt>Качен на</dt>
+                    <dt>{t("Uploaded on")}</dt>
                     <dd>
                       <DateTime value={record.created_at} />
                     </dd>
-                    <dt>Качил</dt>
+                    <dt>{t("Uploaded by")}</dt>
                     <dd>
                       {record.uploader ? (
                         <a
@@ -215,19 +217,19 @@ export function MediaPage({
                           {record.uploader.email}
                         </a>
                       ) : (
-                        "Потребителят вече не е наличен."
+                        t("The user is no longer available.")
                       )}
                     </dd>
-                    <dt>Използване в страници</dt>
+                    <dt>{t("Usage on pages")}</dt>
                     <dd>
                       {usage.length
                         ? usage.map((page) => page.title).join(", ")
-                        : "Не са намерени връзки в съдържанието."}
+                        : t("No references were found in the content.")}
                     </dd>
                   </dl>
                   <p className="react-field-hint">
-                    Показани са известните връзки в страниците. Външни сайтове и ръчни връзки в теми
-                    може също да използват файла.
+
+                    {t("Known page references are shown here. External sites and manual links in themes may also use this file.")}
                   </p>
                   <div className="react-form-actions">
                     <button
@@ -235,10 +237,12 @@ export function MediaPage({
                       type="button"
                       onClick={() => openMediaInNewWindow(record)}
                     >
-                      Преглед в нов прозорец
+
+                      {t("Open in a new window")}
                     </button>
                     <a className="react-secondary-button" href={mediaDownloadUrl(record.url)}>
-                      Изтегли оригинала
+
+                      {t("Download original")}
                     </a>
                     <button
                       className="react-secondary-button"
@@ -250,18 +254,19 @@ export function MediaPage({
                           )
                           setSaved(true)
                         } catch {
-                          setFailure("Адресът не може да бъде копиран автоматично.")
+                          setFailure(t("The address could not be copied automatically."))
                         }
                       }}
                     >
-                      Копирай адреса
+
+                      {t("Copy address")}
                     </button>
                   </div>
                 </div>
               </CollapsibleSection>
               <CollapsibleSection
                 extensionPoint="media.editor.metadata"
-                title="Метаданни"
+                title={t("Metadata")}
                 icon={FileImage}
               >
                 <div className="react-form-grid">
@@ -270,10 +275,10 @@ export function MediaPage({
                       <label htmlFor={`media-${id}-${field}`}>
                         {
                           {
-                            title: "Заглавие",
-                            alt: "Алтернативен текст",
-                            caption: "Надпис",
-                            description: "Описание",
+                            title: t("Title"),
+                            alt: t("Alternative text"),
+                            caption: t("Caption"),
+                            description: t("Description"),
                           }[field]
                         }
                       </label>
@@ -306,8 +311,8 @@ export function MediaPage({
                         {
                           {
                             title: "Име за намиране на файла в библиотеката.",
-                            alt: "Кратко описание на изображението за достъпност.",
-                            caption: "Надпис, който може да се показва под медията.",
+                            alt: t("Brief description of the image for accessibility."),
+                            caption: t("Caption that can be displayed below the media."),
                             description: "Допълнителна информация за файла.",
                           }[field]
                         }
@@ -316,7 +321,7 @@ export function MediaPage({
                   ))}
                 </div>
               </CollapsibleSection>
-              {saved && <p role="status">Готово.</p>}
+              {saved && <p role="status">{t("Done.")}</p>}
               <div className="react-form-actions">
                 <LoadingButton
                   loading={busy}
@@ -324,10 +329,11 @@ export function MediaPage({
                   type="submit"
                   disabled={busy || !canEdit || !!record.deleted_at}
                 >
-                  {busy ? "Записване…" : "Запази"}
+                  {busy ? t("Saving record…") : t("Save")}
                 </LoadingButton>
                 <button className="react-secondary-button" type="button" onClick={onBack}>
-                  Към библиотеката
+
+                  {t("Back to library")}
                 </button>
               </div>
             </form>

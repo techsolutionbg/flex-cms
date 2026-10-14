@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
@@ -264,7 +265,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
       key: "role",
       label: "Роля",
       sortable: true,
-      render: (user) => roleLabels[user.role] ?? user.role,
+      render: (user) => roleLabels[user.role] ? t(roleLabels[user.role]) : user.role,
     },
     {
       key: "status",
@@ -284,7 +285,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
       label: "Действия",
       render: (user) => (
         <TableActionsMenu>
-          <DropdownOption onClick={() => onEdit(user)}>Редактирай</DropdownOption>
+          <DropdownOption onClick={() => onEdit(user)}>{t("Edit")}</DropdownOption>
           {view === "active" ? (
             <>
               {!["admin", "super_admin"].includes(user.role) && (
@@ -293,16 +294,17 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                     void request(user, "POST", "/trash", "Потребителят е преместен в кошчето.")
                   }
                 >
-                  Премести в кошчето
+
+                  {t("Move item to trash")}
                 </DropdownOption>
               )}
               {user.role !== "super_admin" && (
                 <DropdownOption onClick={() => void updateStatus(user)}>
                   {busyId === user.id
-                    ? "Изчакване…"
+                    ? t("Waiting…")
                     : user.status === "active"
-                      ? "Деактивирай"
-                      : "Активирай"}
+                      ? t("Deactivate")
+                      : t("Activate")}
                 </DropdownOption>
               )}
             </>
@@ -313,7 +315,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                   void request(user, "POST", "/restore", "Потребителят е възстановен.")
                 }
               >
-                Възстанови
+
+                {t("Restore")}
               </DropdownOption>
               <DropdownOption
                 danger
@@ -321,7 +324,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                   void request(user, "DELETE", "/force", "Потребителят е изтрит завинаги.")
                 }
               >
-                Изтрий завинаги
+
+                {t("Delete forever")}
               </DropdownOption>
             </>
           )}
@@ -332,7 +336,7 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
 
   return (
     <AdminShell
-      title={view === "trash" ? "Кошче за потребители" : "Потребители"}
+      title={view === "trash" ? t("User trash") : t("Users")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Потребители"
@@ -340,14 +344,15 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
     >
       <div className="react-page-heading">
         <div>
-          <h1>{view === "trash" ? "Кошче за потребители" : "Потребители"}</h1>
+          <h1>{view === "trash" ? t("User trash") : t("Users")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[{ label: view === "trash" ? "Кошче за потребители" : "Потребители" }]}
           />
         </div>
         <button type="button" onClick={onCreate} disabled={view === "trash"}>
-          Нов потребител
+
+          {t("New user")}
         </button>
       </div>
       <DataTable
@@ -363,14 +368,15 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
         bulkActions={
           view === "active" && (
             <>
-              <strong>{selectedIds.size} избрани</strong>
+              <strong>{selectedIds.size}  {t("Selected")}</strong>
               <LoadingButton
                 type="button"
                 loading={bulkAction === "active"}
                 disabled={selectedIds.size === 0 || bulkAction !== null}
                 onClick={() => void applyBulkAction("active")}
               >
-                Активирай
+
+                {t("Activate")}
               </LoadingButton>
               <LoadingButton
                 type="button"
@@ -378,7 +384,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                 disabled={selectedIds.size === 0 || bulkAction !== null}
                 onClick={() => void applyBulkAction("disabled")}
               >
-                Деактивирай
+
+                {t("Deactivate")}
               </LoadingButton>
               <LoadingButton
                 type="button"
@@ -386,7 +393,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                 disabled={selectedIds.size === 0 || bulkAction !== null}
                 onClick={() => void applyBulkAction("trash")}
               >
-                Премести в кошчето
+
+                {t("Move item to trash")}
               </LoadingButton>
             </>
           )
@@ -394,21 +402,21 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
         toolbar={
           <>
             <label className="react-filter-field">
-              <span>Търсене</span>
+              <span>{t("Search")}</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Име или имейл"
+                placeholder={t("Name or email")}
               />
             </label>
             <label className="react-filter-field">
-              <span>Роля</span>
+              <span>{t("Role")}</span>
               <DropdownMenu
-                ariaLabel="Избор на роля"
+                ariaLabel={t("Choose role")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
-                    <span>{roleFilter === "all" ? "Всички роли" : roleLabels[roleFilter]}</span>
+                    <span>{roleFilter === "all" ? t("All roles") : t(roleLabels[roleFilter])}</span>
                     <DropdownChevron />
                   </>
                 }
@@ -417,7 +425,8 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                   selected={roleFilter === "all"}
                   onClick={() => setRoleFilter("all")}
                 >
-                  Всички роли
+
+                  {t("All roles")}
                 </DropdownOption>
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <DropdownOption
@@ -425,20 +434,20 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                     selected={roleFilter === value}
                     onClick={() => setRoleFilter(value)}
                   >
-                    {label}
+                    {t(label)}
                   </DropdownOption>
                 ))}
               </DropdownMenu>
             </label>
             <label className="react-filter-field">
-              <span>Статус</span>
+              <span>{t("Status")}</span>
               <DropdownMenu
-                ariaLabel="Избор на статус"
+                ariaLabel={t("Choose status")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
                     <span>
-                      {statusFilter === "all" ? "Всички статуси" : userStatusLabels[statusFilter]}
+                      {statusFilter === "all" ? t("All statuses") : userStatusLabels[statusFilter]}
                     </span>
                     <DropdownChevron />
                   </>
@@ -448,39 +457,44 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
                   selected={statusFilter === "all"}
                   onClick={() => setStatusFilter("all")}
                 >
-                  Всички статуси
+
+                  {t("All statuses")}
                 </DropdownOption>
                 <DropdownOption
                   selected={statusFilter === "active"}
                   onClick={() => setStatusFilter("active")}
                 >
-                  Активни
+
+                  {t("Active items")}
                 </DropdownOption>
                 <DropdownOption
                   selected={statusFilter === "disabled"}
                   onClick={() => setStatusFilter("disabled")}
                 >
-                  Деактивирани
+
+                  {t("Deactivated users")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
             <label className="react-filter-field">
-              <span>Изглед</span>
+              <span>{t("View")}</span>
               <DropdownMenu
-                ariaLabel="Избор на изглед"
+                ariaLabel={t("Choose view")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
-                    <span>{view === "trash" ? "Кошче" : "Активни потребители"}</span>
+                    <span>{view === "trash" ? t("Trash") : t("Active users")}</span>
                     <DropdownChevron />
                   </>
                 }
               >
                 <DropdownOption selected={view === "active"} onClick={() => setView("active")}>
-                  Активни потребители
+
+                  {t("Active users")}
                 </DropdownOption>
                 <DropdownOption selected={view === "trash"} onClick={() => setView("trash")}>
-                  Кошче
+
+                  {t("Trash")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
@@ -490,10 +504,11 @@ export function UsersPage({ onLogout, onNavigate, onCreate, onEdit, loggingOut }
               onClick={clearFilters}
               disabled={activeFilterCount === 0}
             >
-              Изчисти филтрите
+
+              {t("Clear filters")}
             </button>
             <span className="react-filter-count">
-              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}
+              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
             </span>
           </>
         }

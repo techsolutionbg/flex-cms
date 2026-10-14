@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { LoadingButton } from "@/components/loading-button"
 import { AlertTriangle, X } from "lucide-react"
 import { createPortal } from "react-dom"
@@ -53,7 +54,7 @@ export function ConfirmDialog({
         <button
           className="react-dialog-close"
           type="button"
-          aria-label="Затвори"
+          aria-label={t("Close")}
           onClick={onCancel}
           disabled={busy}
         >
@@ -62,11 +63,11 @@ export function ConfirmDialog({
         <div className={`react-dialog-icon${danger ? " is-danger" : ""}`}>
           <AlertTriangle aria-hidden="true" />
         </div>
-        <h2 id="confirm-dialog-title">{title}</h2>
-        <p>{message}</p>
+        <h2 id="confirm-dialog-title">{t(title)}</h2>
+        <p>{t(message)}</p>
         <div className="react-dialog-actions">
           <button type="button" className="react-dialog-cancel" onClick={onCancel} disabled={busy}>
-            {cancelLabel}
+            {t(cancelLabel)}
           </button>
           <LoadingButton
             type="button"
@@ -75,7 +76,7 @@ export function ConfirmDialog({
             disabled={busy}
             loading={busy}
           >
-            {confirmLabel}
+            {t(confirmLabel)}
           </LoadingButton>
         </div>
       </section>

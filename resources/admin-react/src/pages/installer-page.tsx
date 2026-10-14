@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState, type FormEvent } from "react"
 import {
   ChevronRight,
@@ -140,10 +141,10 @@ export function InstallerPage() {
         </header>
         <div className="installer-react-intro">
           <span className="installer-react-kicker">Flex CMS</span>
-          <h1>Настройте своя сайт</h1>
+          <h1>{t("Set up your site")}</h1>
           <p>
-            Конфигурирайте основните настройки, свържете базата данни и създайте първия
-            администратор.
+
+            {t("Configure the basic settings, connect the database, and create the first administrator.")}
           </p>
         </div>
         {error && (
@@ -155,11 +156,12 @@ export function InstallerPage() {
         {completed && (
           <div className="installer-react-success" role="status">
             <LoaderCircle className="size-5 animate-spin" />
-            Инсталацията приключи. Подготвям административния панел…
+
+            {t("Installation is complete. Preparing the admin panel…")}
           </div>
         )}
         {!payload && !error ? (
-          <div className="installer-react-empty">Няма данни за инсталационната форма.</div>
+          <div className="installer-react-empty">{t("No installation form data is available.")}</div>
         ) : (
           payload && (
             <form className="installer-react-form" onSubmit={submit}>
@@ -168,20 +170,20 @@ export function InstallerPage() {
                 return (
                   <CollapsibleSection
                     key={section.title}
-                    title={section.title}
+                    title={t(section.title)}
                     icon={Icon}
                     storageKey={`installer-${section.title}`}
                   >
-                    <div className="installer-react-section-description">{section.description}</div>
+                    <div className="installer-react-section-description">{t(section.description)}</div>
                     <div className="installer-react-fields">
                       {section.fields.map((field) => (
                         <div className="installer-react-field" key={field.name}>
-                          <Label htmlFor={`installer-${field.name}`}>{field.label}</Label>
+                          <Label htmlFor={`installer-${field.name}`}>{t(field.label)}</Label>
                           <Input
                             id={`installer-${field.name}`}
                             name={field.name}
                             type={field.type}
-                            placeholder={field.placeholder}
+                            placeholder={t(field.placeholder)}
                             value={values[field.name] ?? ""}
                             onChange={(event) => updateValue(field.name, event.target.value)}
                             disabled={submitting || completed}
@@ -189,8 +191,8 @@ export function InstallerPage() {
                           />
                           {field.name === "admin_password" && payload.generated_password && (
                             <small className="installer-react-generated-password">
-                              Генерирана парола: <code>{payload.generated_password}</code>. Сменете
-                              я преди използване в реална среда.
+
+                              {t("Generated password:")} <code>{payload.generated_password}</code>{t(". Change it before using this site in production.")}
                             </small>
                           )}
                         </div>
@@ -206,7 +208,7 @@ export function InstallerPage() {
                   loading={submitting}
                   disabled={completed}
                 >
-                  {submitting ? "Инсталиране…" : "Инсталирай Flex CMS"}
+                  {submitting ? t("Installing…") : t("Install Flex CMS")}
                   <ChevronRight className="size-4" />
                 </LoadingButton>
               </div>

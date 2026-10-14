@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { CodeEditor } from "./code-editor"
 
 export function ManifestEditor({ value }: { value: Record<string, unknown> }) {
@@ -5,7 +6,7 @@ export function ManifestEditor({ value }: { value: Record<string, unknown> }) {
     <CodeEditor
       value={JSON.stringify(value, null, 2)}
       language="json"
-      copyLabel="Копирай manifest"
+      copyLabel={t("Copy manifest")}
     />
   )
 }

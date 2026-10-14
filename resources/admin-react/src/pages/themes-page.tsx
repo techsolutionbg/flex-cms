@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
@@ -119,7 +120,7 @@ export function ThemesPage({
 
   return (
     <AdminShell
-      title="Теми"
+      title={t("Themes")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Теми"
@@ -127,7 +128,7 @@ export function ThemesPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Теми ({themes.length})</h1>
+          <h1>{t("Themes (")}{themes.length})</h1>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} />
         </div>
         <button
@@ -136,14 +137,15 @@ export function ThemesPage({
             onCatalog ? onCatalog() : window.location.assign(adminUrl("/theme-store"))
           }
         >
-          Каталог с теми
+
+          {t("Theme catalog")}
         </button>
       </div>
       <section className="themes-section">
         {loading ? (
-          <p>Зареждане…</p>
+          <p>{t("Loading…")}</p>
         ) : themes.length === 0 ? (
-          <p>Няма открити теми.</p>
+          <p>{t("No themes found.")}</p>
         ) : (
           <div className="theme-grid">
             {themes.map((theme) => {
@@ -160,7 +162,7 @@ export function ThemesPage({
                         event.currentTarget.src = "/theme-placeholder.png"
                       }}
                     />
-                    {theme.active && <span className="theme-card-active">Активна тема</span>}
+                    {theme.active && <span className="theme-card-active">{t("Active theme")}</span>}
                   </div>
                   <div className="theme-card-body">
                     <div className="theme-card-title">
@@ -172,16 +174,18 @@ export function ThemesPage({
                         className={`react-status-badge status-${theme.active ? "active" : "inactive"}`}
                       >
                         <span className="status-dot" />
-                        {theme.active ? "Активна" : "Неактивна"}
+                        {theme.active ? t("Active (feminine)") : t("Inactive (feminine)")}
                       </span>
                     </div>
-                    <p>{theme.description || "Без описание."}</p>
+                    <p>{theme.description || t("No description.")}</p>
                     <div className="theme-card-meta">
                       <span>
-                        Версия <strong>{theme.version}</strong>
+
+                        {t("Version")} <strong>{theme.version}</strong>
                       </span>
                       <span>
-                        Автор <strong>{theme.author}</strong>
+
+                        {t("Author")} <strong>{theme.author}</strong>
                       </span>
                     </div>
                     {theme.tags && theme.tags.length > 0 && (
@@ -193,19 +197,20 @@ export function ThemesPage({
                     )}
                     {theme.update_available && (
                       <div className="theme-card-update">
-                        Налична версия {theme.available_version}
+
+                        {t("Available version")} {theme.available_version}
                       </div>
                     )}
                     {theme.release_notes && (
                       <div className="theme-card-notes">
-                        <strong>Какво ново</strong>
+                        <strong>{t("What's new")}</strong>
                         <span>{theme.release_notes}</span>
                       </div>
                     )}
                     {theme.error && <small className="react-error-text">{theme.error}</small>}
                   </div>
                   <div className="theme-card-actions">
-                    <LoadingButton onClick={() => onDetails?.(theme.id)}>Детайли</LoadingButton>
+                    <LoadingButton onClick={() => onDetails?.(theme.id)}>{t("Details")}</LoadingButton>
                     {theme.valid && (
                       <LoadingButton
                         type="button"
@@ -216,7 +221,7 @@ export function ThemesPage({
                         }
                       >
                         <Power aria-hidden="true" />
-                        {theme.active ? "Деактивирай" : "Активирай"}
+                        {theme.active ? t("Deactivate") : t("Activate")}
                       </LoadingButton>
                     )}
                     {theme.update_available && (
@@ -227,7 +232,8 @@ export function ThemesPage({
                         onClick={() => void runAction(theme, "update_remote")}
                       >
                         <Upload aria-hidden="true" />
-                        Обнови
+
+                        {t("Update")}
                       </LoadingButton>
                     )}
                     <LoadingButton
@@ -237,7 +243,8 @@ export function ThemesPage({
                       onClick={() => setPendingRemoval(theme)}
                     >
                       <Trash2 aria-hidden="true" />
-                      Изтрий
+
+                      {t("Delete")}
                     </LoadingButton>
                   </div>
                 </article>
@@ -248,13 +255,13 @@ export function ThemesPage({
       </section>
       <ConfirmDialog
         open={pendingRemoval !== null}
-        title="Изтриване на тема"
+        title={t("Delete theme")}
         message={
           pendingRemoval
-            ? `Темата „${pendingRemoval.name}“ ще бъде изтрита окончателно.${pendingRemoval.active ? " Първо ще бъде деактивирана." : ""}`
+            ? `${t("Theme ‘{name}’ will be permanently deleted.", "core", { name: pendingRemoval.name })}${pendingRemoval.active ? ` ${t("It will be deactivated first.")}` : ""}`
             : ""
         }
-        confirmLabel="Изтрий"
+        confirmLabel={t("Delete")}
         danger={true}
         busy={pendingRemoval !== null && busyId === pendingRemoval.id}
         onCancel={() => {

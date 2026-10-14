@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import {
   ArrowLeft,
   Braces,
@@ -23,11 +24,11 @@ type PluginDetailPageProps = {
 }
 
 const statusLabels: Record<string, string> = {
-  active: "Активно",
-  installed: "Инсталирано",
-  inactive: "Неактивно",
-  error: "Грешка",
-  discovered: "Неинсталирано",
+  active: "Active",
+  installed: "Installed",
+  inactive: "Inactive",
+  error: "Error",
+  discovered: "Not installed status",
 }
 
 export function PluginDetailPage({
@@ -55,17 +56,18 @@ export function PluginDetailPage({
             items={[{ label: "Разширения", onClick: onBack }, { label: plugin.name }]}
           />
           <p className="plugin-detail-description">
-            {plugin.description || "Няма описание за това разширение."}
+            {plugin.description || t("No description is available for this extension.")}
           </p>
         </div>
         <button type="button" onClick={onBack}>
           <ArrowLeft aria-hidden="true" />
-          Назад към разширенията
+
+          {t("Back to extensions")}
         </button>
       </div>
       <CollapsibleSection
         extensionPoint="plugin.detail.source"
-        title="Код на разширението"
+        title={t("Extension code")}
         icon={Code2}
         className="plugin-source-first-section"
         storageKey={`plugin:${plugin.id}:source`}
@@ -75,7 +77,7 @@ export function PluginDetailPage({
       <div className="plugin-detail-grid">
         <CollapsibleSection
           extensionPoint="plugin.detail.information"
-          title="Информация за разширението"
+          title={t("Extension information")}
           icon={PackageOpen}
           storageKey={`plugin:${plugin.id}:information`}
         >
@@ -90,21 +92,21 @@ export function PluginDetailPage({
           </div>
           <dl className="plugin-detail-list">
             <div>
-              <dt>Версия</dt>
+              <dt>{t("Version")}</dt>
               <dd>{plugin.version || "—"}</dd>
             </div>
             <div>
-              <dt>Състояние</dt>
+              <dt>{t("State")}</dt>
               <dd>
                 <span className={`react-status-badge status-${plugin.status}`}>
                   <span className="status-dot" />
-                  {statusLabels[plugin.status] ?? plugin.status}
+                  {t(statusLabels[plugin.status] ?? plugin.status)}
                 </span>
               </dd>
             </div>
             <div>
-              <dt>Източник</dt>
-              <dd>{plugin.source === "catalog" ? "Каталог" : "Локален пакет"}</dd>
+              <dt>{t("Source")}</dt>
+              <dd>{plugin.source === "catalog" ? t("Catalog") : t("Local package")}</dd>
             </div>
           </dl>
           {plugin.last_error && (
@@ -116,7 +118,7 @@ export function PluginDetailPage({
         </CollapsibleSection>
         <CollapsibleSection
           extensionPoint="plugin.detail.permissions"
-          title="Разрешения"
+          title={t("Permissions")}
           icon={ShieldCheck}
           storageKey={`plugin:${plugin.id}:permissions`}
         >
@@ -130,7 +132,7 @@ export function PluginDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="react-muted">Разширението не заявява специални разрешения.</p>
+            <p className="react-muted">{t("This extension does not request any special permissions.")}</p>
           )}
         </CollapsibleSection>
       </div>

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import Editor, { type OnMount } from "@monaco-editor/react"
 import { Braces, Check, Copy, Maximize2, Minimize2, WrapText } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
@@ -96,36 +97,37 @@ export function CodeEditor({
       <div
         className="code-editor-toolbar"
         ref={toolbarRef}
-        title={fullscreen ? undefined : "Колелцето на мишката: промяна на височината"}
+        title={fullscreen ? undefined : t("Mouse wheel: adjust height")}
       >
         <span className="code-editor-language">{language.toUpperCase()}</span>
         {toolbarContent}
         <div className="code-editor-actions">
           {enableFormat && (
-            <button type="button" onClick={formatCode} title="Форматирай JSON">
+            <button type="button" onClick={formatCode} title={t("Format JSON")}>
               <Braces aria-hidden="true" />
-              Форматирай
+
+              {t("Format")}
             </button>
           )}
           <button
             type="button"
             onClick={() => setWrapped((current) => !current)}
-            title="Пренасяне на редове"
+            title={t("Word wrap")}
           >
             <WrapText aria-hidden="true" />
-            {wrapped ? "Без пренасяне" : "Пренасяй редове"}
+            {wrapped ? t("No wrapping") : t("Wrap lines")}
           </button>
           <button type="button" onClick={() => void copyCode()} title={copyLabel}>
             {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            {copied ? "Копирано" : copyLabel}
+            {copied ? t("Copied") : copyLabel}
           </button>
           <button
             type="button"
             onClick={() => setFullscreen((current) => !current)}
-            title="Цял екран"
+            title={t("Full screen")}
           >
             {fullscreen ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
-            {fullscreen ? "Затвори" : "Цял екран"}
+            {fullscreen ? t("Close") : t("Full screen")}
           </button>
         </div>
       </div>
@@ -154,7 +156,7 @@ export function CodeEditor({
       />
       {!fullscreen && (
         <label className="code-editor-resize-control">
-          <span>Височина</span>
+          <span>{t("Height")}</span>
           <input
             type="range"
             min={240}
@@ -162,7 +164,7 @@ export function CodeEditor({
             step={20}
             value={resizedHeight ?? (height.endsWith("px") ? parseFloat(height) : 460)}
             onChange={(event) => setResizedHeight(Number(event.target.value))}
-            aria-label="Височина на редактора"
+            aria-label={t("Editor height")}
           />
           <span>{resizedHeight ?? (height.endsWith("px") ? parseFloat(height) : 460)} px</span>
         </label>

@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-react"
 import { useState, type InputHTMLAttributes } from "react"
+import { t } from "@/lib/admin-i18n"
 
 type PasswordInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   variant?: "admin" | "ui"
@@ -23,9 +24,9 @@ export function PasswordInput({
       <button
         type="button"
         className="password-field-toggle"
-        aria-label={visible ? "Скрий паролата" : "Покажи паролата"}
+        aria-label={visible ? t("Hide password") : t("Show password")}
         aria-pressed={visible}
-        title={visible ? "Скрий паролата" : "Покажи паролата"}
+        title={visible ? t("Hide password") : t("Show password")}
         disabled={inputProps.disabled}
         onClick={() => setVisible((current) => !current)}
       >

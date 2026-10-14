@@ -136,8 +136,14 @@ final class UpdateJobStore
         if (!is_file($this->path())) {
             return [];
         }
+        $contents = (string) file_get_contents($this->path());
+        // A truncated/empty store can be left as NUL bytes by some filesystems.
+        // It contains no recoverable jobs, so treat it like a new empty store.
+        if (trim($contents, "\0 \t\n\r") === '') {
+            return [];
+        }
         try {
-            $data = json_decode((string) file_get_contents($this->path()), true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
             throw new PlatformUpdateException('The update job store contains invalid JSON.', 0, $exception);
         }

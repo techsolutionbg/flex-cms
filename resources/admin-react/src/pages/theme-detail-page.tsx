@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { Info, Palette, ListTree, History, Eye, Power, Download, Upload, Settings2 } from "lucide-react"
 import { toast } from "sonner"
@@ -115,7 +116,7 @@ export function ThemeDetailPage({
       setBusy(false)
     }
   }
-  const fields = theme
+  const fields: [string, string | null][] = theme
     ? [
         ["Идентификатор", theme.id],
         ["Автор", theme.author],
@@ -125,7 +126,7 @@ export function ThemeDetailPage({
         ["Минимална версия на платформата", theme.minimum_platform_version],
         ["Текуща платформа", theme.platform_version],
         ["PHP", theme.php_version],
-        ["Канал", theme.channel],
+        ["Channel", theme.channel],
       ]
     : []
   const supports = theme?.supports
@@ -137,7 +138,7 @@ export function ThemeDetailPage({
     : null
   return (
     <AdminShell
-      title={theme?.name ?? "Детайли за темата"}
+      title={theme?.name ?? t("Theme details")}
       activeItem="Теми"
       onLogout={onLogout}
       onNavigate={onNavigate}
@@ -155,28 +156,30 @@ export function ThemeDetailPage({
           {theme?.active && (
             <LoadingButton onClick={onSettings}>
               <Settings2 aria-hidden="true" />
-              Настройки на темата
+
+              {t("Theme settings")}
             </LoadingButton>
           )}
-          <LoadingButton onClick={onBack}>Назад към темите</LoadingButton>
+          <LoadingButton onClick={onBack}>{t("Back to themes")}</LoadingButton>
         </div>
       </div>
       {error && (
         <p className="react-error-text" role="alert">
           {error}{" "}
           <LoadingButton onClick={() => setRevision((value) => value + 1)}>
-            Опитай отново
+
+            {t("Try again")}
           </LoadingButton>
         </p>
       )}
-      {!theme && !error && <p role="status">Зареждане…</p>}
+      {!theme && !error && <p role="status">{t("Loading…")}</p>}
       {theme && (
         <div className="theme-detail-sections">
           {theme.catalog_error && <p role="status">{theme.catalog_error}</p>}
           {theme.error && <p className="react-error-text">{theme.error}</p>}
           <CollapsibleSection
             extensionPoint="theme.detail.overview"
-            title="Преглед и статус"
+            title={t("Overview and status")}
             className="theme-detail-overview"
             icon={Palette}
             storageKey={`theme:${id}:overview`}
@@ -194,13 +197,13 @@ export function ThemeDetailPage({
                 className={`react-status-badge ${theme.active ? "status-active" : theme.installed ? "status-installed" : "status-inactive"}`}
               >
                 {theme.active
-                  ? "Активна"
+                  ? t("Active (feminine)")
                   : theme.installed
-                    ? "Инсталирана — неактивна"
-                    : "Неинсталирана"}
+                    ? t("Installed but inactive")
+                    : t("Not installed")}
               </span>
             </p>
-            <p>{theme.description || "Няма публикувано описание."}</p>
+            <p>{theme.description || t("No published description.")}</p>
             <div className="theme-card-actions">
               {!theme.installed && (
                 <LoadingButton
@@ -209,7 +212,8 @@ export function ThemeDetailPage({
                   onClick={() => void action("install_remote")}
                 >
                   <Download />
-                  Инсталирай
+
+                  {t("Install")}
                 </LoadingButton>
               )}
               {theme.installed && theme.valid && (
@@ -219,7 +223,7 @@ export function ThemeDetailPage({
                   onClick={() => void action(theme.active ? "deactivate" : "activate")}
                 >
                   <Power />
-                  {theme.active ? "Деактивирай" : "Активирай"}
+                  {theme.active ? t("Deactivate") : t("Activate")}
                 </LoadingButton>
               )}
               {theme.installed && theme.valid && (
@@ -233,7 +237,8 @@ export function ThemeDetailPage({
                   }
                 >
                   <Eye />
-                  Преглед
+
+                  {t("Preview")}
                 </LoadingButton>
               )}
               {theme.update_available && (
@@ -243,47 +248,50 @@ export function ThemeDetailPage({
                   onClick={() => void action("update_remote")}
                 >
                   <Upload />
-                  Обнови до {theme.latest_version}
+
+                  {t("Upgrade to")} {theme.latest_version}
                 </LoadingButton>
               )}
             </div>
             {!theme.latest_version && !theme.catalog_error && (
-              <p>Няма съвместим релийз за текущата платформа и канал.</p>
+              <p>{t("No compatible release is available for this platform and channel.")}</p>
             )}
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="theme.detail.information"
-            title="Основна информация"
+            title={t("Basic information")}
             icon={Info}
             storageKey={`theme:${id}:info`}
           >
             <dl className="theme-detail-info">
               {fields.map(([label, value]) => (
                 <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value || "Не е зададено"}</dd>
+                  <dt>{t(label)}</dt>
+                  <dd>{value || t("Not set")}</dd>
                 </div>
               ))}
             </dl>
-            <p>Тагове: {theme.tags.length ? theme.tags.join(", ") : "Не са зададени"}</p>
+            <p>{t("Tags:")} {theme.tags.length ? theme.tags.join(", ") : t("Not set (plural)")}</p>
             {safeUrl(theme.homepage) && (
               <p>
                 <a href={theme.homepage!} target="_blank" rel="noopener noreferrer">
-                  Сайт на автора
+
+                  {t("Author website")}
                 </a>
               </p>
             )}
             {safeUrl(theme.documentation) && (
               <p>
                 <a href={theme.documentation!} target="_blank" rel="noopener noreferrer">
-                  Документация
+
+                  {t("Documentation")}
                 </a>
               </p>
             )}
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="theme.detail.features"
-            title="Възможности и менюта"
+            title={t("Features and menus")}
             icon={ListTree}
             storageKey={`theme:${id}:features`}
           >
@@ -294,40 +302,41 @@ export function ThemeDetailPage({
                       .map(
                         (name) =>
                           ({
-                            menus: "Управление на менюта",
-                            navigation: "Навигация",
-                            featured_image: "Изображения на страници",
-                            custom_logo: "Персонализирано лого",
+                            menus: t("Manage menus"),
+                            navigation: t("Navigation"),
+                            featured_image: t("Page images"),
+                            custom_logo: t("Personalized logo"),
                           })[name] ?? name,
                       )
                       .join(", ")
-                  : "Няма декларирани възможности."
-                : "Възможностите не са публикувани в каталога."}
+                  : t("No capabilities are declared.")
+                : t("Capabilities are not published in the catalog.")}
             </p>
             <dl className="theme-detail-info">
               {Object.entries(theme.menu_locations ?? {}).map(([location, label]) => (
                 <div key={location}>
-                  <dt>{label}</dt>
+                  <dt>{t(label)}</dt>
                   <dd>{location}</dd>
                 </div>
               ))}
             </dl>
             {!Object.keys(theme.menu_locations ?? {}).length && (
-              <p>Няма публикувани локации за менюта.</p>
+              <p>{t("No published menu locations.")}</p>
             )}
             {theme.active && supports?.includes("menus") && (
               <LoadingButton onClick={() => onNavigate("Менюта")}>
-                Управление на менюта
+
+                {t("Manage menus")}
               </LoadingButton>
             )}
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="theme.detail.releases"
-            title="Версии и промени"
+            title={t("Versions and changes")}
             icon={History}
             storageKey={`theme:${id}:releases`}
           >
-            {!theme.releases.length && <p>Няма налична информация за релийзите.</p>}
+            {!theme.releases.length && <p>{t("No release information is available.")}</p>}
             {theme.releases.map((release) => (
               <CollapsibleSection
                 key={`${release.version}:${release.channel}`}
@@ -337,21 +346,21 @@ export function ThemeDetailPage({
               >
                 <p>
                   {release.compatible
-                    ? "Съвместима с текущата платформа"
+                    ? t("Compatible with the current platform")
                     : release.reasons.join(" ")}
                 </p>
                 <p className="theme-detail-notes">
-                  {release.release_notes || "Няма описание на промените."}
+                  {release.release_notes || t("No change log is available.")}
                 </p>
                 <dl className="theme-detail-info">
                   <div>
-                    <dt>Публикувана</dt>
+                    <dt>{t("Published")}</dt>
                     <dd>
                       <DateTime value={release.published_at} />
                     </dd>
                   </div>
                   <div>
-                    <dt>Размер</dt>
+                    <dt>{t("Size")}</dt>
                     <dd>{(release.size / 1024).toFixed(1)} KB</dd>
                   </div>
                   <div>
@@ -363,11 +372,11 @@ export function ThemeDetailPage({
                     <dd>{release.compatible_from}</dd>
                   </div>
                   <div>
-                    <dt>Подпис</dt>
+                    <dt>{t("Signature")}</dt>
                     <dd>
                       {release.signed
-                        ? `${release.signature_algorithm ?? "Подписан"} · ${release.key_id ?? "Без идентификатор"} (проверява се при инсталиране)`
-                        : "Не е подписан"}
+                        ? `${release.signature_algorithm ?? t("Signed")} · ${release.key_id ?? t("No key identifier")} (${t("verified during installation")})`
+                        : t("Unsigned")}
                     </dd>
                   </div>
                 </dl>

@@ -1,5 +1,6 @@
 // Runtime of admin extension points: named collapsible sections, tables and screens accept content from plugins.
 // It does not import the components it extends, so CollapsibleSection and DataTable can use it without cycles.
+import { t } from "@/lib/admin-i18n"
 import * as React from "react"
 import {
   FileText,
@@ -71,7 +72,7 @@ export class ExtensionBoundary extends React.Component<
   }
   render() {
     return this.state.failed ? (
-      <p role="alert">Възникна грешка в интерфейса на разширението. Презаредете страницата.</p>
+      <p role="alert">{t("An extension interface error occurred. Reload the page.")}</p>
     ) : (
       this.props.children
     )
@@ -248,7 +249,8 @@ export function ExtensionComponent({
       <div role="alert">
         <p>{failure}</p>
         <Button variant="secondary" type="button" onClick={() => setAttempt(attempt + 1)}>
-          Опитай отново
+
+          {t("Try again")}
         </Button>
       </div>
     )
@@ -266,7 +268,7 @@ export function ExtensionComponent({
       />
     </ExtensionBoundary>
   ) : (
-    <p role="status">Зареждане…</p>
+    <p role="status">{t("Loading…")}</p>
   )
 }
 

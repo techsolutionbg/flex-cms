@@ -33,6 +33,7 @@ final class UserServiceTest extends TestCase
             $table->string('password_hash');
             $table->string('role');
             $table->string('status');
+            $table->string('admin_locale')->default('en');
             $table->dateTime('last_login_at')->nullable();
             $table->boolean('email_verification_required')->default(false);
             $table->dateTime('email_verified_at')->nullable();

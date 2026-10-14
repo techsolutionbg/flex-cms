@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { createContext, useContext } from "react"
 import { ListX, X } from "lucide-react"
 import { Button } from "./ui/button"
@@ -77,7 +78,7 @@ export function AdminWorkspaceTabs() {
   if (!workspace || workspace.panel !== workspace.active) return null
   return (
     <div className="admin-workspace-tabbar">
-      <div className="admin-workspace-tabs" role="tablist" aria-label="Отворени страници">
+      <div className="admin-workspace-tabs" role="tablist" aria-label={t("Open pages")}>
         {workspace.tabs.map((tab, index) => (
           <div
             className="admin-workspace-tab"
@@ -118,9 +119,9 @@ export function AdminWorkspaceTabs() {
                 )
               }}
             >
-              <span className="admin-workspace-tab-title">{tab.title}</span>
+              <span className="admin-workspace-tab-title">{t(tab.title)}</span>
               {tab.dirty && (
-                <span className="admin-workspace-dirty" aria-label="Незапазени промени">
+                <span className="admin-workspace-dirty" aria-label={t("Unsaved changes")}>
                   ●
                 </span>
               )}
@@ -128,7 +129,7 @@ export function AdminWorkspaceTabs() {
             <button
               type="button"
               className="admin-workspace-close"
-              aria-label={`Затвори ${tab.title}`}
+              aria-label={`${t("Close")} ${t(tab.title)}`}
               onClick={() => workspace.close(tab.id)}
             >
               <X size={15} aria-hidden="true" />
@@ -140,13 +141,13 @@ export function AdminWorkspaceTabs() {
         variant="secondary"
         type="button"
         className="admin-workspace-close-all"
-        aria-label="Затвори всички табове"
-        title="Затвори всички табове"
+        aria-label={t("Close all tabs")}
+        title={t("Close all tabs")}
         disabled={!workspace.canCloseAll}
         onClick={workspace.closeAll}
       >
         <ListX aria-hidden="true" />
-        <span>Затвори всички</span>
+        <span>{t("Close all")}</span>
       </Button>
     </div>
   )

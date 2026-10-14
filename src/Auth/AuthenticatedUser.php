@@ -12,6 +12,7 @@ final readonly class AuthenticatedUser
         public string $email,
         public string $role,
         public string $status,
+        public string $adminLocale = 'en',
     ) {}
 
     public function isSuperAdmin(): bool
@@ -19,7 +20,7 @@ final readonly class AuthenticatedUser
         return $this->role === 'super_admin';
     }
 
-    /** @return array{id: int, name: string, email: string, role: string, status: string} */
+    /** @return array{id: int, name: string, email: string, role: string, status: string, admin_locale: string} */
     public function toArray(): array
     {
         return [
@@ -28,6 +29,7 @@ final readonly class AuthenticatedUser
             'email' => $this->email,
             'role' => $this->role,
             'status' => $this->status,
+            'admin_locale' => $this->adminLocale,
         ];
     }
 }

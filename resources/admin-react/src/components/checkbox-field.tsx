@@ -1,4 +1,5 @@
 import { useId, type ChangeEvent } from "react"
+import { t } from "@/lib/admin-i18n"
 
 type CheckboxFieldProps = {
   checked: boolean
@@ -31,8 +32,8 @@ export function CheckboxField({
           <span className="react-switch-thumb" />
         </span>
       </span>
-      <span className="react-checkbox-label">{label}</span>
-      {description && <small id={descriptionId}>{description}</small>}
+      <span className="react-checkbox-label">{t(label)}</span>
+      {description && <small id={descriptionId}>{t(description)}</small>}
     </label>
   )
 }

@@ -20,6 +20,7 @@ final class User extends Model
         'password_hash',
         'role',
         'status',
+        'admin_locale',
         'last_login_at',
         'email_verification_required',
         'email_verified_at',
@@ -50,6 +51,7 @@ final class User extends Model
             (string) $this->getAttribute('email'),
             (string) $this->getAttribute('role'),
             (string) $this->getAttribute('status'),
+            (string) ($this->getAttribute('admin_locale') ?: 'en'),
         );
     }
 }

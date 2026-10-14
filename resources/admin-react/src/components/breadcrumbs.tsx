@@ -1,3 +1,5 @@
+import { t } from "@/lib/admin-i18n"
+
 type BreadcrumbItem = {
   label: string
   onClick?: () => void
@@ -11,7 +13,7 @@ export function Breadcrumbs({
   onHomeClick?: () => void
 }) {
   return (
-    <nav className="react-breadcrumbs" aria-label="Навигационни пътеки">
+    <nav className="react-breadcrumbs" aria-label={t("Navigation breadcrumbs")}>
       <a
         href="#dashboard"
         onClick={(event) => {
@@ -19,7 +21,7 @@ export function Breadcrumbs({
           onHomeClick?.()
         }}
       >
-        Табло
+        {t("Dashboard")}
       </a>
       {items.map((item, index) => (
         <span className="react-breadcrumb-item" key={`${item.label}-${index}`}>
@@ -34,10 +36,10 @@ export function Breadcrumbs({
                 item.onClick?.()
               }}
             >
-              {item.label}
+              {t(item.label)}
             </a>
           ) : (
-            <strong aria-current="page">{item.label}</strong>
+            <strong aria-current="page">{t(item.label)}</strong>
           )}
         </span>
       ))}

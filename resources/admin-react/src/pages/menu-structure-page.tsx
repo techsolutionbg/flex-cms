@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { LoadingButton } from "@/components/loading-button"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ArrowDown, ArrowUp, FileText, GripVertical, ListTree, Save, Trash2 } from "lucide-react"
@@ -182,10 +183,10 @@ export function MenuStructurePage({
     }
   }
   return (
-    <AdminShell {...shell} title="Структура на менюто" activeItem="Менюта">
+    <AdminShell {...shell} title={t("Menu structure")} activeItem="Менюта">
       <div className="react-page-heading">
         <div>
-          <h1>Структура на менюто{menu ? `: ${menu.name}` : ""}</h1>
+          <h1>{t("Menu structure")}{menu ? `: ${menu.name}` : ""}</h1>
           <Breadcrumbs
             onHomeClick={() => shell.onNavigate("Табло")}
             items={[
@@ -204,7 +205,7 @@ export function MenuStructurePage({
               disabled={saving || loading || !menu}
             >
               <Save size={18} />
-              {saving ? "Запазване…" : "Запази структурата"}
+              {saving ? t("Saving…") : t("Save structure")}
             </LoadingButton>
           </div>
         )}
@@ -215,9 +216,9 @@ export function MenuStructurePage({
         </p>
       )}
       {!capabilities ? (
-        <p role="status">Зареждане…</p>
+        <p role="status">{t("Loading…")}</p>
       ) : !supported ? (
-        <p>Активната тема не поддържа управление на менюта.</p>
+        <p>{t("The active theme does not support menu management.")}</p>
       ) : (
         (!failure || menu) && (
           <ExtensionScope value={extensionScope}>
@@ -230,33 +231,34 @@ export function MenuStructurePage({
               }}
             >
               <div className="menu-structure-layout" data-menu-id={menuId}>
-                <aside aria-label="Налични страници">
+                <aside aria-label={t("Available pages")}>
                   <CollapsibleSection
                     extensionPoint="menu.structure.pages"
-                    title="Страници"
+                    title={t("Pages")}
                     icon={FileText}
                     storageKey="menu-structure-pages"
                   >
                     <label className="react-form-field">
-                      <span>Търсене на страница</span>
+                      <span>{t("Search pages")}</span>
                       <input
                         type="search"
                         value={search}
-                        placeholder="Търсене по заглавие…"
+                        placeholder={t("Search by title…")}
                         onChange={(event) => setSearch(event.target.value)}
                         disabled={loading || saving}
                       />
-                      <small>Всички налични страници, независимо от статуса им.</small>
+                      <small>{t("All available pages, regardless of their status.")}</small>
                     </label>
                     {loading ? (
-                      <p role="status">Зареждане на страниците…</p>
+                      <p role="status">{t("Loading pages…")}</p>
                     ) : (
                       <>
                         <p className="react-muted" role="status">
-                          Показани: {visiblePages.length} от {pages.length}
+
+                          {t("Showing:")} {visiblePages.length}  {t("of")} {pages.length}
                         </p>
                         {visiblePages.length ? (
-                          <ul className="menu-structure-pages" aria-label="Списък със страници">
+                          <ul className="menu-structure-pages" aria-label={t("Page list")}>
                             {visiblePages.map((page) => (
                               <li key={page.id}>
                                 <label className="menu-structure-page-row">
@@ -287,8 +289,8 @@ export function MenuStructurePage({
                         ) : (
                           <p className="react-muted">
                             {pages.length
-                              ? "Няма страници, съответстващи на търсенето."
-                              : "Все още няма създадени страници."}
+                              ? t("No pages match your search.")
+                              : t("No pages have been created yet.")}
                           </p>
                         )}
                         <div className="menu-structure-pages-footer">
@@ -298,7 +300,8 @@ export function MenuStructurePage({
                             disabled={selectedPageIds.size === 0 || !menu || saving}
                             onClick={queueSelectedPages}
                           >
-                            Добави избраните страници
+
+                            {t("Add selected pages")}
                             {selectedPageIds.size > 0 ? ` (${selectedPageIds.size})` : ""}
                           </button>
                         </div>
@@ -309,22 +312,22 @@ export function MenuStructurePage({
                 <div className="menu-structure-items">
                   <CollapsibleSection
                     extensionPoint="menu.structure.items"
-                    title="Елементи на менюто"
+                    title={t("Menu items")}
                     icon={ListTree}
                     storageKey={`menu-structure-items-${menuId}`}
                   >
                     {loading ? (
-                      <p role="status">Зареждане на елементите…</p>
+                      <p role="status">{t("Loading menu items…")}</p>
                     ) : !menu?.items.length ? (
                       <p className="react-muted">
-                        Изберете страници и натиснете „Добави избраните страници“.
+
+                        {t("Choose pages, then select “Add selected pages”.")}
                       </p>
                     ) : (
                       <div className="menu-structure-item-list">
                         <p className="react-muted">
-                          Влачете дръжката надясно за подменю на горния елемент и наляво за връщане
-                          на предишното ниво. Влачете нагоре или надолу за промяна на реда. До три
-                          нива.
+
+                          {t("Drag the handle right to nest an item, left to move it back, and up or down to reorder it. Up to three levels.")}
                         </p>
                         {orderedMenuItems(menu.items).map((item) => {
                           const siblings = menu.items.filter(
@@ -357,16 +360,16 @@ export function MenuStructurePage({
                                     <span>
                                       {projectedItem.label} —{" "}
                                       {projectedParent
-                                        ? `подменю на „${projectedParent.label}“`
-                                        : "основно ниво"}
+                                        ? t("Submenu of ‘{name}’", "core", { name: projectedParent.label })
+                                        : t("top level")}
                                     </span>
                                   </div>
                                 )}
                               <button
                                 type="button"
                                 className="menu-structure-drag-handle"
-                                aria-label={`Премести ${item.label}`}
-                                title="Влачи за подреждане; надясно за подменю"
+                                aria-label={t("Move menu item ‘{name}’", "core", { name: item.label })}
+                                title={t("Drag to reorder; drag right to nest")}
                                 disabled={saving}
                                 onPointerDown={(event) => {
                                   if (event.button !== 0 || saving) return
@@ -450,7 +453,7 @@ export function MenuStructurePage({
                               </button>
                               <CollapsibleSection
                                 key={item.id}
-                                title={item.label || "Елемент на менюто"}
+                                title={item.label || t("Menu item")}
                                 icon={FileText}
                                 storageKey={`menu-item-${menuId}-${item.id}`}
                                 defaultOpen={false}
@@ -500,7 +503,7 @@ export function MenuStructurePage({
                                       ] as const
                                     ).map(([field, label, hint, limit]) => (
                                       <label key={field} className="react-form-field">
-                                        <span>{label}</span>
+                                        <span>{t(label)}</span>
                                         <input
                                           value={item[field] ?? ""}
                                           maxLength={limit}
@@ -512,7 +515,7 @@ export function MenuStructurePage({
                                             updateItem(item.id, { [field]: event.target.value })
                                           }
                                         />
-                                        <small>{hint}</small>
+                                        <small>{t(hint)}</small>
                                       </label>
                                     ))}
                                   </div>
@@ -524,13 +527,14 @@ export function MenuStructurePage({
                                         updateItem(item.id, { new_tab: event.target.checked })
                                       }
                                     />
-                                    Отваряне в нов таб
+
+                                    {t("Open in a new tab")}
                                   </label>
                                   <div className="menu-structure-item-actions">
                                     <button
                                       type="button"
                                       className="react-secondary-button menu-button"
-                                      aria-label={`Премести ${item.label} нагоре`}
+                                      aria-label={t("Move menu item ‘{name}’ up", "core", { name: item.label })}
                                       disabled={saving || position === 0}
                                       onClick={() =>
                                         updateItems(
@@ -544,12 +548,13 @@ export function MenuStructurePage({
                                       }
                                     >
                                       <ArrowUp size={16} />
-                                      Нагоре
+
+                                      {t("Move up")}
                                     </button>
                                     <button
                                       type="button"
                                       className="react-secondary-button menu-button"
-                                      aria-label={`Премести ${item.label} надолу`}
+                                      aria-label={t("Move menu item ‘{name}’ down", "core", { name: item.label })}
                                       disabled={saving || position === siblings.length - 1}
                                       onClick={() =>
                                         updateItems(
@@ -563,7 +568,8 @@ export function MenuStructurePage({
                                       }
                                     >
                                       <ArrowDown size={16} />
-                                      Надолу
+
+                                      {t("Move down")}
                                     </button>
                                     <button
                                       type="button"
@@ -576,7 +582,8 @@ export function MenuStructurePage({
                                       }}
                                     >
                                       <Trash2 size={16} />
-                                      Премахни от менюто
+
+                                      {t("Remove from menu")}
                                     </button>
                                   </div>
                                 </fieldset>
@@ -597,7 +604,7 @@ export function MenuStructurePage({
                   disabled={saving || loading || !menu}
                 >
                   <Save size={18} />
-                  {saving ? "Запазване…" : "Запази структурата"}
+                  {saving ? t("Saving…") : t("Save structure")}
                 </LoadingButton>
               </div>
             </form>

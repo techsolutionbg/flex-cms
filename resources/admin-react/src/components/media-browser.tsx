@@ -1,3 +1,4 @@
+import { getAdminLocale, t } from "@/lib/admin-i18n"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Check, Eye, File, GalleryVertical, Grid2X2, List } from "lucide-react"
 import { DataTable, type DataTableColumn } from "./data-table"
@@ -52,6 +53,13 @@ const mediaSortLabels: Record<MediaCardSort, string> = {
   "size-desc": "Размер: най-големи",
   "size-asc": "Размер: най-малки",
   "mime-asc": "Тип файл",
+}
+
+function formatMediaMonth(value: string): string {
+  const date = new Date(`${value}-01T00:00:00`)
+  return Number.isNaN(date.valueOf())
+    ? value
+    : new Intl.DateTimeFormat(getAdminLocale(), { month: "long", year: "numeric" }).format(date)
 }
 
 function readMediaSort(): MediaCardSort {
@@ -260,12 +268,13 @@ export function MediaBrowser({
     return (
       <>
         {record.mime.startsWith("image/") && (
-          <DropdownOption onClick={() => setQuickPreview(record)}>Бърз преглед</DropdownOption>
+          <DropdownOption onClick={() => setQuickPreview(record)}>{t("Quick preview")}</DropdownOption>
         )}
         <DropdownOption onClick={() => openMediaInNewWindow(record)}>
-          Преглед в нов прозорец
+
+          {t("Open in a new window")}
         </DropdownOption>
-        <DropdownOption onClick={() => downloadMedia(record)}>Изтегли</DropdownOption>
+        <DropdownOption onClick={() => downloadMedia(record)}>{t("Download")}</DropdownOption>
       </>
     )
   }
@@ -277,7 +286,7 @@ export function MediaBrowser({
         variant="secondary"
         className="media-card-quick-preview"
         aria-label={`Бърз преглед: ${record.title || record.original_name}`}
-        title="Бърз преглед"
+        title={t("Quick preview")}
         onClick={() => setQuickPreview(record)}
       >
         <Eye size={16} aria-hidden="true" />
@@ -290,7 +299,7 @@ export function MediaBrowser({
         {view === "active" ? (
           <>
             <DropdownOption onClick={() => onSelect(record)}>
-              {picker ? "Избери" : "Преглед и редакция"}
+              {picker ? t("Select") : t("Preview and edit")}
             </DropdownOption>
             {fileActions(record)}
             {!picker && index?.permissions.delete && (
@@ -298,7 +307,8 @@ export function MediaBrowser({
                 disabled={busy}
                 onClick={() => setDeleting({ record, operation: "trash" })}
               >
-                Премести в кошчето
+
+                {t("Move item to trash")}
               </DropdownOption>
             )}
           </>
@@ -306,13 +316,15 @@ export function MediaBrowser({
           <>
             {fileActions(record)}
             <DropdownOption disabled={busy} onClick={() => void action(record, "restore")}>
-              Възстанови
+
+              {t("Restore")}
             </DropdownOption>
             <DropdownOption
               disabled={busy}
               onClick={() => setDeleting({ record, operation: "force" })}
             >
-              Изтрий завинаги
+
+              {t("Delete forever")}
             </DropdownOption>
           </>
         )}
@@ -332,42 +344,42 @@ export function MediaBrowser({
         {!imagesOnly && (
           <DropdownMenu
             triggerVariant="secondary"
-            ariaLabel="Тип медия"
+            ariaLabel={t("Media type")}
             trigger={
               <>
-                {types[type]} <DropdownChevron />
+                {t(types[type])} <DropdownChevron />
               </>
             }
           >
             {Object.entries(types).map(([value, label]) => (
               <DropdownOption key={value} selected={value === type} onClick={() => setType(value)}>
-                {label}
+                {t(label)}
               </DropdownOption>
             ))}
           </DropdownMenu>
         )}
         <DropdownMenu
           triggerVariant="secondary"
-          ariaLabel="Месец на качване"
+          ariaLabel={t("Upload month")}
           trigger={
             <>
-              {month === "all" ? "Всички дати" : month} <DropdownChevron />
+                {month === "all" ? t("All dates") : formatMediaMonth(month)} <DropdownChevron />
             </>
           }
         >
           {["all", ...months].map((value) => (
             <DropdownOption key={value} selected={value === month} onClick={() => setMonth(value)}>
-              {value === "all" ? "Всички дати" : value}
+              {value === "all" ? t("All dates") : formatMediaMonth(value)}
             </DropdownOption>
           ))}
         </DropdownMenu>
         {(layout === "grid" || layout === "masonry") && (
           <DropdownMenu
             triggerVariant="secondary"
-            ariaLabel="Сортиране"
+            ariaLabel={t("Sort media")}
             trigger={
               <>
-                {mediaSortLabels[cardSort]} <DropdownChevron />
+                {t(mediaSortLabels[cardSort])} <DropdownChevron />
               </>
             }
           >
@@ -377,7 +389,7 @@ export function MediaBrowser({
                 selected={value === cardSort}
                 onClick={() => setCardSort(value)}
               >
-                {mediaSortLabels[value]}
+                {t(mediaSortLabels[value])}
               </DropdownOption>
             ))}
           </DropdownMenu>
@@ -385,16 +397,16 @@ export function MediaBrowser({
         {!picker && (
           <DropdownMenu
             triggerVariant="secondary"
-            ariaLabel="Изглед на медията"
+            ariaLabel={t("Media view")}
             trigger={
               <>
-                {view === "active" ? "Медийна библиотека" : "Кошче"} <DropdownChevron />
+                {view === "active" ? t("Media library") : t("Trash")} <DropdownChevron />
               </>
             }
           >
             {["active", "trash"].map((value) => (
               <DropdownOption key={value} selected={view === value} onClick={() => setView(value)}>
-                {value === "active" ? "Медийна библиотека" : "Кошче"}
+                {value === "active" ? t("Media library") : t("Trash")}
               </DropdownOption>
             ))}
           </DropdownMenu>
@@ -402,10 +414,10 @@ export function MediaBrowser({
         {layout === "masonry" && (
           <DropdownMenu
             triggerVariant="secondary"
-            ariaLabel="Превъртане в Masonry изгледа"
+            ariaLabel={t("Masonry scrolling")}
             trigger={
               <>
-                {masonryInfiniteScroll ? "Безкрайно превъртане" : "Странициране"}{" "}
+                {masonryInfiniteScroll ? t("Infinite scroll") : t("Pagination")}{" "}
                 <DropdownChevron />
               </>
             }
@@ -418,7 +430,8 @@ export function MediaBrowser({
                 setVisibleCount(mediaPageSize)
               }}
             >
-              Странициране
+
+              {t("Pagination")}
             </DropdownOption>
             <DropdownOption
               selected={masonryInfiniteScroll}
@@ -427,7 +440,8 @@ export function MediaBrowser({
                 setVisibleCount(mediaPageSize)
               }}
             >
-              Безкрайно превъртане
+
+              {t("Infinite scroll")}
             </DropdownOption>
           </DropdownMenu>
         )}
@@ -435,7 +449,7 @@ export function MediaBrowser({
           <Button
             variant="secondary"
             type="button"
-            aria-label="Решетка"
+            aria-label={t("Grid")}
             aria-pressed={layout === "grid"}
             onClick={() => setLayout("grid")}
           >
@@ -444,7 +458,7 @@ export function MediaBrowser({
           <Button
             variant="secondary"
             type="button"
-            aria-label="Таблица"
+            aria-label={t("Table")}
             aria-pressed={layout === "table"}
             onClick={() => setLayout("table")}
           >
@@ -462,12 +476,12 @@ export function MediaBrowser({
         </div>
       </div>
       <div className="react-form-field">
-        <label htmlFor={picker ? "picker-media-search" : "media-search"}>Търсене</label>
+        <label htmlFor={picker ? "picker-media-search" : "media-search"}>{t("Search")}</label>
         <input
           id={picker ? "picker-media-search" : "media-search"}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Име, заглавие или alt текст…"
+          placeholder={t("Name, title, or alt text…")}
         />
       </div>
     </div>
@@ -507,8 +521,8 @@ export function MediaBrowser({
           aria-pressed={selectedIds ? selectedIds.has(record.id) : undefined}
           aria-label={
             selectedIds
-              ? `${selectedIds.has(record.id) ? "Премахни от избраните" : "Избери"}: ${label}`
-              : `Избери: ${label}`
+              ? `${selectedIds.has(record.id) ? t("Remove from selected") : t("Select")}: ${label}`
+              : `${t("Select")}: ${label}`
           }
           onClick={() => onSelect(record)}
         >
@@ -525,7 +539,7 @@ export function MediaBrowser({
                 className={`media-selection-badge${selectedIds.has(record.id) ? " is-selected" : ""}`}
               >
                 {selectedIds.has(record.id) && <Check size={14} aria-hidden="true" />}
-                {selectedIds.has(record.id) ? "Избрано" : "Избери"}
+                {selectedIds.has(record.id) ? t("Selected item") : t("Select")}
               </span>
             )}
           </span>
@@ -609,7 +623,7 @@ export function MediaBrowser({
                   aria-hidden="true"
                 />
               )}
-              {data.length === 0 && <p>Няма намерени файлове.</p>}
+              {data.length === 0 && <p>{t("No files found.")}</p>}
               <div className="react-pagination">
                 <span>
                   {masonryInfiniteActive
@@ -632,7 +646,7 @@ export function MediaBrowser({
       <MediaQuickPreviewDialog record={quickPreview} onClose={() => setQuickPreview(null)} />
       <ConfirmDialog
         open={!!deleting}
-        title={deleting?.operation === "trash" ? "Преместване в кошчето" : "Изтриване на файл"}
+        title={deleting?.operation === "trash" ? t("Move to trash") : t("Delete file")}
         message={
           deleting?.operation === "trash"
             ? `Да преместим ли „${deleting.record.title || deleting.record.original_name}“ в кошчето? Файлът може да бъде възстановен по-късно.`

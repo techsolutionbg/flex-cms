@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import {
@@ -203,7 +204,7 @@ export function SectionSettingsForm({
       <form onSubmit={(event) => void save(event)}>
         <CollapsibleSection
           extensionPoint={`settings.${section}`}
-          title={details.title}
+          title={t(details.title)}
           icon={details.icon}
           storageKey={`settings:${section}`}
         >
@@ -212,25 +213,27 @@ export function SectionSettingsForm({
               {failure}
               {!values && (
                 <LoadingButton onClick={() => setRevision((value) => value + 1)}>
-                  Опитай отново
+
+                  {t("Try again")}
                 </LoadingButton>
               )}
             </div>
           )}
-          {!values && !failure && <p role="status">Зареждане…</p>}
+          {!values && !failure && <p role="status">{t("Loading…")}</p>}
           {values && (
             <div className="react-form-grid">
               {selects.map(({ key, label, choices, hint }) => (
                 <div className="react-form-field settings-field-wide" key={key}>
-                  <span>{label}</span>
+                  <span>{t(label)}</span>
                   <DropdownMenu
-                    ariaLabel={label}
+                    ariaLabel={t(label)}
                     triggerClassName="react-form-select"
                     trigger={
                       <>
                         <span>
-                          {(choices as Record<string, string>)[values[key]] ??
-                            "Недостъпна страница"}
+                          {(section === "public" && key === "home_page_id" && values[key] !== "0"
+                            ? (choices as Record<string, string>)[values[key]]
+                            : t((choices as Record<string, string>)[values[key]] ?? "Unavailable page"))}
                         </span>
                         <DropdownChevron />
                       </>
@@ -243,16 +246,18 @@ export function SectionSettingsForm({
                         disabled={saving}
                         onClick={() => update(key, value)}
                       >
-                        {label}
+                        {section === "public" && key === "home_page_id" && value !== "0"
+                          ? label
+                          : t(label)}
                       </DropdownOption>
                     ))}
                   </DropdownMenu>
-                  <small>{hint}</small>
+                  <small>{t(hint)}</small>
                 </div>
               ))}
               {section === "public" ? (
                 <label className="react-form-field settings-field-wide">
-                  <span>Съобщение при затворен сайт</span>
+                  <span>{t("Site closed message")}</span>
                   <Textarea
                     rows={3}
                     required
@@ -261,12 +266,12 @@ export function SectionSettingsForm({
                     value={values.closed_message}
                     onChange={(event) => update("closed_message", event.target.value)}
                   />
-                  <small>До 1000 символа. Показва се като текст, без HTML.</small>
+                  <small>{t("Up to 1,000 characters. Displayed as plain text without HTML.")}</small>
                 </label>
               ) : section === "users" ? (
                 <>
                   <label className="react-form-field">
-                    <span>Минимална дължина на паролата</span>
+                    <span>{t("Minimum password length")}</span>
                     <input
                       type="number"
                       required
@@ -277,12 +282,12 @@ export function SectionSettingsForm({
                       onChange={(event) => update("password_min_length", event.target.value)}
                     />
                     <small>
-                      12–64 символа. При създаване, промяна и възстановяване на парола. Максимумът
-                      остава 72 байта.
+
+                      {t("12–64 characters when creating, changing, or recovering a password. The 72-byte maximum still applies.")}
                     </small>
                   </label>
                   <label className="react-form-field">
-                    <span>Сесия без активност (минути)</span>
+                    <span>{t("Idle session timeout (minutes)")}</span>
                     <input
                       type="number"
                       required
@@ -292,13 +297,13 @@ export function SectionSettingsForm({
                       value={values.session_idle_minutes}
                       onChange={(event) => update("session_idle_minutes", event.target.value)}
                     />
-                    <small>5–1440 минути. След изтичане е необходимо повторно влизане.</small>
+                    <small>{t("5–1,440 minutes. Sign-in is required again after the timeout.")}</small>
                   </label>
                 </>
               ) : section === "media" ? (
                 <>
                   <label className="react-form-field">
-                    <span>Максимален размер на файл (MB)</span>
+                    <span>{t("Maximum file size (MB)")}</span>
                     <input
                       type="number"
                       required
@@ -309,11 +314,12 @@ export function SectionSettingsForm({
                       onChange={(event) => update("max_upload_mb", event.target.value)}
                     />
                     <small>
-                      1–1024 MB. Реалният лимит се ограничава и от PHP конфигурацията на сървъра.
+
+                      {t("1–1,024 MB. The PHP server configuration may impose a lower limit.")}
                     </small>
                   </label>
                   <label className="react-form-field">
-                    <span>Максимална резолюция на изображение (мегапиксели)</span>
+                    <span>{t("Maximum image resolution (megapixels)")}</span>
                     <input
                       type="number"
                       required
@@ -325,12 +331,12 @@ export function SectionSettingsForm({
                       onChange={(event) => update("max_image_megapixels", event.target.value)}
                     />
                     <small>
-                      1–100 мегапиксела. Например 6000 × 4000 px са 24 мегапиксела. При недостатъчна
-                      памет за миниатюра се запазва оригиналът без миниатюра.
+
+                      {t("1–100 megapixels. For example, 6000 × 4000 px is 24 megapixels. If there is not enough memory to create a thumbnail, the original is kept without one.")}
                     </small>
                   </label>
                   <label className="react-form-field">
-                    <span>Максимална страна на миниатюрата (px)</span>
+                    <span>{t("Maximum thumbnail side (px)")}</span>
                     <input
                       type="number"
                       required
@@ -341,13 +347,14 @@ export function SectionSettingsForm({
                       onChange={(event) => update("thumbnail_edge", event.target.value)}
                     />
                     <small>
-                      100–1200 px. Запазва пропорциите и не увеличава малки изображения.
+
+                      {t("100–1,200 px. Keeps proportions and does not enlarge small images.")}
                     </small>
                   </label>
                 </>
               ) : section === "updates" ? (
                 <label className="react-form-field settings-field-wide">
-                  <span>Изчакване на каталога (секунди)</span>
+                  <span>{t("Catalog request timeout (seconds)")}</span>
                   <input
                     type="number"
                     required
@@ -358,24 +365,24 @@ export function SectionSettingsForm({
                     onChange={(event) => update("catalog_timeout", event.target.value)}
                   />
                   <small>
-                    5–30 секунди за заявка към каталога на платформата и разширенията. Проверките на
-                    подписите и съвместимостта остават задължителни.
+
+                    {t("5–30 seconds for platform and extension catalog requests. Signature and compatibility checks remain required.")}
                   </small>
                 </label>
               ) : section === "maintenance" ? (
                 <>
                   <div className="react-form-field settings-field-wide operation-errors-log-field">
-                    <span>Дневник на операционни грешки</span>
+                    <span>{t("Operation error log")}</span>
                     <small>
-                      Append-only JSON Lines файл на диска. Всяка грешка от платформата, плъгин или
-                      тема се записва като нов ред.
+
+                      {t("Append-only JSON Lines file on disk. Each platform, plugin, or theme error is added as a new line.")}
                     </small>
                     <OperationErrorsLog revision={revision} />
                   </div>
                   {diagnostics &&
                     Object.entries(diagnostics).map(([label, value]) => (
                       <div className="react-form-field" key={label}>
-                        <span>{label}</span>
+                        <span>{t(label)}</span>
                         <small>{value}</small>
                       </div>
                     ))}
@@ -384,10 +391,10 @@ export function SectionSettingsForm({
                 <>
                   {mail && (
                     <div className="react-form-field settings-field-wide">
-                      <span>Връзка за изпращане: {mail.transport}</span>
+                      <span>{t("Send connection:")} {mail.transport}</span>
                       <small>
-                        Транспортът, SMTP сървърът и данните за достъп се управляват чрез MAILER_DSN
-                        в .env. Текущ подател: {mail.from_name} &lt;{mail.from_address}&gt;.
+
+                        {t("Transport, SMTP server, and credentials are configured through MAILER_DSN in .env. Current sender:")} {mail.from_name} &lt;{mail.from_address}&gt;.
                       </small>
                     </div>
                   )}
@@ -415,7 +422,7 @@ export function SectionSettingsForm({
                     },
                   ].map(({ key, label, type, max, hint }) => (
                     <label className="react-form-field settings-field-wide" key={key}>
-                      <span>{label}</span>
+                      <span>{t(label)}</span>
                       <input
                         type={type}
                         maxLength={max}
@@ -423,7 +430,7 @@ export function SectionSettingsForm({
                         value={values[key]}
                         onChange={(event) => update(key, event.target.value)}
                       />
-                      <small>{hint}</small>
+                      <small>{t(hint)}</small>
                     </label>
                   ))}
                 </>
@@ -440,7 +447,8 @@ export function SectionSettingsForm({
               }}
             >
               <RefreshCw />
-              Провери отново
+
+              {t("Check again")}
             </LoadingButton>
           </div>
         )}
@@ -453,7 +461,8 @@ export function SectionSettingsForm({
               icon={<Save aria-hidden="true" />}
               className="settings-save-button"
             >
-              Запази настройките
+
+              {t("Save settings")}
             </LoadingButton>
           </div>
         )}

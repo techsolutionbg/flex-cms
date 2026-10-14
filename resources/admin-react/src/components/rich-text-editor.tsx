@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useContext, useEffect, useRef, useState } from "react"
 import { MediaPicker } from "./media-picker"
 import {
@@ -189,8 +190,8 @@ export function RichTextEditor({
         <div ref={hostRef} />
       </div>
       {embeddedItems.length > 0 && embeddablePages.length > 0 && (
-        <div className="rich-text-embedded-items" aria-label="Вмъкнати елементи">
-          <span>Вмъкнати елементи</span>
+        <div className="rich-text-embedded-items" aria-label={t("Embedded items")}>
+          <span>{t("Embedded items")}</span>
           {embeddedItems.map((item, index) => (
             <div className="rich-text-embedded-item" key={`${item.index}-${item.text}`}>
               <code>{item.text}</code>
@@ -204,7 +205,8 @@ export function RichTextEditor({
                       setEmbed(page)
                     }}
                   >
-                    Редактирай
+
+                    {t("Edit")}
                     {embeddablePages.length > 1
                       ? `: ${page.label}`
                       : ""}

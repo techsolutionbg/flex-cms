@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { ArrowDownToLine, Eye, PackageOpen, Power } from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
@@ -136,7 +137,7 @@ export function PluginCatalogPage({
 
   return (
     <AdminShell
-      title="Каталог с разширения"
+      title={t("Extension catalog")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Разширения"
@@ -144,23 +145,24 @@ export function PluginCatalogPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Каталог с разширения</h1>
+          <h1>{t("Extension catalog")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[{ label: "Разширения", onClick: onBack }, { label: "Каталог" }]}
           />
         </div>
         <button type="button" onClick={onBack}>
-          Назад към разширенията
+
+          {t("Back to extensions")}
         </button>
       </div>
       {loading ? (
-        <div className="react-catalog-empty">Зареждане на каталога…</div>
+        <div className="react-catalog-empty">{t("Loading catalog…")}</div>
       ) : catalog.length === 0 ? (
         <div className="react-catalog-empty">
           <PackageOpen aria-hidden="true" />
-          <strong>Няма публикувани разширения.</strong>
-          <span>Каталогът временно не съдържа достъпни пакети.</span>
+          <strong>{t("No extensions have been published.")}</strong>
+          <span>{t("The catalog has no packages available right now.")}</span>
         </div>
       ) : (
         <div className="plugin-catalog-grid">
@@ -194,25 +196,27 @@ export function PluginCatalogPage({
                     <span>{plugin.id}</span>
                   </div>
                 </div>
-                <p>{plugin.description || "Няма описание за това разширение."}</p>
+                <p>{plugin.description || t("No description is available for this extension.")}</p>
                 <div className="plugin-catalog-meta">
                   <span>
-                    Версия <strong>{plugin.version}</strong>
+
+                    {t("Version")} <strong>{plugin.version}</strong>
                   </span>
                   {plugin.author && (
                     <span>
-                      Автор <strong>{plugin.author}</strong>
+
+                      {t("Author")} <strong>{plugin.author}</strong>
                     </span>
                   )}
                 </div>
                 {plugin.update_available && (
                   <div className="plugin-catalog-status">
-                    <span className="plugin-catalog-update">Има обновление</span>
+                    <span className="plugin-catalog-update">{t("Update available")}</span>
                   </div>
                 )}
                 {plugin.update_available && plugin.release_notes && (
                   <div className="plugin-catalog-release-notes">
-                    <strong>Какво ново</strong>
+                    <strong>{t("What's new")}</strong>
                     <span>{plugin.release_notes}</span>
                   </div>
                 )}
@@ -224,7 +228,8 @@ export function PluginCatalogPage({
                       disabled={busyAction !== null}
                     >
                       <Eye aria-hidden="true" />
-                      Преглед
+
+                      {t("Preview")}
                     </button>
                   )}
                   {installed && (
@@ -235,7 +240,7 @@ export function PluginCatalogPage({
                       onClick={() => void changeStatus(plugin, statusAction)}
                     >
                       <Power aria-hidden="true" />
-                      {active ? "Деактивирай" : "Активирай"}
+                      {active ? t("Deactivate") : t("Activate")}
                     </LoadingButton>
                   )}
                   <LoadingButton
@@ -247,14 +252,15 @@ export function PluginCatalogPage({
                     onClick={() => void install(plugin)}
                   >
                     {isBusy && busyAction?.action === "install" ? (
-                      "Изчакване…"
+                      t("Waiting…")
                     ) : !installed ? (
                       <>
                         <ArrowDownToLine aria-hidden="true" />
-                        Инсталирай
+
+                        {t("Install")}
                       </>
                     ) : (
-                      "Обнови"
+                      t("Update")
                     )}
                   </LoadingButton>
                 </div>

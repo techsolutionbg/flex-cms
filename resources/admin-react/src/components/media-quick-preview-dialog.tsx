@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
@@ -48,7 +49,7 @@ export function MediaQuickPreviewDialog({
     >
       <div className="media-picker-heading">
         <h2 id={titleId}>{label}</h2>
-        <Button type="button" variant="secondary" aria-label="Затвори" onClick={onClose}>
+        <Button type="button" variant="secondary" aria-label={t("Close")} onClick={onClose}>
           <X />
         </Button>
       </div>
@@ -61,7 +62,8 @@ export function MediaQuickPreviewDialog({
               aria-live="polite"
               aria-busy="true"
             >
-              Зареждане…
+
+              {t("Loading…")}
             </div>
           )}
           <img

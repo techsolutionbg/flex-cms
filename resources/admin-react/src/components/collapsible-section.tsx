@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import { ChevronDown } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { ExtensionComponent, ExtensionSlot, panelIcon, useExtensions } from "./extension-runtime"
+import { t } from "@/lib/admin-i18n"
 
 type CollapsibleSectionProps = {
   title: string
@@ -54,7 +55,7 @@ export function CollapsibleSection({
         {nested.map((extension) => (
           <CollapsibleSection
             key={extension.id}
-            title={extension.label}
+            title={t(extension.label)}
             icon={panelIcon(extension.icon)}
             defaultOpen={extension.default_open}
             storageKey={`nested:${extensionPoint}:${extension.id}`}
@@ -72,7 +73,7 @@ export function CollapsibleSection({
       <section className={`collapsible-section is-open is-static${className ? ` ${className}` : ""}`}>
         <div className="collapsible-section-header collapsible-section-header-static">
           {Icon && <Icon aria-hidden="true" />}
-          <span>{title}</span>
+          <span>{t(title)}</span>
         </div>
         {body}
       </section>
@@ -102,7 +103,7 @@ export function CollapsibleSection({
         onClick={() => setOpen((current) => !current)}
       >
         {Icon && <Icon aria-hidden="true" />}
-        <span>{title}</span>
+        <span>{t(title)}</span>
         <ChevronDown className="collapsible-section-chevron" aria-hidden="true" />
       </button>
       {body}

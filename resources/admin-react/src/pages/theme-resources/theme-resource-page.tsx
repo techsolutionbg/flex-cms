@@ -1,3 +1,4 @@
+import { getAdminLocale, t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -127,7 +128,7 @@ export function ThemeResourcePage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>{viewFilter === "trash" ? "Кошче" : resource.label}</h1>
+          <h1>{viewFilter === "trash" ? t("Trash") : t(resource.label)}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={
@@ -138,7 +139,8 @@ export function ThemeResourcePage({
           />
         </div>
         <button type="button" onClick={onCreate} disabled={viewFilter === "trash"}>
-          Нов {singular}
+
+          {t("New")} {t(singular)}
         </button>
       </div>
       <DataTable
@@ -150,8 +152,8 @@ export function ThemeResourcePage({
           records.length === 0
             ? viewFilter === "trash"
               ? "Кошчето е празно."
-              : `Няма създадени ${resource.label.toLocaleLowerCase("bg")}.`
-            : "Няма записи, отговарящи на филтрите."
+              : t("No {resource} have been created yet.", "core", { resource: t(resource.label).toLocaleLowerCase(getAdminLocale()) })
+            : t("No records match the filters.")
         }
         columns={[
           {
@@ -192,7 +194,7 @@ export function ThemeResourcePage({
             sortable: true,
             render: (record) => (
               <span className={`react-status-badge status-${record.status}`}>
-                {record.status === "published" ? "Публикуван" : "Чернова"}
+                {record.status === "published" ? t("Published theme") : t("Draft")}
               </span>
             ),
           },
@@ -211,7 +213,8 @@ export function ThemeResourcePage({
                 {viewFilter === "active" ? (
                   <>
                     <button type="button" role="menuitem" onClick={() => onEdit(record)}>
-                      Редактирай
+
+                      {t("Edit")}
                     </button>
                     <button
                       type="button"
@@ -220,19 +223,22 @@ export function ThemeResourcePage({
                         void changeStatus(record, record.status === "published" ? "draft" : "published")
                       }
                     >
-                      {record.status === "published" ? "Върни в чернова" : "Публикувай"}
+                      {record.status === "published" ? t("Move to draft") : t("Publish")}
                     </button>
                     <button type="button" role="menuitem" onClick={() => setPendingTrash(record)}>
-                      В кошчето
+
+                      {t("In trash")}
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" role="menuitem" onClick={() => void restore(record)}>
-                      Възстанови
+
+                      {t("Restore")}
                     </button>
                     <button type="button" role="menuitem" onClick={() => setPendingForce(record)}>
-                      Изтрий завинаги
+
+                      {t("Delete forever")}
                     </button>
                   </>
                 )}
@@ -243,64 +249,69 @@ export function ThemeResourcePage({
         toolbar={
           <>
             <label className="react-filter-field">
-              <span>Търсене</span>
+              <span>{t("Search")}</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.currentTarget.value)}
-                placeholder="Заглавие или адрес"
+                placeholder={t("Title or address")}
               />
             </label>
             {viewFilter === "active" && (
               <label className="react-filter-field">
-                <span>Статус</span>
+                <span>{t("Status")}</span>
                 <DropdownMenu
-                  ariaLabel="Избор на статус"
+                  ariaLabel={t("Choose status")}
                   triggerClassName="react-filter-trigger"
                   trigger={
                     <>
                       <span>
                         {statusFilter === "published"
-                          ? "Публикувани"
+                          ? t("Published pages")
                           : statusFilter === "draft"
-                            ? "Чернови"
-                            : "Всички"}
+                            ? t("Drafts")
+                            : t("All")}
                       </span>
                       <DropdownChevron />
                     </>
                   }
                 >
                   <DropdownOption selected={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
-                    Всички
+
+                    {t("All")}
                   </DropdownOption>
                   <DropdownOption
                     selected={statusFilter === "published"}
                     onClick={() => setStatusFilter("published")}
                   >
-                    Публикувани
+
+                    {t("Published pages")}
                   </DropdownOption>
                   <DropdownOption selected={statusFilter === "draft"} onClick={() => setStatusFilter("draft")}>
-                    Чернови
+
+                    {t("Drafts")}
                   </DropdownOption>
                 </DropdownMenu>
               </label>
             )}
             <label className="react-filter-field">
-              <span>Изглед</span>
+              <span>{t("View")}</span>
               <DropdownMenu
-                ariaLabel="Избор на изглед"
+                ariaLabel={t("Choose view")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
-                    <span>{viewFilter === "trash" ? "Кошче" : "Активни"}</span>
+                    <span>{viewFilter === "trash" ? t("Trash") : t("Active items")}</span>
                     <DropdownChevron />
                   </>
                 }
               >
                 <DropdownOption selected={viewFilter === "active"} onClick={() => setViewFilter("active")}>
-                  Активни
+
+                  {t("Active items")}
                 </DropdownOption>
                 <DropdownOption selected={viewFilter === "trash"} onClick={() => setViewFilter("trash")}>
-                  Кошче
+
+                  {t("Trash")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
@@ -309,9 +320,9 @@ export function ThemeResourcePage({
       />
       <ConfirmDialog
         open={pendingTrash !== null}
-        title="Преместване в кошчето"
+        title={t("Move to trash")}
         message={pendingTrash ? `„${pendingTrash.title}“ ще бъде преместен в кошчето.` : ""}
-        confirmLabel="В кошчето"
+        confirmLabel={t("In trash")}
         danger
         onCancel={() => setPendingTrash(null)}
         onConfirm={() => {
@@ -322,9 +333,9 @@ export function ThemeResourcePage({
       />
       <ConfirmDialog
         open={pendingForce !== null}
-        title="Окончателно изтриване"
+        title={t("Delete permanently")}
         message={pendingForce ? `„${pendingForce.title}“ ще бъде изтрит без възможност за възстановяване.` : ""}
-        confirmLabel="Изтрий завинаги"
+        confirmLabel={t("Delete forever")}
         danger
         onCancel={() => setPendingForce(null)}
         onConfirm={() => {

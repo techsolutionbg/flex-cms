@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useRef, useState } from "react"
 import { adminRoute, adminUrl } from "@/lib/admin-routes"
 import { isWorkspacePath, readWorkspace, writeWorkspace } from "@/lib/workspace-storage"
@@ -440,9 +441,9 @@ export function AdminWorkspace({
           navigate={(path) => open(path)}
         />
       ) : (
-        <AdminShell {...common} title="Разширение">
+        <AdminShell {...common} title={t("Extension")}>
           <p role="status">
-            {extensionsError || "Разширението е неактивно или интерфейсът се зарежда."}
+            {extensionsError || t("The extension is inactive or its interface is loading.")}
           </p>
         </AdminShell>
       )
@@ -472,10 +473,11 @@ export function AdminWorkspace({
     if (tab.loading || tab.error)
       return (
         <AdminShell {...common} title={tab.title}>
-          <p role={tab.error ? "alert" : "status"}>{tab.error ?? "Зареждане…"}</p>
+          <p role={tab.error ? "alert" : "status"}>{tab.error ?? t("Loading…")}</p>
           {tab.error && (
             <button className="react-secondary-button" onClick={() => void hydrate(tab)}>
-              Опитай отново
+
+              {t("Try again")}
             </button>
           )}
         </AdminShell>
@@ -616,8 +618,8 @@ export function AdminWorkspace({
     if (/^\/pages\/\d+\/theme-content$/.test(tab.path)) {
       if (!tab.page) {
         return (
-          <AdminShell {...common} title="Съдържание от темата" activeItem="Страници">
-            <p role="status">{tab.loading ? "Зареждане…" : (tab.error ?? "Страницата не е налична.")}</p>
+          <AdminShell {...common} title={t("Theme content")} activeItem="Страници">
+            <p role="status">{tab.loading ? t("Loading…") : (tab.error ?? t("This page is unavailable."))}</p>
           </AdminShell>
         )
       }
@@ -661,11 +663,11 @@ export function AdminWorkspace({
       const definition = themeCapabilities?.resources?.find((item) => item.id === themeResourceMatch[1])
       if (!definition)
         return (
-          <AdminShell {...common} title="Колекция">
+          <AdminShell {...common} title={t("Collection")}>
             <p role="status">
               {themeCapabilities
-                ? "Активната тема не обявява тази колекция."
-                : "Зареждане…"}
+                ? t("The active theme does not declare this collection.")
+                : t("Loading…")}
             </p>
           </AdminShell>
         )
@@ -747,9 +749,9 @@ export function AdminWorkspace({
       })}
       <ConfirmDialog
         open={confirmCloseAll}
-        title="Затваряне на всички табове"
+        title={t("Closing all tabs")}
         message={`Има незапазени промени в ${tabs.filter((tab) => tab.dirty).length} таба. Ако продължите, те ще бъдат загубени. Панелът ще се върне към таблото.`}
-        confirmLabel="Затвори без запазване"
+        confirmLabel={t("Close without saving")}
         onCancel={() => setConfirmCloseAll(false)}
         onConfirm={finishCloseAll}
       />

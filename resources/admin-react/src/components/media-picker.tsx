@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useId, useRef, useState } from "react"
 import { Button } from "./ui/button"
 import { createPortal } from "react-dom"
@@ -52,11 +53,11 @@ export function MediaPicker({
       }}
     >
       <div className="media-picker-heading">
-        <h2 id={title}>Избери медия</h2>
+        <h2 id={title}>{t("Choose media")}</h2>
         <button
           type="button"
           className="react-secondary-button"
-          aria-label="Затвори библиотеката"
+          aria-label={t("Close media library")}
           onClick={onClose}
         >
           <X size={20} />
@@ -82,13 +83,16 @@ export function MediaPicker({
         />
       )}
       {multiple && (
-        <div className="media-picker-actions" role="group" aria-label="Действия за избраните файлове">
+        <div className="media-picker-actions" role="group" aria-label={t("Actions for selected files")}>
           <span className="media-picker-selection-count" role="status" aria-live="polite">
-            {selected.length === 1 ? "Избран е 1 файл" : `Избрани са ${selected.length} файла`}
+            {selected.length === 1
+              ? t("1 file selected")
+              : t("{count} files selected", "core", { count: selected.length })}
           </span>
           <div className="media-picker-action-buttons">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Отказ
+
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
@@ -99,7 +103,8 @@ export function MediaPicker({
               }}
             >
               <Check size={17} aria-hidden="true" />
-              Добави избраните ({selected.length})
+
+              {t("Add selected (")}{selected.length})
             </Button>
           </div>
         </div>

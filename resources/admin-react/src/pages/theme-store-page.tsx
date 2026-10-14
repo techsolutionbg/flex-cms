@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { ArrowDownToLine, PackageOpen, Power, Upload } from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
@@ -136,7 +137,7 @@ export function ThemeStorePage({
 
   return (
     <AdminShell
-      title="Каталог с теми"
+      title={t("Theme catalog")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Теми"
@@ -144,23 +145,24 @@ export function ThemeStorePage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Каталог с теми</h1>
+          <h1>{t("Theme catalog")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[{ label: "Теми", onClick: onBack }, { label: "Каталог" }]}
           />
         </div>
         <button type="button" onClick={onBack}>
-          Назад към темите
+
+          {t("Back to themes")}
         </button>
       </div>
       {loading ? (
-        <div className="react-catalog-empty">Зареждане на каталога…</div>
+        <div className="react-catalog-empty">{t("Loading catalog…")}</div>
       ) : catalog.length === 0 ? (
         <div className="react-catalog-empty">
           <PackageOpen aria-hidden="true" />
-          <strong>Няма публикувани теми.</strong>
-          <span>Каталогът временно не съдържа достъпни теми.</span>
+          <strong>{t("No themes have been published.")}</strong>
+          <span>{t("The catalog has no themes available right now.")}</span>
         </div>
       ) : (
         <div className="theme-store-grid">
@@ -187,17 +189,19 @@ export function ThemeStorePage({
                       className={`react-status-badge status-${active ? "active" : installed ? "installed" : "inactive"}`}
                     >
                       <span className="status-dot" />
-                      {active ? "Активна" : installed ? "Инсталирана" : "Неинсталирана"}
+                      {active ? t("Active (feminine)") : installed ? t("Installed (feminine)") : t("Not installed")}
                     </span>
                   </div>
-                  <p>{theme.description || "Няма описание за тази тема."}</p>
+                  <p>{theme.description || t("No description is available for this theme.")}</p>
                   <div className="theme-store-meta">
                     <span>
-                      Версия <strong>{theme.version}</strong>
+
+                      {t("Version")} <strong>{theme.version}</strong>
                     </span>
                     {theme.author && (
                       <span>
-                        Автор <strong>{theme.author}</strong>
+
+                        {t("Author")} <strong>{theme.author}</strong>
                       </span>
                     )}
                   </div>
@@ -209,17 +213,17 @@ export function ThemeStorePage({
                     </div>
                   )}
                   {theme.update_available && (
-                    <div className="theme-card-update">Налична е нова версия</div>
+                    <div className="theme-card-update">{t("A new version is available")}</div>
                   )}
                   {theme.release_notes && (
                     <div className="theme-card-notes">
-                      <strong>Какво ново</strong>
+                      <strong>{t("What's new")}</strong>
                       <span>{theme.release_notes}</span>
                     </div>
                   )}
                 </div>
                 <div className="theme-store-actions">
-                  <LoadingButton onClick={() => onDetails?.(theme.id)}>Детайли</LoadingButton>
+                  <LoadingButton onClick={() => onDetails?.(theme.id)}>{t("Details")}</LoadingButton>
                   {installed && (
                     <LoadingButton
                       type="button"
@@ -228,7 +232,7 @@ export function ThemeStorePage({
                       onClick={() => void runAction(theme, active ? "deactivate" : "activate")}
                     >
                       <Power aria-hidden="true" />
-                      {active ? "Деактивирай" : "Активирай"}
+                      {active ? t("Deactivate") : t("Activate")}
                     </LoadingButton>
                   )}
                   <LoadingButton
@@ -240,12 +244,13 @@ export function ThemeStorePage({
                     {installed ? (
                       <>
                         <Upload aria-hidden="true" />
-                        {theme.update_available ? "Обнови" : "Преинсталирай"}
+                        {theme.update_available ? t("Update") : t("Reinstall")}
                       </>
                     ) : (
                       <>
                         <ArrowDownToLine aria-hidden="true" />
-                        Инсталирай
+
+                        {t("Install")}
                       </>
                     )}
                   </LoadingButton>

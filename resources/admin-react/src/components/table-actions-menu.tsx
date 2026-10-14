@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { MoreHorizontal } from "lucide-react"
 import { Children, useContext, type ReactNode } from "react"
 import { DropdownMenu, DropdownOption } from "./dropdown-menu"
@@ -18,7 +19,7 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
   if (Children.count(children) === 0 && actions.length === 0) return null
   return (
     <DropdownMenu
-      ariaLabel="Действия"
+      ariaLabel={t("Actions")}
       triggerClassName="table-actions-trigger-react"
       trigger={<MoreHorizontal aria-hidden="true" />}
     >
@@ -29,7 +30,7 @@ export function TableActionsMenu({ children }: { children: ReactNode }) {
           danger={action.danger}
           onClick={() => void action.onSelect(extension!.row, extension!.helpers)}
         >
-          {action.label}
+          {t(action.label)}
         </DropdownOption>
       ))}
     </DropdownMenu>

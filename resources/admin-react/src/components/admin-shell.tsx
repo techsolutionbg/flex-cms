@@ -1,11 +1,12 @@
 import type { CSSProperties, ReactNode } from "react"
-import { Menu, RefreshCw } from "lucide-react"
+import { Menu, PanelLeftClose, PanelLeftOpen, RefreshCw } from "lucide-react"
 import { LoadingButton } from "./loading-button"
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
 import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-context"
 import { PageHelpButton, PageHelpProvider, usePageHelpRegistry } from "./page-help"
 import { AdminPanelSearch } from "./admin-panel-search"
+import { t } from "@/lib/admin-i18n"
 
 type AdminShellProps = {
   children: ReactNode
@@ -51,6 +52,25 @@ export function AdminShell({
       return false
     }
   })
+  const [largeScreen, setLargeScreen] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1025px)").matches,
+  )
+  const [sidebarHidden, setSidebarHidden] = useState(() => {
+    try {
+      return window.localStorage.getItem("flex-admin-sidebar-hidden") === "true"
+    } catch {
+      return false
+    }
+  })
+  const sidebarIsCollapsed = sidebarCollapsed && !largeScreen
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1025px)")
+    const update = () => setLargeScreen(media.matches)
+    update()
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  }, [])
 
   function toggleSidebar() {
     setSidebarCollapsed((current) => {
@@ -64,9 +84,21 @@ export function AdminShell({
     })
   }
 
+  function toggleSidebarVisibility() {
+    setSidebarHidden((current) => {
+      const next = !current
+      try {
+        window.localStorage.setItem("flex-admin-sidebar-hidden", String(next))
+      } catch {
+        // Keep the visibility toggle available when local storage is restricted.
+      }
+      return next
+    })
+  }
+
   return (
     <div
-      className={`admin-shell-react${sidebarCollapsed ? " is-sidebar-collapsed" : ""}${resizing ? " is-sidebar-resizing" : ""}`}
+      className={`admin-shell-react${sidebarIsCollapsed ? " is-sidebar-collapsed" : ""}${sidebarHidden ? " is-sidebar-hidden" : ""}${resizing ? " is-sidebar-resizing" : ""}`}
       style={{ "--sidebar-expanded-width": `${sidebarWidth}px` } as CSSProperties}
     >
       <AdminSidebar
@@ -74,13 +106,13 @@ export function AdminShell({
         onNavigate={onNavigate}
         activeItem={activeItem}
         loggingOut={loggingOut}
-        collapsed={sidebarCollapsed}
+        collapsed={sidebarIsCollapsed}
       />
-      {!sidebarCollapsed && (
+      {!sidebarIsCollapsed && !sidebarHidden && (
         <div
           className="sidebar-resize-handle"
           role="separator"
-          aria-label="Промени ширината на страничната лента"
+          aria-label={t("Resize sidebar")}
           aria-orientation="vertical"
           aria-valuemin={220}
           aria-valuemax={400}
@@ -120,13 +152,28 @@ export function AdminShell({
             <button
               className="react-sidebar-collapse-toggle"
               type="button"
-              aria-label={sidebarCollapsed ? "Разгъни страничната лента" : "Свий страничната лента"}
-              aria-expanded={!sidebarCollapsed}
+              aria-label={t(sidebarIsCollapsed ? "Разгъни страничната лента" : "Свий страничната лента")}
+              aria-expanded={!sidebarIsCollapsed}
               onClick={toggleSidebar}
             >
               <Menu size={21} aria-hidden="true" />
             </button>
-            <h1 className="admin-topbar-title-react">{title}</h1>
+            <button
+              className="react-sidebar-collapse-toggle react-sidebar-visibility-toggle"
+              type="button"
+              aria-label={t(sidebarHidden ? "Show sidebar" : "Hide sidebar")}
+              title={t(sidebarHidden ? "Show sidebar" : "Hide sidebar")}
+              aria-controls="admin-sidebar"
+              aria-expanded={!sidebarHidden}
+              onClick={toggleSidebarVisibility}
+            >
+              {sidebarHidden ? (
+                <PanelLeftOpen size={21} aria-hidden="true" />
+              ) : (
+                <PanelLeftClose size={21} aria-hidden="true" />
+              )}
+            </button>
+            <h1 className="admin-topbar-title-react">{t(title)}</h1>
           </div>
           <AdminPanelSearch />
           <div className="admin-topbar-end">
@@ -135,14 +182,14 @@ export function AdminShell({
               <LoadingButton
                 className="admin-page-refresh"
                 type="button"
-                aria-label="Презареди данните в страницата"
-                title="Презареди данните в страницата"
+                aria-label={t("Refresh page data")}
+                title={t("Refresh page data")}
                 disabled={workspace.refreshing}
                 loading={workspace.refreshing}
                 icon={<RefreshCw size={18} aria-hidden="true" />}
                 onClick={workspace.refresh}
               >
-                <span>Презареди</span>
+                <span>{t("Refresh")}</span>
               </LoadingButton>
             )}
             <LoadingButton
@@ -152,7 +199,7 @@ export function AdminShell({
               disabled={loggingOut}
               loading={loggingOut}
             >
-              {loggingOut ? "Излизане…" : "Изход"}
+              {t(loggingOut ? "Излизане…" : "Изход")}
             </LoadingButton>
           </div>
         </header>

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { useMemo, useState, type SyntheticEvent } from "react"
@@ -58,7 +59,7 @@ export function PageThemeContentForm({
   )
   const template = page.settings?.template ?? "default"
   const templateLabel = templateLabels[template] ?? template
-  const layoutHint = templateLayoutHint[template] ?? template
+  const layoutHint = t(templateLayoutHint[template] ?? template)
 
   usePageHelp(
     useMemo(
@@ -67,9 +68,9 @@ export function PageThemeContentForm({
         content: (
           <>
             <p>
-              Полетата идват от активната тема — обикновено <strong>само за избрани страници</strong> (
-              <code>manifest.json</code> → <code>pages</code>, по slug или id) и/или глобално в
-              настройките. Темата може по-късно да добави и layout-и по CMS шаблон.
+
+              {t("Fields come from the active theme, usually")} <strong>{t("for selected pages only")}</strong> (
+              <code>manifest.json</code> → <code>pages</code>{t(", by slug or ID, and/or globally in settings. The theme can also add CMS template layouts later.")}
             </p>
             <p>
               „{page.title}“
@@ -81,20 +82,19 @@ export function PageThemeContentForm({
               ) : null}
               {page.slug === "home" || template === "landing" ? (
                 <>
-                  . Ако slug съвпада с page binding в темата (напр. <strong>home</strong>), виждате
-                  секции като <strong>{layoutHint}</strong>.
+
+                  {t(". If the slug matches a page binding in the theme, for example")} <strong>home</strong>{t("), you will see sections such as")} <strong>{layoutHint}</strong>.
                 </>
               ) : (
                 <>
-                  . Ако темата няма binding за тази страница, тук няма допълнителни полета — само
-                  съдържанието от редактора.
+
+                  {t(". If the theme has no binding for this page, there are no additional fields here—only the editor content.")}
                 </>
               )}
             </p>
             <p>
-              Глобални полета (лого, контакт, Footer) се редактират от „Теми“ → темата → „Настройки на
-              темата“, не от
-              този екран.
+
+              {t("Global fields (logo, contact details, footer, and more) are edited under Themes → theme → Theme settings, not on this screen.")}
             </p>
           </>
         ),
@@ -120,7 +120,7 @@ export function PageThemeContentForm({
 
   return (
     <AdminShell
-      title="Съдържание от темата"
+      title={t("Theme content")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Страници"
@@ -128,7 +128,7 @@ export function PageThemeContentForm({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Съдържание от темата</h1>
+          <h1>{t("Theme content")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[
@@ -139,12 +139,14 @@ export function PageThemeContentForm({
           />
         </div>
         <button type="button" onClick={() => onSettings(page)}>
-          Настройки на страницата
+
+          {t("Settings for this page")}
         </button>
       </div>
       {panels.length === 0 ? (
         <p role="status">
-          Няма активно разширение за полета на темата или активната тема няма декларирана схема.
+
+          {t("No active extension provides theme fields, or the active theme has no declared schema.")}
         </p>
       ) : (
         <ExtensionScope value={extensionScope}>
@@ -162,7 +164,8 @@ export function PageThemeContentForm({
             <div className="react-form-actions">
               <LoadingButton type="submit" loading={saving}>
                 <Save aria-hidden="true" />
-                Запази
+
+                {t("Save")}
               </LoadingButton>
             </div>
           </form>

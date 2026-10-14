@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 const skeletonCount = 12
 
 const masonryHeights = ["7.5rem", "10rem", "8.25rem", "11.5rem", "9rem", "8rem"]
@@ -10,7 +11,7 @@ export function MediaBrowserSkeleton({ layout }: { layout: "grid" | "masonry" })
       aria-live="polite"
       aria-busy="true"
     >
-      <span className="media-skeleton-status">Зареждане…</span>
+      <span className="media-skeleton-status">{t("Loading…")}</span>
       {Array.from({ length: skeletonCount }, (_, index) => (
         <article
           key={index}

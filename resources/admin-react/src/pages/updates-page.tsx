@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import {
   Archive,
@@ -263,7 +264,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
 
   return (
     <AdminShell
-      title="Обновявания"
+      title={t("Updates")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Обновявания"
@@ -271,17 +272,17 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
     >
       <div className="react-page-heading">
         <div>
-          <h1>Обновявания</h1>
+          <h1>{t("Updates")}</h1>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Обновявания" }]} />
         </div>
       </div>
       {loading ? (
-        <div className="react-empty-state">Зареждане на обновяванията…</div>
+        <div className="react-empty-state">{t("Loading updates…")}</div>
       ) : (
         <div className="updates-page-grid">
           <CollapsibleSection
             extensionPoint="updates.status"
-            title="Състояние на платформата"
+            title={t("Platform status")}
             icon={Server}
             storageKey="updates-platform-status"
             className="updates-platform-status"
@@ -291,9 +292,9 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                 <Server aria-hidden="true" />
               </div>
               <div>
-                <span className="react-eyebrow">Текуща версия</span>
+                <span className="react-eyebrow">{t("Current version")}</span>
                 <strong>{version ?? "—"}</strong>
-                <span>Канал: {remote?.channel ?? "stable"}</span>
+                <span>{t("Channel:")} {remote?.channel ?? "stable"}</span>
               </div>
             </div>
             {updateQueued && (
@@ -302,24 +303,23 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                 <div>
                   <strong>
                     {updateReconnecting
-                      ? "Свързване с платформата…"
+                      ? t("Connecting to the platform…")
                       : updateProgress(currentJob).label}
                   </strong>
                   <p>
                     {updateReconnecting
-                      ? "Платформата се рестартира след обновяването. Изчакваме връзката да бъде възстановена."
+                      ? t("The platform is restarting after the update. Waiting for the connection to return.")
                       : `Етап ${updateProgress(currentJob).step} от 7. Прогресът показва етапите, а не процента изтеглени байтове.`}
                   </p>
                   <progress
                     className="updates-stage-progress"
                     max={7}
                     value={updateProgress(currentJob).value}
-                    aria-label="Етап на обновяването"
+                    aria-label={t("Update stage")}
                   />
                   {(currentJob?.files_total ?? 0) > 0 && (
                     <p>
-                      {currentJob?.files_processed ?? 0} / {currentJob?.files_total} обработени
-                      файла
+                      {currentJob?.files_processed ?? 0} / {currentJob?.files_total}  {t("files processed")}
                     </p>
                   )}
                 </div>
@@ -336,12 +336,13 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                       setMonitorError(
                         reason instanceof Error
                           ? reason.message
-                          : "Статусът не можа да бъде проверен.",
+                          : t("The status could not be checked."),
                       ),
                     )
                   }}
                 >
-                  Провери статуса отново
+
+                  {t("Check status again")}
                 </LoadingButton>
               </div>
             )}
@@ -350,7 +351,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                 <>
                   <TriangleAlert aria-hidden="true" />
                   <div>
-                    <h2>Проверката не бе успешна</h2>
+                    <h2>{t("The check failed")}</h2>
                     <p>{remote.error}</p>
                   </div>
                 </>
@@ -359,14 +360,15 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                   <div className="updates-available-mark">NEW</div>
                   <div className="updates-available-content">
                     <div className="updates-available-heading">
-                      <span className="react-eyebrow">Налична актуализация</span>
-                      <h2>Версия {remote.available.version}</h2>
+                      <span className="react-eyebrow">{t("Update is available")}</span>
+                      <h2>{t("Version")} {remote.available.version}</h2>
                     </div>
                     <p>
-                      {remote.available.release_notes || "Няма допълнителни бележки за релийза."}
+                      {remote.available.release_notes || t("No additional release notes.")}
                     </p>
                     <small>
-                      Публикувана: <DateTime value={remote.available.published_at} /> ·{" "}
+
+                      {t("Published:")} <DateTime value={remote.available.published_at} /> ·{" "}
                       {formatBytes(remote.available.size)}
                     </small>
                     <div className="updates-actions">
@@ -377,7 +379,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                         disabled={busyAction !== null || updateQueued}
                         onClick={() => void runAction("update_remote")}
                       >
-                        {updateQueued ? "Обновяването се изпълнява…" : "Обнови сега"}
+                        {updateQueued ? t("The update is running…") : t("Update now")}
                       </LoadingButton>
                     </div>
                   </div>
@@ -386,8 +388,8 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                 <>
                   <CheckCircle2 aria-hidden="true" />
                   <div>
-                    <h2>Платформата е актуална</h2>
-                    <p>Няма налична съвместима актуализация за текущия канал.</p>
+                    <h2>{t("Platform is up to date")}</h2>
+                    <p>{t("No compatible update is available for the current channel.")}</p>
                   </div>
                 </>
               )}
@@ -395,13 +397,13 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="updates.history"
-            title="История на обновяванията"
+            title={t("Update history")}
             icon={History}
             storageKey="updates-history"
             className="updates-section"
           >
             {history.length === 0 ? (
-              <p className="react-muted">Все още няма записана история.</p>
+              <p className="react-muted">{t("No update history has been recorded yet.")}</p>
             ) : (
               <div className="updates-history-list">
                 {history.map((record, index) => (
@@ -410,7 +412,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                       <strong>
                         {record.type === "platform_rollback"
                           ? "Rollback"
-                          : "Обновяване " + (record.from ?? "—") + " → " + (record.to ?? "—")}
+                          : `${t("Update")} ${record.from ?? "—"} → ${record.to ?? "—"}`}
                       </strong>
                       <small>
                         <DateTime value={record.updated_at ?? record.rolled_back_at} />
@@ -424,7 +426,8 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                         onClick={() => setPendingRollback(record)}
                       >
                         <RotateCcw aria-hidden="true" />
-                        Върни назад
+
+                        {t("Roll back")}
                       </LoadingButton>
                     )}
                   </div>
@@ -434,21 +437,21 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
           </CollapsibleSection>
           <CollapsibleSection
             extensionPoint="updates.releases"
-            title="Всички налични релийзи"
+            title={t("All available releases")}
             icon={Archive}
             storageKey="updates-releases"
             className="updates-section"
           >
             <div className="updates-releases-list">
               {releases.length === 0 ? (
-                <p className="react-muted">Няма налични релийзи.</p>
+                <p className="react-muted">{t("No releases are available.")}</p>
               ) : (
                 releases.map((release) => (
                   <div className="updates-release-row" key={release.version}>
                     <div className="updates-release-info">
                       <div>
-                        <strong>Версия {release.version}</strong>
-                        {release.current && <span className="updates-release-current">Текуща</span>}
+                        <strong>{t("Version")} {release.version}</strong>
+                        {release.current && <span className="updates-release-current">{t("Current")}</span>}
                         {release.downgrade && !release.current && (
                           <span className="updates-release-downgrade">Downgrade</span>
                         )}
@@ -462,7 +465,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                       )}
                     </div>
                     {release.current ? (
-                      <span className="react-status-badge status-published">Инсталиран</span>
+                      <span className="react-status-badge status-published">{t("Installed theme")}</span>
                     ) : (
                       <LoadingButton
                         type="button"
@@ -477,7 +480,7 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
                             : void runAction("update_remote", { version: release.version })
                         }
                       >
-                        {release.downgrade ? "Инсталирай" : "Обнови"}
+                        {release.downgrade ? t("Install") : t("Update")}
                       </LoadingButton>
                     )}
                   </div>
@@ -489,17 +492,16 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
       )}
       <ConfirmDialog
         open={pendingRollback !== null}
-        title="Връщане към предишна версия"
+        title={t("Roll back to a previous version")}
         message={
           pendingRollback
-            ? "Платформата ще бъде върната от версия " +
-              pendingRollback.to +
-              " към " +
-              pendingRollback.from +
-              "."
+            ? t("The platform will be rolled back from version {from} to {to}.", "core", {
+                from: pendingRollback.to ?? "—",
+                to: pendingRollback.from ?? "—",
+              })
             : ""
         }
-        confirmLabel="Върни назад"
+        confirmLabel={t("Roll back")}
         danger={true}
         busy={busyAction === "rollback"}
         onCancel={() => {
@@ -515,13 +517,13 @@ export function UpdatesPage({ onLogout, onNavigate, loggingOut }: UpdatesPagePro
       />
       <ConfirmDialog
         open={pendingRelease !== null}
-        title="Инсталиране на по-стара версия"
+        title={t("Install an older version")}
         message={
           pendingRelease
             ? `Ще инсталирате версия ${pendingRelease.version}. Това е downgrade и ще замени текущата платформа. Продължавате ли?`
             : ""
         }
-        confirmLabel="Инсталирай версията"
+        confirmLabel={t("Install version")}
         danger={true}
         busy={busyAction === "update_remote"}
         onCancel={() => {

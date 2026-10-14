@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
@@ -135,7 +136,7 @@ export function MediaUploader({
   return (
     <section
       className={`media-upload${variant === "dialog" ? " media-upload--dialog" : ""}${dragging && !busy ? " is-dragging" : ""}`}
-      aria-label="Качване на медия"
+      aria-label={t("Upload media")}
       onDragOver={(event) => {
         event.preventDefault()
         setDragging(true)
@@ -166,15 +167,16 @@ export function MediaUploader({
         disabled={busy || acceptedTypes.length === 0}
         onClick={() => input.current?.click()}
       >
-        <Upload size={18} /> Избери файлове
+        <Upload size={18} />  {t("Choose files")}
       </Button>
-      <p>Изберете до 20 файла наведнъж или ги пуснете тук. Качването започва автоматично.</p>
+      <p>{t("Choose up to 20 files at once or drop them here. Upload starts automatically.")}</p>
       <p>
-        До {mediaSize(maxBytes)} на файл. Разрешени типове:{" "}
-        {acceptedLabels.length ? acceptedLabels.join(", ") : "няма"}. SVG не се поддържа.
+
+        {t("Up to")} {mediaSize(maxBytes)}  {t("per file. Allowed types:")}{" "}
+        {acceptedLabels.length ? acceptedLabels.join(", ") : t("None")}{t(". SVG is not supported.")}
       </p>
       {maxImageMegapixels !== undefined && (
-        <p>Максимална резолюция на изображенията: {maxImageMegapixels} мегапиксела.</p>
+        <p>{t("Maximum image resolution:")} {maxImageMegapixels}  {t("megapixels.")}</p>
       )}
       {error && (
         <p role="alert" className="react-form-error">
@@ -189,7 +191,7 @@ export function MediaUploader({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={overallProgress}
-            aria-label="Общ напредък на качването"
+            aria-label={t("Overall upload progress")}
           >
             <div className="media-upload-overall-ring-wrap">
               <svg className="media-upload-overall-ring" viewBox="0 0 44 44" aria-hidden="true">
@@ -206,7 +208,7 @@ export function MediaUploader({
               <span className="media-upload-overall-value">{overallProgress}%</span>
             </div>
             <span className="media-upload-overall-label">
-              {tasks.filter((task) => task.status === "done").length} / {tasks.length} файла
+              {tasks.filter((task) => task.status === "done").length} / {tasks.length}  {t("files")}
             </span>
           </div>
           <ul className="media-upload-tasks">
@@ -216,13 +218,13 @@ export function MediaUploader({
                   <span className="media-upload-task-name">{task.name}</span>
                   <span className="media-upload-task-status">
                     {task.status === "done"
-                      ? "Готово"
+                      ? t("Done")
                       : task.status === "error"
                         ? task.error
                         : task.status === "waiting"
-                          ? "Изчаква"
+                          ? t("Waiting")
                           : task.progress === 100
-                            ? "Обработка…"
+                            ? t("Processing…")
                             : `${task.progress}%`}
                   </span>
                 </div>
@@ -230,7 +232,7 @@ export function MediaUploader({
                   className="media-upload-task-bar"
                   max={100}
                   value={taskProgress(task)}
-                  aria-label={`Качване на ${task.name}`}
+                  aria-label={`${t("Uploading")}: ${task.name}`}
                 />
               </li>
             ))}
@@ -239,7 +241,8 @@ export function MediaUploader({
       )}
       {busy && (
         <Button variant="secondary" type="button" onClick={() => controller.current?.abort()}>
-          Отмени качването
+
+          {t("Cancel upload")}
         </Button>
       )}
     </section>

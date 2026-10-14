@@ -4,6 +4,7 @@ export type PanelSearchTarget = {
   id: string
   label: string
   group: string
+  section?: string
   path: string
   keywords?: string
   settingsTab?: string
@@ -102,7 +103,7 @@ export function filterPanelSearchTargets(
   if (needle === "") return targets.slice(0, limit)
   const scored = targets
     .map((target) => {
-      const haystack = normalize(`${target.label} ${target.group} ${target.keywords ?? ""} ${target.path}`)
+      const haystack = normalize(`${target.label} ${target.group} ${target.section ?? ""} ${target.keywords ?? ""} ${target.path}`)
       if (haystack.includes(needle)) return { target, score: haystack.indexOf(needle) }
       const parts = needle.split(/\s+/).filter(Boolean)
       if (parts.every((part) => haystack.includes(part))) return { target, score: 100 }

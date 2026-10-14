@@ -997,6 +997,22 @@ body {
   .admin-shell-react:not(.is-sidebar-collapsed) {
     --sidebar-width: var(--sidebar-expanded-width, 15.5rem);
   }
+  .admin-shell-react.is-sidebar-hidden {
+    --sidebar-width: 0px;
+  }
+  .admin-shell-react.is-sidebar-hidden.is-sidebar-collapsed {
+    --sidebar-width: 0px;
+  }
+  .admin-shell-react.is-sidebar-hidden .admin-sidebar-react {
+    box-shadow: none;
+    visibility: hidden;
+  }
+  .admin-shell-react .react-sidebar-collapse-toggle:not(.react-sidebar-visibility-toggle) {
+    display: none;
+  }
+  .admin-shell-react .react-sidebar-visibility-toggle {
+    display: grid;
+  }
   .sidebar-resize-handle {
     display: block;
     position: fixed;
@@ -1143,6 +1159,7 @@ body {
   border-top: 1px solid var(--sidebar-separator);
 }
 .sidebar-group-label-react + .sidebar-submenu-transition ul > li:first-child > .sidebar-link-react,
+.sidebar-group-react.is-label-hidden .sidebar-submenu-transition ul > li:first-child > .sidebar-link-react,
 .sidebar-group-toggle-react
   + .sidebar-submenu-transition
   ul
@@ -1306,6 +1323,7 @@ body {
   border-radius: 0.625rem;
   background: var(--surface-raised);
   box-shadow: var(--panel-shadow);
+  animation: admin-search-results-enter 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .admin-topbar-search-option {
   display: flex;
@@ -1321,11 +1339,16 @@ body {
   cursor: pointer;
   font: inherit;
   text-align: left;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
 }
 .admin-topbar-search-option:hover,
 .admin-topbar-search-option.is-active {
   background: var(--surface-hover);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 .admin-topbar-search-option-label {
   font-weight: 600;
@@ -1336,10 +1359,93 @@ body {
   color: var(--text-muted);
   font-size: 0.78rem;
 }
+.admin-topbar-search-tree-branch {
+  list-style: none;
+}
+.admin-topbar-search-submenu-transition {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 0.24s ease, opacity 0.2s ease, visibility 0.24s;
+}
+.admin-topbar-search-submenu-transition.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.admin-topbar-search-submenu-transition > ul {
+  min-height: 0;
+  overflow: hidden;
+}
+.admin-topbar-search-branch {
+  display: flex;
+  width: 100%;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.admin-topbar-search-branch:hover {
+  background: var(--surface-hover);
+}
+.admin-topbar-search-branch.is-section {
+  padding-left: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+.admin-topbar-search-branch svg {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  transition: transform 0.18s ease;
+}
+.admin-topbar-search-branch svg.is-expanded {
+  transform: rotate(180deg);
+}
+.admin-topbar-search-children {
+  margin: 0 0 0 0.7rem;
+  padding: 0 0 0 0.35rem;
+  list-style: none;
+  border-left: 1px solid var(--border);
+}
 .admin-topbar-search-empty {
   padding: 0.65rem 0.75rem;
   color: var(--text-muted);
   font-size: 0.88rem;
+}
+@keyframes admin-search-results-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-topbar-search-results {
+    animation: none;
+  }
+  .admin-topbar-search-option {
+    transition: none;
+  }
+  .admin-topbar-search-branch,
+  .admin-topbar-search-branch svg,
+  .admin-topbar-search-submenu-transition {
+    transition: none;
+  }
 }
 .react-sidebar-collapse-toggle {
   display: grid;
@@ -3991,6 +4097,9 @@ body {
 .sidebar-backdrop {
   display: none;
 }
+.react-sidebar-visibility-toggle {
+  display: none;
+}
 
 @media (max-width: 48rem) {
   .theme-grid {
@@ -4098,6 +4207,7 @@ body {
   .admin-topbar-start {
     grid-column: 1;
     grid-row: 1;
+    padding-left: 2.5rem;
   }
   .sidebar-mobile-toggle {
     position: fixed;
@@ -4113,6 +4223,9 @@ body {
     background: #ffffff;
     color: #203224;
     cursor: pointer;
+  }
+  .sidebar-mobile-toggle.is-open {
+    display: none;
   }
   .sidebar-backdrop {
     position: fixed;
@@ -6861,6 +6974,14 @@ button.react-action-button svg {
 }
 .sidebar-submenu-transition > ul { min-height: 0; overflow: hidden; }
 .sidebar-group-toggle-react { transition: background-color .18s ease, color .18s ease; }
+.sidebar-group-react.is-label-hidden .sidebar-link-react {
+  min-height: 48px;
+  gap: 14px;
+  padding-block: 12px;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+}
 @media (prefers-reduced-motion: reduce) {
   .sidebar-submenu-transition, .sidebar-group-chevron, .sidebar-group-toggle-react { transition: none; }
 }
@@ -6889,7 +7010,6 @@ button.react-action-button svg {
   .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-react .sidebar-link-react { padding-left: 3.6rem; }
   .admin-shell-react.is-sidebar-collapsed .sidebar-subsection-toggle-react { padding-left: 2.4rem; }
 }
-
 .theme-content-form {
   display: flex;
   flex-direction: column;

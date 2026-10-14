@@ -199,9 +199,9 @@ final class HtmlCompilerTest extends TestCase
             'heading' => ['level' => 1, 'size' => 40, 'color' => '#112233'],
         ]);
 
-        self::assertStringContainsString('<h1 style="font-size:40px">Наследство</h1>', $html);
+        self::assertStringContainsString('<h1 style="font-size:40px;color:#112233">Наследство</h1>', $html);
         self::assertStringContainsString('color:#112233', $html);
-        self::assertStringContainsString('<h3 style="font-size:20px">Собствено</h3>', $html);
+        self::assertStringContainsString('<h3 style="font-size:20px;color:#112233">Собствено</h3>', $html);
     }
 
     public function testItKeepsAnExplicitFalseOverAGlobalFullWidthSection(): void

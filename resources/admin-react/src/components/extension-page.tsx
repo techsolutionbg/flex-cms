@@ -57,6 +57,14 @@ import {
 } from "./extension-runtime"
 import { mediaRequest } from "@/lib/media-api"
 import { openSettingsTab } from "@/lib/settings-tabs"
+import {
+  getAdminLocale,
+  getAdminLocales,
+  registerAdminLocale,
+  registerAdminTranslations,
+  t,
+  useAdminLocale,
+} from "@/lib/admin-i18n"
 import { DateTime } from "./date-time"
 import {
   dayjs,
@@ -123,7 +131,7 @@ function Dialog({
     >
       <div className="media-picker-heading">
         <h2 id={id}>{title}</h2>
-        <Button type="button" variant="secondary" aria-label="Затвори" onClick={onClose}>
+        <Button type="button" variant="secondary" aria-label={t("Close")} onClick={onClose}>
           <X />
         </Button>
       </div>
@@ -168,6 +176,14 @@ const host = {
   // Adds guidance for the current screen to the header's help dialog; components.Hint shows inline guidance.
   usePageHelp,
   useHintsVisible,
+  i18n: {
+    t,
+    getLocale: getAdminLocale,
+    getLocales: getAdminLocales,
+    useLocale: useAdminLocale,
+    registerLocale: registerAdminLocale,
+    register: registerAdminTranslations,
+  },
   // Opens a settings tab registered with the settings.tab panel location.
   openSettingsTab,
   components: {
@@ -250,7 +266,8 @@ export function ExtensionModule({
       <div role="alert">
         <p>{failure}</p>
         <Button variant="secondary" onClick={() => setAttempt(attempt + 1)}>
-          Опитай отново
+
+          {t("Try again")}
         </Button>
       </div>
     )
@@ -259,7 +276,7 @@ export function ExtensionModule({
       <Component {...props} />
     </ExtensionBoundary>
   ) : (
-    <p role="status">Зареждане…</p>
+    <p role="status">{t("Loading…")}</p>
   )
 }
 
@@ -277,7 +294,7 @@ export function ExtensionPage({
   onNavigate: (label: string) => void
 }) {
   return (
-    <AdminShell {...shell} title={descriptor.label} activeItem={descriptor.href}>
+    <AdminShell {...shell} title={t(descriptor.label)} activeItem={descriptor.href}>
       <ExtensionModule descriptor={descriptor} path={path} navigate={navigate} />
     </AdminShell>
   )
@@ -303,13 +320,13 @@ export function ExtensionPanels({
       {panels.map((panel) => (
         <CollapsibleSection
           key={panel.id}
-          title={panel.label}
+          title={t(panel.label)}
           icon={panelIcon(panel.icon)}
           defaultOpen={panel.default_open}
           storageKey={`panel:${panel.point}:${panel.id}`}
           className={`extension-panel extension-panel-${panel.id}`}
         >
-          {hint && <Hint>{hint}</Hint>}
+          {hint && <Hint>{t(hint)}</Hint>}
           <div id={`panel-${panel.id}`}>
             <ExtensionComponent descriptor={panel} context={context} saves={saves} />
           </div>

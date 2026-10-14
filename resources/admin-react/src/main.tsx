@@ -16,14 +16,20 @@ import { loadTimeSettings } from "@/lib/time-settings"
 import "./index.css"
 import { installRequestTracking } from "@/lib/request-tracker"
 import { GlobalLoadingBar } from "@/components/global-loading-bar"
+import { setAdminLocale, t, useAdminLocale } from "@/lib/admin-i18n"
 
 installRequestTracking()
 
 function App() {
+  const locale = useAdminLocale()
   const installerRoute = window.location.pathname.replace(/\/$/, "").endsWith("/install")
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [accountId, setAccountId] = useState(0)
   const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.dataset.adminLocale = locale
+  }, [locale])
 
   useEffect(() => {
     setAdminTheme(getAdminTheme())
@@ -77,12 +83,13 @@ function App() {
             cache: "no-store",
           })
           const body = (await response.json().catch(() => ({}))) as {
-            user?: { id?: number; role?: string }
+            user?: { id?: number; role?: string; admin_locale?: string }
           }
 
           if (response.ok) {
             // Known before the panel settings load, so the user's own theme wins over the default.
             setAdminThemeUser(body.user?.id ?? 0)
+            setAdminLocale(body.user?.admin_locale ?? "en")
             if (body.user?.role === "super_admin") {
               try {
                 await Promise.all([loadAdminSettings(), loadTimeSettings()])
@@ -166,7 +173,7 @@ function App() {
 
   if (authenticated === null) {
     return (
-      <main className="auth-loading-screen" aria-label="Проверка на сесия">
+      <main className="auth-loading-screen" aria-label={t("Checking session")}>
         <LoaderCircle className="react-loading-indicator size-6 animate-spin" />
       </main>
     )

@@ -94,6 +94,7 @@ export type UserRecord = {
   email: string
   role: string
   status: string
+  admin_locale?: string
   deleted_at?: string | null
 }
 

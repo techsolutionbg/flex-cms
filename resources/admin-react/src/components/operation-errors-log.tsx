@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useCallback, useEffect, useState } from "react"
 import { FlaskConical, RefreshCw, Trash2 } from "lucide-react"
 import { CodeEditor } from "./code-editor"
@@ -98,21 +99,23 @@ export function OperationErrorsLog({ revision }: { revision: number }) {
       readOnly
       height="420px"
       enableFormat={false}
-      copyLabel="Копирай дневника"
+      copyLabel={t("Copy log")}
       toolbarContent={
         <>
           <span className="operation-errors-log-meta">
             {path}
-            {lines > 0 ? ` · ${lines} запис${lines === 1 ? "" : "а"}` : " · празен"}
-            {truncated ? " · съкратен изглед" : ""}
+            {lines > 0 ? ` · ${lines} запис${lines === 1 ? "" : "а"}` : t(" · empty")}
+            {truncated ? t(" · truncated preview") : ""}
           </span>
           <LoadingButton type="button" loading={loading} onClick={() => void load()}>
             <RefreshCw aria-hidden="true" />
-            Презареди
+
+            {t("Refresh")}
           </LoadingButton>
           <LoadingButton type="button" loading={testing} onClick={() => void triggerTestError()}>
             <FlaskConical aria-hidden="true" />
-            Тестова грешка
+
+            {t("Test error")}
           </LoadingButton>
           <LoadingButton
             type="button"
@@ -122,7 +125,8 @@ export function OperationErrorsLog({ revision }: { revision: number }) {
             onClick={() => void clearLog()}
           >
             <Trash2 aria-hidden="true" />
-            Изчисти
+
+            {t("Clear")}
           </LoadingButton>
         </>
       }

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -20,11 +21,11 @@ import { bulkTargets, type PluginBulkAction } from "@/lib/plugin-bulk"
 import { toast } from "sonner"
 
 const statusLabels: Record<string, string> = {
-  active: "Активно",
-  installed: "Инсталирано",
-  inactive: "Неактивно",
-  error: "Грешка",
-  discovered: "Неинсталирано",
+  active: "Active",
+  installed: "Installed",
+  inactive: "Inactive",
+  error: "Error",
+  discovered: "Not installed status",
 }
 type PluginAction = PluginBulkAction
 const bulkLabels: Record<PluginAction, { label: string; running: string; done: string }> = {
@@ -225,9 +226,15 @@ export function PluginsPage({
     // Plugins that failed stay selected, so the action can be tried again after fixing the cause.
     const failedIds = new Set(failures.map((failure) => failure.id))
     setSelectedIds(failedIds)
-    if (succeeded > 0) toast.success(`${succeeded} ${succeeded === 1 ? "разширение" : "разширения"}: ${bulkLabels[action].done}.`)
+    if (succeeded > 0)
+      toast.success(
+        t("{count} extensions: {status}.", "core", {
+          count: succeeded,
+          status: t(bulkLabels[action].done),
+        }),
+      )
     if (failures.length > 0)
-      toast.error(`${failures.length} ${failures.length === 1 ? "разширение не беше" : "разширения не бяха"} ${bulkLabels[action].done}.`, {
+      toast.error(t("{count} extensions could not be processed.", "core", { count: failures.length }), {
         description: failures.map((failure) => `${failure.name}: ${failure.message}`).join("\n"),
       })
   }
@@ -271,7 +278,7 @@ export function PluginsPage({
         <>
           {plugin.version}
           {plugin.update_available && (
-            <small className="react-table-update">Нова: {plugin.available_version}</small>
+            <small className="react-table-update">{t("New:")} {plugin.available_version}</small>
           )}
         </>
       ),
@@ -283,7 +290,7 @@ export function PluginsPage({
       render: (plugin) => (
         <span className={`react-status-badge status-${plugin.status}`}>
           <span className="status-dot" />
-          {statusLabels[plugin.status] ?? plugin.status}
+          {t(statusLabels[plugin.status] ?? plugin.status)}
         </span>
       ),
     },
@@ -295,7 +302,8 @@ export function PluginsPage({
         return (
           <TableActionsMenu>
             <button type="button" role="menuitem" onClick={() => onView(plugin)}>
-              Преглед
+
+              {t("Preview")}
             </button>
             <button
               type="button"
@@ -303,7 +311,7 @@ export function PluginsPage({
               disabled={busy || !plugin.update_available}
               onClick={() => void runAction(plugin, "update_remote")}
             >
-              {busy && <span className="react-button-spinner" />}Обнови
+              {busy && <span className="react-button-spinner" />}{t("Update")}
             </button>
             {plugin.status === "active" ? (
               <button
@@ -312,7 +320,7 @@ export function PluginsPage({
                 disabled={busy}
                 onClick={() => void runAction(plugin, "deactivate")}
               >
-                {busy && <span className="react-button-spinner" />}Деактивирай
+                {busy && <span className="react-button-spinner" />}{t("Deactivate")}
               </button>
             ) : (
               <button
@@ -321,7 +329,7 @@ export function PluginsPage({
                 disabled={busy}
                 onClick={() => void runAction(plugin, "activate")}
               >
-                {busy && <span className="react-button-spinner" />}Активирай
+                {busy && <span className="react-button-spinner" />}{t("Activate")}
               </button>
             )}
             <button
@@ -331,7 +339,8 @@ export function PluginsPage({
               disabled={busy}
               onClick={() => setPendingRemoval(plugin)}
             >
-              Премахни
+
+              {t("Remove")}
             </button>
           </TableActionsMenu>
         )
@@ -341,7 +350,7 @@ export function PluginsPage({
 
   return (
     <AdminShell
-      title="Разширения"
+      title={t("Extensions")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Разширения"
@@ -349,8 +358,8 @@ export function PluginsPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Разширения</h1>
-          <p className="react-page-lead">Инсталирани разширения на този сайт. Нови — от „Каталог с разширения“.</p>
+          <h1>{t("Extensions")}</h1>
+          <p className="react-page-lead">{t("Installed extensions on this site. Find new ones in the extension catalog.")}</p>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Разширения" }]} />
         </div>
         <div className="react-page-heading-actions">
@@ -360,10 +369,12 @@ export function PluginsPage({
             disabled={loading && !hardRefreshing}
             onClick={() => void hardRefreshFromServer()}
           >
-            Презареди
+
+            {t("Refresh")}
           </LoadingButton>
           <button type="button" onClick={onCatalog}>
-            Каталог с разширения
+
+            {t("Extension catalog")}
           </button>
         </div>
       </div>
@@ -381,8 +392,12 @@ export function PluginsPage({
           <>
             <strong>
               {bulk
-                ? `${bulkLabels[bulk.action].running} ${bulk.done + 1 > bulk.total ? bulk.total : bulk.done + 1} от ${bulk.total}…`
-                : `${selectedPlugins.length} избрани`}
+                ? t("{action}: {current} of {total}…", "core", {
+                    action: t(bulkLabels[bulk.action].running),
+                    current: bulk.done + 1 > bulk.total ? bulk.total : bulk.done + 1,
+                    total: bulk.total,
+                  })
+                : t("{count} selected", "core", { count: selectedPlugins.length })}
             </strong>
             {(["activate", "deactivate", "update_remote"] as const).map((action) => (
               <LoadingButton
@@ -392,7 +407,7 @@ export function PluginsPage({
                 disabled={bulk !== null || busyId !== null || bulkCount(action) === 0}
                 onClick={() => void runBulk(action)}
               >
-                {bulkLabels[action].label}
+                {t(bulkLabels[action].label)}
                 {bulkCount(action) > 0 ? ` (${bulkCount(action)})` : ""}
               </LoadingButton>
             ))}
@@ -403,7 +418,8 @@ export function PluginsPage({
               disabled={bulk !== null || busyId !== null || bulkCount("uninstall") === 0}
               onClick={() => setPendingBulkRemoval(true)}
             >
-              Премахни{bulkCount("uninstall") > 0 ? ` (${bulkCount("uninstall")})` : ""}
+
+              {t("Remove")}{bulkCount("uninstall") > 0 ? ` (${bulkCount("uninstall")})` : ""}
             </LoadingButton>
           </>
         }
@@ -415,22 +431,22 @@ export function PluginsPage({
         toolbar={
           <>
             <label className="react-filter-field">
-              <span>Търсене</span>
+              <span>{t("Search")}</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Име, ID или описание"
+                placeholder={t("Name, ID, or description")}
               />
             </label>
             <label className="react-filter-field">
-              <span>Статус</span>
+              <span>{t("Status")}</span>
               <DropdownMenu
-                ariaLabel="Избор на статус"
+                ariaLabel={t("Choose status")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
                     <span>
-                      {statusFilter === "all" ? "Всички статуси" : statusLabels[statusFilter]}
+                      {statusFilter === "all" ? t("All statuses") : t(statusLabels[statusFilter])}
                     </span>
                     <DropdownChevron />
                   </>
@@ -440,7 +456,8 @@ export function PluginsPage({
                   selected={statusFilter === "all"}
                   onClick={() => setStatusFilter("all")}
                 >
-                  Всички статуси
+
+                  {t("All statuses")}
                 </DropdownOption>
                 {Object.entries(statusLabels).map(([value, label]) => (
                   <DropdownOption
@@ -448,7 +465,7 @@ export function PluginsPage({
                     selected={statusFilter === value}
                     onClick={() => setStatusFilter(value)}
                   >
-                    {label}
+                    {t(label)}
                   </DropdownOption>
                 ))}
               </DropdownMenu>
@@ -459,23 +476,24 @@ export function PluginsPage({
               onClick={clearFilters}
               disabled={activeFilterCount === 0}
             >
-              Изчисти филтрите
+
+              {t("Clear filters")}
             </LoadingButton>
             <span className="react-filter-count">
-              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}
+              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
             </span>
           </>
         }
       />
       <ConfirmDialog
         open={pendingRemoval !== null}
-        title="Премахване на разширение"
+        title={t("Uninstall extension")}
         message={
           pendingRemoval
             ? `Разширението „${pendingRemoval.name}“ ще бъде премахнато окончателно. Ако е активно, първо ще бъде деактивирано.`
             : ""
         }
-        confirmLabel="Премахни"
+        confirmLabel={t("Remove")}
         danger={true}
         busy={pendingRemoval !== null && busyId === pendingRemoval.id}
         onCancel={() => {
@@ -491,11 +509,11 @@ export function PluginsPage({
       />
       <ConfirmDialog
         open={pendingBulkRemoval}
-        title="Премахване на разширения"
+        title={t("Uninstall extensions")}
         message={`${bulkTargets("uninstall", selectedPlugins)
           .map((plugin) => `„${plugin.name}“`)
           .join(", ")} ще бъдат премахнати окончателно. Активните първо ще бъдат деактивирани.`}
-        confirmLabel="Премахни"
+        confirmLabel={t("Remove")}
         danger={true}
         busy={bulk?.action === "uninstall"}
         onCancel={() => {

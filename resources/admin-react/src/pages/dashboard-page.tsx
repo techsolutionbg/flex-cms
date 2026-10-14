@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState, type MouseEvent } from "react"
 import { FileText, Plus, Puzzle, RefreshCw, UserRound, UsersRound } from "lucide-react"
 import { toast } from "sonner"
@@ -91,71 +92,75 @@ export function DashboardPage({
       activeItem="Табло"
       loggingOut={loggingOut}
     >
-      <h1>Административен панел</h1>
-      <section className="dashboard-grid-react" aria-label="Обобщение на системата">
+      <h1>{t("Admin panel")}</h1>
+      <section className="dashboard-grid-react" aria-label={t("System overview")}>
         {cards.map(({ title, path, icon: Icon, value, description, action }) => (
           <CollapsibleSection
             extensionPoint={`dashboard${path.replace(/\//g, ".")}`}
-            title={title}
+            title={t(title)}
             icon={Icon}
             className="dashboard-card-react"
             key={title}
           >
             <strong className="dashboard-stat-react">{value ?? "—"}</strong>
-            <p>{description}</p>
+            <p>{t(description)}</p>
             <a href={adminUrl(path)} onClick={(event) => follow(event, () => onNavigate(title))}>
-              {action}
+              {t(action)}
             </a>
           </CollapsibleSection>
         ))}
         <CollapsibleSection
           extensionPoint="dashboard.quick-actions"
-          title="Бързи действия"
+          title={t("Quick actions")}
           icon={Plus}
           className="dashboard-card-react"
         >
           <div className="dashboard-actions-react">
             <a href={adminUrl("/pages/create")} onClick={(event) => follow(event, onCreatePage)}>
               <Plus />
-              Нова страница
+
+              {t("New page")}
             </a>
             <a
               href={adminUrl("/updates")}
               onClick={(event) => follow(event, () => onNavigate("Обновявания"))}
             >
               <RefreshCw />
-              Провери обновявания
+
+              {t("Check for updates")}
             </a>
             <a
               href={adminUrl("/profile")}
               onClick={(event) => follow(event, () => onNavigate("Профил"))}
             >
               <UserRound />
-              Профил
+
+              {t("Profile")}
             </a>
           </div>
         </CollapsibleSection>
         <CollapsibleSection
           extensionPoint="dashboard.updates"
-          title="Обновявания"
+          title={t("Updates")}
           icon={RefreshCw}
           className="dashboard-card-react"
         >
-          <p>Проверка, инсталация и управление на platform пакети.</p>
+          <p>{t("Platform packages can be checked, installed, and managed here.")}</p>
           <a
             href={adminUrl("/updates")}
             onClick={(event) => follow(event, () => onNavigate("Обновявания"))}
           >
-            Отвори обновявания →
+
+            {t("Open updates →")}
           </a>
         </CollapsibleSection>
         <CollapsibleSection
           extensionPoint="dashboard.version"
-          title="Версия на платформата"
+          title={t("Platform version")}
           icon={RefreshCw}
           className="dashboard-card-react"
         >
-          <p>Текущата инсталирана версия на Flex CMS.</p>
+          <p>{t("Currently installed Flex CMS version.")}</p>
           <strong className="dashboard-version-react">{summary?.version ?? "—"}</strong>
         </CollapsibleSection>
       </section>

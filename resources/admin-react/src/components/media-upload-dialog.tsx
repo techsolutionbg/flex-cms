@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useId, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
@@ -60,11 +61,11 @@ export function MediaUploadDialog({
       }}
     >
       <div className="media-picker-heading">
-        <h2 id={titleId}>Качване на файлове</h2>
+        <h2 id={titleId}>{t("Upload files")}</h2>
         <button
           type="button"
           className="react-secondary-button"
-          aria-label="Затвори"
+          aria-label={t("Close")}
           disabled={busy}
           onClick={requestClose}
         >
@@ -85,10 +86,10 @@ export function MediaUploadDialog({
               }}
             />
           ) : (
-            <p role="alert">Нямате права за качване на файлове.</p>
+            <p role="alert">{t("You do not have permission to upload files.")}</p>
           )
         ) : (
-          <p role="status">Зареждане…</p>
+          <p role="status">{t("Loading…")}</p>
         ))}
     </dialog>,
     document.body,

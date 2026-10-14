@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { useEffect, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 import { toast } from "sonner"
@@ -395,7 +396,7 @@ export function PagesPage({
       sortable: true,
       render: (page: PageRecord) => (
         <span className={`react-status-badge status-${page.status}`}>
-          {page.status === "published" ? "Публикувана" : "Чернова"}
+          {page.status === "published" ? t("Published") : t("Draft")}
         </span>
       ),
     },
@@ -416,14 +417,17 @@ export function PagesPage({
             {viewFilter === "active" ? (
               <>
                 <button type="button" role="menuitem" onClick={() => onEdit(page)}>
-                  Редактирай
+
+                  {t("Edit")}
                 </button>
                 <button type="button" role="menuitem" onClick={() => onSettings(page)}>
-                  Настройки
+
+                  {t("Settings")}
                 </button>
                 {themeContentPanels.length > 0 && (
                   <button type="button" role="menuitem" onClick={() => onThemeContent(page)}>
-                    Съдържание от темата
+
+                    {t("Theme content")}
                   </button>
                 )}
                 <button
@@ -436,10 +440,10 @@ export function PagesPage({
                 >
                   {statusLoading && <LoaderCircle className="react-button-spinner" />}
                   {statusLoading
-                    ? "Изчакване…"
+                    ? t("Waiting…")
                     : page.status === "published"
-                      ? "Върни в чернова"
-                      : "Публикувай"}
+                      ? t("Move to draft")
+                      : t("Publish")}
                 </button>
                 <button
                   type="button"
@@ -447,7 +451,8 @@ export function PagesPage({
                   disabled={statusLoading || bulkBusy}
                   onClick={() => setPendingTrashPage(page)}
                 >
-                  Премести в кошчето
+
+                  {t("Move item to trash")}
                 </button>
               </>
             ) : (
@@ -458,7 +463,8 @@ export function PagesPage({
                   disabled={statusLoading || bulkBusy}
                   onClick={() => void restorePage(page)}
                 >
-                  Възстанови
+
+                  {t("Restore")}
                 </button>
                 <button
                   type="button"
@@ -466,7 +472,8 @@ export function PagesPage({
                   disabled={statusLoading || bulkBusy}
                   onClick={() => setPendingForcePage(page)}
                 >
-                  Изтрий завинаги
+
+                  {t("Delete forever")}
                 </button>
               </>
             )}
@@ -478,7 +485,7 @@ export function PagesPage({
 
   return (
     <AdminShell
-      title="Страници"
+      title={t("Pages")}
       onLogout={onLogout}
       onNavigate={onNavigate}
       activeItem="Страници"
@@ -486,14 +493,15 @@ export function PagesPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>{viewFilter === "trash" ? "Кошче" : "Страници"}</h1>
+          <h1>{viewFilter === "trash" ? t("Trash") : t("Pages")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[{ label: viewFilter === "trash" ? "Кошче" : "Страници" }]}
           />
         </div>
         <button type="button" onClick={onCreate} disabled={viewFilter === "trash"}>
-          Нова страница
+
+          {t("New page")}
         </button>
       </div>
       <DataTable
@@ -510,12 +518,12 @@ export function PagesPage({
           pages.length === 0
             ? viewFilter === "trash"
               ? "Кошчето е празно."
-              : "Няма създадени страници."
-            : "Няма страници, отговарящи на филтрите."
+              : t("No pages have been created yet.")
+            : t("No pages match the filters.")
         }
         bulkActions={
           <>
-            <strong>{selectedPages.length} избрани</strong>
+            <strong>{selectedPages.length}  {t("Selected")}</strong>
             {viewFilter === "active" ? (
               <>
                 <LoadingButton
@@ -524,7 +532,8 @@ export function PagesPage({
                   disabled={bulkBusy || bulkCount("published") === 0}
                   onClick={() => void runBulk("published")}
                 >
-                  Публикувай
+
+                  {t("Publish")}
                   {bulkCount("published") > 0 ? ` (${bulkCount("published")})` : ""}
                 </LoadingButton>
                 <LoadingButton
@@ -533,7 +542,8 @@ export function PagesPage({
                   disabled={bulkBusy || bulkCount("draft") === 0}
                   onClick={() => void runBulk("draft")}
                 >
-                  Върни в чернова
+
+                  {t("Move to draft")}
                   {bulkCount("draft") > 0 ? ` (${bulkCount("draft")})` : ""}
                 </LoadingButton>
                 <LoadingButton
@@ -543,7 +553,8 @@ export function PagesPage({
                   disabled={bulkBusy || bulkCount("trash") === 0}
                   onClick={() => setPendingBulkTrash(true)}
                 >
-                  В кошчето
+
+                  {t("In trash")}
                   {bulkCount("trash") > 0 ? ` (${bulkCount("trash")})` : ""}
                 </LoadingButton>
               </>
@@ -555,7 +566,8 @@ export function PagesPage({
                   disabled={bulkBusy || bulkCount("restore") === 0}
                   onClick={() => void runBulk("restore")}
                 >
-                  Възстанови
+
+                  {t("Restore")}
                   {bulkCount("restore") > 0 ? ` (${bulkCount("restore")})` : ""}
                 </LoadingButton>
                 <LoadingButton
@@ -565,7 +577,8 @@ export function PagesPage({
                   disabled={bulkBusy || bulkCount("force") === 0}
                   onClick={() => setPendingBulkForce(true)}
                 >
-                  Изтрий завинаги
+
+                  {t("Delete forever")}
                   {bulkCount("force") > 0 ? ` (${bulkCount("force")})` : ""}
                 </LoadingButton>
               </>
@@ -575,26 +588,26 @@ export function PagesPage({
         toolbar={
           <>
             <label className="react-filter-field">
-              <span>Търсене</span>
+              <span>{t("Search")}</span>
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Заглавие или URL адрес"
+                placeholder={t("Title or URL")}
               />
             </label>
             <label className="react-filter-field">
-              <span>Статус</span>
+              <span>{t("Status")}</span>
               <DropdownMenu
-                ariaLabel="Избор на статус"
+                ariaLabel={t("Choose status")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
                     <span>
                       {statusFilter === "all"
-                        ? "Всички статуси"
+                        ? t("All statuses")
                         : statusFilter === "draft"
-                          ? "Чернови"
-                          : "Публикувани"}
+                          ? t("Drafts")
+                          : t("Published pages")}
                     </span>
                     <DropdownChevron />
                   </>
@@ -604,35 +617,38 @@ export function PagesPage({
                   selected={statusFilter === "all"}
                   onClick={() => setStatusFilter("all")}
                 >
-                  Всички статуси
+
+                  {t("All statuses")}
                 </DropdownOption>
                 <DropdownOption
                   selected={statusFilter === "draft"}
                   onClick={() => setStatusFilter("draft")}
                 >
-                  Чернови
+
+                  {t("Drafts")}
                 </DropdownOption>
                 <DropdownOption
                   selected={statusFilter === "published"}
                   onClick={() => setStatusFilter("published")}
                 >
-                  Публикувани
+
+                  {t("Published pages")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
             <label className="react-filter-field">
-              <span>Структура</span>
+              <span>{t("Structure")}</span>
               <DropdownMenu
-                ariaLabel="Избор на структура"
+                ariaLabel={t("Choose page structure")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
                     <span>
                       {structureFilter === "all"
-                        ? "Всички страници"
+                        ? t("All pages")
                         : structureFilter === "root"
-                          ? "Родителски страници"
-                          : "Дъщерни страници"}
+                          ? t("Parent pages")
+                          : t("Child pages")}
                     </span>
                     <DropdownChevron />
                   </>
@@ -642,30 +658,33 @@ export function PagesPage({
                   selected={structureFilter === "all"}
                   onClick={() => setStructureFilter("all")}
                 >
-                  Всички страници
+
+                  {t("All pages")}
                 </DropdownOption>
                 <DropdownOption
                   selected={structureFilter === "root"}
                   onClick={() => setStructureFilter("root")}
                 >
-                  Родителски страници
+
+                  {t("Parent pages")}
                 </DropdownOption>
                 <DropdownOption
                   selected={structureFilter === "child"}
                   onClick={() => setStructureFilter("child")}
                 >
-                  Дъщерни страници
+
+                  {t("Child pages")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
             <label className="react-filter-field">
-              <span>Изглед</span>
+              <span>{t("View")}</span>
               <DropdownMenu
-                ariaLabel="Избор на изглед"
+                ariaLabel={t("Choose view")}
                 triggerClassName="react-filter-trigger"
                 trigger={
                   <>
-                    <span>{viewFilter === "active" ? "Активни страници" : "Кошче"}</span>
+                    <span>{viewFilter === "active" ? t("Active pages") : t("Trash")}</span>
                     <DropdownChevron />
                   </>
                 }
@@ -674,13 +693,15 @@ export function PagesPage({
                   selected={viewFilter === "active"}
                   onClick={() => setViewFilter("active")}
                 >
-                  Активни страници
+
+                  {t("Active pages")}
                 </DropdownOption>
                 <DropdownOption
                   selected={viewFilter === "trash"}
                   onClick={() => setViewFilter("trash")}
                 >
-                  Кошче
+
+                  {t("Trash")}
                 </DropdownOption>
               </DropdownMenu>
             </label>
@@ -690,21 +711,22 @@ export function PagesPage({
               onClick={clearFilters}
               disabled={activeFilterCount === 0}
             >
-              Изчисти филтрите
+
+              {t("Clear filters")}
             </button>
             <span className="react-filter-count">
-              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : "Без филтри"}
+              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
             </span>
           </>
         }
       />
       <ConfirmDialog
         open={pendingBulkTrash}
-        title="Преместване в кошчето"
+        title={t("Move to trash")}
         message={`${bulkTargets("trash", selectedPages)
           .map((page) => `„${page.title}“`)
           .join(", ")} ще бъдат преместени в кошчето.`}
-        confirmLabel="В кошчето"
+        confirmLabel={t("In trash")}
         danger
         busy={bulkAction === "trash"}
         onCancel={() => {
@@ -717,11 +739,11 @@ export function PagesPage({
       />
       <ConfirmDialog
         open={pendingBulkForce}
-        title="Окончателно изтриване"
+        title={t("Delete permanently")}
         message={`${bulkTargets("force", selectedPages)
           .map((page) => `„${page.title}“`)
           .join(", ")} ще бъдат изтрити завинаги. Действието не може да бъде отменено.`}
-        confirmLabel="Изтрий завинаги"
+        confirmLabel={t("Delete forever")}
         danger
         busy={bulkAction === "force"}
         onCancel={() => {
@@ -734,9 +756,9 @@ export function PagesPage({
       />
       <ConfirmDialog
         open={pendingTrashPage !== null}
-        title="Преместване в кошчето"
+        title={t("Move to trash")}
         message={pendingTrashPage ? `Страницата „${pendingTrashPage.title}“ ще бъде преместена в кошчето.` : ""}
-        confirmLabel="В кошчето"
+        confirmLabel={t("In trash")}
         danger
         busy={pendingTrashPage !== null && statusLoadingIds.has(pendingTrashPage.id)}
         onCancel={() => {
@@ -753,13 +775,13 @@ export function PagesPage({
       />
       <ConfirmDialog
         open={pendingForcePage !== null}
-        title="Окончателно изтриване"
+        title={t("Delete permanently")}
         message={
           pendingForcePage
             ? `Страницата „${pendingForcePage.title}“ ще бъде изтрита завинаги. Действието не може да бъде отменено.`
             : ""
         }
-        confirmLabel="Изтрий завинаги"
+        confirmLabel={t("Delete forever")}
         danger
         busy={pendingForcePage !== null && statusLoadingIds.has(pendingForcePage.id)}
         onCancel={() => {

@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
@@ -66,13 +67,13 @@ export function ThemeSettingsPage({
         content: (
           <>
             <p>
-              Глобалните настройки на темата — лого, header, контакти, Footer и др. Важат за целия
-              сайт.
+
+              {t("Theme-wide settings—logo, header, contact details, footer, and more—apply to the entire site.")}
             </p>
             <p>
-              Секциите и полетата идват от JSON файла на темата (<code>content_schema</code> в{" "}
-              <code>theme.json</code> → <code>global</code>). Нова секция или поле се добавя само
-              в JSON файла.
+
+              {t("Sections and fields come from the theme's JSON file (")}<code>content_schema</code>  {t("in")}{" "}
+              <code>theme.json</code> → <code>global</code>{t("). New sections or fields must be added in the JSON file.")}
             </p>
           </>
         ),
@@ -96,7 +97,7 @@ export function ThemeSettingsPage({
 
   return (
     <AdminShell
-      title={`Настройки: ${name}`}
+      title={t("Theme settings: {name}", "core", { name })}
       activeItem="Теми"
       onLogout={onLogout}
       onNavigate={onNavigate}
@@ -104,7 +105,7 @@ export function ThemeSettingsPage({
     >
       <div className="react-page-heading">
         <div>
-          <h1>Настройки на темата</h1>
+          <h1>{t("Theme settings")}</h1>
           <Breadcrumbs
             onHomeClick={() => onNavigate("Табло")}
             items={[
@@ -114,21 +115,21 @@ export function ThemeSettingsPage({
             ]}
           />
         </div>
-        <LoadingButton onClick={onDetails}>Към детайлите</LoadingButton>
+        <LoadingButton onClick={onDetails}>{t("View details")}</LoadingButton>
       </div>
       {error && (
         <p className="react-error-text" role="alert">
           {error}
         </p>
       )}
-      {!theme && !error && <p role="status">Зареждане…</p>}
+      {!theme && !error && <p role="status">{t("Loading…")}</p>}
       {theme && !theme.active && (
-        <p role="status">Настройките са достъпни, когато темата е активна. Активирайте я от детайлите.</p>
+        <p role="status">{t("Settings are available while the theme is active. Activate it from the details page.")}</p>
       )}
       {theme?.active && panels.length === 0 && (
         <p role="status">
-          Няма разширение за настройки на темата. Активирайте плъгина „Flex Theme Content“ и
-          декларирайте <code>content_schema</code> в <code>theme.json</code>.
+
+          {t("No theme settings extension is active. Activate “Flex Theme Content” and declare")} <code>content_schema</code>  {t("in")} <code>theme.json</code>.
         </p>
       )}
       {theme?.active && panels.length > 0 && (
@@ -147,7 +148,8 @@ export function ThemeSettingsPage({
             <div className="react-form-actions">
               <LoadingButton type="submit" loading={saving}>
                 <Save aria-hidden="true" />
-                Запази
+
+                {t("Save")}
               </LoadingButton>
             </div>
           </form>

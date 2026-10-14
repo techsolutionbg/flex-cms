@@ -1,3 +1,4 @@
+import { t } from "@/lib/admin-i18n"
 import { Image as ImageIcon, X } from "lucide-react"
 import { useEffect, useId, useState, type CSSProperties } from "react"
 import { mediaRequest, type MediaRecord } from "@/lib/media-api"
@@ -113,20 +114,20 @@ export function ImageField({
       className={`react-form-field image-field${preset === "dark" ? " is-dark" : ""}${fit === "cover" ? " is-cover" : ""}`}
       style={style}
     >
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <div className="image-field-frame">
         <button
           type="button"
           className={`image-field-tile${id !== null && !missing ? " has-image" : ""}`}
           disabled={disabled}
-          aria-label={id === null ? `${label}: ${emptyLabel}` : `${label}: ${changeLabel}`}
+          aria-label={id === null ? `${t(label)}: ${t(emptyLabel)}` : `${t(label)}: ${t(changeLabel)}`}
           aria-describedby={description ? descriptionId : undefined}
           aria-busy={showSkeleton || undefined}
           onClick={() => setOpen(true)}
         >
           {showSkeleton && (
             <span className="image-field-skeleton admin-skeleton-shimmer">
-              <span className="media-skeleton-status">Зареждане на изображението…</span>
+              <span className="media-skeleton-status">{t("Loading image…")}</span>
             </span>
           )}
           {preview && (
@@ -142,12 +143,12 @@ export function ImageField({
           {(id === null || missing) && (
             <span className="image-field-empty" aria-hidden="true">
               <ImageIcon />
-              <span>{missing ? missingLabel : emptyLabel}</span>
+              <span>{t(missing ? missingLabel : emptyLabel)}</span>
             </span>
           )}
           {id !== null && !missing && !showSkeleton && (
             <span className="image-field-hover" aria-hidden="true">
-              {changeLabel}
+              {t(changeLabel)}
             </span>
           )}
         </button>
@@ -156,8 +157,8 @@ export function ImageField({
             type="button"
             className="image-field-remove"
             disabled={disabled}
-            aria-label={`${label}: ${removeLabel}`}
-            title={removeLabel}
+            aria-label={`${t(label)}: ${t(removeLabel)}`}
+            title={t(removeLabel)}
             onClick={() => onChange(null)}
           >
             <X aria-hidden="true" />
@@ -166,7 +167,7 @@ export function ImageField({
       </div>
       {description && (
         <small id={descriptionId} className="react-field-hint">
-          {description}
+          {t(description)}
         </small>
       )}
       <MediaPicker
