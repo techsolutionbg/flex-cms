@@ -226,7 +226,10 @@ export function ExtensionModule({
     let alive = true
     setFailure("")
     setComponent(null)
-    loadModule(descriptor.module)
+    const moduleUrl = attempt === 0
+      ? descriptor.module
+      : `${descriptor.module}${descriptor.module.includes("?") ? "&" : "?"}retry=${attempt}`
+    loadModule(moduleUrl)
       .then((module) => {
         const factory = (embed ? module.createEmbedPicker : module.createPage) as
           | ((hostApi: typeof host) => React.ComponentType<Record<string, unknown>>)
@@ -252,7 +255,7 @@ export function ExtensionModule({
       </div>
     )
   return Component ? (
-    <ExtensionBoundary key={descriptor.module}>
+    <ExtensionBoundary key={`${descriptor.module}:${attempt}`}>
       <Component {...props} />
     </ExtensionBoundary>
   ) : (

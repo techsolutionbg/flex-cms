@@ -6,6 +6,7 @@ namespace Flex\Extensions;
 
 use Flex\Extension\V1\AdminExtensionRegistrarInterface;
 use Flex\Extensions\Exception\PluginPermissionDenied;
+use Flex\Http\AssetVersion;
 
 final class AdminExtensionRegistry
 {
@@ -143,7 +144,7 @@ final class AdminExtensionRegistry
         $extensions = array_values($this->extensions);
         usort($extensions, $byOrder);
 
-        // Each module file is hashed once per call, however many pages and extensions use it.
+        // Each module and its imports are versioned once per call, however many entries use it.
         $versions = [];
         $versioned = function (array $item) use (&$versions): array {
             $item['module'] = $this->versioned($item['module'], $versions);
@@ -235,7 +236,7 @@ final class AdminExtensionRegistry
     }
 
     /**
-     * The module URL with a version from its contents, so browsers load a changed module. Hashing is left to
+     * The module URL with a version from its contents and imports, so browsers load changed modules. Hashing is left to
      * this point: plugins register on every request, public ones included, but only the admin needs the list.
      * @param array<string, string> $versions File => "?v=…", shared by the modules of one bootstrap() call.
      */
@@ -247,7 +248,10 @@ final class AdminExtensionRegistry
         }
         if (!isset($versions[$file])) {
             $hash = @hash_file('sha256', $file);
-            $versions[$file] = $hash === false ? '' : '?v=' . substr($hash, 0, 16);
+            $moduleVersion = AssetVersion::ofModule($file);
+            $versions[$file] = $hash === false || $moduleVersion === null
+                ? ''
+                : '?v=' . substr(hash('sha256', $hash . ':' . $moduleVersion), 0, 16);
         }
 
         return $url . $versions[$file];

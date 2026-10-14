@@ -6,6 +6,7 @@ namespace Flex\Tests\Extensions;
 
 use Flex\Extensions\AdminExtensionRegistry;
 use Flex\Extensions\Exception\PluginPermissionDenied;
+use Flex\Http\AssetVersion;
 use PHPUnit\Framework\TestCase;
 
 final class AdminExtensionRegistryTest extends TestCase
@@ -101,7 +102,8 @@ final class AdminExtensionRegistryTest extends TestCase
             $registrar->extend('pages.list', 'table.row-action', 'open', 'admin.js');
             file_put_contents($directory . '/admin.js', 'export const version = 1;');
             $bootstrap = $registry->bootstrap();
-            $version = '?v=' . substr((string) hash_file('sha256', $directory . '/admin.js'), 0, 16);
+            $file = $directory . '/admin.js';
+            $version = '?v=' . substr(hash('sha256', hash_file('sha256', $file) . ':' . AssetVersion::ofModule($file)), 0, 16);
             self::assertSame('/extensions/acme/forms/assets/admin.js' . $version, $bootstrap['pages'][0]['module']);
             self::assertSame('/extensions/acme/forms/assets/admin.js' . $version, $bootstrap['extensions'][0]['module']);
         } finally {
@@ -129,6 +131,30 @@ final class AdminExtensionRegistryTest extends TestCase
         } finally {
             unlink($directory . '/admin.js');
             rmdir($directory);
+        }
+    }
+
+    public function testModuleUrlChangesWhenAnImportedModuleChanges(): void
+    {
+        $directory = sys_get_temp_dir() . '/flex-admin-assets-' . bin2hex(random_bytes(8));
+        mkdir($directory);
+        try {
+            file_put_contents($directory . '/admin.js', "export { createPage } from './lib/editor.js';");
+            mkdir($directory . '/lib');
+            file_put_contents($directory . '/lib/editor.js', "export { value as createPage } from './canvas.js';");
+            file_put_contents($directory . '/lib/canvas.js', 'export const value = 1;');
+            $registry = new AdminExtensionRegistry();
+            $registry->registrar('acme/forms', ['admin.ui'], $directory)->page('forms', 'Forms', 'admin.js');
+            $first = $registry->bootstrap()['pages'][0]['module'];
+            file_put_contents($directory . '/lib/canvas.js', 'export const value = 123;');
+            clearstatcache(true, $directory . '/lib/canvas.js');
+            self::assertNotSame($first, $registry->bootstrap()['pages'][0]['module']);
+        } finally {
+            @unlink($directory . '/lib/canvas.js');
+            @unlink($directory . '/lib/editor.js');
+            @rmdir($directory . '/lib');
+            @unlink($directory . '/admin.js');
+            @rmdir($directory);
         }
     }
 

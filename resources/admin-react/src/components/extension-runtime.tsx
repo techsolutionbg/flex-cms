@@ -46,7 +46,7 @@ const modules = new Map<string, Promise<Record<string, unknown>>>()
 export function loadModule(url: string): Promise<Record<string, unknown>> {
   if (
     !url.startsWith("/extensions/") ||
-    !/^\/extensions\/[a-zA-Z0-9_/.\-]+\.js(?:\?v=[a-f0-9]{16})?$/.test(url) ||
+    !/^\/extensions\/[a-zA-Z0-9_/.\-]+\.js(?:\?v=[a-f0-9]{16}(?:&retry=\d+)?|\?retry=\d+)?$/.test(url) ||
     url.includes("..")
   )
     return Promise.reject(new Error("Невалиден модул на разширение."))

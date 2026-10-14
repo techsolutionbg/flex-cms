@@ -24,6 +24,39 @@ final readonly class FrontendExtensionAssets
         return $this->collectTags(true);
     }
 
+    /** Styles requested by public content rendered during this request. */
+    public function publicStyles(): array
+    {
+        $styles = [];
+
+        try {
+            foreach ($this->plugins->all() as $plugin) {
+                if ($plugin->getAttribute('status') !== PluginManager::STATUS_ACTIVE) {
+                    continue;
+                }
+
+                $manifest = $plugin->getAttribute('manifest');
+                if (!is_array($manifest)) {
+                    continue;
+                }
+
+                $validated = PluginManifest::fromArray($manifest);
+                if (!PluginPermissions::allows($this->approvedPermissions($plugin, $validated), PluginPermissions::FRONTEND_ASSETS)) {
+                    continue;
+                }
+                $root = realpath((string) $plugin->getAttribute('path')) ?: '';
+                $frontend = $this->withRequestedGroups($validated->id, $this->publicAssetLists($root, $validated->frontend));
+                foreach ($frontend['styles'] as $asset) {
+                    $styles[] = $this->url($validated->id, $asset, $root);
+                }
+            }
+        } catch (\Throwable) {
+            // A plugin's styles must never prevent a shortcode preview from rendering.
+        }
+
+        return array_values(array_unique($styles));
+    }
+
     private function collectTags(bool $publicOnly): string
     {
         $tags = [];
