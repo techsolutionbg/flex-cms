@@ -19,6 +19,8 @@ final readonly class CsrfTokenController
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
     {
-        return $this->responses->json(['csrf_token' => $this->csrf->token()]);
+        return $this->responses->json(['csrf_token' => $this->csrf->token()])
+            ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->withHeader('Pragma', 'no-cache');
     }
 }

@@ -11,6 +11,7 @@ import { CheckboxField } from "@/components/checkbox-field"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { ImageField } from "@/components/image-field"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { useExtensions, useTableExtensions } from "@/components/extension-runtime"
@@ -49,6 +50,8 @@ export function PageForm({
   >(page?.plugin_fields ?? {})
   const [slugEdited, setSlugEdited] = useState(Boolean(page))
   const [saving, setSaving] = useState(false)
+  const [detachDialogOpen, setDetachDialogOpen] = useState(false)
+  const [detachingBuilder, setDetachingBuilder] = useState(false)
   const [error, setError] = useState("")
   const [featuredId, setFeaturedId] = useState<number | null>(page?.featured_media_id ?? null)
   const changed = useWorkspaceChanged()
@@ -88,6 +91,10 @@ export function PageForm({
     [panelContext, saves],
   )
   const pageId = page?.id ?? null
+  const contentBuilder = page?.settings?.content_builder ?? null
+  const contentBuilderName = contentBuilder === "flex/page-builder"
+    ? "Flex Page Builder"
+    : contentBuilder
 
   // Sync from the server when opening a different page — never reset the create form while typing.
   useEffect(() => {
@@ -213,6 +220,43 @@ export function PageForm({
     }
   }
 
+  async function detachContentBuilder() {
+    if (!page || !contentBuilder) return
+    setDetachingBuilder(true)
+    try {
+      const csrfResponse = await fetch("/api/auth/csrf", {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      })
+      const csrf = (await csrfResponse.json()) as { csrf_token?: string }
+      const response = await fetch(`/api/pages/${page.id}/settings`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf.csrf_token ?? "",
+        },
+        body: JSON.stringify({ ...page.settings, content_builder: null }),
+      })
+      const body = (await response.json().catch(() => ({}))) as {
+        page?: PageRecord
+        error?: string | { message?: string }
+      }
+      if (!response.ok)
+        throw new Error(typeof body.error === "string" ? body.error : (body.error?.message ?? "Връзката с билдъра не можа да бъде премахната."))
+      if (body.page) onSaved(body.page)
+      setDetachDialogOpen(false)
+      toast.success("Връзката с билдъра е премахната. HTML съдържанието е запазено.")
+      changed?.()
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Връзката с билдъра не можа да бъде премахната."
+      toast.error(message)
+    } finally {
+      setDetachingBuilder(false)
+    }
+  }
+
   const groupedFields = pageFields.reduce<Record<string, PagePluginField[]>>((groups, field) => {
     ;(groups[field.plugin] ??= []).push(field)
     return groups
@@ -265,12 +309,24 @@ export function PageForm({
           {error}
         </div>
       )}
+      {contentBuilder && (
+        <div className="page-content-builder-notice" role="status">
+          <div>
+            <strong>Редактор на съдържанието: {contentBuilderName}</strong>
+            <span>Секцията „Съдържание“ е скрита, докато този builder е свързан със страницата.</span>
+          </div>
+          <button type="button" onClick={() => setDetachDialogOpen(true)}>
+            Премахни връзката
+          </button>
+        </div>
+      )}
       <form className="react-page-form" onSubmit={save}>
-          <section className="page-editor-basic-panel" aria-labelledby="page-editor-basic-heading">
-            <header className="page-editor-basic-panel-heading" id="page-editor-basic-heading">
-              <FolderTree aria-hidden="true" />
-              <span>Основна информация</span>
-            </header>
+          <CollapsibleSection
+            title="Основна информация"
+            icon={FolderTree}
+            storageKey="page-basic-information"
+            className="page-editor-basic-panel page-editor-basic-panel--collapsible"
+          >
             <div className="page-editor-basic-panel-body">
               <div className="react-form-grid">
                 <label className="react-form-field">
@@ -348,7 +404,7 @@ export function PageForm({
                 </div>
               </div>
             </div>
-          </section>
+          </CollapsibleSection>
           <ExtensionScope value={extensionScope}>
           <CollapsibleSection
             extensionPoint="page.editor.featured-image"
@@ -370,7 +426,7 @@ export function PageForm({
               }}
             />
           </CollapsibleSection>
-          <CollapsibleSection
+          {!contentBuilder && <CollapsibleSection
             extensionPoint="page.editor.content"
             title="Съдържание"
             icon={FileText}
@@ -386,7 +442,7 @@ export function PageForm({
                 }}
               />
             </div>
-          </CollapsibleSection>
+          </CollapsibleSection>}
           <ExtensionPanels location="page.editor" context={panelContext} saves={saves} />
           {Object.entries(groupedFields).map(([plugin, fields]) => (
             <CollapsibleSection
@@ -485,6 +541,15 @@ export function PageForm({
             </button>
           </div>
         </form>
+      <ConfirmDialog
+        open={detachDialogOpen}
+        title="Премахване на връзката с builder"
+        message={`Страницата ще спре да се управлява от ${contentBuilderName ?? "текущия builder"}. HTML съдържанието ще остане запазено, секцията „Съдържание“ ще стане достъпна, а документът на builder-а няма да бъде изтрит.`}
+        confirmLabel="Премахни връзката"
+        busy={detachingBuilder}
+        onConfirm={() => void detachContentBuilder()}
+        onCancel={() => setDetachDialogOpen(false)}
+      />
     </AdminShell>
   )
 }

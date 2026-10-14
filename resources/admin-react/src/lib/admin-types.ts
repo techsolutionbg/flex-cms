@@ -53,6 +53,7 @@ export type PlatformUpdateJob = {
 
 export type PageSettings = {
   template?: string
+  content_builder?: string | null
   menu_order?: number
   use_parent_slugs?: boolean
   show_in_navigation?: boolean

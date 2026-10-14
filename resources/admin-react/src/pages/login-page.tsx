@@ -23,6 +23,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: () => void }) 
       const csrfResponse = await fetch("/api/auth/csrf", {
         credentials: "include",
         headers: { Accept: "application/json" },
+        cache: "no-store",
       })
       const csrfBody = (await csrfResponse.json().catch(() => ({}))) as { csrf_token?: string }
       if (!csrfResponse.ok || !csrfBody.csrf_token)

@@ -61,6 +61,7 @@ export function PagesPage({
   const [bulkAction, setBulkAction] = useState<PageBulkAction | null>(null)
   const [pendingBulkTrash, setPendingBulkTrash] = useState(false)
   const [pendingBulkForce, setPendingBulkForce] = useState(false)
+  const [pendingTrashPage, setPendingTrashPage] = useState<PageRecord | null>(null)
   const [pendingForcePage, setPendingForcePage] = useState<PageRecord | null>(null)
 
   useEffect(() => {
@@ -441,11 +442,10 @@ export function PagesPage({
                       : "Публикувай"}
                 </button>
                 <button
-                  className="is-danger"
                   type="button"
                   role="menuitem"
                   disabled={statusLoading || bulkBusy}
-                  onClick={() => void trashPage(page)}
+                  onClick={() => setPendingTrashPage(page)}
                 >
                   Премести в кошчето
                 </button>
@@ -461,7 +461,6 @@ export function PagesPage({
                   Възстанови
                 </button>
                 <button
-                  className="is-danger"
                   type="button"
                   role="menuitem"
                   disabled={statusLoading || bulkBusy}
@@ -731,6 +730,25 @@ export function PagesPage({
         onConfirm={() => {
           setPendingBulkForce(false)
           void runBulk("force")
+        }}
+      />
+      <ConfirmDialog
+        open={pendingTrashPage !== null}
+        title="Преместване в кошчето"
+        message={pendingTrashPage ? `Страницата „${pendingTrashPage.title}“ ще бъде преместена в кошчето.` : ""}
+        confirmLabel="В кошчето"
+        danger
+        busy={pendingTrashPage !== null && statusLoadingIds.has(pendingTrashPage.id)}
+        onCancel={() => {
+          if (pendingTrashPage === null || !statusLoadingIds.has(pendingTrashPage.id))
+            setPendingTrashPage(null)
+        }}
+        onConfirm={() => {
+          if (pendingTrashPage) {
+            const page = pendingTrashPage
+            setPendingTrashPage(null)
+            void trashPage(page)
+          }
         }}
       />
       <ConfirmDialog

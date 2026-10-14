@@ -1070,7 +1070,7 @@ body {
   height: 1rem;
 }
 .react-table-card {
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid #d4d9d0;
   border-radius: 0.7rem;
   background: white;
@@ -1299,6 +1299,40 @@ body {
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+.page-content-builder-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--section-radius);
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+  box-shadow: var(--panel-shadow);
+}
+.page-content-builder-notice > div {
+  display: grid;
+  gap: 0.25rem;
+}
+.page-content-builder-notice span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.page-content-builder-notice button {
+  flex: 0 0 auto;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.page-content-builder-notice button:hover {
+  background: var(--surface-hover);
 }
 .react-page-form label {
   display: grid;
@@ -3198,6 +3232,12 @@ body {
   background: var(--surface);
   box-shadow: var(--panel-shadow);
   color: var(--text-primary);
+}
+.page-editor-basic-panel--collapsible {
+  overflow: hidden;
+}
+.page-editor-basic-panel--collapsible .page-editor-basic-panel-body {
+  padding: 0;
 }
 .page-editor-basic-panel.is-open,
 .page-editor-basic-panel {

@@ -58,6 +58,11 @@ final readonly class PageService
         $data = $this->validate($attributes, $id);
         $wasPublished = $page->getAttribute('status') === 'published';
         $page->fill($data);
+        if (array_key_exists('content_builder', $attributes)) {
+            $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
+            $settings['content_builder'] = $this->contentBuilderId($attributes['content_builder']);
+            $page->setAttribute('settings', $settings);
+        }
         if ($data['status'] === 'published' && !$wasPublished) {
             $page->setAttribute('published_at', new \DateTimeImmutable('now', new \DateTimeZone('UTC')));
         } elseif ($data['status'] === 'draft') {
@@ -135,7 +140,7 @@ final readonly class PageService
             throw new PageNotFound(sprintf('Page %d was not found.', $id));
         }
 
-        $page->setAttribute('settings', [
+        $normalized = [
             'seo_title' => mb_substr(trim((string) ($settings['seo_title'] ?? '')), 0, 190),
             'meta_description' => mb_substr(trim((string) ($settings['meta_description'] ?? '')), 0, 320),
             'canonical_url' => mb_substr(trim((string) ($settings['canonical_url'] ?? '')), 0, 500),
@@ -145,12 +150,31 @@ final readonly class PageService
             'no_index' => filter_var($settings['no_index'] ?? false, FILTER_VALIDATE_BOOL),
             'show_in_navigation' => filter_var($settings['show_in_navigation'] ?? true, FILTER_VALIDATE_BOOL),
             'show_in_sitemap' => filter_var($settings['show_in_sitemap'] ?? true, FILTER_VALIDATE_BOOL),
-        ]);
+        ];
+        $currentSettings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
+        if (array_key_exists('content_builder', $settings)) {
+            $normalized['content_builder'] = $this->contentBuilderId($settings['content_builder']);
+        } elseif (array_key_exists('content_builder', $currentSettings)) {
+            $normalized['content_builder'] = $this->contentBuilderId($currentSettings['content_builder']);
+        }
+        $page->setAttribute('settings', $normalized);
         $page->saveOrFail();
         $fields = $this->pluginFieldsForEvent($settings['plugin_fields'] ?? null, $settings['plugin_settings'] ?? null);
         $this->extensionApi->dispatch(new PageEvent(EventNames::PAGE_UPDATED, $page->toPublicArray(), $fields));
 
         return $page;
+    }
+
+    private function contentBuilderId(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+        $value = trim($value);
+
+        return $value !== '' && strlen($value) <= 120 && preg_match('~^[a-zA-Z0-9][a-zA-Z0-9._/-]*$~', $value) === 1
+            ? $value
+            : null;
     }
 
     private function templateId(mixed $requested): string
