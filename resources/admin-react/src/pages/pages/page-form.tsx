@@ -36,7 +36,7 @@ function PageFormHelp({
   isEditing: boolean
   pluginContentEditor: boolean
   contentBuilderName: string | null
-  themeContentAvailable: boolean
+  themeContentAvailable: boolean | null
 }) {
   usePageHelp(
     useMemo(

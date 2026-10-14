@@ -205,7 +205,7 @@ export async function extensionHasPageContent(
   const module = await loadModule(descriptor.module)
   const check = module.hasPageContent
   if (typeof check !== "function") return true
-  return Boolean(await (check as (host: typeof host, context: unknown) => unknown)(host, context))
+  return Boolean(await (check as (extensionHost: typeof host, context: unknown) => unknown)(host, context))
 }
 
 export function ExtensionModule({
