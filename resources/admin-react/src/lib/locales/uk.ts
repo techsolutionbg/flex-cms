@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const ukCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Панель керування", "Content": "Вміст", "Pages": "Сторінки", "Media library": "Медіатека",
+  "Appearance": "Вигляд", "Themes": "Теми", "Store": "Магазин", "Catalog": "Каталог", "Sales": "Продажі",
+  "Customers": "Клієнти", "Management": "Керування", "Users": "Користувачі", "Extensions": "Розширення", "System": "Система",
+  "Settings": "Налаштування", "Updates": "Оновлення", "More tools": "Інші інструменти", "Account": "Обліковий запис",
+  "Profile": "Профіль", "Help": "Допомога", "Log out": "Вийти", "Signing out…": "Вихід…", "Refresh": "Оновити",
+  "Refresh page data": "Оновити дані сторінки", "Resize sidebar": "Змінити розмір бічної панелі", "Expand sidebar": "Розгорнути бічну панель",
+  "Collapse sidebar": "Згорнути бічну панель", "Hide sidebar": "Сховати бічну панель", "Show sidebar": "Показати бічну панель",
+  "Profile settings": "Налаштування профілю", "Basic information": "Основна інформація", "Security": "Безпека", "Name": "Ім’я", "Email": "Електронна пошта",
+  "Admin panel language": "Мова панелі адміністратора", "Choose the language used in the admin panel.": "Виберіть мову панелі адміністратора.",
+  "This language applies only to the admin panel.": "Ця мова застосовується лише до панелі адміністратора.", "Panel theme": "Тема панелі",
+  "System default": "Системна за замовчуванням", "Panel font": "Шрифт панелі", "Save changes": "Зберегти зміни",
+  "Profile saved.": "Профіль збережено.", "Could not save profile.": "Не вдалося зберегти профіль.", "Could not load profile.": "Не вдалося завантажити профіль.",
+  "Passwords do not match.": "Паролі не збігаються.", "New password": "Новий пароль", "Confirm new password": "Підтвердьте новий пароль",
+  "Current password": "Поточний пароль", "Password": "Пароль", "Sign in": "Увійти", "Checking…": "Перевірка…",
+  "Forgot password?": "Забули пароль?", "Signed in successfully.": "Вхід успішний.", "Sign-in failed.": "Не вдалося увійти.", "Try again": "Спробувати ще раз",
+  "Loading…": "Завантаження…", "Status": "Статус", "Actions": "Дії", "Search": "Пошук", "Activate": "Активувати",
+  "Deactivate": "Деактивувати", "Draft": "Чернетка", "Close": "Закрити", "Inactive": "Неактивний", "Active": "Активний",
+  "Trash": "Кошик", "Remove": "Видалити", "Update": "Оновити", "View": "Переглянути", "Create page": "Створити сторінку", "Select": "Вибрати",
+  "Administrator": "Адміністратор", "Title": "Назва", "Saving…": "Збереження…", "Location": "Розташування", "Editor": "Редактор",
+  "User": "Користувач", "Published": "Опубліковано", "Role": "Роль", "Default": "За замовчуванням", "Size": "Розмір", "Install": "Встановити",
+  "Installed": "Встановлено", "Page": "Сторінка", "Version": "Версія", "Error": "Помилка", "File": "Файл", "Theme": "Тема", "Show": "Показати",
+  "Search pages, sections and settings…": "Пошук сторінок, розділів і налаштувань…", "No records found.": "Записів не знайдено.",
+  "No matches": "Збігів немає", "Unsaved changes": "Незбережені зміни", "Close all": "Закрити всі", "Admin panel": "Панель адміністратора",
+  "System overview": "Огляд системи", "Quick actions": "Швидкі дії", "New page": "Нова сторінка", "Check for updates": "Перевірити оновлення",
+  "Open updates →": "Відкрити оновлення →", "Platform version": "Версія платформи", "Manage pages →": "Керувати сторінками →",
+  "Manage extensions →": "Керувати розширеннями →", "Manage users →": "Керувати користувачами →",
+}

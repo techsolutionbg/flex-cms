@@ -2,7 +2,7 @@ import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useContext, useEffect, useMemo, useState, type SyntheticEvent } from "react"
+import { useContext, useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { LayoutTemplate, Navigation, Puzzle, Search } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
@@ -13,6 +13,7 @@ import { CollapsibleSection } from "@/components/collapsible-section"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import type { PagePluginField, PageRecord, PageSettings } from "@/lib/admin-types"
 import { ExtensionPanels, ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 type PageSettingsFormProps = {
   page: PageRecord
@@ -46,6 +47,8 @@ export function PageSettingsForm({
     Record<string, Record<string, string | boolean>>
   >(page.plugin_settings ?? {})
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef)
   const templates = useContext(AdminWorkspaceContext)?.themeCapabilities?.page_templates
   const templateOptions: PageTemplateOption[] = templates?.length
     ? templates
@@ -112,6 +115,7 @@ export function PageSettingsForm({
             : (body.error?.message ?? "Настройките не можаха да бъдат запазени."),
         )
       await saves.run({ id: page.id })
+      markClean()
       toast.success("Настройките са запазени.")
       if (body.page) onSaved({ ...body.page, plugin_settings: pluginSettings })
     } catch (reason) {
@@ -153,7 +157,8 @@ export function PageSettingsForm({
         </div>
       </div>
       <ExtensionScope value={{ context: panelContext, saves }}>
-        <form className="react-page-form" onSubmit={save}>
+        <form ref={formRef} className="react-page-form" onClickCapture={refresh} onSubmit={save}>
+          <input type="hidden" value={JSON.stringify({ settings, pluginSettings })} />
           <CollapsibleSection
             extensionPoint="page.settings.appearance"
             title={t("Page preview")}
@@ -298,7 +303,7 @@ export function PageSettingsForm({
               loading={saving}
               className="react-primary-button"
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {saving ? t("Saving record…") : t("Save settings")}
             </LoadingButton>

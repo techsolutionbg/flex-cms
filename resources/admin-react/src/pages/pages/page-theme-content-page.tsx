@@ -1,7 +1,7 @@
 import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
-import { useMemo, useState, type SyntheticEvent } from "react"
+import { useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -9,6 +9,7 @@ import { usePageHelp } from "@/components/page-help"
 import type { PageRecord } from "@/lib/admin-types"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { ExtensionComponent, useExtensions } from "@/components/extension-runtime"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 const templateLabels: Record<string, string> = {
   default: "Стандартен",
@@ -42,8 +43,10 @@ export function PageThemeContentForm({
   loggingOut,
 }: PageThemeContentFormProps) {
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const saves = usePanelSaves()
   const panels = useExtensions("page.theme-content", "screen.section")
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, panels.length > 0)
   const panelContext = useMemo(
     () => ({
       type: "page",
@@ -108,6 +111,7 @@ export function PageThemeContentForm({
     setSaving(true)
     try {
       await saves.run({ id: page.id })
+      markClean()
       toast.success("Съдържанието от темата е запазено.")
     } catch (reason) {
       toast.error(
@@ -150,7 +154,7 @@ export function PageThemeContentForm({
         </p>
       ) : (
         <ExtensionScope value={extensionScope}>
-          <form className="react-page-form theme-content-page-form" onSubmit={save}>
+          <form ref={formRef} className="react-page-form theme-content-page-form" onClickCapture={refresh} onSubmit={save}>
             <div className="theme-content-workspace">
               {panels.map((panel) => (
                 <ExtensionComponent
@@ -162,7 +166,7 @@ export function PageThemeContentForm({
               ))}
             </div>
             <div className="react-form-actions">
-              <LoadingButton type="submit" loading={saving}>
+              <LoadingButton type="submit" loading={saving} disabled={!isDirty}>
                 <Save aria-hidden="true" />
 
                 {t("Save")}

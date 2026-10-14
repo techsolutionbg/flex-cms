@@ -1,7 +1,7 @@
 import { Save } from "lucide-react"
 import { LoadingButton } from "@/components/loading-button"
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
-import { Check, LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
+import { Check, Languages, LoaderCircle, Palette, Shield, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { useWorkspaceSaved } from "@/components/admin-workspace-context"
@@ -9,6 +9,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CollapsibleSection } from "@/components/collapsible-section"
 import { PasswordGenerator } from "@/components/password-generator"
 import { PasswordInput } from "@/components/password-input"
+import { AdminTranslationManagement } from "@/components/admin-translation-management"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
 import {
@@ -24,6 +25,7 @@ import {
   type AdminThemeMode,
 } from "@/lib/admin-theme"
 import type { UserRecord } from "@/lib/admin-types"
+import { useFormDirty } from "@/lib/use-form-dirty"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import {
   getAdminLocale,
@@ -81,8 +83,11 @@ export function ProfilePage({
   const [font, setFont] = useState<AdminFontChoice>(() => getPersonalFont() ?? "inter")
   const activeLocale = useAdminLocale()
   const [locale, setLocale] = useState(() => getAdminLocale())
+  const adminLocales = getAdminLocales()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !loading && !!user)
   // Plugins add sections and fields here through extension points; they save right after this record.
   const saves = usePanelSaves()
   const extensionScope = useMemo(
@@ -182,6 +187,7 @@ export function ProfilePage({
       setPassword("")
       setPasswordConfirmation("")
       setCurrentPassword("")
+      markClean()
       savePersonalTheme(theme)
       savePersonalFont(font)
       await saves.run({ id: body.user.id })
@@ -215,7 +221,8 @@ export function ProfilePage({
       ) : (
         user && (
           <ExtensionScope value={extensionScope}>
-            <form className="react-user-form" onSubmit={save} data-admin-locale={activeLocale}>
+            <form ref={formRef} className="react-user-form" onClickCapture={refresh} onSubmit={save} data-admin-locale={activeLocale}>
+              <input type="hidden" value={JSON.stringify({ name, email, password, passwordConfirmation, currentPassword, theme, font, locale })} />
               <CollapsibleSection
                 extensionPoint="profile.information"
                 title={t("Basic information")}
@@ -310,113 +317,129 @@ export function ProfilePage({
                 storageKey="profile-appearance"
               >
                 <div className="profile-theme-picker">
-                  <div className="profile-font-picker">
-                    <label className="react-form-field-label" id="profile-locale-label">
-                      {t("Admin panel language")}
-                    </label>
-                    <DropdownMenu
-                      ariaLabel={t("Choose panel language")}
-                      triggerClassName="react-form-select"
-                      trigger={
-                        <>
-                          <span>{getAdminLocales().find((item) => item.code === locale)?.label ?? locale}</span>
-                          <DropdownChevron />
-                        </>
-                      }
-                    >
-                      {getAdminLocales().map((item) => (
-                        <DropdownOption
-                          key={item.code}
-                          selected={locale === item.code}
-                          onClick={() => {
-                            setLocale(item.code)
-                            setAdminLocale(item.code)
-                          }}
-                        >
-                          {item.label}
-                        </DropdownOption>
-                      ))}
-                    </DropdownMenu>
-                    <small>
-                      {t("This language applies only to the admin panel.")}
-                    </small>
-                  </div>
-                  <p className="profile-theme-picker-label">{t("Panel theme")}</p>
-                  <div className="profile-theme-options" role="group" aria-label={t("Panel theme")}>
-                    {(Object.keys(themeLabels) as AdminThemeMode[]).map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        aria-pressed={theme === value}
-                        className={`profile-theme-card${theme === value ? " is-selected" : ""}`}
-                        data-theme-choice={value}
-                        onClick={() => changeTheme(value)}
+                  <CollapsibleSection
+                    title={`${t("Admin panel language")} (${adminLocales.length})`}
+                    className="profile-appearance-subsection"
+                    storageKey="profile-appearance-language"
+                  >
+                    <div className="profile-font-picker">
+                      <DropdownMenu
+                        ariaLabel={t("Choose panel language")}
+                        triggerClassName="react-form-select"
+                        trigger={
+                          <>
+                            <span>{adminLocales.find((item) => item.code === locale)?.label ?? locale}</span>
+                            <DropdownChevron />
+                          </>
+                        }
                       >
-                        <span className="profile-theme-preview" aria-hidden="true">
-                          <span className="profile-theme-preview-top" />
-                          <span className="profile-theme-preview-sidebar" />
-                          <span className="profile-theme-preview-content">
-                            <span />
-                            <span />
-                            <i />
-                          </span>
-                        </span>
-                        <span className="profile-theme-card-name">{t(themeLabels[value])}</span>
-                        {theme === value && (
-                          <span className="profile-theme-selected" aria-label={t("Selected theme")}>
-                            <Check size={14} aria-hidden="true" />
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <small>
-                      {t("Your choice is saved on this device and takes precedence over the theme in Settings → Admin panel. System theme follows your operating system.")}
-                  </small>
-                  <div className="profile-font-picker">
-                    <label className="react-form-field-label" id="profile-font-label">
-                      {t("Panel font")}
-                    </label>
-                    <DropdownMenu
-                      ariaLabel={t("Choose panel font")}
-                      triggerClassName="react-form-select"
-                      trigger={
-                        <>
-                          <span style={{ fontFamily: getAdminFontFamily(font) }}>
-                            {t(fontLabels[font])}
-                          </span>
-                          <DropdownChevron />
-                        </>
-                      }
-                    >
-                      {(Object.keys(fontLabels) as AdminFontChoice[]).map((value) => (
-                        <DropdownOption
+                        {adminLocales.map((item) => (
+                          <DropdownOption
+                            key={item.code}
+                            selected={locale === item.code}
+                            onClick={() => {
+                              setLocale(item.code)
+                              setAdminLocale(item.code)
+                            }}
+                          >
+                            {item.label}
+                          </DropdownOption>
+                        ))}
+                      </DropdownMenu>
+                      <small>{t("This language applies only to the admin panel.")}</small>
+                    </div>
+                  </CollapsibleSection>
+                  <CollapsibleSection
+                    title="Panel theme"
+                    className="profile-appearance-subsection"
+                    storageKey="profile-appearance-theme"
+                  >
+                    <div className="profile-theme-options" role="group" aria-label={t("Panel theme")}>
+                      {(Object.keys(themeLabels) as AdminThemeMode[]).map((value) => (
+                        <button
                           key={value}
-                          selected={font === value}
-                          onClick={() => changeFont(value)}
+                          type="button"
+                          aria-pressed={theme === value}
+                          className={`profile-theme-card${theme === value ? " is-selected" : ""}`}
+                          data-theme-choice={value}
+                          onClick={() => changeTheme(value)}
                         >
-                          <span style={{ fontFamily: getAdminFontFamily(value) }}>
-                            {t(fontLabels[value])}
+                          <span className="profile-theme-preview" aria-hidden="true">
+                            <span className="profile-theme-preview-top" />
+                            <span className="profile-theme-preview-sidebar" />
+                            <span className="profile-theme-preview-content">
+                              <span />
+                              <span />
+                              <i />
+                            </span>
                           </span>
-                        </DropdownOption>
+                          <span className="profile-theme-card-name">{t(themeLabels[value])}</span>
+                          {theme === value && (
+                            <span className="profile-theme-selected" aria-label={t("Selected theme")}>
+                              <Check size={14} aria-hidden="true" />
+                            </span>
+                          )}
+                        </button>
                       ))}
-                    </DropdownMenu>
-                    <span
-                      className="profile-font-sample"
-                      style={{ fontFamily: getAdminFontFamily(font) }}
-                      aria-live="polite"
-                    >
-                      {t("Preview: Flex CMS — Aa Bb 123")}
-                    </span>
-                  </div>
+                    </div>
+                    <small>
+                      {t("Your choice is saved on this device and takes precedence over the theme in Settings → Admin panel. System theme follows your operating system.")}
+                    </small>
+                  </CollapsibleSection>
+                  <CollapsibleSection
+                    title="Panel font"
+                    className="profile-appearance-subsection"
+                    storageKey="profile-appearance-font"
+                  >
+                    <div className="profile-font-picker">
+                      <DropdownMenu
+                        ariaLabel={t("Choose panel font")}
+                        triggerClassName="react-form-select"
+                        trigger={
+                          <>
+                            <span style={{ fontFamily: getAdminFontFamily(font) }}>
+                              {t(fontLabels[font])}
+                            </span>
+                            <DropdownChevron />
+                          </>
+                        }
+                      >
+                        {(Object.keys(fontLabels) as AdminFontChoice[]).map((value) => (
+                          <DropdownOption
+                            key={value}
+                            selected={font === value}
+                            onClick={() => changeFont(value)}
+                          >
+                            <span style={{ fontFamily: getAdminFontFamily(value) }}>
+                              {t(fontLabels[value])}
+                            </span>
+                          </DropdownOption>
+                        ))}
+                      </DropdownMenu>
+                      <span
+                        className="profile-font-sample"
+                        style={{ fontFamily: getAdminFontFamily(font) }}
+                        aria-live="polite"
+                      >
+                        {t("Preview: Flex CMS — Aa Bb 123")}
+                      </span>
+                    </div>
+                  </CollapsibleSection>
                 </div>
+              </CollapsibleSection>
+              <CollapsibleSection
+                title={t("Translation management")}
+                icon={Languages}
+                storageKey="profile-translation-management"
+              >
+                <AdminTranslationManagement />
               </CollapsibleSection>
               <div className="react-form-actions">
                 <LoadingButton
                   icon={<Save aria-hidden="true" />}
                   loading={saving}
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || !isDirty}
                 >
 
                   {t("Save changes")}

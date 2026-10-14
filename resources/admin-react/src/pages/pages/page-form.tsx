@@ -23,6 +23,7 @@ import {
 } from "@/components/extension-page"
 import { useExtensions, useTableExtensions } from "@/components/extension-runtime"
 import type { PagePluginField, PageRecord } from "@/lib/admin-types"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 const BUILTIN_CONTENT_EDITOR = "flex-cms/native"
 
@@ -112,6 +113,8 @@ export function PageForm({
   >(page?.plugin_fields ?? {})
   const [slugEdited, setSlugEdited] = useState(Boolean(page))
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef)
   const [detachDialogOpen, setDetachDialogOpen] = useState(false)
   const [detachingBuilder, setDetachingBuilder] = useState(false)
   const [themeContentAvailable, setThemeContentAvailable] = useState<boolean | null>(null)
@@ -209,7 +212,8 @@ export function PageForm({
     setParentId(page!.parent_id ?? null)
     setSlugEdited(true)
     setPluginFields(page!.plugin_fields ?? {})
-  }, [pageId, page])
+    markClean()
+  }, [pageId, page, markClean])
 
   useEffect(() => {
     fetch("/api/admin/pages?view=active", {
@@ -310,6 +314,7 @@ export function PageForm({
         toast.error("Страницата е запазена, но разширение не записа данните си: " + panelFailure)
       }
       if (body.page) onSaved({ ...body.page, plugin_fields: pluginFields })
+      markClean()
       if (panelFailure !== "") changed?.()
     } catch (reason) {
       const message =
@@ -431,7 +436,11 @@ export function PageForm({
           </button>
         </div>
       )}
-      <form className="react-page-form" onSubmit={save}>
+      <form ref={formRef} className="react-page-form" onClickCapture={refresh} onSubmit={save}>
+        <input
+          type="hidden"
+          value={JSON.stringify({ title, slug, content, contentEdited, status, parentId, featuredId, pluginFields })}
+        />
           {!pluginContentEditor && <CollapsibleSection
             title={t("Content")}
             icon={FileText}
@@ -563,6 +572,7 @@ export function PageForm({
               onChange={(id) => {
                 setFeaturedId(id)
                 changed?.()
+                refresh()
               }}
             />
           </CollapsibleSection>
@@ -672,7 +682,7 @@ export function PageForm({
               loading={saving}
               className="react-primary-button"
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {saving ? t("Saving record…") : t("Save page")}
             </LoadingButton>

@@ -16,7 +16,13 @@ import { loadTimeSettings } from "@/lib/time-settings"
 import "./index.css"
 import { installRequestTracking } from "@/lib/request-tracker"
 import { GlobalLoadingBar } from "@/components/global-loading-bar"
-import { setAdminLocale, t, useAdminLocale } from "@/lib/admin-i18n"
+import {
+  setAdminLocale,
+  setAdminTranslationOverrides,
+  t,
+  useAdminLocale,
+  type AdminTranslationOverrides,
+} from "@/lib/admin-i18n"
 
 installRequestTracking()
 
@@ -91,6 +97,20 @@ function App() {
             setAdminThemeUser(body.user?.id ?? 0)
             setAdminLocale(body.user?.admin_locale ?? "en")
             if (body.user?.role === "super_admin") {
+              try {
+                const translationsResponse = await fetch("/api/admin/translations", {
+                  credentials: "include",
+                  headers: { Accept: "application/json" },
+                  cache: "no-store",
+                })
+                const translationsBody = (await translationsResponse.json().catch(() => ({}))) as {
+                  overrides?: AdminTranslationOverrides
+                }
+                if (translationsResponse.ok)
+                  setAdminTranslationOverrides(translationsBody.overrides ?? {})
+              } catch {
+                // Packaged locale catalogs remain available if saved overrides cannot load.
+              }
               try {
                 await Promise.all([loadAdminSettings(), loadTimeSettings()])
               } catch (error) {

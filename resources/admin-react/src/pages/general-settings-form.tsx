@@ -1,6 +1,6 @@
 import { t } from "@/lib/admin-i18n"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Save, Settings } from "lucide-react"
 import { toast } from "sonner"
 import { CollapsibleSection } from "@/components/collapsible-section"
@@ -10,6 +10,7 @@ import { getCsrfToken } from "@/lib/admin-api"
 import { applyTimeSettings } from "@/lib/time-settings"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 type Values = {
   name: string
@@ -38,11 +39,14 @@ export function GeneralSettingsForm() {
     [values],
   )
   const [revision, setRevision] = useState(0)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, values !== null)
   const changed = useWorkspaceChanged()
   const saved = useWorkspaceSaved()
   useEffect(() => {
     const abort = new AbortController()
     setFailure("")
+    setValues(null)
     fetch("/api/admin/settings/general", {
       credentials: "include",
       signal: AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
@@ -64,6 +68,7 @@ export function GeneralSettingsForm() {
   function update(key: keyof Values, value: string) {
     setValues((current) => (current ? { ...current, [key]: value } : current))
     changed?.()
+    refresh()
   }
   async function save(event: React.FormEvent) {
     event.preventDefault()
@@ -83,6 +88,7 @@ export function GeneralSettingsForm() {
       if (!response.ok)
         throw new Error(body.error?.message ?? "Настройките не можаха да бъдат записани.")
       setValues(body.settings)
+      markClean()
       applyTimeSettings(body.settings)
       saved?.()
       await saves.run({ id: "general" })
@@ -133,7 +139,8 @@ export function GeneralSettingsForm() {
     : []
   return (
     <ExtensionScope value={extensionScope}>
-      <form onSubmit={(event) => void save(event)}>
+      <form ref={formRef} onClickCapture={refresh} onSubmit={(event) => void save(event)}>
+        <input type="hidden" value={JSON.stringify(values)} />
         <CollapsibleSection
           extensionPoint="settings.general"
           title={t("General")}
@@ -211,7 +218,7 @@ export function GeneralSettingsForm() {
             <LoadingButton
               type="submit"
               loading={saving}
-              disabled={saving}
+              disabled={saving || !isDirty}
               icon={<Save aria-hidden="true" />}
               className="settings-save-button"
             >

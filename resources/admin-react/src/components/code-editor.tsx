@@ -8,6 +8,7 @@ type CodeEditorProps = {
   value: string
   language?: string
   readOnly?: boolean
+  onChange?: (value: string) => void
   height?: string
   copyLabel?: string
   toolbarContent?: ReactNode
@@ -18,6 +19,7 @@ export function CodeEditor({
   value,
   language = "json",
   readOnly = true,
+  onChange,
   height = "460px",
   copyLabel = "Копирай",
   toolbarContent,
@@ -138,6 +140,7 @@ export function CodeEditor({
         language={language}
         theme="vs-dark"
         value={value}
+        onChange={(nextValue) => onChange?.(nextValue ?? "")}
         onMount={(editor) => {
           editorRef.current = editor
         }}

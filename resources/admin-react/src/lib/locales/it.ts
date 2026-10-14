@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const itCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Dashboard", "Content": "Contenuti", "Pages": "Pagine", "Media library": "Libreria multimediale",
+  "Appearance": "Aspetto", "Themes": "Temi", "Store": "Negozio", "Catalog": "Catalogo", "Sales": "Vendite",
+  "Customers": "Clienti", "Management": "Gestione", "Users": "Utenti", "Extensions": "Estensioni", "System": "Sistema",
+  "Settings": "Impostazioni", "Updates": "Aggiornamenti", "More tools": "Altri strumenti", "Account": "Account", "Profile": "Profilo",
+  "Help": "Aiuto", "Log out": "Esci", "Signing out…": "Disconnessione…", "Refresh": "Aggiorna", "Refresh page data": "Aggiorna i dati della pagina",
+  "Resize sidebar": "Ridimensiona la barra laterale", "Expand sidebar": "Espandi la barra laterale", "Collapse sidebar": "Comprimi la barra laterale",
+  "Hide sidebar": "Nascondi la barra laterale", "Show sidebar": "Mostra la barra laterale", "Profile settings": "Impostazioni del profilo",
+  "Basic information": "Informazioni di base", "Security": "Sicurezza", "Name": "Nome", "Email": "E-mail",
+  "Admin panel language": "Lingua del pannello di amministrazione", "Choose the language used in the admin panel.": "Scegli la lingua del pannello di amministrazione.",
+  "This language applies only to the admin panel.": "Questa lingua si applica solo al pannello di amministrazione.", "Panel theme": "Tema del pannello",
+  "System default": "Predefinito di sistema", "Panel font": "Carattere del pannello", "Save changes": "Salva modifiche",
+  "Profile saved.": "Profilo salvato.", "Could not save profile.": "Impossibile salvare il profilo.", "Could not load profile.": "Impossibile caricare il profilo.",
+  "Passwords do not match.": "Le password non corrispondono.", "New password": "Nuova password", "Confirm new password": "Conferma la nuova password",
+  "Current password": "Password attuale", "Password": "Password", "Sign in": "Accedi", "Checking…": "Verifica in corso…",
+  "Forgot password?": "Password dimenticata?", "Signed in successfully.": "Accesso eseguito correttamente.", "Sign-in failed.": "Accesso non riuscito.",
+  "Try again": "Riprova", "Loading…": "Caricamento…", "Status": "Stato", "Actions": "Azioni", "Search": "Cerca",
+  "Activate": "Attiva", "Deactivate": "Disattiva", "Draft": "Bozza", "Close": "Chiudi", "Inactive": "Inattivo", "Active": "Attivo",
+  "Trash": "Cestino", "Remove": "Rimuovi", "Update": "Aggiorna", "View": "Visualizza", "Create page": "Crea pagina", "Select": "Seleziona",
+  "Administrator": "Amministratore", "Title": "Titolo", "Saving…": "Salvataggio…", "Location": "Posizione", "Editor": "Editor",
+  "User": "Utente", "Published": "Pubblicato", "Role": "Ruolo", "Default": "Predefinito", "Size": "Dimensione", "Install": "Installa",
+  "Installed": "Installato", "Page": "Pagina", "Version": "Versione", "Error": "Errore", "File": "File", "Theme": "Tema", "Show": "Mostra",
+  "Search pages, sections and settings…": "Cerca pagine, sezioni e impostazioni…", "No records found.": "Nessun elemento trovato.",
+  "No matches": "Nessuna corrispondenza", "Unsaved changes": "Modifiche non salvate", "Close all": "Chiudi tutto", "Admin panel": "Pannello di amministrazione",
+  "System overview": "Panoramica del sistema", "Quick actions": "Azioni rapide", "New page": "Nuova pagina", "Check for updates": "Controlla aggiornamenti",
+  "Open updates →": "Apri aggiornamenti →", "Platform version": "Versione della piattaforma", "Manage pages →": "Gestisci pagine →",
+  "Manage extensions →": "Gestisci estensioni →", "Manage users →": "Gestisci utenti →",
+}

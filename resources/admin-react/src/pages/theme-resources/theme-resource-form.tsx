@@ -1,6 +1,6 @@
 import { t } from "@/lib/admin-i18n"
 import { CircleAlert, FileText } from "lucide-react"
-import { useEffect, useState, type SyntheticEvent } from "react"
+import { useEffect, useRef, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -11,6 +11,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 import type { ThemeResourceDefinition } from "@/components/admin-workspace-context"
 import { themeResourceRequest, type ThemeRecordItem } from "./api"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 function slugify(value: string) {
   return value
@@ -50,6 +51,8 @@ export function ThemeResourceForm({
   const [content, setContent] = useState("")
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [featuredId, setFeaturedId] = useState<number | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !loading)
 
   useEffect(() => {
     if (recordId === null) return
@@ -94,6 +97,7 @@ export function ThemeResourceForm({
         { title, slug, summary, content, status, featured_media_id: featuredId },
       )
       toast.success(recordId === null ? `${singular}ът е създаден.` : `${singular}ът е обновен.`)
+      markClean()
       saved?.()
       onSaved(body.record)
     } catch (reason) {
@@ -133,7 +137,8 @@ export function ThemeResourceForm({
               {error}
             </div>
           )}
-          <form className="react-page-form" onSubmit={save}>
+          <form ref={formRef} className="react-page-form" onClickCapture={refresh} onSubmit={save}>
+            <input type="hidden" value={JSON.stringify({ title, slug, summary, content, status, featuredId })} />
             <section className="page-editor-basic-panel">
               <header className="page-editor-basic-panel-heading">
                 <FileText aria-hidden="true" />
@@ -246,7 +251,7 @@ export function ThemeResourceForm({
               />
             </CollapsibleSection>
             <div className="react-form-actions">
-              <LoadingButton type="submit" loading={saving}>
+              <LoadingButton type="submit" loading={saving} disabled={!isDirty}>
 
                 {t("Save")}
               </LoadingButton>

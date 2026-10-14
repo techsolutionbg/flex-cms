@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const ptCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Painel", "Content": "Conteúdo", "Pages": "Páginas", "Media library": "Biblioteca de mídia",
+  "Appearance": "Aparência", "Themes": "Temas", "Store": "Loja", "Catalog": "Catálogo", "Sales": "Vendas",
+  "Customers": "Clientes", "Management": "Gestão", "Users": "Utilizadores", "Extensions": "Extensões", "System": "Sistema",
+  "Settings": "Definições", "Updates": "Atualizações", "More tools": "Mais ferramentas", "Account": "Conta", "Profile": "Perfil",
+  "Help": "Ajuda", "Log out": "Terminar sessão", "Signing out…": "A terminar sessão…", "Refresh": "Atualizar",
+  "Refresh page data": "Atualizar dados da página", "Resize sidebar": "Redimensionar a barra lateral", "Expand sidebar": "Expandir a barra lateral",
+  "Collapse sidebar": "Recolher a barra lateral", "Hide sidebar": "Ocultar a barra lateral", "Show sidebar": "Mostrar a barra lateral",
+  "Profile settings": "Definições do perfil", "Basic information": "Informações básicas", "Security": "Segurança", "Name": "Nome", "Email": "E-mail",
+  "Admin panel language": "Idioma do painel de administração", "Choose the language used in the admin panel.": "Escolha o idioma do painel de administração.",
+  "This language applies only to the admin panel.": "Este idioma aplica-se apenas ao painel de administração.", "Panel theme": "Tema do painel",
+  "System default": "Predefinição do sistema", "Panel font": "Tipo de letra do painel", "Save changes": "Guardar alterações",
+  "Profile saved.": "Perfil guardado.", "Could not save profile.": "Não foi possível guardar o perfil.", "Could not load profile.": "Não foi possível carregar o perfil.",
+  "Passwords do not match.": "As palavras-passe não coincidem.", "New password": "Nova palavra-passe", "Confirm new password": "Confirmar nova palavra-passe",
+  "Current password": "Palavra-passe atual", "Password": "Palavra-passe", "Sign in": "Iniciar sessão", "Checking…": "A verificar…",
+  "Forgot password?": "Esqueceu-se da palavra-passe?", "Signed in successfully.": "Sessão iniciada com sucesso.", "Sign-in failed.": "Falha ao iniciar sessão.",
+  "Try again": "Tentar novamente", "Loading…": "A carregar…", "Status": "Estado", "Actions": "Ações", "Search": "Pesquisar",
+  "Activate": "Ativar", "Deactivate": "Desativar", "Draft": "Rascunho", "Close": "Fechar", "Inactive": "Inativo", "Active": "Ativo",
+  "Trash": "Lixo", "Remove": "Remover", "Update": "Atualizar", "View": "Ver", "Create page": "Criar página", "Select": "Selecionar",
+  "Administrator": "Administrador", "Title": "Título", "Saving…": "A guardar…", "Location": "Localização", "Editor": "Editor",
+  "User": "Utilizador", "Published": "Publicado", "Role": "Função", "Default": "Predefinição", "Size": "Tamanho", "Install": "Instalar",
+  "Installed": "Instalado", "Page": "Página", "Version": "Versão", "Error": "Erro", "File": "Ficheiro", "Theme": "Tema", "Show": "Mostrar",
+  "Search pages, sections and settings…": "Pesquisar páginas, secções e definições…", "No records found.": "Não foram encontrados registos.",
+  "No matches": "Sem resultados", "Unsaved changes": "Alterações não guardadas", "Close all": "Fechar tudo", "Admin panel": "Painel de administração",
+  "System overview": "Visão geral do sistema", "Quick actions": "Ações rápidas", "New page": "Nova página", "Check for updates": "Procurar atualizações",
+  "Open updates →": "Abrir atualizações →", "Platform version": "Versão da plataforma", "Manage pages →": "Gerir páginas →",
+  "Manage extensions →": "Gerir extensões →", "Manage users →": "Gerir utilizadores →",
+}

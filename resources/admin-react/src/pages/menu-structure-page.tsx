@@ -19,6 +19,7 @@ import {
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 import type { MenuShellProps } from "./menus-page"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 const pageStatusLabels: Record<string, string> = {
   published: "Публикувана",
@@ -58,6 +59,8 @@ export function MenuStructurePage({
   const loadedMenuId = useRef<number | null>(null)
   const changed = useWorkspaceChanged()
   const saved = useWorkspaceSaved()
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !loading && !!menu)
   const supported = capabilities?.supports.menus === true
   useEffect(() => {
     if (!supported) return
@@ -82,6 +85,7 @@ export function MenuStructurePage({
         setMenu(record.menu)
         loadedMenuId.current = menuId
         setSelectedPageIds(new Set())
+        markClean()
       })
       .catch((error) => {
         if (!abort.signal.aborted) setFailure((error as Error).message)
@@ -147,6 +151,7 @@ export function MenuStructurePage({
     if (!menu || saving || items === menu.items) return
     setMenu({ ...menu, items })
     changed?.()
+    refresh()
   }
   function place(id: string, target: string, mode: MenuDropMode) {
     if (!menu || saving) return
@@ -173,6 +178,7 @@ export function MenuStructurePage({
         menu,
       )
       setMenu(result.menu)
+      markClean()
       saved?.()
       await saves.run({ id: result.menu.id })
       toast.success("Структурата на менюто е запазена.")
@@ -202,7 +208,7 @@ export function MenuStructurePage({
               type="submit"
               form={`menu-structure-form-${menuId}`}
               className="react-primary-button menu-button"
-              disabled={saving || loading || !menu}
+              disabled={saving || loading || !menu || !isDirty}
             >
               <Save size={18} />
               {saving ? t("Saving…") : t("Save structure")}
@@ -223,13 +229,16 @@ export function MenuStructurePage({
         (!failure || menu) && (
           <ExtensionScope value={extensionScope}>
             <form
+              ref={formRef}
               id={`menu-structure-form-${menuId}`}
               className="react-page-form menu-structure-form"
+              onClickCapture={refresh}
               onSubmit={(event) => {
                 event.preventDefault()
                 void save()
               }}
             >
+              <input type="hidden" value={JSON.stringify(menu)} />
               <div className="menu-structure-layout" data-menu-id={menuId}>
                 <aside aria-label={t("Available pages")}>
                   <CollapsibleSection
@@ -242,6 +251,7 @@ export function MenuStructurePage({
                       <span>{t("Search pages")}</span>
                       <input
                         type="search"
+                        data-dirty-ignore
                         value={search}
                         placeholder={t("Search by title…")}
                         onChange={(event) => setSearch(event.target.value)}
@@ -264,6 +274,7 @@ export function MenuStructurePage({
                                 <label className="menu-structure-page-row">
                                   <input
                                     type="checkbox"
+                                    data-dirty-ignore
                                     disabled={saving}
                                     checked={selectedPageIds.has(page.id)}
                                     onChange={(event) =>
@@ -601,7 +612,7 @@ export function MenuStructurePage({
                   loading={saving}
                   type="submit"
                   className="react-primary-button menu-button"
-                  disabled={saving || loading || !menu}
+                  disabled={saving || loading || !menu || !isDirty}
                 >
                   <Save size={18} />
                   {saving ? t("Saving…") : t("Save structure")}

@@ -1,6 +1,6 @@
 import { t } from "@/lib/admin-i18n"
 import { Save } from "lucide-react"
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -8,6 +8,7 @@ import { LoadingButton } from "@/components/loading-button"
 import { usePageHelp } from "@/components/page-help"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { ExtensionComponent, useExtensions } from "@/components/extension-runtime"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 type ThemeSummary = { id: string; name: string | null; active: boolean }
 
@@ -33,8 +34,10 @@ export function ThemeSettingsPage({
   const [theme, setTheme] = useState<ThemeSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const saves = usePanelSaves()
   const panels = useExtensions("theme.settings", "screen.section")
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !!theme?.active && panels.length > 0)
   const panelContext = useMemo(() => ({ type: "theme", id, theme }), [id, theme])
   const extensionScope = useMemo(() => ({ context: panelContext, saves }), [panelContext, saves])
   const name = theme?.name ?? id
@@ -87,6 +90,7 @@ export function ThemeSettingsPage({
     setSaving(true)
     try {
       await saves.run({ id })
+      markClean()
       toast.success("Настройките на темата са запазени.")
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Настройките не можаха да бъдат запазени.")
@@ -134,7 +138,7 @@ export function ThemeSettingsPage({
       )}
       {theme?.active && panels.length > 0 && (
         <ExtensionScope value={extensionScope}>
-          <form className="react-page-form theme-content-page-form" onSubmit={save}>
+          <form ref={formRef} className="react-page-form theme-content-page-form" onClickCapture={refresh} onSubmit={save}>
             <div className="theme-content-workspace">
               {panels.map((panel) => (
                 <ExtensionComponent
@@ -146,7 +150,7 @@ export function ThemeSettingsPage({
               ))}
             </div>
             <div className="react-form-actions">
-              <LoadingButton type="submit" loading={saving}>
+              <LoadingButton type="submit" loading={saving} disabled={!isDirty}>
                 <Save aria-hidden="true" />
 
                 {t("Save")}

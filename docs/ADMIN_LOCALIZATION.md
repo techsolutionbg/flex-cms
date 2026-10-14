@@ -20,6 +20,10 @@ t("{count} files selected", "core", { count })
 
 To add another built-in language, create a locale file such as `de.ts` with English source keys and German values, import it in `admin-i18n.ts`, and add its BCP 47 code and native label to `localeLabels`. Locale codes such as `de` and `pt-BR` are supported.
 
+## Editing translations in the admin panel
+
+Super administrators can open **Profile settings → Appearance → Translation management**, choose a registered language, and edit its namespace-grouped JSON catalog in the Monaco editor. English source strings are the keys. Saving stores only values that differ from the packaged catalogs in the `admin.translations.overrides` setting; those overrides survive deployments and take precedence over bundled translations. Removing an entry or restoring its packaged value clears that override. Registered theme and plugin namespaces are included when their catalogs have loaded in the admin panel. Overrides affect admin UI only, never public theme output.
+
 ## Themes and plugins
 
 Theme and plugin admin modules receive the platform's `i18n` API through the extension host. Register their admin-only strings by namespace and use `t` when rendering:

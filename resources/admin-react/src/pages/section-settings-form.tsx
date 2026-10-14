@@ -1,6 +1,6 @@
 import { t } from "@/lib/admin-i18n"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import {
   Globe,
   UsersRound,
@@ -20,6 +20,7 @@ import { getCsrfToken } from "@/lib/admin-api"
 import { useWorkspaceChanged, useWorkspaceSaved } from "@/components/admin-workspace-context"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { OperationErrorsLog } from "@/components/operation-errors-log"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 export function SectionSettingsForm({
   section,
@@ -44,6 +45,8 @@ export function SectionSettingsForm({
     [section, values],
   )
   const [revision, setRevision] = useState(0)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, values !== null)
   const changed = useWorkspaceChanged()
   const saved = useWorkspaceSaved()
   const details = {
@@ -87,6 +90,7 @@ export function SectionSettingsForm({
   function update(key: string, value: string) {
     setValues((current) => (current ? { ...current, [key]: value } : current))
     changed?.()
+    refresh()
   }
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -106,6 +110,7 @@ export function SectionSettingsForm({
       if (!response.ok) throw new Error(body.error?.message ?? "Грешка при записване.")
       setValues(body.settings)
       setMail(body.mail ?? null)
+      markClean()
       if (section === "admin") applyAdminSettings(body.settings)
       saved?.()
       await saves.run({ id: section })
@@ -201,7 +206,8 @@ export function SectionSettingsForm({
               : []
   return (
     <ExtensionScope value={extensionScope}>
-      <form onSubmit={(event) => void save(event)}>
+      <form ref={formRef} onClickCapture={refresh} onSubmit={(event) => void save(event)}>
+        <input type="hidden" value={JSON.stringify({ values, mail })} />
         <CollapsibleSection
           extensionPoint={`settings.${section}`}
           title={t(details.title)}
@@ -457,7 +463,7 @@ export function SectionSettingsForm({
             <LoadingButton
               type="submit"
               loading={saving}
-              disabled={saving}
+              disabled={saving || !isDirty}
               icon={<Save aria-hidden="true" />}
               className="settings-save-button"
             >

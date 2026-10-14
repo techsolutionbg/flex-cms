@@ -11,6 +11,7 @@ import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { menuRequest, type MenuIndex, type MenuRecord, type MenuStatus } from "@/lib/menu-api"
 import type { MenuShellProps } from "./menus-page"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 const statusLabels: Record<MenuStatus, string> = {
   active: "Активно",
@@ -53,6 +54,8 @@ export function MenuEditor({
     [menu],
   )
   const [failure, setFailure] = useState("")
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !loading)
   const loadedId = useRef<number | null | undefined>(undefined)
   const changed = useWorkspaceChanged()
   const supported = capabilities?.supports.menus === true
@@ -103,10 +106,12 @@ export function MenuEditor({
   function update(next: MenuRecord) {
     setMenu(next)
     changed?.()
+    refresh()
   }
   function selectLocation(next: string) {
     setLocation(next)
     changed?.()
+    refresh()
   }
   async function save() {
     if (!supported || !index || themeChanged || saving || loading) return
@@ -137,6 +142,7 @@ export function MenuEditor({
       initialLocation.current = location
       onSaved(result.menu)
       await saves.run({ id: result.menu.id })
+      markClean()
       toast.success("Менюто е запазено.")
     } catch (error) {
       setFailure((error as Error).message)
@@ -183,13 +189,16 @@ export function MenuEditor({
       ) : (
         <ExtensionScope value={extensionScope}>
           <form
+            ref={formRef}
             className="react-page-form"
+            onClickCapture={refresh}
             id={`menu-form-${id ?? "new"}`}
             onSubmit={(event) => {
               event.preventDefault()
               void save()
             }}
           >
+            <input type="hidden" value={JSON.stringify({ menu, location })} />
             <fieldset className="menu-fieldset" disabled={saving || themeChanged}>
               <CollapsibleSection
                 extensionPoint="menu.editor.settings"
@@ -305,7 +314,7 @@ export function MenuEditor({
                 loading={saving}
                 type="submit"
                 className="react-primary-button menu-button"
-                disabled={!supported || saving || loading || !index || themeChanged}
+                disabled={!supported || saving || loading || !index || themeChanged || !isDirty}
               >
                 <Save size={18} />
                 {saving ? t("Saving…") : t("Save menu")}

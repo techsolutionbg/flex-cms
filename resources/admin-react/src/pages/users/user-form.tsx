@@ -12,6 +12,7 @@ import { PasswordInput } from "@/components/password-input"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { UserRecord } from "@/lib/admin-types"
+import { useFormDirty } from "@/lib/use-form-dirty"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 
 const roleLabels: Record<string, string> = {
@@ -46,6 +47,8 @@ export function UserForm({
   const [passwordConfirmation, setPasswordConfirmation] = useState("")
   const [sendConfirmation, setSendConfirmation] = useState(!editing)
   const [saving, setSaving] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef)
   // Plugins add sections and fields here through extension points; they save right after this record.
   const saves = usePanelSaves()
   const extensionScope = useMemo(
@@ -111,6 +114,7 @@ export function UserForm({
       if (!response.ok || !body.user)
         throw new Error(body.error?.message ?? "Потребителят не можа да бъде записан.")
       await saves.run({ id: body.user.id })
+      markClean()
       toast.success(editing ? "Потребителят е променен." : "Потребителят е създаден.")
       onSaved(body.user)
     } catch (reason) {
@@ -143,7 +147,8 @@ export function UserForm({
         </div>
       </div>
       <ExtensionScope value={extensionScope}>
-        <form className="react-user-form" onSubmit={save}>
+        <form ref={formRef} className="react-user-form" onClickCapture={refresh} onSubmit={save}>
+          <input type="hidden" value={JSON.stringify({ name, email, role, status, password, passwordConfirmation, sendConfirmation })} />
           <CollapsibleSection
             extensionPoint="user.editor.details"
             title={t("Basic information")}
@@ -330,7 +335,7 @@ export function UserForm({
               icon={<Save aria-hidden="true" />}
               loading={saving}
               type="submit"
-              disabled={saving}
+              disabled={saving || !isDirty}
             >
               {editing ? t("Save changes") : t("Create user action")}
             </LoadingButton>

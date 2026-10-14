@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const svCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Översikt", "Content": "Innehåll", "Pages": "Sidor", "Media library": "Mediabibliotek",
+  "Appearance": "Utseende", "Themes": "Teman", "Store": "Butik", "Catalog": "Katalog", "Sales": "Försäljning",
+  "Customers": "Kunder", "Management": "Hantering", "Users": "Användare", "Extensions": "Tillägg", "System": "System",
+  "Settings": "Inställningar", "Updates": "Uppdateringar", "More tools": "Fler verktyg", "Account": "Konto", "Profile": "Profil",
+  "Help": "Hjälp", "Log out": "Logga ut", "Signing out…": "Loggar ut…", "Refresh": "Uppdatera",
+  "Refresh page data": "Uppdatera siddata", "Resize sidebar": "Ändra sidofältets storlek", "Expand sidebar": "Fäll ut sidofältet",
+  "Collapse sidebar": "Fäll ihop sidofältet", "Hide sidebar": "Dölj sidofältet", "Show sidebar": "Visa sidofältet",
+  "Profile settings": "Profilinställningar", "Basic information": "Grundläggande information", "Security": "Säkerhet", "Name": "Namn", "Email": "E-post",
+  "Admin panel language": "Språk i adminpanelen", "Choose the language used in the admin panel.": "Välj språk för adminpanelen.",
+  "This language applies only to the admin panel.": "Det här språket gäller endast adminpanelen.", "Panel theme": "Paneltema",
+  "System default": "Systemstandard", "Panel font": "Panelens typsnitt", "Save changes": "Spara ändringar",
+  "Profile saved.": "Profilen har sparats.", "Could not save profile.": "Det gick inte att spara profilen.", "Could not load profile.": "Det gick inte att läsa in profilen.",
+  "Passwords do not match.": "Lösenorden stämmer inte överens.", "New password": "Nytt lösenord", "Confirm new password": "Bekräfta nytt lösenord",
+  "Current password": "Nuvarande lösenord", "Password": "Lösenord", "Sign in": "Logga in", "Checking…": "Kontrollerar…",
+  "Forgot password?": "Glömt lösenordet?", "Signed in successfully.": "Du är inloggad.", "Sign-in failed.": "Inloggningen misslyckades.", "Try again": "Försök igen",
+  "Loading…": "Läser in…", "Status": "Status", "Actions": "Åtgärder", "Search": "Sök", "Activate": "Aktivera",
+  "Deactivate": "Inaktivera", "Draft": "Utkast", "Close": "Stäng", "Inactive": "Inaktiv", "Active": "Aktiv",
+  "Trash": "Papperskorg", "Remove": "Ta bort", "Update": "Uppdatera", "View": "Visa", "Create page": "Skapa sida", "Select": "Välj",
+  "Administrator": "Administratör", "Title": "Titel", "Saving…": "Sparar…", "Location": "Plats", "Editor": "Redigerare",
+  "User": "Användare", "Published": "Publicerad", "Role": "Roll", "Default": "Standard", "Size": "Storlek", "Install": "Installera",
+  "Installed": "Installerad", "Page": "Sida", "Version": "Version", "Error": "Fel", "File": "Fil", "Theme": "Tema", "Show": "Visa",
+  "Search pages, sections and settings…": "Sök efter sidor, avsnitt och inställningar…", "No records found.": "Inga poster hittades.",
+  "No matches": "Inga träffar", "Unsaved changes": "Osparade ändringar", "Close all": "Stäng alla", "Admin panel": "Adminpanel",
+  "System overview": "Systemöversikt", "Quick actions": "Snabbåtgärder", "New page": "Ny sida", "Check for updates": "Sök efter uppdateringar",
+  "Open updates →": "Öppna uppdateringar →", "Platform version": "Plattformsversion", "Manage pages →": "Hantera sidor →",
+  "Manage extensions →": "Hantera tillägg →", "Manage users →": "Hantera användare →",
+}

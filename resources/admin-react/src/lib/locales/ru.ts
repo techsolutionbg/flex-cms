@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const ruCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Панель управления", "Content": "Содержимое", "Pages": "Страницы", "Media library": "Медиатека",
+  "Appearance": "Внешний вид", "Themes": "Темы", "Store": "Магазин", "Catalog": "Каталог", "Sales": "Продажи",
+  "Customers": "Клиенты", "Management": "Управление", "Users": "Пользователи", "Extensions": "Расширения", "System": "Система",
+  "Settings": "Настройки", "Updates": "Обновления", "More tools": "Дополнительные инструменты", "Account": "Учётная запись",
+  "Profile": "Профиль", "Help": "Помощь", "Log out": "Выйти", "Signing out…": "Выполняется выход…", "Refresh": "Обновить",
+  "Refresh page data": "Обновить данные страницы", "Resize sidebar": "Изменить размер боковой панели", "Expand sidebar": "Развернуть боковую панель",
+  "Collapse sidebar": "Свернуть боковую панель", "Hide sidebar": "Скрыть боковую панель", "Show sidebar": "Показать боковую панель",
+  "Profile settings": "Настройки профиля", "Basic information": "Основная информация", "Security": "Безопасность", "Name": "Имя", "Email": "Электронная почта",
+  "Admin panel language": "Язык панели администратора", "Choose the language used in the admin panel.": "Выберите язык панели администратора.",
+  "This language applies only to the admin panel.": "Этот язык используется только в панели администратора.", "Panel theme": "Тема панели",
+  "System default": "Системная по умолчанию", "Panel font": "Шрифт панели", "Save changes": "Сохранить изменения",
+  "Profile saved.": "Профиль сохранён.", "Could not save profile.": "Не удалось сохранить профиль.", "Could not load profile.": "Не удалось загрузить профиль.",
+  "Passwords do not match.": "Пароли не совпадают.", "New password": "Новый пароль", "Confirm new password": "Подтвердите новый пароль",
+  "Current password": "Текущий пароль", "Password": "Пароль", "Sign in": "Войти", "Checking…": "Проверка…",
+  "Forgot password?": "Забыли пароль?", "Signed in successfully.": "Вход выполнен.", "Sign-in failed.": "Не удалось войти.", "Try again": "Повторить",
+  "Loading…": "Загрузка…", "Status": "Статус", "Actions": "Действия", "Search": "Поиск", "Activate": "Активировать",
+  "Deactivate": "Деактивировать", "Draft": "Черновик", "Close": "Закрыть", "Inactive": "Неактивен", "Active": "Активен",
+  "Trash": "Корзина", "Remove": "Удалить", "Update": "Обновить", "View": "Просмотреть", "Create page": "Создать страницу", "Select": "Выбрать",
+  "Administrator": "Администратор", "Title": "Заголовок", "Saving…": "Сохранение…", "Location": "Расположение", "Editor": "Редактор",
+  "User": "Пользователь", "Published": "Опубликовано", "Role": "Роль", "Default": "По умолчанию", "Size": "Размер", "Install": "Установить",
+  "Installed": "Установлено", "Page": "Страница", "Version": "Версия", "Error": "Ошибка", "File": "Файл", "Theme": "Тема", "Show": "Показать",
+  "Search pages, sections and settings…": "Поиск страниц, разделов и настроек…", "No records found.": "Записи не найдены.",
+  "No matches": "Совпадений нет", "Unsaved changes": "Несохранённые изменения", "Close all": "Закрыть все", "Admin panel": "Панель администратора",
+  "System overview": "Обзор системы", "Quick actions": "Быстрые действия", "New page": "Новая страница", "Check for updates": "Проверить обновления",
+  "Open updates →": "Открыть обновления →", "Platform version": "Версия платформы", "Manage pages →": "Управление страницами →",
+  "Manage extensions →": "Управление расширениями →", "Manage users →": "Управление пользователями →",
+}

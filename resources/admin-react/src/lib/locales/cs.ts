@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const csCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Nástěnka", "Content": "Obsah", "Pages": "Stránky", "Media library": "Knihovna médií",
+  "Appearance": "Vzhled", "Themes": "Motivy", "Store": "Obchod", "Catalog": "Katalog", "Sales": "Prodej",
+  "Customers": "Zákazníci", "Management": "Správa", "Users": "Uživatelé", "Extensions": "Rozšíření", "System": "Systém",
+  "Settings": "Nastavení", "Updates": "Aktualizace", "More tools": "Další nástroje", "Account": "Účet", "Profile": "Profil",
+  "Help": "Nápověda", "Log out": "Odhlásit se", "Signing out…": "Odhlašování…", "Refresh": "Obnovit",
+  "Refresh page data": "Obnovit data stránky", "Resize sidebar": "Změnit velikost postranního panelu", "Expand sidebar": "Rozbalit postranní panel",
+  "Collapse sidebar": "Sbalit postranní panel", "Hide sidebar": "Skrýt postranní panel", "Show sidebar": "Zobrazit postranní panel",
+  "Profile settings": "Nastavení profilu", "Basic information": "Základní informace", "Security": "Zabezpečení", "Name": "Jméno", "Email": "E-mail",
+  "Admin panel language": "Jazyk administračního panelu", "Choose the language used in the admin panel.": "Vyberte jazyk administračního panelu.",
+  "This language applies only to the admin panel.": "Tento jazyk se vztahuje pouze na administrační panel.", "Panel theme": "Motiv panelu",
+  "System default": "Výchozí nastavení systému", "Panel font": "Písmo panelu", "Save changes": "Uložit změny",
+  "Profile saved.": "Profil byl uložen.", "Could not save profile.": "Profil se nepodařilo uložit.", "Could not load profile.": "Profil se nepodařilo načíst.",
+  "Passwords do not match.": "Hesla se neshodují.", "New password": "Nové heslo", "Confirm new password": "Potvrdit nové heslo",
+  "Current password": "Aktuální heslo", "Password": "Heslo", "Sign in": "Přihlásit se", "Checking…": "Kontrola…",
+  "Forgot password?": "Zapomněli jste heslo?", "Signed in successfully.": "Přihlášení proběhlo úspěšně.", "Sign-in failed.": "Přihlášení se nezdařilo.", "Try again": "Zkusit znovu",
+  "Loading…": "Načítání…", "Status": "Stav", "Actions": "Akce", "Search": "Hledat", "Activate": "Aktivovat",
+  "Deactivate": "Deaktivovat", "Draft": "Koncept", "Close": "Zavřít", "Inactive": "Neaktivní", "Active": "Aktivní",
+  "Trash": "Koš", "Remove": "Odebrat", "Update": "Aktualizovat", "View": "Zobrazit", "Create page": "Vytvořit stránku", "Select": "Vybrat",
+  "Administrator": "Správce", "Title": "Název", "Saving…": "Ukládání…", "Location": "Umístění", "Editor": "Editor",
+  "User": "Uživatel", "Published": "Publikováno", "Role": "Role", "Default": "Výchozí", "Size": "Velikost", "Install": "Instalovat",
+  "Installed": "Nainstalováno", "Page": "Stránka", "Version": "Verze", "Error": "Chyba", "File": "Soubor", "Theme": "Motiv", "Show": "Zobrazit",
+  "Search pages, sections and settings…": "Hledat stránky, sekce a nastavení…", "No records found.": "Nebyly nalezeny žádné záznamy.",
+  "No matches": "Žádné shody", "Unsaved changes": "Neuložené změny", "Close all": "Zavřít vše", "Admin panel": "Administrační panel",
+  "System overview": "Přehled systému", "Quick actions": "Rychlé akce", "New page": "Nová stránka", "Check for updates": "Zkontrolovat aktualizace",
+  "Open updates →": "Otevřít aktualizace →", "Platform version": "Verze platformy", "Manage pages →": "Spravovat stránky →",
+  "Manage extensions →": "Spravovat rozšíření →", "Manage users →": "Spravovat uživatele →",
+}

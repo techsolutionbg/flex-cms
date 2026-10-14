@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const nlCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Dashboard", "Content": "Inhoud", "Pages": "Pagina’s", "Media library": "Mediabibliotheek",
+  "Appearance": "Weergave", "Themes": "Thema’s", "Store": "Winkel", "Catalog": "Catalogus", "Sales": "Verkoop",
+  "Customers": "Klanten", "Management": "Beheer", "Users": "Gebruikers", "Extensions": "Extensies", "System": "Systeem",
+  "Settings": "Instellingen", "Updates": "Updates", "More tools": "Meer hulpmiddelen", "Account": "Account", "Profile": "Profiel",
+  "Help": "Help", "Log out": "Uitloggen", "Signing out…": "Bezig met uitloggen…", "Refresh": "Vernieuwen",
+  "Refresh page data": "Paginagegevens vernieuwen", "Resize sidebar": "Zijbalk aanpassen", "Expand sidebar": "Zijbalk uitklappen",
+  "Collapse sidebar": "Zijbalk inklappen", "Hide sidebar": "Zijbalk verbergen", "Show sidebar": "Zijbalk tonen",
+  "Profile settings": "Profielinstellingen", "Basic information": "Basisinformatie", "Security": "Beveiliging", "Name": "Naam", "Email": "E-mail",
+  "Admin panel language": "Taal van het beheerpaneel", "Choose the language used in the admin panel.": "Kies de taal voor het beheerpaneel.",
+  "This language applies only to the admin panel.": "Deze taal geldt alleen voor het beheerpaneel.", "Panel theme": "Paneelthema",
+  "System default": "Systeemstandaard", "Panel font": "Paneellettertype", "Save changes": "Wijzigingen opslaan",
+  "Profile saved.": "Profiel opgeslagen.", "Could not save profile.": "Profiel kon niet worden opgeslagen.", "Could not load profile.": "Profiel kon niet worden geladen.",
+  "Passwords do not match.": "Wachtwoorden komen niet overeen.", "New password": "Nieuw wachtwoord", "Confirm new password": "Nieuw wachtwoord bevestigen",
+  "Current password": "Huidig wachtwoord", "Password": "Wachtwoord", "Sign in": "Inloggen", "Checking…": "Controleren…",
+  "Forgot password?": "Wachtwoord vergeten?", "Signed in successfully.": "Je bent ingelogd.", "Sign-in failed.": "Inloggen mislukt.",
+  "Try again": "Opnieuw proberen", "Loading…": "Laden…", "Status": "Status", "Actions": "Acties", "Search": "Zoeken",
+  "Activate": "Activeren", "Deactivate": "Deactiveren", "Draft": "Concept", "Close": "Sluiten", "Inactive": "Inactief", "Active": "Actief",
+  "Trash": "Prullenbak", "Remove": "Verwijderen", "Update": "Bijwerken", "View": "Bekijken", "Create page": "Pagina maken", "Select": "Selecteren",
+  "Administrator": "Beheerder", "Title": "Titel", "Saving…": "Opslaan…", "Location": "Locatie", "Editor": "Editor", "User": "Gebruiker",
+  "Published": "Gepubliceerd", "Role": "Rol", "Default": "Standaard", "Size": "Grootte", "Install": "Installeren", "Installed": "Geïnstalleerd",
+  "Page": "Pagina", "Version": "Versie", "Error": "Fout", "File": "Bestand", "Theme": "Thema", "Show": "Tonen",
+  "Search pages, sections and settings…": "Pagina’s, secties en instellingen zoeken…", "No records found.": "Geen items gevonden.",
+  "No matches": "Geen overeenkomsten", "Unsaved changes": "Niet-opgeslagen wijzigingen", "Close all": "Alles sluiten", "Admin panel": "Beheerpaneel",
+  "System overview": "Systeemoverzicht", "Quick actions": "Snelle acties", "New page": "Nieuwe pagina", "Check for updates": "Controleren op updates",
+  "Open updates →": "Updates openen →", "Platform version": "Platformversie", "Manage pages →": "Pagina’s beheren →",
+  "Manage extensions →": "Extensies beheren →", "Manage users →": "Gebruikers beheren →",
+}

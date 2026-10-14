@@ -1896,10 +1896,36 @@ body {
   gap: 0.8rem;
   min-width: 0;
 }
-.profile-theme-picker-label {
+.profile-appearance-subsection > .collapsible-section-header {
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+.profile-appearance-subsection > .collapsible-section-body > .collapsible-section-body-inner {
+  padding: 1rem;
+}
+.profile-appearance-subsection .profile-font-picker {
+  margin-top: 0;
+}
+.admin-translation-management {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.admin-translation-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.admin-translation-toolbar .react-form-select {
+  min-width: min(100%, 16rem);
+}
+.admin-translation-help {
   margin: 0;
-  color: var(--text-primary);
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 .profile-theme-options {
   display: grid;
@@ -4062,7 +4088,7 @@ body {
 }
 .dashboard-card-react a {
   color: #172118;
-  font-weight: 700;
+  font-weight: 400;
   text-decoration: none;
 }
 .dashboard-card-react a:hover {
@@ -6684,14 +6710,17 @@ select:focus-visible,
 .settings-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
 }
 .settings-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.9rem;
   font-weight: 400;
 }
 .settings-tab svg {
@@ -6703,6 +6732,33 @@ select:focus-visible,
   background: var(--surface-active);
   border-color: var(--border-strong);
   color: var(--text-primary);
+}
+.settings-navigation-shell {
+  position: relative;
+  z-index: 20;
+}
+.settings-nav-backdrop,
+.settings-nav-header,
+.settings-mobile-nav-trigger {
+  display: none;
+}
+.settings-nav-drawer {
+  display: contents;
+}
+.settings-page-heading-copy {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.settings-page-heading-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+.settings-page-heading-title-row > .settings-mobile-nav-trigger {
+  display: none;
 }
 .settings-placeholder {
   display: grid;
@@ -6730,6 +6786,125 @@ select:focus-visible,
   height: 1rem;
   flex-shrink: 0;
   margin-right: 0;
+}
+
+@media (max-width: 720px) {
+  .settings-page-heading-title-row > .settings-mobile-nav-trigger {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.55rem;
+    background: var(--surface-subtle);
+    color: var(--text-primary);
+  }
+  .settings-page-heading-title-row > .settings-mobile-nav-trigger svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .settings-navigation-shell {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: visibility 0s linear 220ms;
+  }
+  .settings-navigation-shell.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
+  }
+  .settings-nav-backdrop {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgb(8 5 12 / 0.62);
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  .settings-navigation-shell.is-open .settings-nav-backdrop {
+    opacity: 1;
+  }
+  .settings-nav-drawer {
+    position: absolute;
+    inset: 0 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    width: min(21rem, calc(100vw - 2.5rem));
+    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    border-left: 1px solid var(--border-strong);
+    background: var(--surface);
+    box-shadow: -1rem 0 3rem rgb(0 0 0 / 0.24);
+    transform: translateX(102%);
+    transition: transform 220ms ease;
+  }
+  .settings-navigation-shell.is-open .settings-nav-drawer {
+    transform: translateX(0);
+  }
+  .settings-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .settings-nav-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  .settings-nav-header button {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--surface-subtle);
+    color: var(--text-primary);
+  }
+  .settings-nav-header button svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+  .settings-navigation-shell .settings-tabs {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    margin: 0;
+  }
+  .settings-navigation-shell .settings-tab {
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-navigation-shell,
+  .settings-nav-backdrop,
+  .settings-nav-drawer {
+    transition-duration: 0.01ms;
+  }
+  .settings-navigation-shell {
+    transition-delay: 0s;
+  }
 }
 
 /* Multiline controls use the same geometry and theme tokens as text fields. */

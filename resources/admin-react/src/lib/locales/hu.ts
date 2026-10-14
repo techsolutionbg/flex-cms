@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const huCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Vezérlőpult", "Content": "Tartalom", "Pages": "Oldalak", "Media library": "Médiatár",
+  "Appearance": "Megjelenés", "Themes": "Témák", "Store": "Áruház", "Catalog": "Katalógus", "Sales": "Értékesítés",
+  "Customers": "Ügyfelek", "Management": "Kezelés", "Users": "Felhasználók", "Extensions": "Bővítmények", "System": "Rendszer",
+  "Settings": "Beállítások", "Updates": "Frissítések", "More tools": "További eszközök", "Account": "Fiók", "Profile": "Profil",
+  "Help": "Súgó", "Log out": "Kijelentkezés", "Signing out…": "Kijelentkezés…", "Refresh": "Frissítés",
+  "Refresh page data": "Oldal adatainak frissítése", "Resize sidebar": "Oldalsáv átméretezése", "Expand sidebar": "Oldalsáv kibontása",
+  "Collapse sidebar": "Oldalsáv összecsukása", "Hide sidebar": "Oldalsáv elrejtése", "Show sidebar": "Oldalsáv megjelenítése",
+  "Profile settings": "Profilbeállítások", "Basic information": "Alapadatok", "Security": "Biztonság", "Name": "Név", "Email": "E-mail",
+  "Admin panel language": "Az adminisztrációs felület nyelve", "Choose the language used in the admin panel.": "Válassza ki az adminisztrációs felület nyelvét.",
+  "This language applies only to the admin panel.": "Ez a nyelv csak az adminisztrációs felületre vonatkozik.", "Panel theme": "Felület témája",
+  "System default": "Rendszer alapértelmezése", "Panel font": "Felület betűtípusa", "Save changes": "Módosítások mentése",
+  "Profile saved.": "A profil mentése sikerült.", "Could not save profile.": "A profilt nem sikerült menteni.", "Could not load profile.": "A profilt nem sikerült betölteni.",
+  "Passwords do not match.": "A jelszavak nem egyeznek.", "New password": "Új jelszó", "Confirm new password": "Új jelszó megerősítése",
+  "Current password": "Jelenlegi jelszó", "Password": "Jelszó", "Sign in": "Bejelentkezés", "Checking…": "Ellenőrzés…",
+  "Forgot password?": "Elfelejtette a jelszavát?", "Signed in successfully.": "Sikeres bejelentkezés.", "Sign-in failed.": "A bejelentkezés nem sikerült.", "Try again": "Próbálja újra",
+  "Loading…": "Betöltés…", "Status": "Állapot", "Actions": "Műveletek", "Search": "Keresés", "Activate": "Aktiválás",
+  "Deactivate": "Deaktiválás", "Draft": "Piszkozat", "Close": "Bezárás", "Inactive": "Inaktív", "Active": "Aktív",
+  "Trash": "Lomtár", "Remove": "Eltávolítás", "Update": "Frissítés", "View": "Megtekintés", "Create page": "Oldal létrehozása", "Select": "Kiválasztás",
+  "Administrator": "Rendszergazda", "Title": "Cím", "Saving…": "Mentés…", "Location": "Hely", "Editor": "Szerkesztő",
+  "User": "Felhasználó", "Published": "Közzétéve", "Role": "Szerepkör", "Default": "Alapértelmezett", "Size": "Méret", "Install": "Telepítés",
+  "Installed": "Telepítve", "Page": "Oldal", "Version": "Verzió", "Error": "Hiba", "File": "Fájl", "Theme": "Téma", "Show": "Megjelenítés",
+  "Search pages, sections and settings…": "Oldalak, szakaszok és beállítások keresése…", "No records found.": "Nem találhatók rekordok.",
+  "No matches": "Nincs találat", "Unsaved changes": "Nem mentett módosítások", "Close all": "Összes bezárása", "Admin panel": "Adminisztrációs felület",
+  "System overview": "Rendszer áttekintése", "Quick actions": "Gyorsműveletek", "New page": "Új oldal", "Check for updates": "Frissítések keresése",
+  "Open updates →": "Frissítések megnyitása →", "Platform version": "Platformverzió", "Manage pages →": "Oldalak kezelése →",
+  "Manage extensions →": "Bővítmények kezelése →", "Manage users →": "Felhasználók kezelése →",
+}

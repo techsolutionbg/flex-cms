@@ -1,7 +1,7 @@
 import { t } from "@/lib/admin-i18n"
 import { LoadingButton } from "@/components/loading-button"
 import { Textarea } from "@/components/ui/textarea"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { FileImage, Info, Upload } from "lucide-react"
 import { MediaUploadDialog } from "@/components/media-upload-dialog"
 import { AdminShell } from "@/components/admin-shell"
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import type { MediaIndex } from "@/lib/media-api"
 import { DateTime } from "@/components/date-time"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
+import { useFormDirty } from "@/lib/use-form-dirty"
 
 export function MediaPage({
   onLogout,
@@ -54,6 +55,8 @@ export function MediaPage({
   )
   const [saved, setSaved] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const { isDirty, markClean, refresh } = useFormDirty(formRef, !!record)
   const changed = useWorkspaceChanged(),
     markSaved = useWorkspaceSaved()
   useEffect(() => {
@@ -145,7 +148,9 @@ export function MediaPage({
         ) : (
           <ExtensionScope value={extensionScope}>
             <form
+              ref={formRef}
               className="react-page-form"
+              onClickCapture={refresh}
               onSubmit={async (event) => {
                 event.preventDefault()
                 if (busy) return
@@ -160,6 +165,7 @@ export function MediaPage({
                   )
                   setRecord(result.media)
                   await saves.run({ id: result.media.id })
+                  markClean()
                   markSaved?.()
                   setSaved(true)
                 } catch (error) {
@@ -169,6 +175,7 @@ export function MediaPage({
                 }
               }}
             >
+              <input type="hidden" value={JSON.stringify(record)} />
               <CollapsibleSection
                 extensionPoint="media.editor.preview"
                 title={t("Preview")}
@@ -327,7 +334,7 @@ export function MediaPage({
                   loading={busy}
                   className="react-primary-button"
                   type="submit"
-                  disabled={busy || !canEdit || !!record.deleted_at}
+                  disabled={busy || !canEdit || !!record.deleted_at || !isDirty}
                 >
                   {busy ? t("Saving record…") : t("Save")}
                 </LoadingButton>

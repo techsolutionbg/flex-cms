@@ -8,10 +8,10 @@ use Flex\Auth\Middleware\{RequireAuthenticationMiddleware, RequireSuperAdminMidd
 use Flex\Contracts\Container\ServiceProviderInterface;
 use Flex\Contracts\Http\RouteRegistryInterface;
 use Flex\Http\Controller\Admin\{AdminDashboardSummaryController, AdminPagesDataController, AdminPluginActionController, AdminPluginCatalogDataController, AdminPluginUploadController, AdminPluginsDataController, AdminThemeActionController, AdminThemeCatalogDataController, AdminThemePreviewController, AdminThemesDataController, AdminUpdatesActionController, AdminUpdatesDataController};
+use Flex\Http\Controller\Admin\AdminMenusDataController;
+use Flex\Http\Controller\Admin\AdminThemeCapabilitiesController;
 use Flex\Http\Controller\Pages\{CreatePageController, DeletePageController, ForceDeletePageController, ListPagesController, RestorePageController, UpdatePageController, UpdatePageSettingsController, UpdatePageStatusController};
 use Flex\Session\CsrfMiddleware;
-use Flex\Http\Controller\Admin\AdminThemeCapabilitiesController;
-use Flex\Http\Controller\Admin\AdminMenusDataController;
 use Psr\Container\ContainerInterface;
 
 final class AdminRouteServiceProvider implements ServiceProviderInterface
@@ -43,6 +43,8 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
         $r->add('GET', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general', $auth);
         $r->add('PUT', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general.save', $write);
+        $r->add('GET', '/api/admin/translations', \Flex\Http\Controller\Admin\AdminTranslationsController::class, 'api.admin.translations', $auth);
+        $r->add('PUT', '/api/admin/translations', \Flex\Http\Controller\Admin\AdminTranslationsController::class, 'api.admin.translations.save', $write);
         $r->add('GET', '/api/admin/settings/{section:public|users|media|mail|updates|admin|maintenance}', \Flex\Http\Controller\Admin\AdminSectionSettingsController::class, 'api.admin.settings.section', $auth);
         $r->add('PUT', '/api/admin/settings/{section:public|users|media|mail|updates|admin|maintenance}', \Flex\Http\Controller\Admin\AdminSectionSettingsController::class, 'api.admin.settings.section.save', $write);
         $r->add('GET', '/api/admin/theme-capabilities', AdminThemeCapabilitiesController::class, 'api.admin.theme-capabilities', $auth);

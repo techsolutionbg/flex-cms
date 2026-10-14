@@ -1,0 +1,32 @@
+import { enCatalog } from "./en"
+
+// English remains the fallback for catalog entries not translated yet.
+export const plCatalog: Record<string, string> = {
+  ...enCatalog,
+  "Dashboard": "Panel główny", "Content": "Treść", "Pages": "Strony", "Media library": "Biblioteka multimediów",
+  "Appearance": "Wygląd", "Themes": "Motywy", "Store": "Sklep", "Catalog": "Katalog", "Sales": "Sprzedaż",
+  "Customers": "Klienci", "Management": "Zarządzanie", "Users": "Użytkownicy", "Extensions": "Rozszerzenia", "System": "System",
+  "Settings": "Ustawienia", "Updates": "Aktualizacje", "More tools": "Więcej narzędzi", "Account": "Konto", "Profile": "Profil",
+  "Help": "Pomoc", "Log out": "Wyloguj się", "Signing out…": "Wylogowywanie…", "Refresh": "Odśwież",
+  "Refresh page data": "Odśwież dane strony", "Resize sidebar": "Zmień rozmiar paska bocznego", "Expand sidebar": "Rozwiń pasek boczny",
+  "Collapse sidebar": "Zwiń pasek boczny", "Hide sidebar": "Ukryj pasek boczny", "Show sidebar": "Pokaż pasek boczny",
+  "Profile settings": "Ustawienia profilu", "Basic information": "Podstawowe informacje", "Security": "Bezpieczeństwo", "Name": "Nazwa", "Email": "E-mail",
+  "Admin panel language": "Język panelu administracyjnego", "Choose the language used in the admin panel.": "Wybierz język panelu administracyjnego.",
+  "This language applies only to the admin panel.": "Ten język dotyczy tylko panelu administracyjnego.", "Panel theme": "Motyw panelu",
+  "System default": "Domyślne ustawienie systemu", "Panel font": "Czcionka panelu", "Save changes": "Zapisz zmiany",
+  "Profile saved.": "Profil został zapisany.", "Could not save profile.": "Nie udało się zapisać profilu.", "Could not load profile.": "Nie udało się wczytać profilu.",
+  "Passwords do not match.": "Hasła nie są zgodne.", "New password": "Nowe hasło", "Confirm new password": "Potwierdź nowe hasło",
+  "Current password": "Obecne hasło", "Password": "Hasło", "Sign in": "Zaloguj się", "Checking…": "Sprawdzanie…",
+  "Forgot password?": "Nie pamiętasz hasła?", "Signed in successfully.": "Zalogowano pomyślnie.", "Sign-in failed.": "Logowanie nie powiodło się.",
+  "Try again": "Spróbuj ponownie", "Loading…": "Ładowanie…", "Status": "Status", "Actions": "Działania", "Search": "Szukaj",
+  "Activate": "Aktywuj", "Deactivate": "Dezaktywuj", "Draft": "Wersja robocza", "Close": "Zamknij", "Inactive": "Nieaktywny", "Active": "Aktywny",
+  "Trash": "Kosz", "Remove": "Usuń", "Update": "Aktualizuj", "View": "Wyświetl", "Create page": "Utwórz stronę", "Select": "Wybierz",
+  "Administrator": "Administrator", "Title": "Tytuł", "Saving…": "Zapisywanie…", "Location": "Lokalizacja", "Editor": "Edytor",
+  "User": "Użytkownik", "Published": "Opublikowano", "Role": "Rola", "Default": "Domyślne", "Size": "Rozmiar", "Install": "Zainstaluj",
+  "Installed": "Zainstalowano", "Page": "Strona", "Version": "Wersja", "Error": "Błąd", "File": "Plik", "Theme": "Motyw", "Show": "Pokaż",
+  "Search pages, sections and settings…": "Szukaj stron, sekcji i ustawień…", "No records found.": "Nie znaleziono żadnych wpisów.",
+  "No matches": "Brak wyników", "Unsaved changes": "Niezapisane zmiany", "Close all": "Zamknij wszystko", "Admin panel": "Panel administracyjny",
+  "System overview": "Przegląd systemu", "Quick actions": "Szybkie działania", "New page": "Nowa strona", "Check for updates": "Sprawdź aktualizacje",
+  "Open updates →": "Otwórz aktualizacje →", "Platform version": "Wersja platformy", "Manage pages →": "Zarządzaj stronami →",
+  "Manage extensions →": "Zarządzaj rozszerzeniami →", "Manage users →": "Zarządzaj użytkownikami →",
+}

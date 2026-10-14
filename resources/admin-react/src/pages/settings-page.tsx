@@ -1,5 +1,5 @@
 import { t } from "@/lib/admin-i18n"
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
   Settings,
@@ -10,6 +10,8 @@ import {
   RefreshCw,
   PanelsTopLeft,
   Wrench,
+  List,
+  X,
 } from "lucide-react"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
@@ -82,6 +84,8 @@ export function SettingsPage({
   section: string
   onSectionChange: (sectionId: string) => void
 }) {
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
+  const mobileNavigationTrigger = useRef<HTMLButtonElement>(null)
   // Active plugins add their global settings as extra tabs (location settings.tab).
   const extensionTabs = useExtensions("settings", "screen.tab")
   const tabs: { id: string; title: string; icon: LucideIcon }[] = [
@@ -106,9 +110,38 @@ export function SettingsPage({
   }, [onSectionChange])
   const current = tabs.some((tab) => tab.id === section) ? section : "general"
 
-  function selectSection(id: string) {
-    if (id === current) return
-    onSectionChange(id)
+  useEffect(() => {
+    if (!mobileNavigationOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileNavigationOpen(false)
+        mobileNavigationTrigger.current?.focus()
+      }
+    }
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [current, mobileNavigationOpen])
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 721px)")
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMobileNavigationOpen(false)
+    }
+    desktop.addEventListener("change", closeOnDesktop)
+    return () => desktop.removeEventListener("change", closeOnDesktop)
+  }, [])
+
+  function selectSection(id: string, closeDrawer = true) {
+    if (id !== current) onSectionChange(id)
+    if (closeDrawer) {
+      setMobileNavigationOpen(false)
+      if (mobileNavigationOpen) mobileNavigationTrigger.current?.focus()
+    }
   }
   return (
     <AdminShell
@@ -118,48 +151,95 @@ export function SettingsPage({
       onNavigate={onNavigate}
       loggingOut={loggingOut}
     >
-      <div className="react-page-heading">
-        <div>
-          <h1>{t("Settings")}</h1>
+      <div className="react-page-heading settings-page-heading">
+        <div className="settings-page-heading-copy">
+          <div className="settings-page-heading-title-row">
+            <h1>{t("Settings")}</h1>
+            <button
+              ref={mobileNavigationTrigger}
+              type="button"
+              className="settings-mobile-nav-trigger"
+              aria-label={t("Settings sections")}
+              aria-expanded={mobileNavigationOpen}
+              aria-controls="settings-sections-navigation"
+              onClick={() => setMobileNavigationOpen(true)}
+            >
+              <List aria-hidden="true" />
+            </button>
+          </div>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Настройки" }]} />
         </div>
       </div>
       <div
-        className="settings-tabs"
-        role="tablist"
-        aria-label={t("Settings sections")}
-        onKeyDown={(event) => {
-          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return
-          event.preventDefault()
-          const index = tabs.findIndex((tab) => tab.id === current)
-          const next =
-            event.key === "Home"
-              ? 0
-              : event.key === "End"
-                ? tabs.length - 1
-                : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length
-          selectSection(tabs[next].id)
-          event.currentTarget
-            .querySelector<HTMLButtonElement>(`#settings-tab-${tabs[next].id}`)
-            ?.focus()
-        }}
+        id="settings-sections-navigation"
+        className={`settings-navigation-shell${mobileNavigationOpen ? " is-open" : ""}`}
+        role={mobileNavigationOpen ? "dialog" : undefined}
+        aria-modal={mobileNavigationOpen || undefined}
+        aria-label={mobileNavigationOpen ? t("Settings sections") : undefined}
+        data-open={mobileNavigationOpen}
       >
-        {tabs.map(({ id, title, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            className={`react-secondary-button settings-tab${current === id ? " is-active" : ""}`}
-            role="tab"
-            id={`settings-tab-${id}`}
-            aria-selected={current === id}
-            aria-controls={`settings-panel-${id}`}
-            tabIndex={current === id ? 0 : -1}
-            onClick={() => selectSection(id)}
+        <button
+          type="button"
+          className="settings-nav-backdrop"
+          aria-label={t("Close")}
+          tabIndex={-1}
+          onClick={() => {
+            setMobileNavigationOpen(false)
+            mobileNavigationTrigger.current?.focus()
+          }}
+        />
+        <div className="settings-nav-drawer">
+          <div className="settings-nav-header">
+            <h2>{t("Settings sections")}</h2>
+            <button
+              type="button"
+              aria-label={t("Close")}
+              onClick={() => {
+                setMobileNavigationOpen(false)
+                mobileNavigationTrigger.current?.focus()
+              }}
+            >
+              <X aria-hidden="true" />
+            </button>
+          </div>
+          <div
+            className="settings-tabs"
+            role="tablist"
+            aria-label={t("Settings sections")}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return
+              event.preventDefault()
+              const index = tabs.findIndex((tab) => tab.id === current)
+              const next =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? tabs.length - 1
+                    : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length
+              selectSection(tabs[next].id, false)
+              event.currentTarget
+                .querySelector<HTMLButtonElement>(`#settings-tab-${tabs[next].id}`)
+                ?.focus()
+            }}
           >
-            <Icon aria-hidden="true" />
-            {t(title)}
-          </button>
-        ))}
+            {tabs.map(({ id, title, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                className={`react-secondary-button settings-tab${current === id ? " is-active" : ""}`}
+                role="tab"
+                id={`settings-tab-${id}`}
+                aria-selected={current === id}
+                aria-controls={`settings-panel-${id}`}
+                tabIndex={current === id ? 0 : -1}
+                onClick={() => selectSection(id)}
+              >
+                <Icon aria-hidden="true" />
+                {t(title)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       {sections.map((section) => (
         <div
