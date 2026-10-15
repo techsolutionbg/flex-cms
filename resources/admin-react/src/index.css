@@ -3366,6 +3366,14 @@ body {
   gap: 1rem;
   min-width: 0;
 }
+.theme-editor-settings {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+.theme-editor-settings > .react-form-field {
+  width: min(100%, 30rem);
+}
 .plugin-source-layout {
   display: grid;
   grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
@@ -3378,6 +3386,23 @@ body {
 }
 .plugin-source-content {
   min-width: 0;
+}
+.theme-image-preview {
+  display: grid;
+  min-height: 16rem;
+  max-height: 70vh;
+  place-items: center;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-subtle);
+}
+.theme-image-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(70vh - 2rem);
+  object-fit: contain;
 }
 .plugin-source-content .code-editor-toolbar {
   flex-wrap: wrap;

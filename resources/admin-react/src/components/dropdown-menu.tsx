@@ -9,6 +9,7 @@ type DropdownMenuProps = {
   ariaLabel: string
   triggerVariant?: "dropdown-trigger" | "secondary"
   triggerClassName?: string
+  disabled?: boolean
 }
 
 export function DropdownMenu({
@@ -17,6 +18,7 @@ export function DropdownMenu({
   ariaLabel,
   triggerClassName = "",
   triggerVariant = "dropdown-trigger",
+  disabled = false,
 }: DropdownMenuProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -93,9 +95,12 @@ export function DropdownMenu({
         ref={triggerRef}
         className={triggerClassName}
         type="button"
+        disabled={disabled}
         aria-label={ariaLabel}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        aria-expanded={disabled ? false : open}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
       >
         {trigger}
       </Button>

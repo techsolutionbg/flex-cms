@@ -41,6 +41,9 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
         $r->add('GET', '/api/admin/plugins/source', \Flex\Http\Controller\Admin\AdminPluginSourceController::class, 'api.admin.plugins.source', $auth);
         $r->add('GET', '/api/admin/plugins/catalog', AdminPluginCatalogDataController::class, 'api.admin.plugins.catalog', $auth);
         $r->add('GET', '/api/admin/themes', AdminThemesDataController::class, 'api.admin.themes', $auth);
+        $r->add('GET', '/api/admin/themes/source/image', \Flex\Http\Controller\Admin\AdminThemeSourceImageController::class, 'api.admin.themes.source.image', $auth);
+        $r->add('GET', '/api/admin/themes/source', \Flex\Http\Controller\Admin\AdminThemeSourceController::class, 'api.admin.themes.source', $auth);
+        $r->add('PUT', '/api/admin/themes/source', \Flex\Http\Controller\Admin\AdminThemeSourceController::class, 'api.admin.themes.source.save', $write);
         $r->add('GET', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general', $auth);
         $r->add('PUT', '/api/admin/settings/general', \Flex\Http\Controller\Admin\AdminGeneralSettingsController::class, 'api.admin.settings.general.save', $write);
         $r->add('GET', '/api/admin/translations', \Flex\Http\Controller\Admin\AdminTranslationsController::class, 'api.admin.translations', $auth);

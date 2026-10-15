@@ -215,12 +215,6 @@ export function ThemeStorePage({
                   {theme.update_available && (
                     <div className="theme-card-update">{t("A new version is available")}</div>
                   )}
-                  {theme.release_notes && (
-                    <div className="theme-card-notes">
-                      <strong>{t("What's new")}</strong>
-                      <span>{theme.release_notes}</span>
-                    </div>
-                  )}
                 </div>
                 <div className="theme-store-actions">
                   <LoadingButton onClick={() => onDetails?.(theme.id)}>{t("Details")}</LoadingButton>

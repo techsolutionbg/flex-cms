@@ -9,6 +9,7 @@ import { UserForm, UsersPage } from "@/pages/users"
 import { ProfilePage } from "@/pages/profile-page"
 import { ThemesPage } from "@/pages/themes-page"
 import { ThemeStorePage } from "@/pages/theme-store-page"
+import { ThemeEditorPage } from "@/pages/theme-editor-page"
 import { ThemeDetailPage } from "@/pages/theme-detail-page"
 import { ThemeSettingsPage } from "@/pages/theme-settings-page"
 import { PluginCatalogPage, PluginDetailPage, PluginsPage } from "@/pages/plugins"
@@ -54,6 +55,7 @@ const sections: Record<string, string> = {
   "/profile": "Профил",
   "/themes": "Теми",
   "/theme-store": "Каталог с теми",
+  "/theme-editor": "Редактор на теми",
   "/plugins": "Разширения",
   "/plugins/catalog": "Каталог с разширения",
   "/updates": "Обновявания",
@@ -523,9 +525,12 @@ export function AdminWorkspace({
         return (
           <ThemesPage
             {...common}
+            onThemeEditor={() => open("/theme-editor")}
             onDetails={(id) => open(`/themes/${id}`, { title: `Тема: ${id}` })}
           />
         )
+      case "/theme-editor":
+        return <ThemeEditorPage {...common} />
       case "/theme-store":
         return (
           <ThemeStorePage

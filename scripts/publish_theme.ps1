@@ -15,7 +15,8 @@ param(
     [string] $CompatibleFrom = '>=0.1.56 <1.0.0',
     [string] $Name = '',
     [string] $Description = '',
-    [string] $MinimumPlatformVersion = '0.1.56'
+    [string] $MinimumPlatformVersion = '0.1.56',
+    [string] $ScreenshotUrl = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -125,9 +126,23 @@ try {
         Invoke-WebRequest -Uri "$baseUrl/themes/index.json" -UseBasicParsing -OutFile $indexPath -TimeoutSec 30
         $index = Get-Content -LiteralPath $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json
     } catch {
+        $statusCode = 0
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
+        if ($statusCode -ne 404) { throw }
         $index = [pscustomobject]@{ schema = 1; repository = 'flex-cms'; type = 'theme'; themes = @() }
     }
     if (-not $index.themes) { $index | Add-Member -NotePropertyName themes -NotePropertyValue @() -Force }
+    $existingTheme = @($index.themes | Where-Object { $_.id -eq $ThemeId } | Select-Object -First 1)[0]
+    $screenshotUrlToPublish = if (-not [string]::IsNullOrWhiteSpace($ScreenshotUrl)) {
+        $ScreenshotUrl
+    } elseif ($existingTheme -and -not [string]::IsNullOrWhiteSpace([string] $existingTheme.screenshot_url)) {
+        [string] $existingTheme.screenshot_url
+    } else {
+        $null
+    }
+    if ($screenshotUrlToPublish -and $screenshotUrlToPublish -notmatch '^https://') {
+        throw 'ScreenshotUrl must use HTTPS.'
+    }
     $themes = @($index.themes | Where-Object { $_.id -ne $ThemeId })
     $manifestUrl = "$baseUrl/themes/manifests/$ThemeId.json"
     $entry = [ordered]@{
@@ -136,6 +151,7 @@ try {
         description = $Description
         author = 'Flex CMS'
         manifest_url = $manifestUrl
+        screenshot_url = $screenshotUrlToPublish
         minimum_platform_version = $MinimumPlatformVersion
         license = 'GPL-2.0-or-later'
         supports = @{ menus = $true; navigation = $true }

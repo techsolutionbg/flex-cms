@@ -9,6 +9,7 @@ const simplePaths = new Set([
   "/users",
   "/profile",
   "/themes",
+  "/theme-editor",
   "/theme-store",
   "/plugins",
   "/plugins/catalog",

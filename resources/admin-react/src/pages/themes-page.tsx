@@ -15,6 +15,7 @@ type ThemesPageProps = {
   onLogout: () => void
   onNavigate: (label: string) => void
   onCatalog?: () => void
+  onThemeEditor?: () => void
   onDetails?: (id: string) => void
   loggingOut: boolean
 }
@@ -23,6 +24,7 @@ export function ThemesPage({
   onLogout,
   onNavigate,
   onCatalog,
+  onThemeEditor,
   onDetails,
   loggingOut,
 }: ThemesPageProps) {
@@ -131,15 +133,22 @@ export function ThemesPage({
           <h1>{t("Themes (")}{themes.length})</h1>
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Теми" }]} />
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            onCatalog ? onCatalog() : window.location.assign(adminUrl("/theme-store"))
-          }
-        >
-
-          {t("Theme catalog")}
-        </button>
+        <div className="react-page-heading-actions">
+          <button
+            type="button"
+            onClick={() => onThemeEditor?.()}
+          >
+            {t("Theme editor")}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onCatalog ? onCatalog() : window.location.assign(adminUrl("/theme-store"))
+            }
+          >
+            {t("Theme catalog")}
+          </button>
+        </div>
       </div>
       <section className="themes-section">
         {loading ? (
@@ -199,12 +208,6 @@ export function ThemesPage({
                       <div className="theme-card-update">
 
                         {t("Available version")} {theme.available_version}
-                      </div>
-                    )}
-                    {theme.release_notes && (
-                      <div className="theme-card-notes">
-                        <strong>{t("What's new")}</strong>
-                        <span>{theme.release_notes}</span>
                       </div>
                     )}
                     {theme.error && <small className="react-error-text">{theme.error}</small>}
