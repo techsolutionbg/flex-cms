@@ -32,6 +32,8 @@ type DataTableProps<T> = {
   selectedKeys?: ReadonlySet<string | number>
   onSelectionChange?: (keys: Set<string | number>) => void
   filterStorageKey?: string
+  /** Opens the filter panel when a row is selected and places bulk actions inside it. */
+  expandToolbarOnSelection?: boolean
   /** Name of this table for plugin columns, row actions, bulk actions and filters, e.g. "users.list". */
   extensionPoint?: string
 }
@@ -49,6 +51,7 @@ export function DataTable<T>({
   selectedKeys = new Set(),
   onSelectionChange,
   filterStorageKey,
+  expandToolbarOnSelection = false,
   extensionPoint,
 }: DataTableProps<T>) {
   const rowsKey = useMemo(() => data.map(rowKey).join("0000"), [data, rowKey])
@@ -160,7 +163,27 @@ export function DataTable<T>({
   const selectedRows = data.filter((row) => selectedKeys.has(rowKey(row)))
   const extensionBulk = selectable && selectedRows.length > 0 ? extensions.bulkActions : []
   const hasToolbar = Boolean(toolbar) || extensions.toolbars.length > 0
+  const hasBulkToolbar = Boolean(bulkActions) || extensionBulk.length > 0
   const rowActions = extensions.rowActions as ExtensionRowAction<unknown>[]
+  useEffect(() => {
+    if (expandToolbarOnSelection && selectedKeys.size > 0) setToolbarOpen(true)
+  }, [expandToolbarOnSelection, selectedKeys.size])
+
+  const bulkToolbar = hasBulkToolbar ? (
+    <div className="react-bulk-toolbar">
+      {bulkActions}
+      {extensionBulk.map((action) => (
+        <button
+          key={action.label}
+          type="button"
+          className={action.danger ? "react-danger-button" : "react-secondary-button"}
+          onClick={() => void action.run(selectedRows, extensions.helpers)}
+        >
+          {t(action.label, action.namespace)}
+        </button>
+      ))}
+    </div>
+  ) : null
   return (
     <div className="react-table-card">
       {hasToolbar && (
@@ -192,25 +215,12 @@ export function DataTable<T>({
                   />
                 ))}
               </div>
+              {expandToolbarOnSelection && bulkToolbar}
             </div>
           </div>
         </div>
       )}
-      {(bulkActions || extensionBulk.length > 0) && (
-        <div className="react-bulk-toolbar">
-          {bulkActions}
-          {extensionBulk.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              className={action.danger ? "react-danger-button" : "react-secondary-button"}
-              onClick={() => void action.run(selectedRows, extensions.helpers)}
-            >
-              {t(action.label, action.namespace)}
-            </button>
-          ))}
-        </div>
-      )}
+      {(!expandToolbarOnSelection || !hasToolbar) && bulkToolbar}
       <div className="react-table-scroll">
         <table className="react-data-table">
           <thead>

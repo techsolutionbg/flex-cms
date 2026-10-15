@@ -79,6 +79,73 @@
   cursor: pointer;
   font-size: 13px;
 }
+.admin-icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+.react-tooltip-anchor {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.react-tooltip-content {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  z-index: 100;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2rem));
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.4rem;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  line-height: 1.25;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -0.2rem);
+  transition: opacity 120ms ease, transform 120ms ease;
+  visibility: hidden;
+}
+.react-tooltip-content[data-placement="top"] {
+  top: auto;
+  bottom: calc(100% + 0.5rem);
+  transform: translate(-50%, 0.2rem);
+}
+.react-tooltip-content[data-placement="left"] {
+  top: 50%;
+  right: calc(100% + 0.5rem);
+  bottom: auto;
+  left: auto;
+  transform: translate(0.2rem, -50%);
+}
+.react-tooltip-content[data-placement="right"] {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: calc(100% + 0.5rem);
+  transform: translate(-0.2rem, -50%);
+}
+.react-tooltip-anchor:hover .react-tooltip-content,
+.react-tooltip-anchor:focus-within .react-tooltip-content {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+.react-tooltip-content.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+.react-tooltip-anchor:hover .react-tooltip-content[data-placement="left"],
+.react-tooltip-anchor:focus-within .react-tooltip-content[data-placement="left"],
+.react-tooltip-anchor:hover .react-tooltip-content[data-placement="right"],
+.react-tooltip-anchor:focus-within .react-tooltip-content[data-placement="right"] {
+  transform: translate(0, -50%);
+}
 .admin-page-refresh:hover:not(:disabled) {
   background: var(--surface-hover);
 }
@@ -189,38 +256,58 @@
 
 .admin-workspace-tabs {
   display: flex;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   gap: 4px;
-  padding: 8px 16px 0;
+  padding: 8px 0 0;
   background: var(--surface-subtle);
   border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.admin-workspace-tabs::-webkit-scrollbar {
+  display: none;
 }
 .admin-workspace-tabbar {
   display: flex;
   min-width: 0;
   background: var(--surface-subtle);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
 }
 .admin-workspace-tabbar .admin-workspace-tabs {
-  flex: 1;
-  min-width: 0;
-  border-bottom: 0;
+  flex: 0 1 auto;
+  margin-left: 0.5rem;
 }
 button.admin-workspace-close-all {
   flex-shrink: 0;
   align-self: center;
-  margin: 0.4rem 1rem 0.4rem 0.5rem;
+  margin: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
+  padding: 0;
+}
+.admin-workspace-tabbar > .react-tooltip-anchor {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0 1rem 0 auto;
 }
 .admin-workspace-tabbar button.admin-workspace-close-all {
-  min-height: 2rem;
-  padding-block: 0.3rem;
+  min-height: 2.5rem;
+  padding-block: 0;
 }
 @media (max-width: 640px) {
   .admin-workspace-close-all span {
     display: none;
   }
   button.admin-workspace-close-all {
+    margin-right: 0;
+  }
+  .admin-workspace-tabbar > .react-tooltip-anchor {
     margin-right: 0.5rem;
   }
 }
@@ -267,6 +354,10 @@ button.admin-workspace-close-all {
   transition:
     background-color 120ms ease,
     color 120ms ease;
+}
+.admin-workspace-tab > .react-tooltip-anchor {
+  display: flex;
+  align-items: center;
 }
 .admin-workspace-tab:hover {
   background: var(--surface-hover);
@@ -1106,7 +1197,7 @@ body {
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
-  padding: 1.1rem 0;
+  padding: 0 0 1.1rem;
 }
 .sidebar-group-react {
   margin: 0;
@@ -1253,7 +1344,13 @@ body {
   box-shadow: 0 0 0 0.25rem var(--sidebar-accent-glow);
 }
 .sidebar-logout-react {
-  display: none;
+  display: flex;
+  width: calc(100% - 2rem);
+  align-self: center;
+  margin: 0.2rem 1rem 1rem;
+}
+.sidebar-link-react[href$="/profile"] {
+  border-bottom: 1px solid var(--sidebar-separator);
 }
 .admin-main-react {
   min-height: 100vh;
@@ -1288,7 +1385,7 @@ body {
   margin: 0;
   overflow: hidden;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1475,6 +1572,11 @@ body {
   font: inherit;
   text-decoration: underline;
 }
+.admin-logout-react.admin-icon-button {
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+}
 .admin-logout-react:disabled {
   cursor: wait;
   opacity: 0.65;
@@ -1576,6 +1678,47 @@ body {
 .react-page-heading-actions button svg {
   width: 1rem;
   height: 1rem;
+}
+.react-page-heading-actions .plugin-list-icon-button {
+  display: inline-flex;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+.react-page-heading-actions .plugin-list-icon-button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.plugins-page * {
+  font-weight: 400 !important;
+}
+.plugins-page .react-table-filter-header > span {
+  font-size: 1rem;
+}
+.plugins-page .react-filter-field,
+.plugins-page .react-filter-field input,
+.plugins-page .react-filter-trigger {
+  font-size: 0.9rem;
+}
+.plugins-page .react-bulk-toolbar .plugin-bulk-icon-button {
+  display: inline-flex;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.plugins-page .react-bulk-toolbar .plugin-bulk-icon-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 .react-table-card {
   overflow: hidden;
@@ -2949,14 +3092,50 @@ body {
   border-color: #d9503b;
   background: #d9503b;
 }
-.plugin-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
-  align-items: start;
-}
 .plugin-source-first-section {
   margin-bottom: 1.25rem;
+}
+.plugin-detail-tabbar {
+  margin-bottom: 1.25rem;
+  border-bottom: 0;
+  background: transparent;
+}
+.plugin-detail-tabbar .admin-workspace-tabs {
+  flex: 0 1 auto;
+  margin-left: 0;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-right: 0;
+  padding-left: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+}
+.plugin-detail-tabbar .admin-workspace-tab > .react-tooltip-anchor {
+  display: flex;
+}
+.plugin-detail-tabbar .admin-workspace-tab > .react-tooltip-anchor > button[role="tab"] {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 3rem;
+  justify-content: center;
+  padding: 0.7rem 0.9rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.plugin-detail-tabbar .admin-workspace-tab > .react-tooltip-anchor > button[role="tab"] svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.plugin-detail-settings-panel .react-form-actions {
+  margin-top: 1.25rem;
+  padding-top: 0;
 }
 .react-panel {
   border: 1px solid #d3d9ce;
@@ -3374,6 +3553,193 @@ body {
 .theme-editor-settings > .react-form-field {
   width: min(100%, 30rem);
 }
+.theme-builder-page {
+  display: flex;
+  min-height: calc(100vh - 7.5rem);
+  flex-direction: column;
+  margin: -1.5rem;
+}
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-sidebar-react,
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-topbar-react,
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-workspace-tabbar,
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-workspace-tabs {
+  display: none;
+}
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-main-react { margin-left: 0; }
+.admin-shell-react:has(.theme-builder-page.is-fullscreen) .admin-content-react { padding: 0; }
+.theme-builder-page.is-fullscreen {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  background: var(--background);
+}
+.theme-builder-page.is-fullscreen .theme-builder-heading {
+  justify-content: center;
+  padding: .5rem 1rem;
+}
+.theme-builder-page.is-fullscreen .theme-builder-heading > div:first-child { display: none; }
+.theme-builder-page.is-fullscreen .theme-builder-actions {
+  width: 100%;
+  justify-content: flex-start;
+  gap: .4rem;
+}
+.theme-builder-page.is-fullscreen .theme-builder-actions > .theme-builder-save-button {
+  order: 5;
+  margin-left: auto;
+}
+.theme-builder-page.is-fullscreen .theme-builder-view-toggle { order: 3; }
+.theme-builder-page.is-fullscreen .theme-builder-theme-select {
+  width: auto;
+  min-width: 10rem;
+  min-height: 2.25rem;
+  padding: .4rem .65rem;
+  font-size: .82rem;
+}
+.theme-builder-page.is-fullscreen .theme-builder-actions > .react-action-button,
+.theme-builder-page.is-fullscreen .theme-builder-view-toggle .react-action-button {
+  min-height: 2.25rem;
+  padding: .4rem .65rem;
+  font-size: .8rem;
+}
+.theme-builder-page.is-fullscreen .theme-builder-view-toggle { gap: .35rem; }
+.theme-builder-page.is-fullscreen .theme-builder-workspace { flex: 1 1 0; }
+.theme-builder-page.is-fullscreen .theme-builder-workspace {
+  grid-template-columns: minmax(18rem, var(--theme-builder-panel-width, 40%)) 10px minmax(0, 1fr);
+}
+.theme-builder-resizer { display: none; }
+.theme-builder-page.is-fullscreen .theme-builder-resizer {
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  background: var(--surface-subtle);
+  color: var(--muted-foreground);
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+.theme-builder-page.is-fullscreen .theme-builder-resizer:hover,
+.theme-builder-page.is-fullscreen .theme-builder-resizer:focus-visible {
+  border-color: var(--control-accent);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+.theme-builder-page.is-resizing-panel,
+.theme-builder-page.is-resizing-panel * { cursor: col-resize !important; user-select: none !important; }
+.theme-builder-page.is-fullscreen .theme-builder-controls { max-height: none; }
+.theme-builder-page.is-fullscreen .theme-content-fields { grid-template-columns: minmax(0, 1fr); }
+.theme-builder-page.is-fullscreen .theme-content-field-half { grid-column: 1; }
+.theme-builder-page.is-fullscreen .theme-builder-canvas iframe { min-height: calc(100vh - 5.5rem); }
+.theme-builder-heading {
+  align-items: center;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.theme-builder-actions,
+.theme-builder-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.theme-builder-theme-select { min-width: 13rem; }
+.theme-builder-workspace {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(19rem, 30rem) minmax(0, 1fr);
+}
+.theme-builder-controls {
+  min-width: 0;
+  max-height: calc(100vh - 11.5rem);
+  overflow: auto;
+  padding: 1rem;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+.theme-builder-panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.theme-builder-panel-heading h2 { margin: 0; font-size: 1.05rem; }
+.theme-builder-panel-heading span,
+.theme-builder-note { color: var(--muted-foreground); font-size: .85rem; }
+.theme-builder-preview {
+  display: flex;
+  min-width: 0;
+  min-height: 32rem;
+  flex-direction: column;
+  background: var(--surface-subtle);
+}
+.theme-builder-preview-toolbar {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: .85rem;
+}
+.theme-builder-device-picker { display: flex; gap: .25rem; }
+.theme-builder-device-picker button {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: .4rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.theme-builder-device-picker button[aria-pressed="true"] { border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.theme-builder-canvas {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+  overflow: auto;
+  padding: .75rem;
+}
+.theme-builder-canvas iframe {
+  width: 100%;
+  min-height: calc(100vh - 13rem);
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  background: white;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 14%);
+}
+.theme-builder-canvas.is-tablet iframe { width: 768px; flex: 0 0 768px; }
+.theme-builder-canvas.is-mobile iframe { width: 390px; flex: 0 0 390px; }
+.theme-builder-loading { display: grid; min-height: 20rem; place-items: center; color: var(--muted-foreground); }
+.theme-builder-page > .plugin-source-viewer { margin: 1.5rem; }
+@media (max-width: 900px) {
+  .theme-builder-page { margin: -1.25rem -1rem; }
+  .theme-builder-heading { align-items: stretch; flex-direction: column; padding: 1rem; }
+  .theme-builder-actions { flex-wrap: wrap; }
+  .theme-builder-workspace { grid-template-columns: minmax(0, 1fr); }
+  .theme-builder-page.is-fullscreen .theme-builder-workspace { grid-template-columns: minmax(0, 1fr); }
+  .theme-builder-page.is-fullscreen .theme-builder-resizer { display: none; }
+  .theme-builder-controls { max-height: 45vh; border-right: 0; border-bottom: 1px solid var(--border); }
+  .theme-builder-preview { min-height: 55vh; }
+  .theme-builder-canvas iframe { min-height: 55vh; }
+  .theme-builder-page.is-fullscreen .theme-builder-controls { max-height: 42vh; }
+  .theme-builder-page.is-fullscreen .theme-builder-preview { min-height: 45vh; }
+  .theme-builder-page.is-fullscreen .theme-builder-canvas iframe { min-height: 45vh; }
+}
 .plugin-source-layout {
   display: grid;
   grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
@@ -3523,6 +3889,40 @@ body {
   color: #687268;
   line-height: 1.55;
 }
+.plugin-detail-copy,
+.plugin-detail-release-notes {
+  margin-top: 1.25rem;
+}
+.plugin-detail-copy h3,
+.plugin-detail-release-notes h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+.plugin-detail-release-notes h3 span {
+  margin-left: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.plugin-detail-copy p,
+.plugin-detail-release-notes p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-line;
+}
+.plugin-detail-permissions {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.plugin-detail-permissions h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  font-size: 1.2rem;
+}
 .plugin-permissions {
   display: grid;
   gap: 0.7rem;
@@ -3532,12 +3932,32 @@ body {
 }
 .plugin-permissions li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
 }
 .plugin-permissions svg {
+  flex: 0 0 auto;
   width: 1rem;
+  margin-top: 0.15rem;
   color: #27814c;
+}
+.plugin-permission-copy {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 1.05rem;
+}
+.plugin-permission-copy strong {
+  font-weight: 400;
+}
+.plugin-permission-copy small {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.plugin-permission-copy code {
+  width: fit-content;
+  color: var(--text-muted);
+  font-size: 0.78rem;
 }
 .plugin-manifest-panel {
   margin-top: 1.25rem;
@@ -3735,11 +4155,6 @@ body {
   font-size: 0.88rem;
   font-weight: 400;
   line-height: 1.4;
-}
-@media (max-width: 800px) {
-  .plugin-detail-grid {
-    grid-template-columns: 1fr;
-  }
 }
 @media (max-width: 650px) {
   .code-editor-toolbar {
@@ -4000,7 +4415,7 @@ body {
   cursor: pointer;
   font: inherit;
   font-size: 1.1rem;
-  font-weight: 500;
+  font-weight: 400;
   text-align: left;
 }
 .collapsible-section-header:hover {
@@ -6962,6 +7377,50 @@ textarea.react-ui-textarea {
   line-height: 1.55;
   resize: vertical;
 }
+
+/* Keep Theme Builder controls compact at every viewport size. */
+.theme-builder-controls .theme-content-panel,
+.theme-builder-controls .theme-content-tab-panel { gap: .45rem; }
+.theme-builder-controls .theme-content-fields { grid-template-columns: minmax(0, 1fr); gap: .55rem; padding-block: .25rem; }
+.theme-builder-controls .theme-content-hint,
+.theme-builder-controls .theme-content-label { font-size: .76rem; }
+.theme-builder-controls .collapsible-section-header {
+  min-height: 2.9rem;
+  gap: .45rem;
+  padding: .6rem .8rem;
+  font-size: .9rem;
+}
+.theme-builder-controls .collapsible-section-header > svg { width: 1rem; }
+.theme-builder-controls .collapsible-section-body-inner { padding: .75rem; }
+.theme-builder-controls .collapsible-section .collapsible-section .collapsible-section-body-inner { padding: .6rem; }
+.theme-builder-controls .collapsible-section.is-closed > .collapsible-section-body > .collapsible-section-body-inner { padding-block: 0; }
+.theme-builder-controls .theme-content-field { gap: .25rem; }
+.theme-builder-controls .theme-content-color-current input[type="color"] { width: 2.5rem; height: 2.1rem; }
+.theme-builder-controls .theme-content-color-swatch { width: 1.5rem; height: 1.5rem; }
+.theme-builder-controls .theme-content-button-preset { min-height: 4.2rem; gap: .35rem; padding: .45rem; }
+.theme-builder-controls .theme-content-button-preview { min-width: 5.2rem; min-height: 1.65rem; padding: .25rem .5rem; font-size: .67rem; }
+.theme-builder-controls input.react-ui-input,
+.theme-builder-controls textarea.react-ui-textarea,
+.theme-builder-controls select,
+.theme-builder-controls .universal-dropdown-trigger,
+.theme-builder-controls .react-form-select {
+  min-height: 2.3rem;
+  padding: .45rem .65rem;
+  font-size: .83rem;
+}
+.theme-builder-controls textarea.react-ui-textarea { min-height: 4.5rem; }
+.theme-builder-controls .react-primary-button,
+.theme-builder-controls .react-secondary-button,
+.theme-builder-controls .react-loading-button,
+.theme-builder-controls .theme-content-button-preset {
+  font-size: .76rem;
+}
+.theme-builder-controls .react-primary-button,
+.theme-builder-controls .react-secondary-button,
+.theme-builder-controls .react-loading-button {
+  min-height: 2.2rem;
+  padding: .4rem .65rem;
+}
 input.react-ui-input::placeholder,
 textarea.react-ui-textarea::placeholder {
   color: var(--text-muted);
@@ -7332,5 +7791,19 @@ button.react-action-button svg {
 
 .theme-content-repeater-row:last-of-type {
   border-bottom: 0;
+}
+
+.react-breadcrumbs a,
+.react-breadcrumbs a:visited,
+.react-breadcrumbs a:hover,
+.react-breadcrumbs a:active,
+.react-breadcrumbs a:focus-visible {
+  color: #fff;
+  font-weight: 400;
+  text-decoration: none;
+}
+.react-breadcrumbs strong {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 

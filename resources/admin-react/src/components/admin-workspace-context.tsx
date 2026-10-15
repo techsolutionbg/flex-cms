@@ -2,6 +2,7 @@ import { t } from "@/lib/admin-i18n"
 import { createContext, useContext } from "react"
 import { ListX, X } from "lucide-react"
 import { Button } from "./ui/button"
+import { Tooltip } from "./ui/tooltip"
 import type { ExtensionPageDescriptor } from "./extension-page"
 import type { ExtensionDescriptor } from "./extension-runtime"
 
@@ -131,29 +132,31 @@ export function AdminWorkspaceTabs() {
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              className="admin-workspace-close"
-              aria-label={`${t("Close")} ${t(tab.title, tab.namespace)}`}
-              onClick={() => workspace.close(tab.id)}
-            >
-              <X size={15} aria-hidden="true" />
-            </button>
+            <Tooltip content={`${t("Close")} ${t(tab.title, tab.namespace)}`}>
+              <button
+                type="button"
+                className="admin-workspace-close"
+                aria-label={`${t("Close")} ${t(tab.title, tab.namespace)}`}
+                onClick={() => workspace.close(tab.id)}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            </Tooltip>
           </div>
         ))}
       </div>
-      <Button
-        variant="secondary"
-        type="button"
-        className="admin-workspace-close-all"
-        aria-label={t("Close all tabs")}
-        title={t("Close all tabs")}
-        disabled={!workspace.canCloseAll}
-        onClick={workspace.closeAll}
-      >
-        <ListX aria-hidden="true" />
-        <span>{t("Close all")}</span>
-      </Button>
+      <Tooltip content="Close all tabs" placement="left">
+        <Button
+          variant="secondary"
+          type="button"
+          className="admin-workspace-close-all"
+          aria-label={t("Close all tabs")}
+          disabled={!workspace.canCloseAll}
+          onClick={workspace.closeAll}
+        >
+          <ListX aria-hidden="true" />
+        </Button>
+      </Tooltip>
     </div>
   )
 }

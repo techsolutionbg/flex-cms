@@ -15,12 +15,13 @@ use Flex\Themes\ThemeManager;
 use Flex\Themes\ThemeResourceService;
 use Flex\Menus\PublicMenuRenderer;
 use Flex\Menus\PublicMenuApi;
+use Flex\Session\CsrfTokenManager;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 final readonly class PublicPageController
 {
-    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ThemeResourceService $records, private ?\Flex\Media\PublicMediaApi $media = null, private ?\Flex\Settings\SectionSettings $siteSettings = null, private ?\Flex\Contracts\Http\ViewRendererInterface $views = null, private ?HomePageResolver $homePages = null) {}
+    public function __construct(private PageRepository $pages, private ThemeManager $themes, private ConfigRepositoryInterface $configuration, private ResponseFactoryInterface $responses, private ExtensionApiInterface $extensionApi, private PublicMenuRenderer $menus, private ThemeResourceService $records, private ?\Flex\Media\PublicMediaApi $media = null, private ?\Flex\Settings\SectionSettings $siteSettings = null, private ?\Flex\Contracts\Http\ViewRendererInterface $views = null, private ?HomePageResolver $homePages = null, private ?CsrfTokenManager $csrf = null) {}
 
     /** @param array<string, string> $arguments */
     public function __invoke(ServerRequestInterface $request, array $arguments = []): ResponseInterface
@@ -69,7 +70,10 @@ final readonly class PublicPageController
         $menuData['__flex_media_api'] = $this->media;
         $menuData['__flex_theme_records'] = fn(string $resource): array => $this->records->published($resource);
         $menuData['featured_media'] = $this->media?->get((int) $page->getAttribute('featured_media_id')) ?? [];
-        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'document_title' => $documentTitle, 'navigation' => $navigation] + $menuData));
+        $query = $request->getQueryParams();
+        $contactStatus = is_array($query) && is_string($query['contact'] ?? null) && in_array($query['contact'], ['sent', 'invalid', 'unconfigured', 'error'], true) ? $query['contact'] : '';
+
+        return $this->responses->html($this->themes->render('page.twig', ['page' => $page, 'page_public_path' => $publicPages->publicPath($page), 'page_settings' => $settings, 'head_tags' => $headTags, 'document_title' => $documentTitle, 'navigation' => $navigation, 'csrf_token' => $this->csrf?->token() ?? '', 'contact_status' => $contactStatus] + $menuData));
     }
 
     private function homePage(PublicPageSet $publicPages): ?Page

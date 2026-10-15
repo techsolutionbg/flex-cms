@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react"
-import { Menu, PanelLeftClose, PanelLeftOpen, RefreshCw } from "lucide-react"
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, RefreshCw } from "lucide-react"
 import { LoadingButton } from "./loading-button"
 import { useContext, useEffect, useState } from "react"
 import { AdminSidebar } from "./admin-sidebar"
@@ -7,6 +7,7 @@ import { AdminWorkspaceContext, AdminWorkspaceTabs } from "./admin-workspace-con
 import { PageHelpButton, PageHelpProvider, usePageHelpRegistry } from "./page-help"
 import { AdminPanelSearch } from "./admin-panel-search"
 import { t } from "@/lib/admin-i18n"
+import { Tooltip } from "./ui/tooltip"
 
 type AdminShellProps = {
   children: ReactNode
@@ -179,28 +180,33 @@ export function AdminShell({
           <div className="admin-topbar-end">
             <PageHelpButton entries={help.entries} />
             {workspace && (
-              <LoadingButton
-                className="admin-page-refresh"
-                type="button"
-                aria-label={t("Refresh page data")}
-                title={t("Refresh page data")}
-                disabled={workspace.refreshing}
-                loading={workspace.refreshing}
-                icon={<RefreshCw size={18} aria-hidden="true" />}
-                onClick={workspace.refresh}
-              >
-                <span>{t("Refresh")}</span>
-              </LoadingButton>
+              <Tooltip content="Refresh">
+                <LoadingButton
+                  className="admin-page-refresh admin-icon-button"
+                  type="button"
+                  aria-label={t("Refresh")}
+                  disabled={workspace.refreshing}
+                  loading={workspace.refreshing}
+                  icon={<RefreshCw size={18} aria-hidden="true" />}
+                  onClick={workspace.refresh}
+                >
+                  {null}
+                </LoadingButton>
+              </Tooltip>
             )}
-            <LoadingButton
-              className="admin-logout-react"
-              type="button"
-              onClick={onLogout}
-              disabled={loggingOut}
-              loading={loggingOut}
-            >
-              {t(loggingOut ? "Излизане…" : "Изход")}
-            </LoadingButton>
+            <Tooltip content={loggingOut ? "Signing out…" : "Log out"}>
+              <LoadingButton
+                className="admin-logout-react admin-icon-button"
+                type="button"
+                aria-label={t(loggingOut ? "Signing out…" : "Log out")}
+                onClick={onLogout}
+                disabled={loggingOut}
+                loading={loggingOut}
+                icon={<LogOut size={18} aria-hidden="true" />}
+              >
+                {null}
+              </LoadingButton>
+            </Tooltip>
           </div>
         </header>
         <AdminWorkspaceTabs />

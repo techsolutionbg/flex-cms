@@ -1,13 +1,15 @@
 import { t } from "@/lib/admin-i18n"
-import { Save } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
+import { ChevronsDownUp, Save } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react"
 import { toast } from "sonner"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { LoadingButton } from "@/components/loading-button"
+import { Button } from "@/components/ui/button"
 import { usePageHelp } from "@/components/page-help"
 import { ExtensionScope, usePanelSaves } from "@/components/extension-page"
 import { ExtensionComponent, useExtensions } from "@/components/extension-runtime"
+import { useWorkspaceChanged } from "@/components/admin-workspace-context"
 import { useFormDirty } from "@/lib/use-form-dirty"
 
 type ThemeSummary = { id: string; name: string | null; active: boolean }
@@ -34,10 +36,17 @@ export function ThemeSettingsPage({
   const [theme, setTheme] = useState<ThemeSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [panelDirty, setPanelDirty] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const saves = usePanelSaves()
   const panels = useExtensions("theme.settings", "screen.section")
   const { isDirty, markClean, refresh } = useFormDirty(formRef, !!theme?.active && panels.length > 0)
+  const workspaceChanged = useWorkspaceChanged()
+  const onPanelChange = useCallback(() => {
+    setPanelDirty(true)
+    workspaceChanged?.()
+    refresh()
+  }, [refresh, workspaceChanged])
   const panelContext = useMemo(() => ({ type: "theme", id, theme }), [id, theme])
   const extensionScope = useMemo(() => ({ context: panelContext, saves }), [panelContext, saves])
   const name = theme?.name ?? id
@@ -91,12 +100,26 @@ export function ThemeSettingsPage({
     try {
       await saves.run({ id })
       markClean()
+      setPanelDirty(false)
       toast.success("Настройките на темата са запазени.")
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : "Настройките не можаха да бъдат запазени.")
     } finally {
       setSaving(false)
     }
+  }
+
+  function toggleAllSections() {
+    const headers = formRef.current?.querySelectorAll<HTMLButtonElement>(
+      ".theme-content-workspace .collapsible-section-header[aria-expanded]",
+    )
+    if (!headers?.length) return
+
+    const openAll = Array.from(headers).some((header) => header.getAttribute("aria-expanded") === "false")
+    headers.forEach((header) => {
+      const isOpen = header.getAttribute("aria-expanded") === "true"
+      if (isOpen !== openAll) header.click()
+    })
   }
 
   return (
@@ -119,7 +142,13 @@ export function ThemeSettingsPage({
             ]}
           />
         </div>
-        <LoadingButton onClick={onDetails}>{t("View details")}</LoadingButton>
+        <div className="react-page-heading-actions">
+          <Button variant="secondary" type="button" onClick={toggleAllSections}>
+            <ChevronsDownUp aria-hidden="true" />
+            {t("Toggle all sections")}
+          </Button>
+          <LoadingButton onClick={onDetails}>{t("View details")}</LoadingButton>
+        </div>
       </div>
       {error && (
         <p className="react-error-text" role="alert">
@@ -138,7 +167,7 @@ export function ThemeSettingsPage({
       )}
       {theme?.active && panels.length > 0 && (
         <ExtensionScope value={extensionScope}>
-          <form ref={formRef} className="react-page-form theme-content-page-form" onClickCapture={refresh} onSubmit={save}>
+          <form ref={formRef} className="react-page-form theme-content-page-form" onSubmit={save}>
             <div className="theme-content-workspace">
               {panels.map((panel) => (
                 <ExtensionComponent
@@ -146,11 +175,12 @@ export function ThemeSettingsPage({
                   descriptor={panel}
                   context={panelContext}
                   saves={saves}
+                  props={{ changed: onPanelChange }}
                 />
               ))}
             </div>
             <div className="react-form-actions">
-              <LoadingButton type="submit" loading={saving} disabled={!isDirty}>
+              <LoadingButton type="submit" loading={saving} disabled={!isDirty && !panelDirty}>
                 <Save aria-hidden="true" />
 
                 {t("Save")}

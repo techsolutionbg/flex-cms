@@ -19,6 +19,8 @@ export type ImageFieldProps = {
   value: number | null
   onChange: (id: number | null) => void
   description?: string
+  /** Optional theme-provided preview shown until a media-library image is selected. */
+  previewUrl?: string | null
   disabled?: boolean
   /**
    * Surface behind the image. The default follows the panel theme.
@@ -49,6 +51,7 @@ export function ImageField({
   value,
   onChange,
   description,
+  previewUrl,
   disabled = false,
   background = "surface",
   aspectRatio = "16 / 10",
@@ -68,7 +71,9 @@ export function ImageField({
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
   const preset = background in BACKGROUNDS ? (background as keyof typeof BACKGROUNDS) : null
   const backgroundColor = preset ? BACKGROUNDS[preset] : background
-  const preview = record && record.id === id ? record.thumbnail_url || record.url : null
+  const preview = id === null
+    ? (previewUrl || null)
+    : record && record.id === id ? record.thumbnail_url || record.url : null
   const loading = id !== null && record?.id !== id && !missing
   const imageReady = preview !== null && loadedSrc === preview
   const showSkeleton = id !== null && (loading || (preview !== null && !imageReady))
@@ -118,9 +123,9 @@ export function ImageField({
       <div className="image-field-frame">
         <button
           type="button"
-          className={`image-field-tile${id !== null && !missing ? " has-image" : ""}`}
+          className={`image-field-tile${preview && !missing ? " has-image" : ""}`}
           disabled={disabled}
-          aria-label={id === null ? `${t(label)}: ${t(emptyLabel)}` : `${t(label)}: ${t(changeLabel)}`}
+            aria-label={id === null && !previewUrl ? `${t(label)}: ${t(emptyLabel)}` : `${t(label)}: ${t(changeLabel)}`}
           aria-describedby={description ? descriptionId : undefined}
           aria-busy={showSkeleton || undefined}
           onClick={() => setOpen(true)}
@@ -140,13 +145,13 @@ export function ImageField({
               onError={() => setLoadedSrc(preview)}
             />
           )}
-          {(id === null || missing) && (
+          {((id === null && !previewUrl) || missing) && (
             <span className="image-field-empty" aria-hidden="true">
               <ImageIcon />
               <span>{t(missing ? missingLabel : emptyLabel)}</span>
             </span>
           )}
-          {id !== null && !missing && !showSkeleton && (
+          {preview && !missing && !showSkeleton && (
             <span className="image-field-hover" aria-hidden="true">
               {t(changeLabel)}
             </span>

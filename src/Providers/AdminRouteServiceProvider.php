@@ -73,6 +73,7 @@ final class AdminRouteServiceProvider implements ServiceProviderInterface
             $write,
         );
         $r->add('GET', '/admin/themes/{id}/preview', AdminThemePreviewController::class, 'admin.themes.preview', $auth);
+        $r->add('POST', '/admin/themes/{id}/preview', AdminThemePreviewController::class, 'admin.themes.preview.draft', $write);
         $r->add('POST', '/api/themes/action', AdminThemeActionController::class, 'api.themes.action', $write);
         $r->add('POST', '/api/plugins/action', AdminPluginActionController::class, 'api.plugins.action', $write);
         $r->add('POST', '/api/admin/updates/action', AdminUpdatesActionController::class, 'api.admin.updates.action', $write);

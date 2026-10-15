@@ -21,7 +21,7 @@ final readonly class PublicMenuRenderer
         $menus = [];
         $html = [];
         if ($locations === []) {
-            return ['menus' => [], 'menu_html' => []];
+            return ['menus' => [], 'menu_html' => [], 'available_menus' => $this->allActiveMenus($pages)];
         }
         $db = $this->database->connection();
         $bindings = $db->table('theme_menu_assignments')->join('menus', 'menus.id', '=', 'theme_menu_assignments.menu_id')->whereNull('menus.deleted_at')->where('menus.status', 'active')->where('theme_id', $theme)->pluck('menu_id', 'location');
@@ -32,7 +32,19 @@ final readonly class PublicMenuRenderer
             $menus[$location] = $this->itemsForMenu((int) $bindings[$location], $pages);
             $html[$location] = $this->renderItems($menus[$location]);
         }
-        return ['menus' => $menus, 'menu_html' => $html];
+        return ['menus' => $menus, 'menu_html' => $html, 'available_menus' => $this->allActiveMenus($pages)];
+    }
+
+    /** @return list<array{id: int, name: string, slug: string, items: list<array<string, mixed>>}> */
+    private function allActiveMenus(PublicPageSet $pages): array
+    {
+        $rows = $this->database->connection()->table('menus')->where('status', 'active')->whereNull('deleted_at')->orderBy('name')->get(['id', 'name', 'slug']);
+        return $rows->map(fn($menu): array => [
+            'id' => (int) $menu->id,
+            'name' => (string) $menu->name,
+            'slug' => (string) $menu->slug,
+            'items' => $this->itemsForMenu((int) $menu->id, $pages),
+        ])->all();
     }
 
     /** @return list<array{id: int, name: string, slug: string, items: list<array<string, mixed>>}> */

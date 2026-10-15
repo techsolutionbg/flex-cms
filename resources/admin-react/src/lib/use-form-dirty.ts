@@ -68,7 +68,9 @@ export function useFormDirty(
     const form = formRef.current
     if (!form) return
     let frame = 0
-    const update = () => {
+    const update = (event: Event) => {
+      // Expanding or collapsing a section changes only the editor layout, not form data.
+      if (event.target instanceof Element && event.target.closest(".collapsible-section-header")) return
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => refresh())
     }

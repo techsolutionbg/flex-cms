@@ -7,7 +7,7 @@ namespace Flex\ThemeContent;
 /** Validates Theme Content Schema v1 manifest and field definition files. */
 final class ThemeContentSchemaValidator
 {
-    private const FIELD_TYPES = ['text', 'textarea', 'checkbox', 'url', 'email', 'number', 'media', 'page_link', 'repeater'];
+    private const FIELD_TYPES = ['text', 'textarea', 'checkbox', 'url', 'email', 'number', 'media', 'page_link', 'select', 'color', 'button_style', 'repeater'];
 
     private const ID_PATTERN = '/^[a-z][a-z0-9_-]{0,63}$/';
 
@@ -168,6 +168,27 @@ final class ThemeContentSchemaValidator
                 }
                 $errors = [...$errors, ...$this->validateFields($field['fields'], $contextLabel . ' repeater "' . $id . '"', $depth + 1)];
             }
+            if (in_array($type, ['select', 'button_style'], true)) {
+                $options = $field['options'] ?? null;
+                if (!is_array($options) || !array_is_list($options) || $options === []) {
+                    $errors[] = sprintf('%s select field "%s" requires a non-empty options array.', $contextLabel, $id);
+                } else {
+                    $optionValues = [];
+                    foreach ($options as $optionIndex => $option) {
+                        if (!is_array($option) || !is_string($option['value'] ?? null) || !is_string($option['label'] ?? null) || trim($option['label']) === '') {
+                            $errors[] = sprintf('%s select field "%s" option %d requires string value and non-empty label.', $contextLabel, $id, $optionIndex);
+                            continue;
+                        }
+                        if (isset($optionValues[$option['value']])) {
+                            $errors[] = sprintf('%s select field "%s" has duplicate option value "%s".', $contextLabel, $id, $option['value']);
+                        }
+                        $optionValues[$option['value']] = true;
+                    }
+                    if (array_key_exists('default', $field) && is_string($field['default']) && !isset($optionValues[$field['default']])) {
+                        $errors[] = sprintf('%s select field "%s" default must match an option value.', $contextLabel, $id);
+                    }
+                }
+            }
             if (isset($field['maxLength']) && (!is_int($field['maxLength']) || $field['maxLength'] < 1)) {
                 $errors[] = sprintf('%s field "%s" maxLength must be a positive integer.', $contextLabel, $id);
             }
@@ -193,6 +214,8 @@ final class ThemeContentSchemaValidator
     {
         return match ($type) {
             'checkbox' => is_bool($value),
+            'color' => is_string($value) && preg_match('/^#[0-9a-fA-F]{6}$/', $value) === 1,
+            'select', 'button_style' => is_string($value),
             'number' => $value === null || is_int($value) || is_float($value),
             'media', 'page_link' => $value === null || (is_int($value) && $value > 0),
             'repeater' => is_array($value) && array_is_list($value) && array_filter($value, static fn(mixed $row): bool => !is_array($row) || ($row !== [] && array_is_list($row))) === [],

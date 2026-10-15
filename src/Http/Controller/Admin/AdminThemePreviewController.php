@@ -44,6 +44,20 @@ final readonly class AdminThemePreviewController
             return $this->responses->text('Темата не е намерена или е невалидна.', 404);
         }
 
+        $previewSections = null;
+        if (strtoupper($request->getMethod()) === 'POST') {
+            $body = $request->getParsedBody();
+            if (!is_array($body)) {
+                $decoded = json_decode((string) $request->getBody(), true);
+                $body = is_array($decoded) ? $decoded : [];
+            }
+            $sections = $body['sections'] ?? null;
+            if (!is_array($sections)) {
+                return $this->responses->text('Невалидни данни за преглед.', 400);
+            }
+            $previewSections = $sections;
+        }
+
         $publicPages = $this->pages->publicPageSet();
         $slug = trim($this->configuration->string('app.public_home_slug', 'home'));
         $page = $slug === '' ? null : $publicPages->findPublishedBySlug($slug);
@@ -52,7 +66,10 @@ final readonly class AdminThemePreviewController
             $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
             $menuData['__flex_theme_records'] = fn(string $resource): array => $this->records->published($resource);
 
-            return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', ['title' => 'Няма публикувана начална страница'] + $menuData), 404);
+            return $this->responses->html($this->themes->renderForTheme($theme, '404.twig', [
+                'title' => 'Няма публикувана начална страница',
+                '__flex_preview_theme_content' => $previewSections === null ? null : ['sections' => $previewSections],
+            ] + $menuData), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
         $navigation = array_map(fn(Page $item): array => [
@@ -74,6 +91,7 @@ final readonly class AdminThemePreviewController
             'document_title' => is_string($documentTitle) && trim($documentTitle) !== '' ? $documentTitle : (string) $page->getAttribute('title'),
             'navigation' => $navigation,
             'preview' => true,
+            '__flex_preview_theme_content' => $previewSections === null ? null : ['sections' => $previewSections],
         ] + $menuData));
     }
 }

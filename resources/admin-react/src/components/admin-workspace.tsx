@@ -733,7 +733,13 @@ export function AdminWorkspace({
             closeAll,
             canCloseAll: tabs.some((item) => item.path !== "/" || item.dirty),
             saved: () => patch(tab.id, { dirty: false }),
-            changed: () => patch(tab.id, { dirty: true }),
+            // Plugin fields report edits on every keystroke. Only patch the workspace when the
+            // tab first becomes dirty; repeatedly updating the workspace can make controlled
+            // extension inputs flicker or lose focus while the user is typing.
+            changed: () => {
+              if (!tabsRef.current.find((item) => item.id === tab.id)?.dirty)
+                patch(tab.id, { dirty: true })
+            },
             rename: (title: string) => patch(tab.id, { title }),
             refresh: () => void refresh(tab.id),
             refreshing: Boolean(tab.loading),

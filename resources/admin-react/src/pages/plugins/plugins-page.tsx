@@ -1,12 +1,14 @@
 import { t } from "@/lib/admin-i18n"
 import { adminPluginPath, adminUrl } from "@/lib/admin-routes"
 import { useEffect, useState } from "react"
+import { Pause, Play, RefreshCw, Store, Trash2 } from "lucide-react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { AdminShell } from "@/components/admin-shell"
 import { useWorkspacePanelActive } from "@/components/admin-workspace-context"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { LoadingButton } from "@/components/loading-button"
+import { Tooltip } from "@/components/ui/tooltip"
 import { TableActionsMenu } from "@/components/table-actions-menu"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { getCsrfToken } from "@/lib/admin-api"
@@ -35,6 +37,11 @@ const bulkLabels: Record<PluginAction, { label: string; running: string; done: s
   update_remote: { label: "Обнови", running: "Обновяване", done: "обновени" },
   uninstall: { label: "Премахни", running: "Премахване", done: "премахнати" },
 }
+const bulkIcons = {
+  activate: Play,
+  deactivate: Pause,
+  update_remote: RefreshCw,
+} as const
 type PluginsPageProps = {
   onLogout: () => void
   onNavigate: (label: string) => void
@@ -356,6 +363,7 @@ export function PluginsPage({
       activeItem="Разширения"
       loggingOut={loggingOut}
     >
+      <div className="plugins-page">
       <div className="react-page-heading">
         <div>
           <h1>{t("Extensions")}</h1>
@@ -363,24 +371,35 @@ export function PluginsPage({
           <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Разширения" }]} />
         </div>
         <div className="react-page-heading-actions">
-          <LoadingButton
-            type="button"
-            loading={hardRefreshing}
-            disabled={loading && !hardRefreshing}
-            onClick={() => void hardRefreshFromServer()}
-          >
-
-            {t("Refresh")}
-          </LoadingButton>
-          <button type="button" onClick={onCatalog}>
-
-            {t("Extension catalog")}
-          </button>
+          <Tooltip content="Refresh">
+            <LoadingButton
+              className="plugin-list-icon-button"
+              type="button"
+              aria-label={t("Refresh")}
+              loading={hardRefreshing}
+              disabled={loading && !hardRefreshing}
+              icon={<RefreshCw size={18} aria-hidden="true" />}
+              onClick={() => void hardRefreshFromServer()}
+            >
+              {null}
+            </LoadingButton>
+          </Tooltip>
+          <Tooltip content="Extension catalog" placement="left">
+            <button
+              className="plugin-list-icon-button"
+              type="button"
+              aria-label={t("Extension catalog")}
+              onClick={onCatalog}
+            >
+              <Store size={18} aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
       </div>
       <DataTable
         extensionPoint="plugins.list"
         filterStorageKey="plugins"
+        expandToolbarOnSelection
         data={filteredPlugins}
         columns={columns}
         rowKey={(plugin) => plugin.id}
@@ -399,28 +418,42 @@ export function PluginsPage({
                   })
                 : t("{count} selected", "core", { count: selectedPlugins.length })}
             </strong>
-            {(["activate", "deactivate", "update_remote"] as const).map((action) => (
-              <LoadingButton
-                key={action}
-                type="button"
-                loading={bulk?.action === action}
-                disabled={bulk !== null || busyId !== null || bulkCount(action) === 0}
-                onClick={() => void runBulk(action)}
-              >
-                {t(bulkLabels[action].label)}
-                {bulkCount(action) > 0 ? ` (${bulkCount(action)})` : ""}
-              </LoadingButton>
-            ))}
-            <LoadingButton
-              type="button"
-              className="is-danger"
-              loading={bulk?.action === "uninstall"}
-              disabled={bulk !== null || busyId !== null || bulkCount("uninstall") === 0}
-              onClick={() => setPendingBulkRemoval(true)}
+            {(["activate", "deactivate", "update_remote"] as const).map((action) => {
+              const Icon = bulkIcons[action]
+              const label = t(bulkLabels[action].label)
+              const count = bulkCount(action)
+              return (
+                <Tooltip content={count > 0 ? `${label} (${count})` : label} key={action}>
+                  <LoadingButton
+                    type="button"
+                    className="plugin-bulk-icon-button"
+                    aria-label={label}
+                    title={undefined}
+                    icon={<Icon aria-hidden="true" />}
+                    loading={bulk?.action === action}
+                    disabled={bulk !== null || busyId !== null || count === 0}
+                    onClick={() => void runBulk(action)}
+                  >
+                    {null}
+                  </LoadingButton>
+                </Tooltip>
+              )
+            })}
+            <Tooltip
+              content={bulkCount("uninstall") > 0 ? `${t("Remove")} (${bulkCount("uninstall")})` : t("Remove")}
             >
-
-              {t("Remove")}{bulkCount("uninstall") > 0 ? ` (${bulkCount("uninstall")})` : ""}
-            </LoadingButton>
+              <LoadingButton
+                type="button"
+                className="is-danger plugin-bulk-icon-button"
+                aria-label={t("Remove")}
+                icon={<Trash2 aria-hidden="true" />}
+                loading={bulk?.action === "uninstall"}
+                disabled={bulk !== null || busyId !== null || bulkCount("uninstall") === 0}
+                onClick={() => setPendingBulkRemoval(true)}
+              >
+                {null}
+              </LoadingButton>
+            </Tooltip>
           </>
         }
         emptyMessage={
@@ -477,14 +510,12 @@ export function PluginsPage({
               disabled={activeFilterCount === 0}
             >
 
-              {t("Clear filters")}
+              {`${t("Clear filters")} (${activeFilterCount})`}
             </LoadingButton>
-            <span className="react-filter-count">
-              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
-            </span>
           </>
         }
       />
+      </div>
       <ConfirmDialog
         open={pendingRemoval !== null}
         title={t("Uninstall extension")}

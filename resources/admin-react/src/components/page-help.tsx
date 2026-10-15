@@ -16,6 +16,7 @@ import { createPortal } from "react-dom"
 import { CheckboxField } from "./checkbox-field"
 import { LoadingButton } from "./loading-button"
 import { Button } from "./ui/button"
+import { Tooltip } from "./ui/tooltip"
 
 /** Guidance for the current screen, shown in the header's help dialog. Screens and plugins add their own. */
 export type PageHelpEntry = { title: string; content: ReactNode }
@@ -130,16 +131,18 @@ export function PageHelpButton({ entries }: { entries: () => PageHelpEntry[] }) 
   const list = open ? entries() : []
   return (
     <>
-      <LoadingButton
-        className="admin-page-refresh"
-        type="button"
-        title={t("Guidance for this page")}
-        aria-haspopup="dialog"
-        icon={<CircleHelp size={18} aria-hidden="true" />}
-        onClick={() => setOpen(true)}
-      >
-        <span>{t("Help")}</span>
-      </LoadingButton>
+      <Tooltip content="Help">
+        <LoadingButton
+          className="admin-page-refresh admin-icon-button"
+          type="button"
+          aria-label={t("Help")}
+          aria-haspopup="dialog"
+          icon={<CircleHelp size={18} aria-hidden="true" />}
+          onClick={() => setOpen(true)}
+        >
+          {null}
+        </LoadingButton>
+      </Tooltip>
       {createPortal(
         <dialog
           ref={ref}

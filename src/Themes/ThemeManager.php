@@ -67,6 +67,8 @@ final class ThemeManager
     /** @param array<string, mixed> $data */
     public function renderForTheme(string $theme, string $template, array $data = []): string
     {
+        $previewThemeContent = $data['__flex_preview_theme_content'] ?? null;
+        unset($data['__flex_preview_theme_content']);
         // Render into a copy: extension output must never be saved back to page content.
         if (($data['page'] ?? null) instanceof \Flex\Pages\Page && $this->extensionApi !== null) {
             $page = clone $data['page'];
@@ -96,7 +98,7 @@ final class ThemeManager
         if ($themeEntryPath === null && $declaredEntry !== null) {
             throw new \RuntimeException(sprintf('Стартовият файл „%s“ от theme.json на темата „%s“ не е намерен.', $declaredEntry, $theme));
         }
-        $themeContent = function () use ($data, $theme): array {
+        $themeContent = function () use ($data, $theme, $previewThemeContent): array {
             $default = ['global' => ['sections' => []], 'page' => ['template' => '', 'layout' => null, 'sections' => []]];
             if ($this->extensionApi === null) {
                 return $default;
@@ -105,7 +107,11 @@ final class ThemeManager
             $pageArray = $page instanceof \Flex\Pages\Page
                 ? $page->toPublicArray()
                 : (is_array($page) ? $page : []);
-            $filtered = $this->extensionApi->applyFilters('public.theme.content', $default, ['page' => $pageArray, 'theme' => $theme]);
+            $filtered = $this->extensionApi->applyFilters('public.theme.content', $default, [
+                'page' => $pageArray,
+                'theme' => $theme,
+                'preview_theme_content' => is_array($previewThemeContent) ? $previewThemeContent : null,
+            ]);
 
             return is_array($filtered) ? $filtered : $default;
         };
