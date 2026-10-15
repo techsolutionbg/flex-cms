@@ -15,7 +15,8 @@ param(
     [string] $CompatibleFrom = '>=0.1.56 <1.0.0',
     [string] $Name = '',
     [string] $Description = '',
-    [string] $MinimumPlatformVersion = '0.1.56'
+    [string] $MinimumPlatformVersion = '0.1.56',
+    [string[]] $Permissions = @('admin.ui', 'routes.admin', 'routes.public', 'frontend.assets')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -128,6 +129,9 @@ try {
         Invoke-WebRequest -Uri "$baseUrl/plugins/index.json" -UseBasicParsing -OutFile $indexPath -TimeoutSec 30
         $index = Get-Content -LiteralPath $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json
     } catch {
+        $statusCode = 0
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { $statusCode = [int] $_.Exception.Response.StatusCode }
+        if ($statusCode -ne 404) { throw }
         $index = [pscustomobject]@{ schema = 1; repository = 'flex-cms'; type = 'plugin'; plugins = @() }
     }
     if (-not $index.plugins) { $index | Add-Member -NotePropertyName plugins -NotePropertyValue @() -Force }
@@ -140,7 +144,7 @@ try {
         author = 'Flex'
         manifest_url = $manifestUrl
         minimum_platform_version = $MinimumPlatformVersion
-        permissions = @('admin.ui', 'routes.admin', 'routes.public', 'frontend.assets')
+        permissions = @($Permissions)
     }
     $plugins += [pscustomobject]$entry
     $index.plugins = @($plugins | Sort-Object id)
