@@ -733,11 +733,8 @@ export function PagesPage({
               disabled={activeFilterCount === 0}
             >
 
-              {t("Clear filters")}
+              {`${t("Clear filters")} (${activeFilterCount})`}
             </button>
-            <span className="react-filter-count">
-              {activeFilterCount ? `${activeFilterCount} приложени филтъра` : t("No filters")}
-            </span>
           </>
         }
       />
