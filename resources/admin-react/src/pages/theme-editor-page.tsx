@@ -5,10 +5,25 @@ import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
 import { ThemeSourceEditor } from "@/components/theme-source-editor"
 import { Button } from "@/components/ui/button"
-import { ExtensionComponent, ExtensionScope, useExtensions, usePanelSaves } from "@/components/extension-runtime"
+import {
+  ExtensionComponent,
+  ExtensionScope,
+  useExtensions,
+  usePanelSaves,
+} from "@/components/extension-runtime"
 import { getCsrfToken } from "@/lib/admin-api"
 import type { ThemeRecord } from "@/lib/admin-types"
-import { Code2, Eye, GripVertical, Maximize2, Minimize2, Monitor, Save, Smartphone, Tablet } from "lucide-react"
+import {
+  Code2,
+  Eye,
+  GripVertical,
+  Maximize2,
+  Minimize2,
+  Monitor,
+  Save,
+  Smartphone,
+  Tablet,
+} from "lucide-react"
 import { toast } from "sonner"
 
 type PreviewWidth = "desktop" | "tablet" | "mobile"
@@ -85,6 +100,19 @@ const PREVIEW_BRIDGE = `<script data-flex-preview-bridge>
       else if (document.body.getAttribute(attribute) !== value) document.body.setAttribute(attribute, value);
     }
   };
+  const syncStylesheets = (freshDocument) => {
+    const currentLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+    const freshLinks = Array.from(freshDocument.head.querySelectorAll('link[rel="stylesheet"]'));
+    freshLinks.forEach((freshLink, index) => {
+      const currentLink = currentLinks[index];
+      if (currentLink && currentLink.href === freshLink.href) return;
+      const replacement = document.importNode(freshLink, true);
+      if (currentLink) currentLink.replaceWith(replacement);
+      else document.head.appendChild(replacement);
+      currentLinks[index] = replacement;
+    });
+    currentLinks.slice(freshLinks.length).forEach((link) => link.remove());
+  };
   const resolvePreviewLink = (anchor) => {
     try {
       const url = new URL(anchor.href);
@@ -118,6 +146,7 @@ const PREVIEW_BRIDGE = `<script data-flex-preview-bridge>
         if (currentValue !== null) parsed.body.setAttribute(attribute, currentValue);
       }
     }
+    syncStylesheets(parsed);
     patch(document.head, parsed.head);
     patch(document.body, parsed.body);
     syncThemeDesignTokens(parsed);
@@ -143,9 +172,12 @@ export function ThemeEditorPage({
   const [selectedThemeId, setSelectedThemeId] = useState("")
   const [loadingThemes, setLoadingThemes] = useState(true)
   const [view, setView] = useState<"builder" | "files">("builder")
-  const [expanded, setExpanded] = useState(() => new URLSearchParams(window.location.search).get("fullscreen") === "1")
+  const [expanded, setExpanded] = useState(
+    () => new URLSearchParams(window.location.search).get("fullscreen") === "1",
+  )
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>("desktop")
   const [previewHtml, setPreviewHtml] = useState("")
+  const [previewReloadKey, setPreviewReloadKey] = useState(0)
   const [previewBusy, setPreviewBusy] = useState(false)
   const [panelWidth, setPanelWidth] = useState<number | null>(null)
   const [resizingPanel, setResizingPanel] = useState(false)
@@ -161,7 +193,8 @@ export function ThemeEditorPage({
   const saves = usePanelSaves()
 
   useEffect(() => {
-    const syncFullscreenFromUrl = () => setExpanded(new URLSearchParams(window.location.search).get("fullscreen") === "1")
+    const syncFullscreenFromUrl = () =>
+      setExpanded(new URLSearchParams(window.location.search).get("fullscreen") === "1")
     window.addEventListener("popstate", syncFullscreenFromUrl)
     return () => window.removeEventListener("popstate", syncFullscreenFromUrl)
   }, [])
@@ -172,7 +205,11 @@ export function ThemeEditorPage({
     if (nextExpanded) params.set("fullscreen", "1")
     else params.delete("fullscreen")
     const query = params.toString()
-    window.history.pushState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`)
+    window.history.pushState(
+      {},
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+    )
     setExpanded(nextExpanded)
   }, [expanded])
 
@@ -203,14 +240,17 @@ export function ThemeEditorPage({
           themes?: ThemeRecord[]
           error?: { message?: string }
         }
-        if (!response.ok) throw new Error(body.error?.message ?? "Темите не можаха да бъдат заредени.")
+        if (!response.ok)
+          throw new Error(body.error?.message ?? "Темите не можаха да бъдат заредени.")
         const installedThemes = body.themes ?? []
         setThemes(installedThemes)
         setSelectedThemeId(installedThemes.find((theme) => theme.active)?.id ?? "")
       })
       .catch((reason) => {
         if (!controller.signal.aborted)
-          toast.error(reason instanceof Error ? reason.message : "Темите не можаха да бъдат заредени.")
+          toast.error(
+            reason instanceof Error ? reason.message : "Темите не можаха да бъдат заредени.",
+          )
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingThemes(false)
@@ -219,54 +259,81 @@ export function ThemeEditorPage({
   }, [])
 
   const selectedTheme = themes.find((theme) => theme.id === selectedThemeId)
-  const panels = useExtensions(selectedTheme?.active ? "theme.settings" : undefined, "screen.section")
-  const panelContext = useMemo(() => ({ type: "theme", id: selectedThemeId, theme: selectedTheme }), [selectedTheme, selectedThemeId])
+  const panels = useExtensions(
+    selectedTheme?.active ? "theme.settings" : undefined,
+    "screen.section",
+  )
+  const panelContext = useMemo(
+    () => ({ type: "theme", id: selectedThemeId, theme: selectedTheme }),
+    [selectedTheme, selectedThemeId],
+  )
   const extensionScope = useMemo(() => ({ context: panelContext, saves }), [panelContext, saves])
 
-  const renderPreview = useCallback(async (sections: Record<string, unknown> | null) => {
-    if (!selectedThemeId) return
-    const sequence = ++previewSequence.current
-    setPreviewBusy(true)
-    try {
-      const headers: Record<string, string> = { Accept: "text/html" }
-      const init: RequestInit = { credentials: "include", headers }
-      if (sections) {
-        headers["Content-Type"] = "application/json"
-        headers["X-CSRF-Token"] = await getCsrfToken()
-        init.method = "POST"
-        init.body = JSON.stringify({ sections })
-      }
-      const response = await fetch(`/admin/themes/${encodeURIComponent(selectedThemeId)}/preview`, init)
-      const html = await response.text()
-      if (!response.ok && response.status !== 404) throw new Error("Прегледът на темата не може да бъде зареден.")
-      if (sequence === previewSequence.current) {
-        const base = `<base href="${window.location.origin}/">`
-        const withBase = html.replace(/<head([^>]*)>/i, `<head$1>${base}`)
-        const nextHtml = withBase.includes("data-flex-preview-bridge")
-          ? withBase
-          : withBase.replace(/<\/body>/i, `${PREVIEW_BRIDGE}</body>`)
-        if (previewFrameReady.current) {
-          pendingPreviewHtml.current = nextHtml
-          previewFrame.current?.contentWindow?.postMessage({ type: "flex-theme-preview-update", html: nextHtml }, "*")
-        } else if (!previewDocumentSet.current) {
-          previewDocumentSet.current = true
-          setPreviewHtml(nextHtml)
-        } else {
-          pendingPreviewHtml.current = nextHtml
+  const renderPreview = useCallback(
+    async (sections: Record<string, unknown> | null, forceReload = false) => {
+      if (!selectedThemeId) return
+      const sequence = ++previewSequence.current
+      setPreviewBusy(true)
+      try {
+        const headers: Record<string, string> = { Accept: "text/html" }
+        const init: RequestInit = { credentials: "include", headers }
+        if (sections) {
+          headers["Content-Type"] = "application/json"
+          headers["X-CSRF-Token"] = await getCsrfToken()
+          init.method = "POST"
+          init.body = JSON.stringify({ sections })
         }
+        const response = await fetch(
+          `/admin/themes/${encodeURIComponent(selectedThemeId)}/preview`,
+          init,
+        )
+        const html = await response.text()
+        if (!response.ok && response.status !== 404)
+          throw new Error("Прегледът на темата не може да бъде зареден.")
+        if (sequence === previewSequence.current) {
+          const base = `<base href="${window.location.origin}/">`
+          const withBase = html.replace(/<head([^>]*)>/i, `<head$1>${base}`)
+          const nextHtml = withBase.includes("data-flex-preview-bridge")
+            ? withBase
+            : withBase.replace(/<\/body>/i, `${PREVIEW_BRIDGE}</body>`)
+          if (forceReload) {
+            // A design switch changes both the selected Twig partial and its stylesheet.
+            // Reload the iframe so neither can remain stale in the live preview.
+            previewFrameReady.current = false
+            pendingPreviewHtml.current = nextHtml
+            setPreviewReloadKey((key) => key + 1)
+            setPreviewHtml(nextHtml)
+          } else if (previewFrameReady.current) {
+            pendingPreviewHtml.current = nextHtml
+            previewFrame.current?.contentWindow?.postMessage(
+              { type: "flex-theme-preview-update", html: nextHtml },
+              "*",
+            )
+          } else if (!previewDocumentSet.current) {
+            previewDocumentSet.current = true
+            setPreviewHtml(nextHtml)
+          } else {
+            pendingPreviewHtml.current = nextHtml
+          }
+        }
+      } catch (reason) {
+        if (sequence === previewSequence.current)
+          toast.error(reason instanceof Error ? reason.message : "Грешка при прегледа.")
+      } finally {
+        if (sequence === previewSequence.current) setPreviewBusy(false)
       }
-    } catch (reason) {
-      if (sequence === previewSequence.current)
-        toast.error(reason instanceof Error ? reason.message : "Грешка при прегледа.")
-    } finally {
-      if (sequence === previewSequence.current) setPreviewBusy(false)
-    }
-  }, [selectedThemeId])
+    },
+    [selectedThemeId],
+  )
 
-  const onPreviewChange = useCallback((sections: Record<string, unknown>) => {
-    if (previewTimer.current !== null) window.clearTimeout(previewTimer.current)
-    previewTimer.current = window.setTimeout(() => void renderPreview(sections), 300)
-  }, [renderPreview])
+  const onPreviewChange = useCallback(
+    (sections: Record<string, unknown>, change?: { sectionId?: string; fieldId?: string }) => {
+      if (previewTimer.current !== null) window.clearTimeout(previewTimer.current)
+      const forceReload = change?.sectionId === "home_cta" && change.fieldId === "design"
+      previewTimer.current = window.setTimeout(() => void renderPreview(sections, forceReload), 300)
+    },
+    [renderPreview],
+  )
 
   useEffect(() => {
     if (!selectedThemeId) return
@@ -288,13 +355,21 @@ export function ThemeEditorPage({
       if (event.data?.type === "flex-theme-preview-ready") {
         previewFrameReady.current = true
         if (pendingPreviewHtml.current) {
-          previewFrame.current?.contentWindow?.postMessage({ type: "flex-theme-preview-update", html: pendingPreviewHtml.current }, "*")
+          previewFrame.current?.contentWindow?.postMessage(
+            { type: "flex-theme-preview-update", html: pendingPreviewHtml.current },
+            "*",
+          )
         }
         return
       }
-      if (event.data?.type !== "flex-theme-preview-navigate" || typeof event.data.url !== "string") return
+      if (event.data?.type !== "flex-theme-preview-navigate" || typeof event.data.url !== "string")
+        return
       let target: URL
-      try { target = new URL(event.data.url, window.location.origin) } catch { return }
+      try {
+        target = new URL(event.data.url, window.location.origin)
+      } catch {
+        return
+      }
       if (target.origin !== window.location.origin) return
       const sequence = ++navigationSequence
       void fetch(target.href, { credentials: "include", headers: { Accept: "text/html" } })
@@ -304,14 +379,23 @@ export function ThemeEditorPage({
         })
         .then((html) => {
           if (sequence !== navigationSequence) return
-          const withBase = html.replace(/<head([^>]*)>/i, `<head$1><base href="${window.location.origin}/">`)
+          const withBase = html.replace(
+            /<head([^>]*)>/i,
+            `<head$1><base href="${window.location.origin}/">`,
+          )
           const nextHtml = withBase.includes("data-flex-preview-bridge")
             ? withBase
             : withBase.replace(/<\/body>/i, `${PREVIEW_BRIDGE}</body>`)
-          previewFrame.current?.contentWindow?.postMessage({ type: "flex-theme-preview-navigate-response", html: nextHtml }, "*")
+          previewFrame.current?.contentWindow?.postMessage(
+            { type: "flex-theme-preview-navigate-response", html: nextHtml },
+            "*",
+          )
         })
         .catch((reason) => {
-          if (sequence === navigationSequence) toast.error(reason instanceof Error ? reason.message : "Грешка при зареждане на страницата.")
+          if (sequence === navigationSequence)
+            toast.error(
+              reason instanceof Error ? reason.message : "Грешка при зареждане на страницата.",
+            )
         })
     }
     window.addEventListener("message", receivePreviewMessage)
@@ -325,7 +409,9 @@ export function ThemeEditorPage({
       setPanelDirty(false)
       toast.success("Настройките на темата са запазени.")
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : "Настройките не можаха да бъдат запазени.")
+      toast.error(
+        reason instanceof Error ? reason.message : "Настройките не можаха да бъдат запазени.",
+      )
     } finally {
       setSaving(false)
     }
@@ -333,55 +419,146 @@ export function ThemeEditorPage({
 
   function selectTheme(themeId: string) {
     if (themeId === selectedThemeId) return
-    if ((panelDirty || fileDirty) && !window.confirm("Имате незапазени промени. Да ги отхвърля ли?")) return
+    if (
+      (panelDirty || fileDirty) &&
+      !window.confirm("Имате незапазени промени. Да ги отхвърля ли?")
+    )
+      return
     setSelectedThemeId(themeId)
     setPanelDirty(false)
     setFileDirty(false)
   }
 
   return (
-    <AdminShell title={t("Theme editor")} onLogout={onLogout} onNavigate={onNavigate} activeItem="Теми" loggingOut={loggingOut}>
-      <div className={`theme-builder-page${expanded ? " is-fullscreen" : ""}${resizingPanel ? " is-resizing-panel" : ""}`} style={panelWidth === null ? undefined : { "--theme-builder-panel-width": `${panelWidth}px` } as CSSProperties}>
+    <AdminShell
+      title={t("Theme editor")}
+      onLogout={onLogout}
+      onNavigate={onNavigate}
+      activeItem="Теми"
+      loggingOut={loggingOut}
+    >
+      <div
+        className={`theme-builder-page${expanded ? " is-fullscreen" : ""}${resizingPanel ? " is-resizing-panel" : ""}`}
+        style={
+          panelWidth === null
+            ? undefined
+            : ({ "--theme-builder-panel-width": `${panelWidth}px` } as CSSProperties)
+        }
+      >
         <div className="react-page-heading theme-builder-heading">
           <div>
             <h1>{t("Theme editor")}</h1>
-            <Breadcrumbs onHomeClick={() => onNavigate("Табло")} items={[{ label: "Themes", onClick: () => onNavigate("Теми") }, { label: t("Theme editor") }]} />
+            <Breadcrumbs
+              onHomeClick={() => onNavigate("Табло")}
+              items={[
+                { label: "Themes", onClick: () => onNavigate("Теми") },
+                { label: t("Theme editor") },
+              ]}
+            />
           </div>
           <div className="theme-builder-actions">
             <DropdownMenu
               ariaLabel={t("Choose a theme")}
               disabled={loadingThemes || themes.length === 0}
               triggerClassName="react-form-select theme-builder-theme-select"
-              trigger={<><span>{loadingThemes ? t("Loading themes…") : selectedTheme?.name ?? (themes.length === 0 ? t("No installed themes") : t("Select a theme"))}</span><DropdownChevron /></>}
+              trigger={
+                <>
+                  <span>
+                    {loadingThemes
+                      ? t("Loading themes…")
+                      : (selectedTheme?.name ??
+                        (themes.length === 0 ? t("No installed themes") : t("Select a theme")))}
+                  </span>
+                  <DropdownChevron />
+                </>
+              }
             >
-              {themes.map((theme) => <DropdownOption key={theme.id} selected={selectedThemeId === theme.id} onClick={() => selectTheme(theme.id)}>{theme.name}{theme.active ? " · Активна" : ""}</DropdownOption>)}
+              {themes.map((theme) => (
+                <DropdownOption
+                  key={theme.id}
+                  selected={selectedThemeId === theme.id}
+                  onClick={() => selectTheme(theme.id)}
+                >
+                  {theme.name}
+                  {theme.active ? " · Активна" : ""}
+                </DropdownOption>
+              ))}
             </DropdownMenu>
             {view === "builder" && selectedTheme?.active && panels.length > 0 && (
-              <Button className="theme-builder-save-button" variant="primary" type="button" onClick={() => void saveSettings()} disabled={!panelDirty} loading={saving}><Save size={17} /> Запази</Button>
+              <Button
+                className="theme-builder-save-button"
+                variant="primary"
+                type="button"
+                onClick={() => void saveSettings()}
+                disabled={!panelDirty}
+                loading={saving}
+              >
+                <Save size={17} /> Запази
+              </Button>
             )}
-            <Button variant="secondary" type="button" onClick={toggleFullscreen} aria-label={expanded ? "Изход от цял екран" : "Разгъни редактора на цял екран"} title={expanded ? "Изход от цял екран" : "Цял екран на редактора"}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={toggleFullscreen}
+              aria-label={expanded ? "Изход от цял екран" : "Разгъни редактора на цял екран"}
+              title={expanded ? "Изход от цял екран" : "Цял екран на редактора"}
+            >
               {expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
               {expanded ? "Изход от цял екран" : "Цял екран"}
             </Button>
             <div className="theme-builder-view-toggle" role="group" aria-label="Режим на редактора">
-              <Button variant={view === "builder" ? "primary" : "secondary"} type="button" onClick={() => setView("builder")}><Eye size={17} /> Дизайн</Button>
-              <Button variant={view === "files" ? "primary" : "secondary"} type="button" onClick={() => setView("files")}><Code2 size={17} /> Файлове</Button>
+              <Button
+                variant={view === "builder" ? "primary" : "secondary"}
+                type="button"
+                onClick={() => setView("builder")}
+              >
+                <Eye size={17} /> Дизайн
+              </Button>
+              <Button
+                variant={view === "files" ? "primary" : "secondary"}
+                type="button"
+                onClick={() => setView("files")}
+              >
+                <Code2 size={17} /> Файлове
+              </Button>
             </div>
           </div>
         </div>
 
-        {!selectedTheme && !loadingThemes && <p role="status">Няма инсталирана тема за редактиране.</p>}
+        {!selectedTheme && !loadingThemes && (
+          <p role="status">Няма инсталирана тема за редактиране.</p>
+        )}
 
         {selectedTheme && view === "builder" && (
           <div className="theme-builder-workspace">
             <aside className="theme-builder-controls">
-              <div className="theme-builder-panel-heading"><h2>Настройки на дизайна</h2><span>{selectedTheme.name}</span></div>
-              {!selectedTheme.active && <p className="theme-builder-note">За да променяте съдържанието, активирайте темата. Прегледът остава достъпен.</p>}
+              <div className="theme-builder-panel-heading">
+                <h2>Настройки на дизайна</h2>
+                <span>{selectedTheme.name}</span>
+              </div>
+              {!selectedTheme.active && (
+                <p className="theme-builder-note">
+                  За да променяте съдържанието, активирайте темата. Прегледът остава достъпен.
+                </p>
+              )}
               {selectedTheme.active && panels.length > 0 ? (
                 <ExtensionScope value={extensionScope}>
-                  {panels.map((panel) => <ExtensionComponent key={panel.id} descriptor={panel} context={panelContext} saves={saves} props={{ changed: () => setPanelDirty(true), previewChange: onPreviewChange }} />)}
+                  {panels.map((panel) => (
+                    <ExtensionComponent
+                      key={panel.id}
+                      descriptor={panel}
+                      context={panelContext}
+                      saves={saves}
+                      props={{ changed: () => setPanelDirty(true), previewChange: onPreviewChange }}
+                    />
+                  ))}
                 </ExtensionScope>
-              ) : selectedTheme.active ? <p className="theme-builder-note">Активирайте „Flex Theme Content“ и добавете content_schema към theme.json, за да редактирате текстовете и настройките.</p> : null}
+              ) : selectedTheme.active ? (
+                <p className="theme-builder-note">
+                  Активирайте „Flex Theme Content“ и добавете content_schema към theme.json, за да
+                  редактирате текстовете и настройките.
+                </p>
+              ) : null}
             </aside>
             <div
               className="theme-builder-resizer"
@@ -389,7 +566,10 @@ export function ThemeEditorPage({
               aria-label="Промяна на ширината на панела с настройки"
               aria-orientation="vertical"
               aria-valuemin={280}
-              aria-valuemax={Math.max(320, typeof window === "undefined" ? 1200 : window.innerWidth - 400)}
+              aria-valuemax={Math.max(
+                320,
+                typeof window === "undefined" ? 1200 : window.innerWidth - 400,
+              )}
               aria-valuenow={panelWidth ?? Math.round(window.innerWidth * 0.4)}
               tabIndex={0}
               onPointerDown={(event) => {
@@ -399,10 +579,12 @@ export function ThemeEditorPage({
                 resizePanel(event.clientX)
               }}
               onPointerMove={(event) => {
-                if (event.currentTarget.hasPointerCapture(event.pointerId)) resizePanel(event.clientX)
+                if (event.currentTarget.hasPointerCapture(event.pointerId))
+                  resizePanel(event.clientX)
               }}
               onPointerUp={(event) => {
-                if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+                if (event.currentTarget.hasPointerCapture(event.pointerId))
+                  event.currentTarget.releasePointerCapture(event.pointerId)
                 setResizingPanel(false)
               }}
               onPointerCancel={() => setResizingPanel(false)}
@@ -422,20 +604,61 @@ export function ThemeEditorPage({
             <section className="theme-builder-preview" aria-label="Преглед на сайта">
               <div className="theme-builder-preview-toolbar">
                 <span>{previewBusy ? "Обновяване на прегледа…" : "Преглед на живо"}</span>
-                <div role="group" aria-label="Размер на прегледа" className="theme-builder-device-picker">
-                  <button type="button" aria-label="Десктоп" aria-pressed={previewWidth === "desktop"} onClick={() => setPreviewWidth("desktop")}><Monitor size={17} /></button>
-                  <button type="button" aria-label="Таблет" aria-pressed={previewWidth === "tablet"} onClick={() => setPreviewWidth("tablet")}><Tablet size={17} /></button>
-                  <button type="button" aria-label="Телефон" aria-pressed={previewWidth === "mobile"} onClick={() => setPreviewWidth("mobile")}><Smartphone size={17} /></button>
+                <div
+                  role="group"
+                  aria-label="Размер на прегледа"
+                  className="theme-builder-device-picker"
+                >
+                  <button
+                    type="button"
+                    aria-label="Десктоп"
+                    aria-pressed={previewWidth === "desktop"}
+                    onClick={() => setPreviewWidth("desktop")}
+                  >
+                    <Monitor size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Таблет"
+                    aria-pressed={previewWidth === "tablet"}
+                    onClick={() => setPreviewWidth("tablet")}
+                  >
+                    <Tablet size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Телефон"
+                    aria-pressed={previewWidth === "mobile"}
+                    onClick={() => setPreviewWidth("mobile")}
+                  >
+                    <Smartphone size={17} />
+                  </button>
                 </div>
               </div>
               <div className={`theme-builder-canvas is-${previewWidth}`}>
-                {previewHtml ? <iframe ref={previewFrame} key={selectedTheme.id} title={`Преглед на тема ${selectedTheme.name}`} srcDoc={previewHtml} sandbox="allow-scripts allow-forms allow-popups" /> : <div className="theme-builder-loading">Зареждане на прегледа…</div>}
+                {previewHtml ? (
+                  <iframe
+                    ref={previewFrame}
+                    key={`${selectedTheme.id}-${previewReloadKey}`}
+                    title={`Преглед на тема ${selectedTheme.name}`}
+                    srcDoc={previewHtml}
+                    sandbox="allow-scripts allow-forms allow-popups"
+                  />
+                ) : (
+                  <div className="theme-builder-loading">Зареждане на прегледа…</div>
+                )}
               </div>
             </section>
           </div>
         )}
 
-        {selectedTheme && view === "files" && <ThemeSourceEditor key={selectedTheme.id} themeId={selectedTheme.id} onUnsavedChangesChange={setFileDirty} />}
+        {selectedTheme && view === "files" && (
+          <ThemeSourceEditor
+            key={selectedTheme.id}
+            themeId={selectedTheme.id}
+            onUnsavedChangesChange={setFileDirty}
+          />
+        )}
       </div>
     </AdminShell>
   )
