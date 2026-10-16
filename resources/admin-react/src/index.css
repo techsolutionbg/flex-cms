@@ -272,6 +272,9 @@
 .admin-workspace-tabs::-webkit-scrollbar {
   display: none;
 }
+body:has(dialog:modal) .admin-workspace-tabs {
+  overflow: hidden;
+}
 .admin-workspace-tabbar {
   display: flex;
   min-width: 0;
@@ -3719,12 +3722,14 @@ body {
   min-height: calc(100vh - 13rem);
   border: 1px solid var(--border);
   border-radius: .5rem;
-  background: white;
+  background: var(--surface);
   box-shadow: 0 8px 30px rgb(0 0 0 / 14%);
 }
 .theme-builder-canvas.is-tablet iframe { width: 768px; flex: 0 0 768px; }
 .theme-builder-canvas.is-mobile iframe { width: 390px; flex: 0 0 390px; }
 .theme-builder-loading { display: grid; min-height: 20rem; place-items: center; color: var(--muted-foreground); }
+.theme-builder-preview-error { align-content: center; justify-items: center; gap: .8rem; padding: 1.5rem; text-align: center; }
+.theme-builder-preview-error p { max-width: 30rem; margin: 0; color: var(--text-primary); }
 .theme-builder-page > .plugin-source-viewer { margin: 1.5rem; }
 @media (max-width: 900px) {
   .theme-builder-page { margin: -1.25rem -1rem; }
@@ -7095,6 +7100,7 @@ select:focus-visible,
 }
 .media-picker-heading h2 {
   margin: 0;
+  font-size: 1.25rem;
 }
 .contact-form-embed-picker {
   display: flex;

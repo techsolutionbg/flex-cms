@@ -1,5 +1,5 @@
 import { t } from "@/lib/admin-i18n"
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react"
 import { AdminShell } from "@/components/admin-shell"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { DropdownChevron, DropdownMenu, DropdownOption } from "@/components/dropdown-menu"
@@ -12,6 +12,7 @@ import {
   usePanelSaves,
 } from "@/components/extension-runtime"
 import { getCsrfToken } from "@/lib/admin-api"
+import { readAdminColorScheme, subscribeAdminColorScheme } from "@/lib/admin-theme"
 import type { ThemeRecord } from "@/lib/admin-types"
 import {
   Code2,
@@ -27,6 +28,19 @@ import {
 import { toast } from "sonner"
 
 type PreviewWidth = "desktop" | "tablet" | "mobile"
+
+function applyAdminThemeToPreviewPlaceholder(html: string, colorScheme: "light" | "dark") {
+  if (!html.includes("data-flex-preview-placeholder")) return html
+  const withoutPreviousTheme = html.replace(
+    /<style data-flex-preview-profile-theme>[\s\S]*?<\/style>/g,
+    "",
+  )
+  const rootStyle = window.getComputedStyle(document.documentElement)
+  const surface = rootStyle.getPropertyValue("--surface").trim()
+  const text = rootStyle.getPropertyValue("--text-primary").trim()
+  const style = `<style data-flex-preview-profile-theme>:root{color-scheme:${colorScheme};--surface:${surface};--text-primary:${text}}body{background:var(--surface);color:var(--text-primary)}</style>`
+  return withoutPreviousTheme.replace("</head>", `${style}</head>`)
+}
 
 const PREVIEW_BRIDGE = `<script data-flex-preview-bridge>
 (() => {
@@ -168,6 +182,12 @@ export function ThemeEditorPage({
   onNavigate: (label: string) => void
   loggingOut: boolean
 }) {
+  const adminThemeVariant = useSyncExternalStore(
+    subscribeAdminColorScheme,
+    () => document.documentElement.dataset.adminThemeVariant ?? readAdminColorScheme(),
+    () => "light",
+  )
+  const adminColorScheme = adminThemeVariant.startsWith("dark") ? "dark" : "light"
   const [themes, setThemes] = useState<ThemeRecord[]>([])
   const [selectedThemeId, setSelectedThemeId] = useState("")
   const [loadingThemes, setLoadingThemes] = useState(true)
@@ -179,6 +199,7 @@ export function ThemeEditorPage({
   const [previewHtml, setPreviewHtml] = useState("")
   const [previewReloadKey, setPreviewReloadKey] = useState(0)
   const [previewBusy, setPreviewBusy] = useState(false)
+  const [previewError, setPreviewError] = useState("")
   const [panelWidth, setPanelWidth] = useState<number | null>(null)
   const [resizingPanel, setResizingPanel] = useState(false)
   const [panelDirty, setPanelDirty] = useState(false)
@@ -273,10 +294,13 @@ export function ThemeEditorPage({
     async (sections: Record<string, unknown> | null, forceReload = false) => {
       if (!selectedThemeId) return
       const sequence = ++previewSequence.current
+      const controller = new AbortController()
+      const timeout = window.setTimeout(() => controller.abort(), 15000)
       setPreviewBusy(true)
+      setPreviewError("")
       try {
         const headers: Record<string, string> = { Accept: "text/html" }
-        const init: RequestInit = { credentials: "include", headers }
+        const init: RequestInit = { credentials: "include", headers, signal: controller.signal }
         if (sections) {
           headers["Content-Type"] = "application/json"
           headers["X-CSRF-Token"] = await getCsrfToken()
@@ -290,12 +314,14 @@ export function ThemeEditorPage({
         const html = await response.text()
         if (!response.ok && response.status !== 404)
           throw new Error("Прегледът на темата не може да бъде зареден.")
+        if (!html.trim()) throw new Error("Прегледът на темата върна празна страница.")
         if (sequence === previewSequence.current) {
           const base = `<base href="${window.location.origin}/">`
           const withBase = html.replace(/<head([^>]*)>/i, `<head$1>${base}`)
-          const nextHtml = withBase.includes("data-flex-preview-bridge")
-            ? withBase
-            : withBase.replace(/<\/body>/i, `${PREVIEW_BRIDGE}</body>`)
+          const themedHtml = applyAdminThemeToPreviewPlaceholder(withBase, adminColorScheme)
+          const nextHtml = themedHtml.includes("data-flex-preview-bridge")
+            ? themedHtml
+            : themedHtml.replace(/<\/body>/i, `${PREVIEW_BRIDGE}</body>`)
           if (forceReload) {
             // A design switch changes both the selected Twig partial and its stylesheet.
             // Reload the iframe so neither can remain stale in the live preview.
@@ -317,14 +343,21 @@ export function ThemeEditorPage({
           }
         }
       } catch (reason) {
-        if (sequence === previewSequence.current)
+        if (sequence === previewSequence.current) {
+          setPreviewError("Прегледът не може да бъде зареден. Проверете темата и опитайте отново.")
           toast.error(reason instanceof Error ? reason.message : "Грешка при прегледа.")
+        }
       } finally {
+        window.clearTimeout(timeout)
         if (sequence === previewSequence.current) setPreviewBusy(false)
       }
     },
-    [selectedThemeId],
+    [adminColorScheme, selectedThemeId],
   )
+
+  useEffect(() => {
+    setPreviewHtml((current) => applyAdminThemeToPreviewPlaceholder(current, adminColorScheme))
+  }, [adminColorScheme])
 
   const onPreviewChange = useCallback(
     (sections: Record<string, unknown>, change?: { sectionId?: string; fieldId?: string }) => {
@@ -338,6 +371,7 @@ export function ThemeEditorPage({
   useEffect(() => {
     if (!selectedThemeId) return
     setPreviewHtml("")
+    setPreviewError("")
     previewFrameReady.current = false
     previewDocumentSet.current = false
     pendingPreviewHtml.current = ""
@@ -601,7 +635,11 @@ export function ThemeEditorPage({
             >
               <GripVertical size={16} aria-hidden="true" />
             </div>
-            <section className="theme-builder-preview" aria-label="Преглед на сайта">
+            <section
+              className="theme-builder-preview"
+              aria-label="Преглед на сайта"
+              data-admin-color-scheme={adminColorScheme}
+            >
               <div className="theme-builder-preview-toolbar">
                 <span>{previewBusy ? "Обновяване на прегледа…" : "Преглед на живо"}</span>
                 <div
@@ -636,7 +674,18 @@ export function ThemeEditorPage({
                 </div>
               </div>
               <div className={`theme-builder-canvas is-${previewWidth}`}>
-                {previewHtml ? (
+                {previewError ? (
+                  <div className="theme-builder-loading theme-builder-preview-error" role="alert">
+                    <p>{previewError}</p>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => void renderPreview(null, true)}
+                    >
+                      Опитай отново
+                    </Button>
+                  </div>
+                ) : previewHtml ? (
                   <iframe
                     ref={previewFrame}
                     key={`${selectedTheme.id}-${previewReloadKey}`}
@@ -645,7 +694,7 @@ export function ThemeEditorPage({
                     sandbox="allow-scripts allow-forms allow-popups"
                   />
                 ) : (
-                  <div className="theme-builder-loading">Зареждане на прегледа…</div>
+                  <div className="theme-builder-loading" role="status">Зареждане на прегледа…</div>
                 )}
               </div>
             </section>

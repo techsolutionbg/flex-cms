@@ -114,6 +114,15 @@ final class ThemeContentSchemaValidator
             if (!is_string($section['label'] ?? null) || trim((string) $section['label']) === '') {
                 $errors[] = sprintf('%s section "%s" requires label.', $contextLabel, $id);
             }
+            if (array_key_exists('page_slug', $section) && (!is_string($section['page_slug']) || preg_match(self::ID_PATTERN, $section['page_slug']) !== 1)) {
+                $errors[] = sprintf('%s section "%s" page_slug must be a valid page slug when set.', $contextLabel, $id);
+            }
+            if (array_key_exists('page_role', $section) && $section['page_role'] !== 'home') {
+                $errors[] = sprintf('%s section "%s" page_role must be "home" when set.', $contextLabel, $id);
+            }
+            if (array_key_exists('page_slug', $section) && array_key_exists('page_role', $section)) {
+                $errors[] = sprintf('%s section "%s" cannot set both page_slug and page_role.', $contextLabel, $id);
+            }
             if (!is_array($section['fields'] ?? null)) {
                 $errors[] = sprintf('%s section "%s" requires fields array.', $contextLabel, $id);
                 continue;

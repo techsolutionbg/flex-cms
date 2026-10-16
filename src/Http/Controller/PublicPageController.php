@@ -40,13 +40,16 @@ final readonly class PublicPageController
             if (str_contains(strtolower($request->getHeaderLine('Accept')), 'application/json')) {
                 return $this->responses->json(['error' => ['status' => 404, 'message' => 'Страницата не е намерена.']], 404);
             }
-            $capabilities = $this->themes->capabilities();
-            $menuData = $this->menus->forTheme($capabilities['theme'] ?? '', $publicPages, $capabilities['menu_locations']);
-            $menuData['__flex_menu_api'] = new PublicMenuApi($this->menus, $publicPages);
-            $menuData['__flex_media_api'] = $this->media;
-            $menuData['__flex_theme_records'] = fn(string $resource): array => $this->records->published($resource);
+            $isHome = $slug === '';
+            $html = $this->views?->render('system/not-found.twig', [
+                'title' => $isHome ? 'Начална страница не е налична' : 'Страницата не е намерена',
+                'message' => $isHome
+                    ? 'Няма публикувана начална страница. Създайте или публикувайте начална страница, за да я покажете тук.'
+                    : 'Търсената страница не съществува или вече не е публикувана.',
+                'show_home_link' => !$isHome,
+            ]);
 
-            return $this->responses->html($this->themes->render('404.twig', ['title' => 'Страницата не е намерена'] + $menuData), 404);
+            return $this->responses->html($html ?? $this->renderNotFoundFallback($isHome), 404);
         }
         $settings = is_array($page->getAttribute('settings')) ? $page->getAttribute('settings') : [];
         $navigation = array_map(fn(Page $item): array => [
@@ -79,5 +82,19 @@ final readonly class PublicPageController
     private function homePage(PublicPageSet $publicPages): ?Page
     {
         return ($this->homePages ?? new HomePageResolver($this->configuration, $this->siteSettings))->resolve($publicPages);
+    }
+
+    private function renderNotFoundFallback(bool $isHome): string
+    {
+        $title = $isHome ? 'Начална страница не е налична' : 'Страницата не е намерена';
+        $message = $isHome
+            ? 'Няма публикувана начална страница. Създайте или публикувайте начална страница, за да я покажете тук.'
+            : 'Търсената страница не съществува или вече не е публикувана.';
+        $link = $isHome ? '' : '<p><a href="/">Към началната страница</a></p>';
+
+        return '<!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>404 · Flex CMS</title></head><body><main><p>404</p><h1>'
+            . htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            . '</h1><p>' . htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            . '</p>' . $link . '</main></body></html>';
     }
 }

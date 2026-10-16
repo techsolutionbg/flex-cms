@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>404 · Flex CMS</title>
+    {{ vite_tags|default('')|raw }}
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            display: grid;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            place-items: center;
+            background: #f4f5f6;
+            color: #30343b;
+            font: 16px/1.6 system-ui, sans-serif;
+        }
+        main {
+            width: min(100%, 38rem);
+            padding: clamp(2rem, 7vw, 4rem);
+            border: 1px solid #dfe3e7;
+            border-radius: 1rem;
+            background: #fff;
+            text-align: center;
+            box-shadow: 0 1.5rem 4rem rgb(20 30 40 / 9%);
+        }
+        .status { margin: 0 0 .5rem; color: #e6532f; font-size: .9rem; font-weight: 700; letter-spacing: .12em; }
+        h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.25rem); line-height: 1.2; }
+        main > p:not(.status) { margin: 1rem 0 0; color: #606a73; }
+        a { display: inline-block; margin-top: 1.25rem; color: #c94324; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <main>
+        <p class="status">404</p>
+        <h1>{{ title|e }}</h1>
+        <p>{{ message|e }}</p>
+        {% if show_home_link %}<p><a href="/">Към началната страница</a></p>{% endif %}
+    </main>
+</body>
+</html>

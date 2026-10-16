@@ -130,6 +130,9 @@ function Dialog({
         event.preventDefault()
         onClose()
       }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
     >
       <div className="media-picker-heading">
         <h2 id={id}>{title}</h2>

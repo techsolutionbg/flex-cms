@@ -179,7 +179,10 @@ export function subscribeAdminColorScheme(onChange: () => void): () => void {
   const root = document.documentElement
   const media = window.matchMedia?.("(prefers-color-scheme: dark)")
   const observer = new MutationObserver(onChange)
-  observer.observe(root, { attributes: true, attributeFilter: ["data-admin-theme"] })
+  observer.observe(root, {
+    attributes: true,
+    attributeFilter: ["data-admin-theme", "data-admin-theme-variant"],
+  })
   media?.addEventListener("change", onChange)
   return () => {
     observer.disconnect()

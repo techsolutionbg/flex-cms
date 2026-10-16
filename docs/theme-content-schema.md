@@ -41,6 +41,7 @@ Each `global.json` / `layouts/*.json` file contains:
     {
       "id": "hero",
       "label": "Hero",
+      "page_slug": "about",
       "order": 10,
       "description": "optional",
       "fields": [
@@ -70,6 +71,8 @@ Optional `default`: initial value in the same shape as the table above (repeater
 Optional `layout`: `half` (two columns in admin) or `full` (one row). Default: `textarea` / `repeater` / `media` / `page_link` → full width; `text`, `url`, `email`, `number` → half width (pairs such as label + URL).
 
 IDs must match `^[a-z][a-z0-9_-]{0,63}$`.
+
+Global sections may optionally declare `page_slug` to bind their tab to a CMS page slug, or `page_role: "home"` to bind it to the configured home page. In the theme editor, the platform checks these bindings against existing pages and shows a warning in the affected tab when its page is missing.
 
 Validation is implemented in `Flex\ThemeContent\ThemeContentSchemaValidator`.
 
